@@ -1,0 +1,18 @@
+{
+	"name": "Refleks",
+
+	"image": "mcr.microsoft.com/devcontainers/go:1-1.24-bookworm",
+	"postCreateCommand": "sudo apt-get update && sudo apt-get install -y nodejs npm pkg-config libgtk-3-dev libglib2.0-dev libgirepository1.0-dev libwebkit2gtk-4.0-dev gir1.2-webkit2-4.0 && go install github.com/wailsapp/wails/v2/cmd/wails@latest",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"bradlc.vscode-tailwindcss"
+			]
+		}
+	}
+
+	// "mounts": [
+	// 	"source=C:/Program Files (x86)/Steam,target=/mnt/steam,type=bind,consistency=cached",
+	// 	"source=C:/Program Files (x86)/Steam/steamapps/common/FPSAimTrainer/FPSAimTrainer,target=/mnt/kovaaks,type=bind,consistency=cached"
+	// ]
+}
