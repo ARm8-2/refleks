@@ -1,0 +1,62 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Wails: Build for Windows",
+			"command": "wails",
+			"args": [
+				"build",
+				"-platform",
+				"windows/amd64"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$go"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "Build RefleK's app for Windows (cross-compilation)"
+		},
+		{
+			"type": "shell",
+			"label": "Wails: Dev",
+			"command": "wails",
+			"args": [
+				"dev"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "none"
+			},
+			"detail": "Run wails dev"
+		},
+		{
+			"type": "shell",
+			"label": "Serve Landing (static)",
+			"command": "python3",
+			"args": [
+				"-m",
+				"http.server",
+				"8080",
+				"--directory",
+				"landing"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "none"
+			},
+			"detail": "Serve the static landing/ folder at http://localhost:8080/"
+		}
+	]
+}

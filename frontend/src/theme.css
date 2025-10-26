@@ -1,0 +1,157 @@
+/*
+  RefleK's Theme System
+  ---------------------
+  Edit this file to customize colors, like you would in VS Code.
+
+  Usage:
+  - The app root sets a class on <html>: `theme-dark` or `theme-light`.
+  - Components use CSS variables (below) via Tailwind arbitrary values, e.g.:
+      bg-[var(--bg-primary)] text-[var(--text-primary)] border-[var(--border-primary)]
+      hover:bg-[var(--bg-tertiary)]
+  - You can add more variables or additional theme classes (e.g. theme-ocean).
+
+  Variables (keep names stable for theme compatibility):
+  --bg-primary       : main application background
+  --bg-secondary     : panel/background for surfaces
+  --bg-tertiary      : subtle elevated surface / hovers
+  --bg-card          : solid card background
+  --bg-hover         : generic hover background
+  --border-primary   : primary borders / separators
+  --border-secondary : secondary borders
+  --text-primary     : primary text color
+  --text-secondary   : secondary text color
+  --text-muted       : muted/tertiary text
+  --accent-primary   : brand/accent color
+  --accent-hover     : hover color for accent
+  --accent-light     : lighter tint of accent
+  --success          : success state color
+  --warning          : warning state color
+  --error            : error state color
+  --gradient-bg      : app background gradient
+  --gradient-card    : card gradient
+  --gradient-accent  : accent gradient
+
+  Scrollbars use the same tokens via dedicated variables:
+  --scrollbar-track, --scrollbar-thumb, --scrollbar-thumb-hover, --scrollbar-thumb-active, --scrollbar-accent
+*/
+
+/* Dark theme */
+.theme-dark {
+  /* New token set */
+  --bg-primary: #111316;
+  --bg-secondary: rgba(24, 25, 28, 0.9);
+  --bg-tertiary: rgba(32, 34, 37, 0.85);
+  --bg-card: #1f1f1f;
+  --bg-hover: #333333;
+  --text-primary: #e6e6e6;
+  --text-secondary: #b0b0b0;
+  --text-muted: #666666;
+  --accent-primary: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-light: #60a5fa;
+  --border-primary: #333333;
+  --border-secondary: #404040;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --gradient-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
+  --gradient-card: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%);
+  --gradient-accent: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+
+  --scrollbar-size: 10px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.08);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.16);
+  --scrollbar-thumb-active: rgba(255, 255, 255, 0.24);
+  --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 80%, white);
+}
+
+/* Light theme */
+.theme-light {
+  --bg-primary: #f6f7f9;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f2f4;
+  --bg-card: #ffffff;
+  --bg-hover: #ecf0f4;
+  --text-primary: #1f2328;
+  --text-secondary: #59636e;
+  --text-muted: #8a949e;
+  --accent-primary: #0ea5e9;
+  --accent-hover: #0284c7;
+  --accent-light: #38bdf8;
+  --border-primary: #dcdfe4;
+  --border-secondary: #c9cfd7;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --gradient-bg: linear-gradient(135deg, #ffffff 0%, #f6f7f9 50%, #ebeff5 100%);
+  --gradient-card: linear-gradient(135deg, #ffffff 0%, #f5f7fb 100%);
+  --gradient-accent: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+
+  --scrollbar-size: 10px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --scrollbar-thumb-active: rgba(0, 0, 0, 0.35);
+  --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 80%, black);
+}
+
+/* Dracula theme */
+.theme-dracula {
+  --bg-primary: #282a36;
+  --bg-secondary: #2b2d3a;
+  --bg-tertiary: #343746;
+  --bg-card: #2f3140;
+  --bg-hover: #3a3d4e;
+  --text-primary: #f8f8f2;
+  --text-secondary: #a6accd;
+  --text-muted: #8a8fb0;
+  --accent-primary: #bd93f9;
+  --accent-hover: #a87df0;
+  --accent-light: #d8b6ff;
+  --border-primary: #44475a;
+  --border-secondary: #5b5e72;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --gradient-bg: linear-gradient(135deg, #1f2030 0%, #2b2d3a 50%, #242638 100%);
+  --gradient-card: linear-gradient(135deg, #2b2d3a 0%, #343746 100%);
+  --gradient-accent: linear-gradient(135deg, #bd93f9 0%, #8a63d2 100%);
+
+  --scrollbar-size: 10px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-active: rgba(255, 255, 255, 0.28);
+  --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 85%, white);
+}
+
+/* Ocean (light) theme */
+.theme-ocean {
+  --bg-primary: #eaf2fb;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #ecf2f9;
+  --bg-card: #ffffff;
+  --bg-hover: #e3edf8;
+  --text-primary: #17202a;
+  --text-secondary: #5b6b7c;
+  --text-muted: #7a8b9c;
+  --accent-primary: #06b6d4;
+  --accent-hover: #0891b2;
+  --accent-light: #22d3ee;
+  --border-primary: #d6e1ef;
+  --border-secondary: #c5d5e7;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --gradient-bg: linear-gradient(135deg, #ffffff 0%, #eaf2fb 50%, #dae6f8 100%);
+  --gradient-card: linear-gradient(135deg, #ffffff 0%, #ecf2f9 100%);
+  --gradient-accent: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+
+  --scrollbar-size: 10px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.14);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
+  --scrollbar-thumb-active: rgba(0, 0, 0, 0.3);
+  --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 80%, black);
+}

@@ -1,0 +1,98 @@
+@import './theme.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", monospace;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  /* Fleet-style global scrollbar
+     - Uses CSS variables for easy theming
+     - Works for WebKit/Chromium via ::-webkit-scrollbar and for Firefox via scrollbar-color/width
+     - Add the `.scrollbar-compact` class to elements that should show a smaller scrollbar
+  */
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  /* WebKit / Chromium */
+  *::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+    height: var(--scrollbar-size);
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    /* create padding around the thumb */
+    background-clip: padding-box;
+    transition: background-color .15s ease, transform .12s ease, opacity .12s ease;
+    opacity: 0.9;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+    transform: scale(1.02);
+    opacity: 1;
+  }
+
+  *::-webkit-scrollbar-thumb:active {
+    background-color: var(--scrollbar-thumb-active);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Keyboard focus / accessibility accent */
+  *:focus-visible::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-accent);
+  }
+
+  *:focus-visible {
+    scrollbar-color: var(--scrollbar-accent) var(--scrollbar-track);
+  }
+
+  /* Compact helper class for tighter UI areas */
+  .scrollbar-compact::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-compact {
+    scrollbar-width: thin;
+  }
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local(""),
+    url("./assets/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+}

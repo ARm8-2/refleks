@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RefleK's — Kovaak's Analytics & Insights</title>
+  <meta name="description"
+    content="RefleK's is a free, open‑source desktop app that analyzes your Kovaak's stats in real-time. Track sessions, explore benchmarks, capture mouse paths, and gain actionable insights. Built with Go + React." />
+  <!-- Tailwind (CDN) for quick static layout -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles/main.css" />
+</head>
+
+<body class="text-[var(--text-primary)] min-h-screen">
+  <!-- Nav -->
+  <header
+    class="fixed inset-x-0 top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-[color:var(--bg-secondary)/0.25] bg-[var(--bg-secondary)]/20 border-b border-[var(--border-primary)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="#home" class="flex items-center gap-2 group">
+        <img alt="RefleK's logo" src="./assets/logo.svg"
+          class="w-7 h-7 opacity-90 group-hover:opacity-100 transition" />
+        <span class="font-semibold tracking-tight text-lg">RefleK's</span>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="hidden md:flex items-center gap-6 text-sm text-[var(--text-muted)]">
+        <a href="#tour" class="hover:text-[var(--text-primary)] transition-colors">How it works</a>
+        <a href="#features" class="hover:text-[var(--text-primary)] transition-colors">Features</a>
+        <a href="#oss" class="hover:text-[var(--text-primary)] transition-colors">Open‑source</a>
+        <a href="#support" class="hover:text-[var(--text-primary)] transition-colors">Support</a>
+        <a href="https://github.com/ARm8-2/refleks/releases" target="_blank"
+          class="px-4 py-2 rounded-lg bg-[var(--accent-primary)] text-black font-medium hover:bg-[var(--accent-hover)] transition-colors">Download</a>
+      </nav>
+
+      <!-- Mobile Menu Button -->
+      <button id="mobile-menu-btn" class="md:hidden p-2 -mr-2 text-[var(--text-primary)]" aria-label="Toggle menu">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path class="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"></path>
+          <path class="close-icon hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <nav id="mobile-menu" class="md:hidden hidden border-t border-[var(--border-primary)] bg-[var(--bg-secondary)]">
+      <div class="px-4 py-3 space-y-1">
+        <a href="#tour"
+          class="block px-3 py-3 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] transition-colors">How
+          it works</a>
+        <a href="#features"
+          class="block px-3 py-3 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] transition-colors">Features</a>
+        <a href="#oss"
+          class="block px-3 py-3 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] transition-colors">Open‑source</a>
+        <a href="#support"
+          class="block px-3 py-3 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] transition-colors">Support</a>
+        <a href="https://github.com/ARm8-2/refleks/releases" target="_blank"
+          class="block px-3 py-3 rounded-lg bg-[var(--accent-primary)] text-black font-medium text-center hover:bg-[var(--accent-hover)] transition-colors">Download</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section id="home" class="pt-32 pb-20 sm:pt-36 sm:pb-24 border-b border-[var(--border-primary)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight gradient-text">RefleK's</h1>
+      <p class="mt-4 sm:mt-5 text-lg sm:text-xl md:text-2xl text-[var(--text-muted)] max-w-3xl mx-auto px-2">
+        Your aim trainer gives scores. RefleK's gives answers.
+      </p>
+      <p class="mt-4 sm:mt-6 text-sm sm:text-[15px] leading-relaxed text-[var(--text-muted)] max-w-2xl mx-auto px-2">
+        RefleK's is a free, open‑source desktop app that automatically tracks your Kovaak's practice sessions, shows
+        what you're improving at, and helps you see where to focus next — all running on your computer with zero setup.
+      </p>
+      <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 justify-center px-4">
+        <a href="https://github.com/ARm8-2/refleks/releases" target="_blank"
+          class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-[var(--accent-primary)] text-black font-semibold hover:bg-[var(--accent-hover)] transition-colors min-h-[48px]">
+          Download for Windows
+        </a>
+        <a href="#features"
+          class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl border border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors min-h-[48px]">
+          See what's inside
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product Tour -->
+  <section id="tour" class="py-16 sm:py-20 lg:py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-center mb-10 sm:mb-14">How it works</h2>
+
+      <div class="tour-container">
+        <!-- Sticky visual panel (desktop only) -->
+        <div class="tour-visual">
+          <div class="tour-screen">
+            <div class="tour-slide active" data-slide="1">
+              <div class="tour-slide-title">Automatic tracking</div>
+              <p class="tour-slide-text">RefleK's monitors your stats folder and imports new runs automatically.</p>
+              <div class="tour-slide-visual live">
+                <div class="live-indicator">●</div>
+                <div class="live-label">Live</div>
+              </div>
+            </div>
+            <div class="tour-slide" data-slide="2">
+              <div class="tour-slide-title">Deep analysis</div>
+              <p class="tour-slide-text">Trend analysis, consistency tracking, and performance trajectories.</p>
+              <img src="./assets/127.0.0.1_34115_ (1).png" alt="Deep analysis view"
+                class="w-full h-full object-cover rounded-lg" />
+            </div>
+            <div class="tour-slide" data-slide="3">
+              <div class="tour-slide-title">Practice sessions</div>
+              <p class="tour-slide-text">Runs are grouped automatically so you can review whole training blocks.</p>
+              <img src="./assets/127.0.0.1_34115_ (2).png" alt="Practice sessions view"
+                class="w-full h-full object-cover rounded-lg" />
+            </div>
+            <div class="tour-slide" data-slide="4">
+              <div class="tour-slide-title">Benchmark progress</div>
+              <p class="tour-slide-text">Browse benchmarks and track your progress with live updates.</p>
+              <img src="./assets/127.0.0.1_34115_ (3).png" alt="Benchmark progress view"
+                class="w-full h-full object-cover rounded-lg" />
+            </div>
+            <div class="tour-slide" data-slide="5">
+              <div class="tour-slide-title">Mouse movement replay</div>
+              <p class="tour-slide-text">Record and visualize your mouse path to study precision.</p>
+              <img src="./assets/127.0.0.1_34115_ (4).png" alt="Mouse movement replay view"
+                class="w-full h-full object-cover rounded-lg" />
+            </div>
+            <div class="tour-slide" data-slide="6">
+              <div class="tour-slide-title">100% private</div>
+              <p class="tour-slide-text">Everything runs on your computer. Your data stays yours.</p>
+              <img src="./assets/127.0.0.1_34115_ (5).png" alt="Settings view"
+                class="w-full h-full object-cover rounded-lg" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature steps -->
+        <div class="tour-steps">
+          <article class="tour-step" data-step="1">
+            <span class="eyebrow">Automatic</span>
+            <h3 class="step-title">Always up to date</h3>
+            <p class="step-copy">RefleK's monitors your Kovaak's stats folder and automatically pulls in new runs as you
+              finish them. No need to click "import" or upload files — it just works.</p>
+            <ul class="bullets space-y-2">
+              <li>Automatically monitors when you open the app</li>
+              <li>Newest runs always appear at the top</li>
+              <li>Works with all Kovaak's scenarios</li>
+            </ul>
+          </article>
+
+          <article class="tour-step" data-step="2">
+            <span class="eyebrow">Clear insights</span>
+            <h3 class="step-title">Stats that make sense</h3>
+            <p class="step-copy">RefleK's analyzes your runs to show accuracy trends, consistency patterns, and
+              performance trajectories — helping you understand if you're actually improving over time.</p>
+            <ul class="bullets space-y-2">
+              <li>Trend analysis showing improvement over time</li>
+              <li>Performance consistency tracking</li>
+              <li>Score charts with trajectory predictions</li>
+              <li>Compare performance across sessions</li>
+            </ul>
+          </article>
+
+          <article class="tour-step" data-step="3">
+            <span class="eyebrow">Sessions</span>
+            <h3 class="step-title">See the full picture</h3>
+            <p class="step-copy">Your scenarios get grouped into practice sessions based on when you played them, so you
+              can review an entire training block and spot patterns.</p>
+            <ul class="bullets space-y-2">
+              <li>Automatic grouping (you can adjust the time gap)</li>
+              <li>Session summaries with key stats</li>
+              <li>Quick navigation between scenarios</li>
+              <li>Performance highlights and lowlights</li>
+            </ul>
+          </article>
+
+          <article class="tour-step" data-step="4">
+            <span class="eyebrow">Benchmarks</span>
+            <h3 class="step-title">Track your progress</h3>
+            <p class="step-copy">Browse official benchmark lists and see your live progress update automatically. Save
+              your favorites for quick access and watch your ranks improve over time.</p>
+            <ul class="bullets space-y-2">
+              <li>All major benchmarks included</li>
+              <li>Progress updates in real‑time</li>
+              <li>Favorite system for quick access</li>
+              <li>Works automatically with your Steam account</li>
+            </ul>
+          </article>
+
+          <article class="tour-step" data-step="5">
+            <span class="eyebrow">Advanced</span>
+            <h3 class="step-title">Visualize your mouse movement</h3>
+            <p class="step-copy">Turn on mouse tracking to record and replay your mouse movements during scenarios.
+              Perfect for studying precision and spotting bad habits.</p>
+            <ul class="bullets space-y-2">
+              <li>Optional — turn it on in settings</li>
+              <li>No performance impact</li>
+              <li>Replay with pause and scrub controls</li>
+              <li>Saved locally to your computer, never uploaded</li>
+            </ul>
+          </article>
+
+          <article class="tour-step" data-step="6">
+            <span class="eyebrow">Private</span>
+            <h3 class="step-title">Your data stays yours</h3>
+            <p class="step-copy">Everything runs on your computer. RefleK's never sends your stats anywhere except when
+              fetching benchmark progress from Kovaak's (and only when you ask).</p>
+            <ul class="bullets space-y-2">
+              <li>No accounts or sign‑ups</li>
+              <li>No tracking or data collection</li>
+              <li>Settings saved to your computer</li>
+              <li>100% open‑source code</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Secondary features grid -->
+  <section id="features"
+    class="py-16 sm:py-20 lg:py-24 bg-[var(--bg-tertiary)] border-y border-[var(--border-primary)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-center mb-8 sm:mb-12">Everything you need to improve</h2>
+      <div class="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div class="card">
+          <div class="card-title">Automatic tracking</div>
+          <p class="card-copy">RefleK's watches your Kovaak's folder and brings in new runs as you finish them — no
+            clicking "import" or uploading files.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Deep performance analysis</div>
+          <p class="card-copy">Goes beyond basic scores and accuracy with trend analysis, consistency tracking, and
+            performance trajectories to show if you're actually improving.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Practice session view</div>
+          <p class="card-copy">Your scenarios get grouped into sessions automatically based on when you played, making
+            it easy to review a full training block.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Benchmark progress</div>
+          <p class="card-copy">Browse all the major benchmarks and track your progress with live updates. Save favorites
+            for quick access.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Mouse movement replay</div>
+          <p class="card-copy">Turn on mouse tracking to record and replay your mouse path with pause/scrub controls —
+            great for spotting bad habits.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">100% private</div>
+          <p class="card-copy">Everything runs on your computer. RefleK's doesn't collect data or send your stats
+            anywhere (except fetching benchmark progress when you ask).</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Built‑in themes</div>
+          <p class="card-copy">Choose from several color themes to match your setup and preferences.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Launch scenarios instantly</div>
+          <p class="card-copy">Click any scenario in RefleK's to launch it directly in Kovaak's — no copying names or
+            searching.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Free & open‑source</div>
+          <p class="card-copy">RefleK's is completely free and the code is public on GitHub. You can view it, report
+            bugs, or contribute improvements.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Roadmap preview -->
+  <section class="py-16 sm:py-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-center mb-3 sm:mb-4">Coming soon</h2>
+      <p class="text-sm sm:text-[15px] text-[var(--text-muted)] max-w-3xl mx-auto text-center mb-8 sm:mb-10 px-2">
+        Planned features. Timelines may change based on feedback and testing.
+      </p>
+      <div class="grid gap-4 sm:gap-6 md:grid-cols-3">
+        <div class="card">
+          <div class="card-title">AI‑powered insights</div>
+          <p class="card-copy">Get intelligent feedback on your sessions with pattern recognition, strengths and
+            weaknesses analysis, and personalized recommendations on what to practice next.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Mouse movement analysis</div>
+          <p class="card-copy">Automatic detection of overshoots, undershoots, and inefficient movements. See exactly
+            how optimal your mouse control is and where to improve.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Custom themes</div>
+          <p class="card-copy">Design and share your own color themes to make RefleK's match your setup perfectly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Open‑source / CTA -->
+  <section id="oss" class="py-16 sm:py-20 lg:py-24">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h2 class="text-2xl sm:text-3xl font-extrabold mb-3 sm:mb-4">Free, open‑source, made by the community</h2>
+      <p class="text-sm sm:text-[15px] text-[var(--text-muted)] max-w-3xl mx-auto px-2">
+        RefleK's is built in the open. The code is on GitHub, and everyone's welcome to report bugs, suggest features,
+        or contribute.
+      </p>
+      <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap gap-3 justify-center px-4">
+        <a class="btn min-h-[48px]" target="_blank" href="https://github.com/ARm8-2/refleks">View on GitHub</a>
+        <a class="btn-outline min-h-[48px]" target="_blank"
+          href="https://github.com/ARm8-2/refleks/issues/new/choose">Report a bug</a>
+        <a class="btn-outline min-h-[48px]" target="_blank"
+          href="https://github.com/ARm8-2/refleks/issues/new?labels=enhancement&template=feature_request.md">Request a
+          feature</a>
+      </div>
+    </div>
+  </section>
+  href="https://github.com/ARm8-2/refleks/issues/new/choose">Report a
+  bug</a>
+  <a class="btn-outline min-h-[48px]" target="_blank"
+    href="https://github.com/ARm8-2/refleks/issues/new?labels=enhancement&template=feature_request.md">Request a
+    feature</a>
+  </div>
+  </div>
+  </section>
+
+  <!-- Support / feedback -->
+  <section id="support" class="py-16 sm:py-20 lg:py-24 bg-[var(--bg-tertiary)] border-t border-[var(--border-primary)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid gap-4 sm:gap-6 md:grid-cols-2">
+        <div class="panel">
+          <div class="panel-title">Support development</div>
+          <p class="panel-copy">RefleK's is free and always will be. If you'd like to support the project, you can buy
+            me a coffee!</p>
+          <a class="panel-link" target="_blank" href="https://ko-fi.com/arm8_">Support on Ko‑fi →</a>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Get help or share feedback</div>
+          <p class="panel-copy">Found a bug? Want to suggest a feature? Need help? You can reach out on GitHub or
+            Discord.</p>
+          <div class="flex flex-col gap-2 mt-3">
+            <a class="panel-link" target="_blank" href="https://github.com/ARm8-2/refleks/issues">Open an issue on
+              GitHub →</a>
+            <span class="text-sm text-[var(--text-muted)]">or message <button
+                class="text-[var(--text-primary)] font-semibold hover:text-[var(--accent-primary)] cursor-pointer transition-colors inline-flex items-center gap-1"
+                onclick="navigator.clipboard.writeText('arm8').then(() => { const btn = this; const orig = btn.innerHTML; btn.innerHTML = '✓ copied!'; setTimeout(() => btn.innerHTML = orig, 2000); })"
+                title="Click to copy">arm8</button> on Discord</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="py-16 sm:py-20">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-center mb-6 sm:mb-8">Common questions</h2>
+      <div class="faq max-w-3xl mx-auto">
+        <details>
+          <summary>Is RefleK's made by Kovaak's?</summary>
+          <div class="details-body">No. RefleK's is an independent project made by the community. We're not affiliated
+            with Kovaak's or The Meta.</div>
+        </details>
+        <details>
+          <summary>Is RefleK's safe?</summary>
+          <div class="details-body">Yes. RefleK's is open‑source and runs entirely on your computer. It doesn't collect
+            data or send your stats anywhere (except when you choose to fetch benchmark progress from Kovaak's).</div>
+        </details>
+        <details>
+          <summary>What platforms work with RefleK's?</summary>
+          <div class="details-body">RefleK's currently supports Windows. The mouse tracking feature is Windows‑only
+            because it uses Windows‑specific APIs. If you'd like support for Mac or Linux, let us know on GitHub.</div>
+        </details>
+        <details>
+          <summary>Does it track my mouse all the time?</summary>
+          <div class="details-body">No. Mouse tracking is turned off by default. When you turn it on, it only records
+            during Kovaak's scenarios and saves everything to your computer. You can turn it off anytime in settings.
+          </div>
+        </details>
+        <details>
+          <summary>How do I help improve RefleK's?</summary>
+          <div class="details-body">Open an issue on GitHub to report bugs or suggest features. If you want to
+            contribute code, check CONTRIBUTING.md in the repository for guidelines.</div>
+        </details>
+        <details>
+          <summary>Where do I report bugs?</summary>
+          <div class="details-body">Open an issue on GitHub with details about what happened. You can also message arm8
+            on Discord if you need help.</div>
+        </details>
+        <details>
+          <summary>How does benchmark tracking work?</summary>
+          <div class="details-body">RefleK's includes all the major benchmark lists. When you view a benchmark, it
+            fetches your progress from Kovaak's using your Steam account (detected automatically on Windows).</div>
+        </details>
+        <details>
+          <summary>Do I need to create an account?</summary>
+          <div class="details-body">No. RefleK's doesn't have accounts or logins. Everything runs on your computer and
+            uses your existing Steam account for benchmark progress.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+  <footer class="py-8 sm:py-10 text-center text-[var(--text-muted)] border-t border-[var(--border-primary)]">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-sm">
+        <a href="https://github.com/ARm8-2/refleks" target="_blank"
+          class="hover:text-[var(--text-primary)] transition-colors">GitHub</a>
+        <span class="hidden sm:inline">•</span>
+        <a href="https://ko-fi.com/arm8_" target="_blank"
+          class="hover:text-[var(--text-primary)] transition-colors">Support on Ko‑fi</a>
+        <span class="hidden sm:inline">•</span>
+        <span class="text-[var(--text-secondary)]">Contact: <button
+            class="text-[var(--text-primary)] font-semibold hover:text-[var(--accent-primary)] cursor-pointer transition-colors inline-flex items-center gap-1"
+            onclick="navigator.clipboard.writeText('arm8').then(() => { const btn = this; const orig = btn.innerHTML; btn.innerHTML = '✓ copied!'; setTimeout(() => btn.innerHTML = orig, 2000); })"
+            title="Click to copy">arm8</button> on
+          Discord</span>
+      </div>
+      <p class="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed max-w-3xl mx-auto">
+        <strong>Disclaimer:</strong> RefleK's is an independent open‑source project and is not affiliated with Kovaak's,
+        The Meta, or any other company. All trademarks are the property of their respective owners.
+      </p>
+      <p class="text-sm text-[var(--text-muted)]">© 2025 RefleK's — Built with Go + React (Wails) • GPL‑3.0 License</p>
+    </div>
+  </footer>
+
+  <!-- Sticky/animations script -->
+  <script src="./scripts/main.js"></script>
+</body>
+<!--
+    Notes
+    - This is a static landing page under /landing. It’s separate from the desktop app frontend.
+    - Tailwind is loaded via CDN for convenience; custom visuals are in styles/main.css.
+  -->
+
+</html>

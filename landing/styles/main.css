@@ -1,0 +1,650 @@
+/* Theme (matches app dark defaults) */
+:root {
+  --bg-primary: #111316;
+  --bg-secondary: rgba(24, 25, 28, 0.9);
+  --bg-tertiary: rgba(32, 34, 37, 0.85);
+  --bg-card: #1f1f1f;
+  --bg-hover: #333;
+  --text-primary: #e6e6e6;
+  --text-secondary: #b0b0b0;
+  --text-muted: #666;
+  --accent-primary: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-light: #60a5fa;
+  --border-primary: #333;
+  --border-secondary: #404040;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --gradient-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
+  --gradient-card: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%);
+  --gradient-accent: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  /* Hint to browsers that we use a dark color scheme (affects built-in UI like scrollbars) */
+  color-scheme: dark;
+}
+
+html,
+body {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  /* Prevent text size adjustment on mobile */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Improve tap targets on mobile */
+a,
+button {
+  -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Aurora + stars background (more noticeable, GPU-friendly) */
+body {
+  position: relative;
+  isolation: isolate;
+  /* create stacking context so ::before/::after (z-index:0) sit behind content */
+  background-color: var(--bg-primary);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: -10vh -10vw;
+  z-index: 0;
+  pointer-events: none;
+  /* More vibrant aurora gradients */
+  background:
+    radial-gradient(45% 38% at 15% 20%, rgba(59, 130, 246, 0.28), transparent 52%),
+    radial-gradient(50% 42% at 85% 22%, rgba(99, 102, 241, 0.22), transparent 50%),
+    radial-gradient(38% 38% at 70% 82%, rgba(245, 158, 11, 0.16), transparent 58%),
+    radial-gradient(42% 35% at 25% 75%, rgba(139, 92, 246, 0.12), transparent 60%),
+    var(--bg-primary);
+  filter: blur(22px) saturate(120%);
+  transform: translateZ(0);
+  will-change: transform;
+  animation: auroraShift 12s ease-in-out infinite alternate;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.08) 0.5px, transparent 0.7px),
+    radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.07) 0.5px, transparent 0.8px),
+    radial-gradient(circle at 30% 80%, rgba(255, 255, 255, 0.06) 0.5px, transparent 0.8px),
+    radial-gradient(circle at 90% 40%, rgba(255, 255, 255, 0.05) 0.5px, transparent 0.8px);
+  background-size: 160px 160px, 220px 220px, 300px 300px, 280px 280px;
+  opacity: 0.5;
+  animation: starDrift 10s linear infinite;
+}
+
+/* Ensure content layers above animated background */
+header,
+section,
+footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* Header visual tweak: stronger backdrop where available to keep nav readable over animated bg */
+header {
+  background: linear-gradient(180deg, rgba(24, 25, 28, 0.18), rgba(24, 25, 28, 0.08));
+}
+
+@keyframes auroraShift {
+  0% {
+    transform: translate3d(-3%, -2.5%, 0) scale(1.02) rotate(0.001deg);
+  }
+
+  33% {
+    transform: translate3d(2.5%, 1.5%, 0) scale(1.05) rotate(0.001deg);
+  }
+
+  66% {
+    transform: translate3d(-1.5%, 3%, 0) scale(1.03) rotate(0.001deg);
+  }
+
+  100% {
+    transform: translate3d(1%, -2%, 0) scale(1.04) rotate(0.001deg);
+  }
+}
+
+@keyframes starDrift {
+  from {
+    background-position: 0 0, 0 0, 0 0;
+  }
+
+  to {
+    background-position: 2000px 1500px, -1600px 1200px, 1000px -800px;
+  }
+}
+
+/* Reduce animations on mobile for better performance */
+@media (max-width: 768px) {
+  body::before {
+    animation: auroraShift 20s ease-in-out infinite alternate;
+  }
+
+  body::after {
+    animation: starDrift 15s linear infinite;
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  body::before,
+  body::after {
+    animation: none !important;
+  }
+
+  .visual-slide,
+  .feature-step {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+}
+
+/* Text helpers */
+.gradient-text {
+  background-image: linear-gradient(to right, var(--accent-primary), var(--accent-hover));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* Prevent text from wrapping oddly on small screens */
+  display: inline-block;
+}
+
+.eyebrow {
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-weight: 700;
+  color: var(--accent-primary);
+  font-size: 11px;
+}
+
+@media (min-width: 640px) {
+  .eyebrow {
+    font-size: 12px;
+  }
+}
+
+.step-title {
+  font-size: clamp(20px, 4vw, 28px);
+  font-weight: 800;
+  margin-top: 6px;
+  line-height: 1.2;
+}
+
+.step-copy {
+  color: var(--text-muted);
+  margin-top: .5rem;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.bullets {
+  margin-top: .75rem;
+  color: var(--text-primary);
+  list-style: none;
+  padding-left: 0;
+}
+
+.bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+.bullets li::before {
+  content: '✔';
+  color: var(--accent-primary);
+  font-size: .9em;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .75rem 1.25rem;
+  border-radius: .75rem;
+  background: var(--accent-primary);
+  color: #000;
+  font-weight: 600;
+  transition: background 0.2s ease;
+  text-decoration: none;
+  /* Ensure good touch target size */
+  min-height: 44px;
+}
+
+.btn:hover {
+  background: var(--accent-hover);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .75rem 1.25rem;
+  border-radius: .75rem;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: background 0.2s ease;
+  text-decoration: none;
+  /* Ensure good touch target size */
+  min-height: 44px;
+}
+
+.btn-outline:hover {
+  background: var(--bg-tertiary);
+}
+
+/* ========== NEW PRODUCT TOUR ========== */
+.tour-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .tour-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+}
+
+/* Visual panel (sticky on desktop, hidden on mobile) */
+.tour-visual {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .tour-visual {
+    display: block;
+    position: sticky;
+    top: 6rem;
+    /* top-24 = 6rem */
+    height: 70vh;
+  }
+}
+
+.tour-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--border-primary);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Slides */
+.tour-slide {
+  position: absolute;
+  inset: 0;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.tour-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tour-slide-title {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.tour-slide-text {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Screenshot images with zoom */
+.tour-slide img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 12px;
+  transform: scale(1.15);
+  /* Zoom in by 15% */
+}
+
+/* Placeholder visual backgrounds */
+.tour-slide-visual {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px dashed var(--border-primary);
+  position: relative;
+}
+
+/* Slide visual variants - only keep "live" since it's still a placeholder */
+.tour-slide-visual.live {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.live-indicator {
+  font-size: 32px;
+  color: var(--accent-primary);
+  animation: pulse 2s infinite;
+}
+
+.live-label {
+  font-size: 14px;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Feature steps */
+.tour-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+@media (min-width: 640px) {
+  .tour-steps {
+    gap: 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tour-steps {
+    gap: 5rem;
+  }
+}
+
+.tour-step {
+  opacity: 0.3;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  min-height: 30vh;
+  /* Each step takes at least 30vh */
+}
+
+.tour-step.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Cards / panels */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 18px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+@media (min-width: 640px) {
+  .card {
+    border-radius: 14px;
+    padding: 20px;
+  }
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+@media (min-width: 640px) {
+  .card-title {
+    font-size: 17px;
+  }
+}
+
+.card-copy {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (min-width: 640px) {
+  .card-copy {
+    font-size: 15px;
+  }
+}
+
+.panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+@media (min-width: 640px) {
+  .panel {
+    border-radius: 14px;
+    padding: 22px;
+  }
+}
+
+.panel-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+@media (min-width: 640px) {
+  .panel-title {
+    font-size: 18px;
+  }
+}
+
+.panel-copy {
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (min-width: 640px) {
+  .panel-copy {
+    font-size: 15px;
+  }
+}
+
+.panel-link {
+  color: var(--accent-primary);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+@media (min-width: 640px) {
+  .panel-link {
+    font-size: 15px;
+  }
+}
+
+.panel-link:hover {
+  text-decoration: underline;
+  color: var(--accent-light);
+}
+
+/* Details (accordion) */
+details {
+  border: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  transition: background 0.2s ease;
+}
+
+@media (min-width: 640px) {
+  details {
+    border-radius: 12px;
+    padding: 0.875rem 1.125rem;
+  }
+}
+
+details>summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.5;
+  /* Ensure good touch target */
+  min-height: 44px;
+  padding: 4px 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 640px) {
+  details>summary {
+    font-size: 16px;
+  }
+}
+
+details>summary::after {
+  content: '+';
+  font-size: 20px;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+details[open]>summary::after {
+  content: '−';
+}
+
+details>summary::-webkit-details-marker {
+  display: none;
+}
+
+details[open] {
+  background: var(--bg-tertiary);
+}
+
+details .details-body {
+  color: var(--text-muted);
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-primary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (min-width: 640px) {
+  details .details-body {
+    font-size: 15px;
+  }
+}
+
+/* FAQ accordion */
+.faq details {
+  background: var(--bg-secondary);
+}
+
+.faq details+details {
+  margin-top: 0.75rem;
+}
+
+/* Scrollbar (WebKit + Firefox) — only thumb visible, no track */
+/* Firefox */
+html,
+body {
+  /* Firefox: fully invisible track, visible thumb */
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  scrollbar-width: thin;
+}
+
+/* WebKit/Blink - only show thumb */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  /* Completely transparent - no background at all */
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  /* Add transparent border to create padding effect */
+  border: 2px solid transparent;
+  background-clip: content-box;
+  /* Only show background in content area, not border */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(255, 255, 255, 0.4);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}

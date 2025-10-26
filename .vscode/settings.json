@@ -1,0 +1,20 @@
+{
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "always",
+    },
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/dist": true
+    },
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/wailsjs": true
+    }
+}
