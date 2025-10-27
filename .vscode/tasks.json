@@ -40,14 +40,14 @@
 		},
 		{
 			"type": "shell",
-			"label": "Serve Landing (static)",
+			"label": "Serve Docs (static)",
 			"command": "python3",
 			"args": [
 				"-m",
 				"http.server",
 				"8080",
 				"--directory",
-				"landing"
+				"docs"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
@@ -56,7 +56,7 @@
 			"group": {
 				"kind": "none"
 			},
-			"detail": "Serve the static landing/ folder at http://localhost:8080/"
+			"detail": "Serve the static docs/ folder at http://localhost:8080/"
 		}
 	]
 }
