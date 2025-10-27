@@ -1,0 +1,46 @@
+<header
+  class="fixed inset-x-0 top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-[color:var(--bg-secondary)/0.25] bg-[var(--bg-secondary)]/20 border-b border-[var(--border-primary)]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-2 group brand-link" aria-label="Go to home">
+      <img alt="RefleK's logo" data-src="assets/logo.svg"
+        class="w-7 h-7 opacity-90 group-hover:opacity-100 transition" />
+      <span class="font-semibold tracking-tight text-lg">RefleK's</span>
+    </a>
+
+    <!-- Desktop Nav -->
+    <nav class="hidden md:flex items-center gap-6 text-sm text-[var(--text-muted)]">
+      <a href="#" class="hover:text-[var(--text-primary)] transition-colors nav-link" data-page="home">Home</a>
+      <a href="#" class="hover:text-[var(--text-primary)] transition-colors nav-link" data-page="help">Help</a>
+      <a href="#" class="hover:text-[var(--text-primary)] transition-colors nav-link" data-page="updates">Updates</a>
+      <a href="https://github.com/ARm8-2/refleks/releases" target="_blank"
+        class="px-4 py-2 rounded-lg bg-[var(--accent-primary)] text-black font-medium hover:bg-[var(--accent-hover)] transition-colors">Download</a>
+    </nav>
+
+    <!-- Mobile Menu Button -->
+    <button id="mobile-menu-btn" class="md:hidden p-2 -mr-2 text-[var(--text-primary)]" aria-label="Toggle menu">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path class="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M4 6h16M4 12h16M4 18h16"></path>
+        <path class="close-icon hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Mobile Menu -->
+  <nav id="mobile-menu" class="md:hidden hidden border-t border-[var(--border-primary)] bg-[var(--bg-secondary)]">
+    <div class="px-4 py-3 space-y-1">
+      <a href="#"
+        class="nav-link block px-3 py-3 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] transition-colors"
+        data-page="home">Home</a>
+      <a href="#"
+        class="nav-link block px-3 py-3 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] transition-colors"
+        data-page="help">Help</a>
+      <a href="#"
+        class="nav-link block px-3 py-3 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] transition-colors"
+        data-page="updates">Updates</a>
+      <a href="https://github.com/ARm8-2/refleks/releases" target="_blank"
+        class="block px-3 py-3 rounded-lg bg-[var(--accent-primary)] text-black font-medium text-center hover:bg-[var(--accent-hover)] transition-colors">Download</a>
+    </div>
+  </nav>
+</header>
