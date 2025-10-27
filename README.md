@@ -89,6 +89,13 @@ Parsing and analytics happen locally. When you open Benchmarks, the app calls Ko
 
 Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and coding guidelines.
 
+## Acknowledgments & Data Sources
+
+Primary sources:
+- KovaaK's Benchmark Tracker — https://kovaaks.com/kovaaks/benchmark-tracker
+- Benchmark Data Reference — The tier structure and visual design principles used for our internal benchmark tracking were heavily informed by the excellent work done by EviL behind the webapp [**evxl.app**](https://evxl.app/) (Discord: _evxl).
+
+If you'd like a different credit or link (or to request removal), please open an issue or submit a PR.
 
 ## License
 
