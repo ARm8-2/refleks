@@ -6,23 +6,18 @@
     const footerPlaceholder = document.getElementById('footer-placeholder')
 
     try {
-      // Determine correct path based on current location
-      const isInPagesFolder = window.location.pathname.includes('/pages/')
-      const basePath = isInPagesFolder ? '../partials/' : './partials/'
-
+      // Use root-absolute paths for partials to work from any page
       if (headerPlaceholder) {
-        const headerResponse = await fetch(basePath + 'header.html')
+        const headerResponse = await fetch('../partials/header.html')
         if (headerResponse.ok) {
           headerPlaceholder.innerHTML = await headerResponse.text()
           // Re-initialize mobile menu after header is loaded
           initMobileMenu()
-          // Fix paths for nav links & logo based on current location
-          fixHeaderPaths()
         }
       }
 
       if (footerPlaceholder) {
-        const footerResponse = await fetch(basePath + 'footer.html')
+        const footerResponse = await fetch('../partials/footer.html')
         if (footerResponse.ok) {
           footerPlaceholder.innerHTML = await footerResponse.text()
         }
@@ -30,33 +25,6 @@
     } catch (error) {
       console.error('Error loading partials:', error)
     }
-  }
-
-  // ===== HEADER PATH REWRITER =====
-  function fixHeaderPaths() {
-    const isInPagesFolder = window.location.pathname.includes('/pages/')
-    const prefix = isInPagesFolder ? '../' : './'
-
-    // Brand link -> Home
-    const brand = document.querySelector('header .brand-link')
-    if (brand) brand.setAttribute('href', prefix + 'pages/home.html')
-
-    // Logo image
-    const logo = document.querySelector('header img[data-src]')
-    if (logo) logo.setAttribute('src', prefix + logo.getAttribute('data-src'))
-
-    // Nav links (desktop + mobile)
-    const routes = {
-      home: 'pages/home.html',
-      help: 'pages/help.html',
-      updates: 'pages/updates.html'
-    }
-    document.querySelectorAll('header a.nav-link[data-page]').forEach((a) => {
-      const key = a.getAttribute('data-page')
-      if (key && routes[key]) {
-        a.setAttribute('href', prefix + routes[key])
-      }
-    })
   }
 
   // ===== MOBILE MENU =====

@@ -330,62 +330,39 @@ header {
   line-height: 1.5;
 }
 
-/* Screenshot images with zoom */
-.tour-slide img {
-  position: absolute;
-  inset: 0;
+/* removed legacy absolute-cover image rule */
+
+/* removed legacy placeholder visual styles */
+
+/* Slide screenshot panel (small inner panel for image only) */
+
+.tour-screenshot {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  /* allow child to stretch */
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-primary);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.tour-screenshot img {
+  position: static;
+  /* override legacy */
+  inset: auto;
+  /* override legacy */
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: top center;
-  border-radius: 12px;
-  transform: scale(1.15);
-  /* Zoom in by 15% */
+  border-radius: 0;
+  transform: none;
+  /* override legacy */
+  display: block;
 }
 
-/* Placeholder visual backgrounds */
-.tour-slide-visual {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px dashed var(--border-primary);
-  position: relative;
-}
-
-/* Slide visual variants - only keep "live" since it's still a placeholder */
-.tour-slide-visual.live {
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.live-indicator {
-  font-size: 32px;
-  color: var(--accent-primary);
-  animation: pulse 2s infinite;
-}
-
-.live-label {
-  font-size: 14px;
-  color: var(--accent-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 600;
-}
-
-@keyframes pulse {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.5;
-  }
-}
+/* removed live badge overlay */
 
 /* Feature steps */
 .tour-steps {
