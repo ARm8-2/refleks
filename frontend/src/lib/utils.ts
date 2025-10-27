@@ -8,3 +8,9 @@ export function getScenarioName(it: ScenarioRecord | { fileName?: string; stats?
   if (typeof fn === 'string' && fn.includes(' - ')) return fn.split(' - ')[0]
   return String(direct ?? fn ?? '')
 }
+
+// Safe accessor for the "Date Played" field, accepting both spaced and unspaced variants
+export function getDatePlayed(stats: Record<string, any> | undefined): string {
+  if (!stats) return ''
+  return String(stats['Date Played'] ?? stats['DatePlayed'] ?? '')
+}

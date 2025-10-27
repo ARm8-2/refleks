@@ -1,7 +1,7 @@
 import { ChevronLeft } from 'lucide-react'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AutoSizer, CellMeasurer, CellMeasurerCache, List, type ListRowProps } from 'react-virtualized'
-import { useUIState } from '../../store/ui'
+import { useUIState } from '../../hooks/useUIState'
 
 type VirtualizedProps<T> = {
   items: T[]

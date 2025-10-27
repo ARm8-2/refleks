@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useStore } from '../../hooks/useStore'
 import { getSettings, resetSettings, updateSettings } from '../../lib/internal'
 import { applyTheme, getSavedTheme, setTheme, THEMES, type Theme } from '../../lib/theme'
-import { useStore } from '../../store/store'
 import type { Settings } from '../../types/ipc'
 
 export function SettingsPage() {

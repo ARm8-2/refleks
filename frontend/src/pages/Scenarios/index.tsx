@@ -2,39 +2,35 @@ import { Play } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { EventsOn } from '../../../wailsjs/runtime'
 import { ListDetail, Tabs } from '../../components'
+import { setQuery, useRoute } from '../../hooks/useRoute'
+import { useStore } from '../../hooks/useStore'
+import { useUIState } from '../../hooks/useUIState'
 import { getSettings, launchScenario } from '../../lib/internal'
-import { getQuery } from '../../lib/nav'
-import { getScenarioName } from '../../lib/utils'
-import { useStore } from '../../store/store'
-import { useUIState } from '../../store/ui'
+import { getDatePlayed, getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 import { AiTab, AnalysisTab, MouseTraceTab, RawTab } from './tabs'
 
 export function ScenariosPage() {
   const scenarios = useStore(s => s.scenarios)
   const newCount = useStore(s => s.newScenarios)
+  const { query: routeQuery } = useRoute()
   const [activeId, setActiveId] = useState<string | null>(scenarios[0]?.filePath ?? null)
   const active = useMemo(() => scenarios.find(s => s.filePath === activeId) ?? scenarios[0] ?? null, [scenarios, activeId])
   const [watchPath, setWatchPath] = useState<string>('stats')
 
-  // Auto-select the newest scenario when the list updates
+  // Sync selection with URL: /scenario?file=...
   useEffect(() => {
-    const newestId = scenarios[0]?.filePath ?? null
-    if (newestId && newestId !== activeId) {
-      setActiveId(newestId)
-    } else if (!newestId && activeId !== null) {
-      setActiveId(null)
+    const qFile = routeQuery.file
+    if (qFile && scenarios.some(s => s.filePath === qFile)) {
+      if (activeId !== qFile) setActiveId(qFile)
+    } else {
+      // Fallback: ensure active points to an existing item, otherwise default to newest
+      const exists = activeId ? scenarios.some(s => s.filePath === activeId) : false
+      if (!exists) {
+        setActiveId(scenarios[0]?.filePath ?? null)
+      }
     }
-  }, [scenarios])
-
-  // Deep-linking support: /scenario?file=...&tab=analysis
-  useEffect(() => {
-    const q = getQuery()
-    if (q.file) {
-      const exists = scenarios.find(s => s.filePath === q.file)
-      if (exists) setActiveId(q.file)
-    }
-  }, [scenarios])
+  }, [routeQuery.file, scenarios, activeId])
 
   // Resolve current watch path for placeholder text; update on watcher restarts
   useEffect(() => {
@@ -73,10 +69,10 @@ export function ScenariosPage() {
           items={scenarios}
           getKey={(it) => it.filePath}
           renderItem={(it) => (
-            <button key={it.filePath} onClick={() => setActiveId(it.filePath)}
+            <button key={it.filePath} onClick={() => { setActiveId(it.filePath); setQuery({ file: it.filePath }) }}
               className={`w-full text-left p-2 rounded border ${active?.filePath === it.filePath ? 'bg-[var(--bg-tertiary)] border-[var(--border-primary)]' : 'border-[var(--border-primary)] hover:bg-[var(--bg-tertiary)]'}`}>
               <div className="font-medium text-[var(--text-primary)]">{getScenarioName(it)}</div>
-              <div className="text-xs text-[var(--text-secondary)]">{it.stats['DatePlayed']}</div>
+              <div className="text-xs text-[var(--text-secondary)]">{getDatePlayed(it.stats)}</div>
               <div className="text-xs text-[var(--text-secondary)]">Score: {it.stats['Score'] ?? '?'} • Acc: {formatPct(it.stats['Accuracy'])}</div>
             </button>
           )}
@@ -108,14 +104,14 @@ export function ScenariosPage() {
 
 function ScenarioDetail({ item }: { item: ScenarioRecord | null }) {
   const [tab, setTab] = useUIState<'raw' | 'analysis' | 'mouse' | 'ai'>('tabs:scenario', 'raw')
+  const { query: routeQuery } = useRoute()
   useEffect(() => {
-    // Apply query override once on mount if present
-    const q = getQuery()
-    if (q.tab && (q.tab === 'raw' || q.tab === 'analysis' || q.tab === 'mouse' || q.tab === 'ai')) {
-      setTab(q.tab)
-      // do not clear query to keep simple
+    // Keep tab in sync with URL if present
+    const t = routeQuery.tab
+    if (t && (t === 'raw' || t === 'analysis' || t === 'mouse' || t === 'ai')) {
+      setTab(t as any)
     }
-  }, [])
+  }, [routeQuery.tab])
   if (!item) return <div className="text-sm text-[var(--text-secondary)]">No scenario selected.</div>
   const tabs = [
     { id: 'raw', label: 'Raw Stats', content: <RawTab item={item} /> },
@@ -123,7 +119,7 @@ function ScenarioDetail({ item }: { item: ScenarioRecord | null }) {
     { id: 'mouse', label: 'Mouse Trace', content: <MouseTraceTab item={item} /> },
     { id: 'ai', label: 'AI Insights', content: <AiTab /> },
   ]
-  return <Tabs tabs={tabs} active={tab} onChange={(id) => setTab(id as any)} />
+  return <Tabs tabs={tabs} active={tab} onChange={(id) => { setTab(id as any); setQuery({ tab: String(id) }) }} />
 }
 
 function formatPct(v: any) {

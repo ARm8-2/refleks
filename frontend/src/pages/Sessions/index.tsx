@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ListDetail, Tabs } from '../../components'
-import { useStore } from '../../store/store'
-import { useUIState } from '../../store/ui'
+import { useStore } from '../../hooks/useStore'
+import { useUIState } from '../../hooks/useUIState'
 import type { Session } from '../../types/domain'
 import { AiTab, OverviewTab } from './tabs'
 

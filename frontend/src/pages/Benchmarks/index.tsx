@@ -1,16 +1,18 @@
 import { ArrowLeft, Search, Star } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { EventsOn } from '../../../wailsjs/runtime'
 import { BenchmarkCard, Tabs } from '../../components'
-import { getBenchmarkProgress, getBenchmarks, getFavoriteBenchmarks, setFavoriteBenchmarks } from '../../lib/internal'
-import { useUIState } from '../../store/ui'
+import { useOpenedBenchmarkProgress } from '../../hooks/useOpenedBenchmarkProgress'
+import { navigate, useRoute } from '../../hooks/useRoute'
+import { useUIState } from '../../hooks/useUIState'
+import { getBenchmarks, getFavoriteBenchmarks, setFavoriteBenchmarks } from '../../lib/internal'
 import type { Benchmark } from '../../types/ipc'
 import { AiTab, OverviewTab } from './tabs'
 
 type BenchItem = { id: string; title: string; abbreviation: string; subtitle?: string; color?: string }
 
 export function BenchmarksPage() {
-  const [selected, setSelected] = useUIState<string | null>('Benchmark:selected', null)
+  const { query: routeQuery } = useRoute()
+  const selected = routeQuery.b || null
   const [items, setItems] = useState<BenchItem[]>([])
   const [byId, setById] = useState<Record<string, Benchmark>>({})
   const [query, setQuery] = useState('')
@@ -45,7 +47,9 @@ export function BenchmarksPage() {
     return () => { isMounted = false }
   }, [])
 
-  // selected persisted via hook
+  // selection is derived from URL; no local state or effects needed
+
+  // selected comes from URL (?b)
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     let list = items
@@ -64,16 +68,16 @@ export function BenchmarksPage() {
     const list = filtered.length ? filtered : items
     if (list.length === 0) return
     const r = list[Math.floor(Math.random() * list.length)]
-    setSelected(r.id)
+    navigate(`/benchmarks?b=${encodeURIComponent(r.id)}`)
   }
 
   return selected
-    ? <BenchmarksDetail bench={byId[selected!]} id={selected} favorites={favorites} onToggleFav={toggleFavorite} onBack={() => setSelected(null)} />
+    ? <BenchmarksDetail bench={byId[selected!]} id={selected} favorites={favorites} onToggleFav={toggleFavorite} onBack={() => navigate('/benchmarks')} />
     : <BenchmarksExplore
       items={filtered}
       favorites={favorites}
       onToggleFav={toggleFavorite}
-      onOpen={setSelected}
+      onOpen={(id) => navigate(`/benchmarks?b=${encodeURIComponent(id)}`)}
       query={query}
       onQuery={setQuery}
       showFavOnly={showFavOnly}
@@ -131,58 +135,8 @@ function BenchmarksExplore({ items, favorites, onToggleFav, onOpen, query, onQue
 
 function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: string; bench?: Benchmark; favorites: string[]; onToggleFav: (id: string) => void; onBack: () => void }) {
   const [tab, setTab] = useUIState<'overview' | 'ai'>(`Benchmark:${id}:tab`, 'overview')
-  const [difficultyIdx, setDifficultyIdx] = useUIState<number>(`Benchmark:${id}:difficultyIdx`, 0)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [progress, setProgress] = useState<Record<string, any> | null>(null)
-
-  // persisted via hook
-  useEffect(() => {
-    if (!bench || !bench.difficulties?.length) return
-    const idx = Math.min(difficultyIdx, bench.difficulties.length - 1)
-    const did = bench.difficulties[idx].kovaaksBenchmarkId
-    let cancelled = false
-    setLoading(true); setError(null)
-    getBenchmarkProgress(did)
-      .then((data) => { if (!cancelled) setProgress(data) })
-      .catch((e) => { if (!cancelled) setError(String(e?.message || e)) })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [bench, difficultyIdx])
-
-  // Live refresh: when scenarios are added/updated, re-fetch the current difficulty's progress
-  useEffect(() => {
-    if (!bench || !bench.difficulties?.length) return
-    const idx = Math.min(difficultyIdx, bench.difficulties.length - 1)
-    const did = bench.difficulties[idx].kovaaksBenchmarkId
-    let cancelled = false
-    let t: any = null
-
-    const refresh = () => {
-      if (cancelled) return
-      // Silent refresh: don't toggle global loading to avoid UI flicker
-      getBenchmarkProgress(did)
-        .then((data) => { if (!cancelled) setProgress(data) })
-        .catch((e) => { if (!cancelled) setError(String(e?.message || e)) })
-    }
-
-    const trigger = () => {
-      if (cancelled) return
-      if (t) clearTimeout(t)
-      // Debounce a bit in case multiple events fire during import
-      t = setTimeout(refresh, 700)
-    }
-
-    const offAdd = EventsOn('ScenarioAdded', () => trigger())
-    const offUpd = EventsOn('ScenarioUpdated', () => trigger())
-
-    return () => {
-      cancelled = true
-      if (t) clearTimeout(t)
-      try { offAdd() } catch { /* ignore */ }
-      try { offUpd() } catch { /* ignore */ }
-    }
-  }, [bench, difficultyIdx])
+  // Use shared hook for progress + live updates and difficulty state
+  const { progress, loading, error, difficultyIndex, setDifficultyIndex } = useOpenedBenchmarkProgress({ id, bench: bench ?? null })
 
   return (
     <div className="space-y-3 p-4 h-full overflow-auto">
@@ -202,8 +156,8 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
           <label className="text-sm text-[var(--text-secondary)]">Difficulty</label>
           <select
             className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded px-2 py-1 text-sm"
-            value={difficultyIdx}
-            onChange={(e) => setDifficultyIdx(Number(e.target.value))}
+            value={difficultyIndex}
+            onChange={(e) => setDifficultyIndex(Number(e.target.value))}
           >
             {bench.difficulties.map((d, i) => (
               <option key={d.kovaaksBenchmarkId} value={i}>{d.difficultyName}</option>
@@ -212,7 +166,7 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
         </div>
       ) : <div className="text-sm text-[var(--text-secondary)]">No difficulties info.</div>}
       <Tabs tabs={[
-        { id: 'overview', label: 'Overview', content: <OverviewTab bench={bench} difficultyIndex={difficultyIdx} loading={loading} error={error} progress={progress} /> },
+        { id: 'overview', label: 'Overview', content: <OverviewTab bench={bench} difficultyIndex={difficultyIndex} loading={loading} error={error} progress={progress} /> },
         { id: 'ai', label: 'AI Insights', content: <AiTab /> },
       ]} active={tab} onChange={(id) => setTab(id as any)} />
     </div>

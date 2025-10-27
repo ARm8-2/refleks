@@ -1,25 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
 import { EventsOn } from '../wailsjs/runtime'
+import { navigate } from './hooks/useRoute'
+import { StoreProvider, useStore } from './hooks/useStore'
 import { getRecentScenarios, getSettings, startWatcher } from './lib/internal'
 import { applyTheme, getSavedTheme } from './lib/theme'
 import { BenchmarksPage } from './pages/Benchmarks'
 import { ScenariosPage } from './pages/Scenarios'
 import { SessionsPage } from './pages/Sessions'
 import { SettingsPage } from './pages/Settings'
-import { StoreProvider, useStore } from './store/store'
 
 function Link({ to, children }: { to: string, children: React.ReactNode }) {
   const onClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
     e.preventDefault()
-    if (window.location.pathname !== to) {
-      window.history.pushState({}, '', to)
-      window.dispatchEvent(new PopStateEvent('popstate'))
-    }
+    navigate(to, { preserveSearch: !to.includes('?') })
   }
-  const active = window.location.pathname === to
+  const target = new URL(to, window.location.origin)
+  const active = window.location.pathname === target.pathname
   return (
     <a
-      href={to}
+      href={target.toString()}
       onClick={onClick}
       className={`px-3 py-1 rounded hover:bg-[var(--bg-tertiary)] ${active ? 'bg-[var(--bg-tertiary)]' : ''}`}
     >

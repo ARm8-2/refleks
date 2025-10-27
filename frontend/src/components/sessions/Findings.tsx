@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
+import { navigate } from '../../hooks/useRoute'
 import { getScenarioName } from '../../lib/utils'
-import { goto } from '../../lib/nav'
 import type { ScenarioRecord } from '../../types/ipc'
 
 function fmtPct01(v: any) {
@@ -54,7 +54,7 @@ export function Findings({ items }: { items: ScenarioRecord[] }) {
   const openItem = (rec: ScenarioRecord) => {
     const file = encodeURIComponent(rec.filePath)
     const tab = openTab
-    goto(`/scenarios?file=${file}&tab=${tab}`)
+    navigate(`/scenarios?file=${file}&tab=${tab}`)
   }
 
   const Row = ({ rec }: { rec: ScenarioRecord }) => (
