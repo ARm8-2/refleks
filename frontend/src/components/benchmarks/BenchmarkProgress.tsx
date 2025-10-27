@@ -32,6 +32,122 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
 
   const overallRankName = rankDefs[(progress?.overall_rank ?? 0) - 1]?.name || '—'
 
+  // Normalize API categories to metadata-defined main categories and subcategories
+  const normalized = useMemo(() => {
+    type ScenarioEntry = [string, any]
+    type MainAgg = {
+      main: string
+      hasSubAPI: boolean
+      allScenarios: ScenarioEntry[]
+      bySub: Map<string, ScenarioEntry[]>
+    }
+    const result: Array<{
+      catName: string
+      catColor?: string
+      groups: Array<{ name: string; color?: string; scenarios: ScenarioEntry[] }>
+    }> = []
+    if (!categories) return result
+
+    const mainNames = Object.keys(catDefs)
+
+    // Helper: find main category and optional sub from an API key
+    const findMainAndSub = (key: string): { main: string; sub: string | null } => {
+      // Exact match first
+      const exact = mainNames.find(m => m.toLowerCase() === key.toLowerCase())
+      if (exact) return { main: exact, sub: null }
+
+      // Try prefix-based match allowing space/hyphen/underscore or camelCase boundary
+      for (const m of mainNames) {
+        if (key.toLowerCase().startsWith(m.toLowerCase())) {
+          const rem = key.substring(m.length)
+          if (!rem) return { main: m, sub: null }
+          // Trim common separators
+          let remainder = rem.replace(/^[-_\s]+/, '')
+          remainder = remainder.trim()
+          if (!remainder) return { main: m, sub: null }
+
+          // Map to known subcategory name when possible (case/space insensitive)
+          const subs = catDefs[m]?.subcategories || []
+          const norm = (s: string) => s.replace(/\s+|[-_]/g, '').toLowerCase()
+          const match = subs.find(s => norm(s.name) === norm(remainder))
+          return { main: m, sub: match ? match.name : remainder }
+        }
+      }
+
+      // Fallback: treat the entire key as a standalone main category
+      return { main: key, sub: null }
+    }
+
+    const aggregates = new Map<string, MainAgg>()
+
+    for (const [key, cat] of Object.entries(categories)) {
+      const { main, sub } = findMainAndSub(key)
+      const agg = aggregates.get(main) || ({ main, hasSubAPI: false, allScenarios: [], bySub: new Map<string, ScenarioEntry[]>() } as MainAgg)
+      const scenEntries: ScenarioEntry[] = Object.entries(cat?.scenarios || {})
+      if (sub) {
+        agg.hasSubAPI = true
+        const bucket = agg.bySub.get(sub) || []
+        bucket.push(...scenEntries)
+        agg.bySub.set(sub, bucket)
+      } else {
+        agg.allScenarios.push(...scenEntries)
+      }
+      aggregates.set(main, agg)
+    }
+
+    // Build output in the order of metadata categories first, then any extras
+    const orderedMains = [...mainNames, ...[...aggregates.keys()].filter(k => !mainNames.includes(k))]
+
+    for (const main of orderedMains) {
+      const agg = aggregates.get(main)
+      if (!agg) continue
+      const subDefs = catDefs[main]?.subcategories || []
+      const catColor = catDefs[main]?.color
+
+      if (agg.hasSubAPI) {
+        // Use API-provided per-sub categories directly, but order them by metadata when possible
+        const seen = new Set<string>()
+        const groups: Array<{ name: string; color?: string; scenarios: ScenarioEntry[] }> = []
+        for (const sd of subDefs) {
+          const scenarios = agg.bySub.get(sd.name)
+          if (scenarios && scenarios.length) {
+            groups.push({ name: sd.name, color: sd.color, scenarios })
+            seen.add(sd.name)
+          }
+        }
+        // Append any remaining subs not defined in metadata, preserving insertion order
+        for (const [sub, scenarios] of agg.bySub.entries()) {
+          if (seen.has(sub)) continue
+          groups.push({ name: sub, color: undefined, scenarios })
+        }
+        // If there were also ungrouped main scenarios, add them as leftovers group
+        if (agg.allScenarios.length) {
+          groups.push({ name: '', color: undefined, scenarios: agg.allScenarios })
+        }
+        result.push({ catName: main, catColor, groups })
+      } else {
+        // Single main category with all scenarios; distribute by expected counts if available
+        const groups: Array<{ name: string; color?: string; scenarios: ScenarioEntry[] }> = []
+        let pos = 0
+        const scenEntries = agg.allScenarios
+        for (const sd of subDefs) {
+          const take = Math.max(0, Math.min(sd.count, scenEntries.length - pos))
+          groups.push({ name: sd.name, color: sd.color, scenarios: scenEntries.slice(pos, pos + take) })
+          pos += take
+        }
+        if (pos < scenEntries.length) {
+          groups.push({ name: '', color: undefined, scenarios: scenEntries.slice(pos) })
+        }
+        // If no subDefs, just one unnamed group with everything
+        if (groups.length === 0) {
+          groups.push({ name: '', color: undefined, scenarios: scenEntries })
+        }
+        result.push({ catName: main, catColor, groups })
+      }
+    }
+
+    return result
+  }, [categories, catDefs])
 
   return (
     <div className="space-y-4">
@@ -64,27 +180,9 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
             </div>
 
             {/* Category cards content (no repeated headers) */}
-            {Object.keys(categories).map((catName) => {
-              const cat = categories[catName]
+            {normalized.map(({ catName, catColor, groups }) => {
               const ranks = rankDefs
               const cols = grid(ranks.length)
-              const catColor = catDefs[catName]?.color
-              const subDefs = catDefs[catName]?.subcategories || []
-              const scenEntries: Array<[string, any]> = Object.entries(cat?.scenarios || {})
-
-              // Group scenarios by subcategory counts
-              const groups: Array<{ sub: { name: string; color?: string }; scenarios: Array<[string, any]> }> = []
-              let pos = 0
-              for (const sub of subDefs) {
-                const take = Math.max(0, Math.min(sub.count, scenEntries.length - pos))
-                groups.push({ sub: { name: sub.name, color: sub.color }, scenarios: scenEntries.slice(pos, pos + take) })
-                pos += take
-              }
-              if (pos < scenEntries.length) {
-                // Any leftovers (mismatch between counts and server list) go into an unnamed bucket
-                groups.push({ sub: { name: '', color: undefined }, scenarios: scenEntries.slice(pos) })
-              }
-
               return (
                 <div key={catName} className="border border-[var(--border-primary)] rounded bg-[var(--bg-tertiary)] overflow-hidden mt-3">
                   <div className="flex">
@@ -97,8 +195,8 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
                         <div key={gi} className="flex gap-2">
                           {/* Subcategory vertical label with fixed width for alignment */}
                           <div className="w-8 px-1 py-2 flex items-center justify-center flex-shrink-0">
-                            {g.sub.name ? (
-                              <span className="text-[10px] font-semibold" style={{ color: g.sub.color || 'var(--text-secondary)', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{g.sub.name}</span>
+                            {g.name ? (
+                              <span className="text-[10px] font-semibold" style={{ color: g.color || 'var(--text-secondary)', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{g.name}</span>
                             ) : (
                               <span className="text-[10px] text-[var(--text-secondary)]" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>—</span>
                             )}
@@ -133,7 +231,8 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
                                           <span className="relative z-10">{value != null ? numberFmt(value) : '—'}</span>
                                         </div>
                                       )
-                                    })}
+                                    }
+                                    )}
                                   </React.Fragment>
                                 )
                               })}

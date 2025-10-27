@@ -15,6 +15,7 @@ export function BenchmarkCard({ id, title, abbreviation, color, isFavorite, onOp
     e.stopPropagation()
     onToggleFavorite(id)
   }
+  
   return (
     <div
       onClick={() => onOpen(id)}
