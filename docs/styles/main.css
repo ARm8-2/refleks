@@ -501,6 +501,119 @@ header {
   color: var(--accent-light);
 }
 
+/* Timeline styles for Updates page */
+.timeline {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Central line */
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 120px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+}
+
+@media (max-width: 640px) {
+  .timeline::before {
+    left: 70px;
+  }
+}
+
+.timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 120px auto;
+  gap: 2rem;
+  padding: 1.5rem 0;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .timeline-item {
+    grid-template-columns: 70px auto;
+    gap: 1.5rem;
+    padding: 1rem 0;
+  }
+}
+
+.timeline-date {
+  text-align: right;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 14px;
+  padding-top: 0;
+  padding-right: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .timeline-date {
+    padding-right: 1rem;
+    font-size: 13px;
+  }
+}
+
+.timeline-dot {
+  position: absolute;
+  left: 120px;
+  top: 1.65rem;
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%);
+  background: var(--accent-primary);
+  border-radius: 999px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  z-index: 1;
+}
+
+@media (max-width: 640px) {
+  .timeline-dot {
+    left: 70px;
+    top: 1.15rem;
+  }
+}
+
+.timeline-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.timeline-version {
+  font-weight: 800;
+  font-size: 17px;
+  color: var(--text-primary);
+}
+
+.timeline-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.timeline-features li {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.timeline-features li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--text-secondary);
+}
+
 /* Details (accordion) */
 details {
   border: 1px solid var(--border-primary);

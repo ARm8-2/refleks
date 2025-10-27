@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Updates — RefleK's</title>
-  <meta name="description" content="RefleK's updates placeholder." />
+  <meta name="description" content="RefleK's changelog and roadmap." />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,21 +14,124 @@
 </head>
 
 <body class="text-[var(--text-primary)] min-h-screen">
-  <!-- Header partial -->
   <div id="header-placeholder"></div>
 
-  <main class="flex items-center justify-center min-h-[60vh] py-24">
-    <div class="max-w-3xl mx-auto px-4 text-center">
-      <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold gradient-text">Updates</h1>
-      <p class="mt-4 text-lg text-[var(--text-muted)]">Coming soon — we're working on this page.</p>
-      <p class="mt-3 text-sm text-[var(--text-muted)]">Return to the <a href="/home/" class="underline">home
-          page</a> or check back later.</p>
+  <!-- Hero -->
+  <section class="pt-32 pb-20 sm:pt-36 sm:pb-24 border-b border-[var(--border-primary)]">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight gradient-text">Updates &amp; Roadmap
+      </h1>
+      <p class="mt-4 sm:mt-5 text-base sm:text-lg text-[var(--text-muted)] max-w-2xl mx-auto">
+        See what's new, what we're working on, and what's coming next.
+      </p>
     </div>
-  </main>
+  </section>
 
-  <!-- Footer partial -->
+  <!-- Releases timeline -->
+  <section class="py-16 sm:py-20">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl sm:text-3xl font-extrabold mb-8 sm:mb-10">Releases</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <span class="timeline-dot" aria-hidden="true"></span>
+          <div class="timeline-date">Oct 2025</div>
+          <div class="timeline-body">
+            <div class="timeline-version">v0.1.0 — Beta</div>
+            <ul class="timeline-features">
+              <li>Automatic tracking and session grouping</li>
+              <li>Benchmarks: browse lists + Steam progress (Windows)</li>
+              <li>Mouse tracking and replay (Windows)</li>
+              <li>Deep analysis with trend charts and consistency metrics</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <span class="timeline-dot" aria-hidden="true"></span>
+          <div class="timeline-date">Sep 2025</div>
+          <div class="timeline-body">
+            <div class="timeline-version">v0.0.0 — Alpha</div>
+            <ul class="timeline-features">
+              <li>Initial import and proof‑of‑concept analysis</li>
+              <li>Basic session grouping and run history</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <p class="mt-8 text-sm text-[var(--text-muted)] text-center">Note: versions shown are prerelease and subject to
+        change.</p>
+    </div>
+  </section>
+
+  <!-- In progress -->
+  <section class="py-16 sm:py-20 bg-[var(--bg-tertiary)] border-y border-[var(--border-primary)]">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-center mb-3 sm:mb-4">In progress</h2>
+      <p class="text-sm sm:text-[15px] text-[var(--text-muted)] max-w-3xl mx-auto text-center mb-8 sm:mb-10 px-2">
+        Features currently under active development.
+      </p>
+      <div class="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div class="card">
+          <div class="card-title">AI‑powered insights</div>
+          <p class="card-copy">Get intelligent feedback on your sessions with pattern recognition, strengths and
+            weaknesses analysis, and personalized recommendations on what to practice next.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Mouse movement analysis</div>
+          <p class="card-copy">Automatic detection of overshoots, undershoots, and inefficient movements. See exactly
+            how optimal your mouse control is and where to improve.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Cross‑platform support</div>
+          <p class="card-copy">Experimental builds for Linux and macOS with file watcher parity (mouse tracking
+            remains Windows‑only for now).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Under consideration -->
+  <section class="py-16 sm:py-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-center mb-3 sm:mb-4">Under consideration</h2>
+      <p class="text-sm sm:text-[15px] text-[var(--text-muted)] max-w-3xl mx-auto text-center mb-8 sm:mb-10 px-2">
+        Features we're exploring based on feedback and feasibility.
+      </p>
+      <div class="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div class="card">
+          <div class="card-title">Encrypted cloud sync</div>
+          <p class="card-copy">Optional encrypted backups and sync for settings, favorites, and local analytics across
+            devices.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Multi‑profile support</div>
+          <p class="card-copy">Separate profiles for multiple players on the same machine, each with their own stats
+            and settings.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Mobile companion app</div>
+          <p class="card-copy">Read‑only view of your sessions, benchmarks, and trends on your phone for quick
+            on‑the‑go review.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Aim Lab import</div>
+          <p class="card-copy">Import stats from other aim trainers to compare your progress across different
+            platforms holistically.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Custom themes</div>
+          <p class="card-copy">Design and share your own color themes to make RefleK's match your setup perfectly.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Session sharing</div>
+          <p class="card-copy">Export a shareable session summary you can send to coaches or friends for review and
+            feedback.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div id="footer-placeholder"></div>
-
   <script src="/scripts/main.js"></script>
 </body>
 
