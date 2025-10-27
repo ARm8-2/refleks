@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { EventsOn } from '../wailsjs/runtime'
 import { navigate } from './hooks/useRoute'
 import { StoreProvider, useStore } from './hooks/useStore'
-import { getRecentScenarios, getSettings, startWatcher } from './lib/internal'
+import { getRecentScenarios, getSettings, getVersion, startWatcher } from './lib/internal'
 import { applyTheme, getSavedTheme } from './lib/theme'
 import { BenchmarksPage } from './pages/Benchmarks'
 import { ScenariosPage } from './pages/Scenarios'
@@ -28,13 +28,27 @@ function Link({ to, children }: { to: string, children: React.ReactNode }) {
 }
 
 function TopNav() {
+  const [version, setVersion] = useState<string>('')
+  useEffect(() => { getVersion().then(v => setVersion(v)).catch(() => setVersion('')) }, [])
   const link = (to: string, label: string) => (
     <Link to={to}>{label}</Link>
   )
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-[var(--bg-secondary)] text-[var(--text-primary)] border-b border-[var(--border-primary)]">
+    <div className="relative flex items-center px-4 py-2 bg-[var(--bg-secondary)] text-[var(--text-primary)] border-b border-[var(--border-primary)]">
       <div className="flex items-center gap-2">
         <div className="font-semibold">RefleK's</div>
+        {version && <span className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--border-primary)] text-[var(--text-secondary)]">v{version}</span>}
+      </div>
+
+      {/* Centered tabs - absolutely centered so side content doesn't affect position */}
+      <div className="absolute left-1/2 transform -translate-x-1/2 flex gap-2 items-center">
+        {link('/scenarios', 'Scenarios')}
+        {link('/', 'Sessions')}
+        {link('/benchmarks', 'Benchmarks')}
+      </div>
+
+      {/* Right-side actions - pushed to the end with ml-auto */}
+      <div className="flex items-center gap-2 ml-auto">
         <a
           href="https://github.com/ARm8-2/refleks"
           target="_blank"
@@ -42,21 +56,6 @@ function TopNav() {
           className="text-xs underline underline-offset-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           Support & Feedback
-        </a>
-      </div>
-      <div className="flex gap-2 items-center">
-        {link('/scenarios', 'Scenarios')}
-        {link('/', 'Sessions')}
-        {link('/benchmarks', 'Benchmarks')}
-      </div>
-      <div className="flex items-center gap-2">
-        <a
-          href="https://github.com/ARm8-2/refleks"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs underline underline-offset-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-        >
-          Help
         </a>
         {link('/settings', 'Settings')}
       </div>

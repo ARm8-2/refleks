@@ -1,9 +1,11 @@
 import {
   GetBenchmarkProgress as _GetBenchmarkProgress,
   GetBenchmarks as _GetBenchmarks,
+  GetDefaultSettings as _GetDefaultSettings,
   GetFavoriteBenchmarks as _GetFavoriteBenchmarks,
   GetRecentScenarios as _GetRecentScenarios,
   GetSettings as _GetSettings,
+  GetVersion as _GetVersion,
   LaunchKovaaksScenario as _LaunchKovaaksScenario,
   ResetSettings as _ResetSettings,
   SetFavoriteBenchmarks as _SetFavoriteBenchmarks,
@@ -43,6 +45,11 @@ export async function getSettings(): Promise<Settings> {
   return s as unknown as Settings
 }
 
+export async function getDefaultSettings(): Promise<Settings> {
+  const s = await _GetDefaultSettings()
+  return s as unknown as Settings
+}
+
 export async function updateSettings(payload: Settings): Promise<void> {
   const res = await _UpdateSettings(payload as unknown as models.Settings)
   if (res !== true) {
@@ -55,6 +62,11 @@ export async function resetSettings(): Promise<void> {
   if (res !== true) {
     throw new Error(typeof res === 'string' ? res : 'ResetSettings failed')
   }
+}
+
+export async function getVersion(): Promise<string> {
+  const v = await _GetVersion()
+  return String(v || '')
 }
 
 export async function getBenchmarks(): Promise<Benchmark[]> {

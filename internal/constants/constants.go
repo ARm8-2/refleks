@@ -4,6 +4,10 @@ package constants
 // should not be persisted to disk. Keep magic strings and URLs here.
 
 const (
+	// AppVersion is the human-readable semantic version of the application.
+	// Bump this on every release. Follow SemVer: MAJOR.MINOR.PATCH
+	AppVersion = "0.1.0"
+
 	// Kovaaks player progress endpoint. Use fmt.Sprintf with benchmarkId and steamId.
 	KovaaksPlayerProgressURL = "https://kovaaks.com/webapp-backend/benchmarks/player-progress-rank-benchmark?benchmarkId=%d&steamId=%s"
 	// DefaultRecentCap bounds how many recent scenarios we retain in memory when
@@ -11,7 +15,7 @@ const (
 	DefaultRecentCap = 500
 
 	// Default UI/analysis values
-	DefaultSessionGapMinutes  = 30
+	DefaultSessionGapMinutes  = 15
 	DefaultTheme              = "dark"
 	DefaultMouseBufferMinutes = 10
 	DefaultMaxExistingOnStart = 500

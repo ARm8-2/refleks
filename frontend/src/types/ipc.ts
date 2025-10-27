@@ -23,12 +23,14 @@ export interface Benchmark {
   difficulties: BenchmarkDifficulty[]
 }
 
+import type { Theme } from '../lib/theme'
+
 export interface Settings {
   steamInstallDir?: string
   statsDir: string
   tracesDir: string
   sessionGapMinutes: number
-  theme: string
+  theme: Theme
   favoriteBenchmarks?: string[]
   mouseTrackingEnabled?: boolean
   mouseBufferMinutes?: number

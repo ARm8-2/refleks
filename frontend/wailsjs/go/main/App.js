@@ -10,6 +10,10 @@ export function GetBenchmarks() {
   return window['go']['main']['App']['GetBenchmarks']();
 }
 
+export function GetDefaultSettings() {
+  return window['go']['main']['App']['GetDefaultSettings']();
+}
+
 export function GetFavoriteBenchmarks() {
   return window['go']['main']['App']['GetFavoriteBenchmarks']();
 }
@@ -20,6 +24,10 @@ export function GetRecentScenarios(arg1) {
 
 export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
+}
+
+export function GetVersion() {
+  return window['go']['main']['App']['GetVersion']();
 }
 
 export function Greet(arg1) {

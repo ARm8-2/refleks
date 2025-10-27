@@ -14,23 +14,22 @@ export function SettingsPage() {
   const [mouseEnabled, setMouseEnabled] = useState(false)
   const [mouseBuffer, setMouseBuffer] = useState(10)
   const [maxExisting, setMaxExisting] = useState(500)
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   useEffect(() => {
+    // Load settings from backend and trust backend-sanitized values.
     getSettings()
       .then((s: Settings) => {
-        if (s) {
-          setSteamDir((s as any).steamInstallDir || 'C:/Program Files (x86)/Steam')
-          setStatsPath(s.statsDir || '')
-          setTracesPath((s as any).tracesDir || '{defaultconfigpath}/traces')
-          setGap(Number(s.sessionGapMinutes) || 30)
-          const isTheme = (val: string): val is Theme => (THEMES as readonly string[]).includes(val)
-          const safe: Theme = (typeof s.theme === 'string' && isTheme(s.theme)) ? s.theme : 'dark'
-          setThemeState(safe)
-          applyTheme(safe)
-          setMouseEnabled(Boolean(s.mouseTrackingEnabled))
-          setMouseBuffer(Number(s.mouseBufferMinutes) > 0 ? Number(s.mouseBufferMinutes) : 10)
-          setMaxExisting(Number((s as any).maxExistingOnStart) > 0 ? Number((s as any).maxExistingOnStart) : 500)
-        }
+        if (!s) return
+        setSteamDir((s as any).steamInstallDir || '')
+        setStatsPath(s.statsDir || '')
+        setTracesPath((s as any).tracesDir || '')
+        setGap(s.sessionGapMinutes)
+        setThemeState(s.theme)
+        applyTheme(s.theme)
+        setMouseEnabled(Boolean(s.mouseTrackingEnabled))
+        setMouseBuffer(Number(s.mouseBufferMinutes))
+        setMaxExisting(Number((s as any).maxExistingOnStart))
       })
       .catch(() => { })
   }, [])
@@ -49,17 +48,15 @@ export function SettingsPage() {
     try {
       await resetSettings()
       const s = await getSettings()
-      setSteamDir((s as any).steamInstallDir || 'C:/Program Files (x86)/Steam')
+      setSteamDir((s as any).steamInstallDir || '')
       setStatsPath(s.statsDir || '')
-      setTracesPath((s as any).tracesDir || '{defaultconfigpath}/traces')
-      setGap(Number(s.sessionGapMinutes) || 30)
-      const isTheme = (val: string): val is Theme => (THEMES as readonly string[]).includes(val)
-      const safe: Theme = (typeof s.theme === 'string' && isTheme(s.theme)) ? s.theme : 'dark'
-      setThemeState(safe)
-      setTheme(safe)
+      setTracesPath((s as any).tracesDir || '')
+      setGap(s.sessionGapMinutes)
+      setThemeState(s.theme)
+      setTheme(s.theme)
       setMouseEnabled(Boolean(s.mouseTrackingEnabled))
-      setMouseBuffer(Number(s.mouseBufferMinutes) > 0 ? Number(s.mouseBufferMinutes) : 10)
-      setMaxExisting(Number((s as any).maxExistingOnStart) > 0 ? Number((s as any).maxExistingOnStart) : 500)
+      setMouseBuffer(Number(s.mouseBufferMinutes))
+      setMaxExisting(Number((s as any).maxExistingOnStart))
     } catch (e) {
       console.error('ResetSettings error:', e)
     }
@@ -67,40 +64,96 @@ export function SettingsPage() {
   return (
     <div className="space-y-4 h-full flex flex-col p-4">
       <div className="text-lg font-medium">Settings</div>
-      <div className="space-y-3 max-w-xl">
-        <Field label="Steam install directory">
-          <input value={steamDir} onChange={e => setSteamDir(e.target.value)} className="w-full px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border-primary)]" />
-        </Field>
-        <Field label="Stats directory">
-          <input value={statsPath} onChange={e => setStatsPath(e.target.value)} className="w-full px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border-primary)]" />
-        </Field>
-        <Field label="Traces directory">
-          <input value={tracesPath} onChange={e => setTracesPath(e.target.value)} className="w-full px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border-primary)]" />
-        </Field>
-        <Field label="Session gap (minutes)">
-          <input type="number" value={gap} onChange={e => setGap(Number(e.target.value))} className="w-24 px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border-primary)]" />
-        </Field>
-        <Field label="Enable mouse tracking (Windows)">
-          <input type="checkbox" checked={mouseEnabled} onChange={e => setMouseEnabled(e.target.checked)} />
-        </Field>
-        <Field label="Mouse buffer (minutes)">
-          <input type="number" value={mouseBuffer} onChange={e => setMouseBuffer(Math.max(1, Number(e.target.value)))} className="w-24 px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border-primary)]" />
-        </Field>
-        <Field label="Parse existing on start (max)">
-          <input type="number" value={maxExisting} onChange={e => setMaxExisting(Math.max(0, Number(e.target.value)))} className="w-24 px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border-primary)]" />
-        </Field>
-        <Field label="Theme">
-          <select value={theme} onChange={e => setThemeState(e.target.value as Theme)} className="px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border-primary)]">
-            {THEMES.map(t => <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}</option>)}
-          </select>
-        </Field>
-        <div className="pt-2">
+      <div className="space-y-6 max-w-5xl">
+        {/* General (primary settings) */}
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">General</h3>
+          <div className="space-y-3 p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
+            <Field label="Stats directory">
+              <input
+                value={statsPath}
+                onChange={e => setStatsPath(e.target.value)}
+                className="w-full px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+              />
+            </Field>
+            <Field label="Session gap (minutes)">
+              <input
+                type="number"
+                value={gap}
+                onChange={e => setGap(Number(e.target.value))}
+                className="w-24 px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+              />
+            </Field>
+            <Field label="Theme">
+              <select
+                value={theme}
+                onChange={e => setThemeState(e.target.value as Theme)}
+                className="px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+              >
+                {THEMES.map(t => <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}</option>)}
+              </select>
+            </Field>
+          </div>
+        </section>
+
+        {/* Advanced - nested under General as a collapsible block */}
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Advanced</h3>
+            <button
+              onClick={() => setShowAdvanced(v => !v)}
+              className="text-xs px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]"
+            >
+              {showAdvanced ? 'Hide' : 'Show'} advanced
+            </button>
+          </div>
+          {showAdvanced && (
+            <div className="space-y-3 p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
+              <Field label="Steam install directory">
+                <input
+                  value={steamDir}
+                  onChange={e => setSteamDir(e.target.value)}
+                  className="w-full px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                />
+              </Field>
+              <Field label="Traces directory">
+                <input
+                  value={tracesPath}
+                  onChange={e => setTracesPath(e.target.value)}
+                  className="w-full px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                />
+              </Field>
+              <Field label="Enable mouse tracking (Windows)">
+                <input type="checkbox" checked={mouseEnabled} onChange={e => setMouseEnabled(e.target.checked)} />
+              </Field>
+              <Field label="Mouse buffer (minutes)">
+                <input
+                  type="number"
+                  value={mouseBuffer}
+                  onChange={e => setMouseBuffer(Math.max(1, Number(e.target.value)))}
+                  className="w-24 px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                />
+              </Field>
+              <Field label="Parse existing on start (max)">
+                <input
+                  type="number"
+                  value={maxExisting}
+                  onChange={e => setMaxExisting(Math.max(0, Number(e.target.value)))}
+                  className="w-24 px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                />
+              </Field>
+            </div>
+          )}
+        </section>
+
+        {/* Actions & Help */}
+        <section>
           <div className="flex items-center gap-2">
             <button onClick={save} className="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-sm">Save</button>
             <button onClick={onReset} className="px-3 py-1 rounded bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-primary)] text-[var(--text-primary)] text-sm">Reset to defaults</button>
+            <div className="text-xs text-[var(--text-secondary)] ml-2">Settings persist to your OS config folder. Theme applies immediately.</div>
           </div>
-        </div>
-        <div className="text-xs text-[var(--text-secondary)]">Settings persist to your OS config folder. Theme applies immediately.</div>
+        </section>
       </div>
     </div>
   )

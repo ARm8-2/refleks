@@ -53,6 +53,9 @@ func Sanitize(s models.Settings) models.Settings {
 	if s.SessionGapMinutes <= 0 {
 		s.SessionGapMinutes = constants.DefaultSessionGapMinutes
 	}
+	if strings.TrimSpace(s.Theme) == "" {
+		s.Theme = constants.DefaultTheme
+	}
 	if s.MouseBufferMinutes <= 0 {
 		s.MouseBufferMinutes = constants.DefaultMouseBufferMinutes
 	}

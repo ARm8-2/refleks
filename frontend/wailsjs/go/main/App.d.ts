@@ -6,11 +6,15 @@ export function GetBenchmarkProgress(arg1:number):Promise<string>;
 
 export function GetBenchmarks():Promise<Array<models.Benchmark>>;
 
+export function GetDefaultSettings():Promise<models.Settings>;
+
 export function GetFavoriteBenchmarks():Promise<Array<string>>;
 
 export function GetRecentScenarios(arg1:number):Promise<Array<models.ScenarioRecord>>;
 
 export function GetSettings():Promise<models.Settings>;
+
+export function GetVersion():Promise<string>;
 
 export function Greet(arg1:string):Promise<string>;
 

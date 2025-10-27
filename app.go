@@ -239,6 +239,19 @@ func (a *App) ResetSettings() (bool, string) {
 	return a.UpdateSettings(appsettings.Default())
 }
 
+// --- App metadata ---
+
+// GetVersion returns the current application version.
+func (a *App) GetVersion() string {
+	return constants.AppVersion
+}
+
+// GetDefaultSettings returns the application's default settings (sanitized),
+// useful for UI placeholders and help text.
+func (a *App) GetDefaultSettings() models.Settings {
+	return appsettings.Sanitize(appsettings.Default())
+}
+
 // LaunchKovaaksScenario opens the Steam deep-link to launch a given scenario in Kovaak's.
 // The "mode" parameter is optional; default is "challenge". Returns (true, "ok") on success.
 func (a *App) LaunchKovaaksScenario(name string, mode string) (bool, string) {
