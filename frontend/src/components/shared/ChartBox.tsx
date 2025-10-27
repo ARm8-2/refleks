@@ -13,6 +13,8 @@ import {
 import { Info } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
+import { Dropdown } from './Dropdown'
+import { Toggle } from './Toggle'
 
 // Register common chart.js components once
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, RadialLinearScale, Title, Tooltip, Legend, Filler)
@@ -55,29 +57,21 @@ export function ChartBox({
         <div className="text-sm font-medium text-[var(--text-primary)] truncate" title={title}>{title}</div>
         <div className="flex items-center gap-2">
           {controls?.dropdown && (
-            <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-              {controls.dropdown.label && <span>{controls.dropdown.label}</span>}
-              <select
-                className="bg-[var(--bg-tertiary)] text-[var(--text-primary)] text-xs rounded px-2 py-1 border border-[var(--border-primary)]"
-                value={controls.dropdown.value}
-                onChange={(e) => controls.dropdown!.onChange(e.target.value)}
-              >
-                {controls.dropdown.options.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </label>
+            <Dropdown
+              size="sm"
+              label={controls.dropdown.label}
+              value={controls.dropdown.value}
+              onChange={(v) => controls.dropdown!.onChange(v)}
+              options={controls.dropdown.options}
+            />
           )}
           {controls?.toggle && (
-            <label className="flex items-center gap-1 text-xs text-[var(--text-secondary)] select-none">
-              <input
-                type="checkbox"
-                className="accent-[var(--accent-primary)]"
-                checked={controls.toggle.checked}
-                onChange={(e) => controls.toggle!.onChange(e.target.checked)}
-              />
-              <span>{controls.toggle.label ?? 'Auto'}</span>
-            </label>
+            <Toggle
+              size="sm"
+              label={controls.toggle.label ?? 'Auto'}
+              checked={controls.toggle.checked}
+              onChange={(v) => controls.toggle!.onChange(v)}
+            />
           )}
           <button
             aria-label="Info"

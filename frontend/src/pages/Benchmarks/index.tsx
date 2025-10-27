@@ -1,6 +1,6 @@
 import { ArrowLeft, Search, Star } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { BenchmarkCard, Tabs } from '../../components'
+import { BenchmarkCard, Dropdown, Tabs } from '../../components'
 import { useOpenedBenchmarkProgress } from '../../hooks/useOpenedBenchmarkProgress'
 import { navigate, useRoute } from '../../hooks/useRoute'
 import { useUIState } from '../../hooks/useUIState'
@@ -153,16 +153,13 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
       <div className="text-lg font-medium">Benchmark: {bench ? `${bench.abbreviation} ${bench.benchmarkName}` : id}</div>
       {bench?.difficulties?.length ? (
         <div className="flex items-center gap-2">
-          <label className="text-sm text-[var(--text-secondary)]">Difficulty</label>
-          <select
-            className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded px-2 py-1 text-sm"
+          <Dropdown
+            label="Difficulty"
+            size="md"
             value={difficultyIndex}
-            onChange={(e) => setDifficultyIndex(Number(e.target.value))}
-          >
-            {bench.difficulties.map((d, i) => (
-              <option key={d.kovaaksBenchmarkId} value={i}>{d.difficultyName}</option>
-            ))}
-          </select>
+            onChange={(v: string) => setDifficultyIndex(Number(v))}
+            options={bench.difficulties.map((d, i) => ({ label: d.difficultyName, value: i }))}
+          />
         </div>
       ) : <div className="text-sm text-[var(--text-secondary)]">No difficulties info.</div>}
       <Tabs tabs={[

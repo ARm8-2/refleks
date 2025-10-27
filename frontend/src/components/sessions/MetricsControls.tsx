@@ -1,3 +1,5 @@
+import { Dropdown } from '../shared/Dropdown';
+import { Toggle } from '../shared/Toggle';
 
 export function MetricsControls({
   names,
@@ -23,37 +25,30 @@ export function MetricsControls({
   const pctOptions = [20, 25, 30, 40, 50]
   return (
     <div className="flex items-center gap-3 flex-wrap">
-      <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-        <span>Scenario</span>
-        <select
-          className="bg-[var(--bg-tertiary)] text-[var(--text-primary)] text-xs rounded px-2 py-1 border border-[var(--border-primary)]"
-          value={selectedName}
-          onChange={(e) => { onSelect(e.target.value) }}
-        >
-          {names.map(n => <option key={n} value={n}>{n}</option>)}
-        </select>
-      </label>
-      <label className="flex items-center gap-2 text-xs text-[var(--text-secondary)] select-none">
-        <input type="checkbox" className="accent-[var(--accent-primary)]" checked={autoSelectLast} onChange={e => onToggleAuto(e.target.checked)} />
-        <span>Auto</span>
-      </label>
+      <Dropdown
+        label="Scenario"
+        value={selectedName}
+        onChange={(v: string) => onSelect(v)}
+        options={names.map(n => ({ label: n, value: n }))}
+      />
+      <Toggle
+        label="Auto"
+        checked={autoSelectLast}
+        onChange={(v: boolean) => onToggleAuto(v)}
+      />
       <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
         <span>Compare</span>
-        <select
-          className="bg-[var(--bg-tertiary)] text-[var(--text-primary)] text-xs rounded px-2 py-1 border border-[var(--border-primary)]"
+        <Dropdown
           value={firstPct}
-          onChange={(e) => onFirstPct(Number(e.target.value))}
-        >
-          {pctOptions.map(p => <option key={`f-${p}`} value={p}>{p}% first</option>)}
-        </select>
+          onChange={(v: string) => onFirstPct(Number(v))}
+          options={pctOptions.map(p => ({ label: `${p}% first`, value: p }))}
+        />
         <span>vs</span>
-        <select
-          className="bg-[var(--bg-tertiary)] text-[var(--text-primary)] text-xs rounded px-2 py-1 border border-[var(--border-primary)]"
+        <Dropdown
           value={lastPct}
-          onChange={(e) => onLastPct(Number(e.target.value))}
-        >
-          {pctOptions.map(p => <option key={`l-${p}`} value={p}>{p}% last</option>)}
-        </select>
+          onChange={(v: string) => onLastPct(Number(v))}
+          options={pctOptions.map(p => ({ label: `${p}% last`, value: p }))}
+        />
       </div>
     </div>
   )

@@ -1,6 +1,8 @@
-import { Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Point } from '../../types/domain';
+import { SegmentedControl } from '../shared/SegmentedControl';
+import { Toggle } from '../shared/Toggle';
 
 export function TraceViewer({ points, stats }: { points: Point[]; stats: Record<string, any> }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -426,29 +428,19 @@ export function TraceViewer({ points, stats }: { points: Point[]; stats: Record<
 
           <div className="flex items-center gap-3">
             <span>Trail:</span>
-            <div className="inline-flex rounded overflow-hidden border border-[var(--border-primary)]">
-              <button
-                className={`px-3 py-1 ${trailMode === 'last2' ? 'bg-[var(--bg-tertiary)] text-[var(--text-primary)]' : ''}`}
-                onClick={() => setTrailMode('last2')}
-              >
-                Last 2s
-              </button>
-              <button
-                className={`px-3 py-1 ${trailMode === 'all' ? 'bg-[var(--bg-tertiary)] text-[var(--text-primary)]' : ''}`}
-                onClick={() => setTrailMode('all')}
-              >
-                All
-              </button>
-            </div>
-            <span>Follow:</span>
-            <div className="inline-flex rounded overflow-hidden border border-[var(--border-primary)]">
-              <button
-                className={`px-3 py-1 ${autoFollow ? 'bg-[var(--bg-tertiary)] text-[var(--text-primary)]' : ''}`}
-                onClick={() => setAutoFollow((v) => !v)}
-              >
-                Auto
-              </button>
-            </div>
+            <SegmentedControl
+              options={[
+                { label: 'Last 2s', value: 'last2' },
+                { label: 'All', value: 'all' },
+              ]}
+              value={trailMode}
+              onChange={(v: 'all' | 'last2') => setTrailMode(v)}
+            />
+            <Toggle
+              label="Follow"
+              checked={autoFollow}
+              onChange={(v: boolean) => setAutoFollow(v)}
+            />
             <span className="hidden sm:inline">Zoom: {Math.round(zoom * 100)}%</span>
             <span>Samples: <b className="text-[var(--text-primary)]">{points.length.toLocaleString()}</b></span>
           </div>

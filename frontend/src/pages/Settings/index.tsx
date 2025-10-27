@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Button, Dropdown } from '../../components'
 import { useStore } from '../../hooks/useStore'
 import { getSettings, resetSettings, updateSettings } from '../../lib/internal'
 import { applyTheme, getSavedTheme, setTheme, THEMES, type Theme } from '../../lib/theme'
@@ -85,13 +86,12 @@ export function SettingsPage() {
               />
             </Field>
             <Field label="Theme">
-              <select
+              <Dropdown
                 value={theme}
-                onChange={e => setThemeState(e.target.value as Theme)}
-                className="px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
-              >
-                {THEMES.map(t => <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}</option>)}
-              </select>
+                onChange={(v: string) => setThemeState(v as Theme)}
+                options={THEMES.map(t => ({ label: t[0].toUpperCase() + t.slice(1), value: t }))}
+                size="md"
+              />
             </Field>
           </div>
         </section>
@@ -124,7 +124,12 @@ export function SettingsPage() {
                 />
               </Field>
               <Field label="Enable mouse tracking (Windows)">
-                <input type="checkbox" checked={mouseEnabled} onChange={e => setMouseEnabled(e.target.checked)} />
+                <Dropdown
+                  value={mouseEnabled ? 'on' : 'off'}
+                  onChange={(v: string) => setMouseEnabled(v === 'on')}
+                  options={[{ label: 'On', value: 'on' }, { label: 'Off', value: 'off' }]}
+                  size="md"
+                />
               </Field>
               <Field label="Mouse buffer (minutes)">
                 <input
@@ -149,8 +154,8 @@ export function SettingsPage() {
         {/* Actions & Help */}
         <section>
           <div className="flex items-center gap-2">
-            <button onClick={save} className="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-sm">Save</button>
-            <button onClick={onReset} className="px-3 py-1 rounded bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-primary)] text-[var(--text-primary)] text-sm">Reset to defaults</button>
+            <Button variant="accent" size="md" onClick={save}>Save</Button>
+            <Button variant="secondary" size="md" onClick={onReset}>Reset to defaults</Button>
             <div className="text-xs text-[var(--text-secondary)] ml-2">Settings persist to your OS config folder. Theme applies immediately.</div>
           </div>
         </section>
