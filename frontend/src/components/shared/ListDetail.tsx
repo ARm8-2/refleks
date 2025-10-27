@@ -196,10 +196,10 @@ export function ListDetail<T = any>({
 
           {/* List content */}
           {isExpanded ? (
-            <div className="pl-2 min-h-0 flex-1">
+            <div className="min-h-0 flex-1">
               <div className="h-full">
                 {items.length === 0 ? (
-                  emptyPlaceholder ?? <div className="text-sm text-[var(--text-secondary)]">No items.</div>
+                  emptyPlaceholder ?? <div className="p-3 text-sm text-[var(--text-secondary)]">No items.</div>
                 ) : (
                   <VirtualizedList
                     items={items}
@@ -298,7 +298,7 @@ function VirtualizedList<T>({ items, renderItem, getKey, rowHeight, isResizing =
       <CellMeasurer cache={cache} columnIndex={0} rowIndex={index} parent={parent} key={rowKey}>
         {({ measure }) => (
           <div style={style} onLoad={measure} className="pb-2 first:pt-2">
-            <div className="pr-1">{child}</div>
+            <div className="px-2">{child}</div>
           </div>
         )}
       </CellMeasurer>

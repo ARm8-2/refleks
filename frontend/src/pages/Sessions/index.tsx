@@ -59,7 +59,7 @@ export function SessionsPage() {
               </div>
             </button>
           )}
-          emptyPlaceholder={<div className="text-sm text-[var(--text-secondary)]">No sessions yet.</div>}
+          emptyPlaceholder={<div className="p-3 text-sm text-[var(--text-secondary)]">No sessions yet.</div>}
           detail={<SessionDetail session={sessions.find(s => s.id === active) ?? null} />}
         />
       </div>
