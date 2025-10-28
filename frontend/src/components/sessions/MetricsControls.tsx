@@ -41,7 +41,7 @@ export function MetricsControls({
           <span>View</span>
           <SegmentedControl
             options={[
-              { label: 'Runs', value: 'scenarios' },
+              { label: 'Scenarios', value: 'scenarios' },
               { label: 'Sessions', value: 'sessions' },
             ]}
             value={mode}
