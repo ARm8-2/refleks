@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChartBox, MetricsControls, MetricsLineChart, SummaryStats, TimeOfDayAreaChart } from '../../../components'
+import { ChartBox, MetricsControls, MetricsLineChart, SessionLengthInsights, SummaryStats, TimeOfDayAreaChart } from '../../../components'
 import { useStore } from '../../../hooks/useStore'
 import { buildChartSeries, computeSessionAverages, groupByScenario } from '../../../lib/metrics'
 import { getScenarioName } from '../../../lib/utils'
@@ -92,6 +92,9 @@ export function ProgressAllTab() {
           <TimeOfDayAreaChart items={scenarios} />
         </div>
       </ChartBox>
+
+      {/* Session length insights for the selected scenario across sessions */}
+      <SessionLengthInsights sessions={sessions} scenarioName={selectedName} />
     </div>
   )
 }
