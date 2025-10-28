@@ -1,4 +1,4 @@
-import { ArrowLeft, Search, Star } from 'lucide-react'
+import { ChevronLeft, Search, Star } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { BenchmarkCard, Dropdown, Tabs } from '../../components'
 import { useOpenedBenchmarkProgress } from '../../hooks/useOpenedBenchmarkProgress'
@@ -140,17 +140,31 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
 
   return (
     <div className="space-y-3 p-4 h-full overflow-auto">
-      <div className="flex items-center justify-between">
-        <button onClick={onBack} className="text-sm text-[var(--text-primary)] hover:text-white inline-flex items-center gap-1">
-          <ArrowLeft size={14} className="inline-block align-[-2px]" />
-          Back
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onBack}
+          className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+          aria-label="Back"
+          title="Back"
+        >
+          <ChevronLeft size={16} />
         </button>
-        <button onClick={() => onToggleFav(id)} className="px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)] text-sm flex items-center gap-2">
-          <Star size={16} strokeWidth={1.5} style={{ color: favorites.includes(id) ? 'var(--accent-primary)' as any : undefined, fill: favorites.includes(id) ? 'var(--accent-primary)' : 'none' }} />
-          {favorites.includes(id) ? 'Unfavorite' : 'Favorite'}
-        </button>
+        <div className="text-lg font-medium flex items-center gap-2">
+          <span>Benchmark: {bench ? `${bench.abbreviation} ${bench.benchmarkName}` : id}</span>
+          <button
+            onClick={() => onToggleFav(id)}
+            className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] align-[2px]"
+            aria-label={favorites.includes(id) ? 'Unfavorite' : 'Favorite'}
+            title={favorites.includes(id) ? 'Unfavorite' : 'Favorite'}
+          >
+            <Star
+              size={20}
+              strokeWidth={1.5}
+              style={{ color: (favorites.includes(id) ? 'var(--accent-primary)' : undefined) as any, fill: favorites.includes(id) ? 'var(--accent-primary)' : 'none' }}
+            />
+          </button>
+        </div>
       </div>
-      <div className="text-lg font-medium">Benchmark: {bench ? `${bench.abbreviation} ${bench.benchmarkName}` : id}</div>
       {bench?.difficulties?.length ? (
         <div className="flex items-center gap-2">
           <Dropdown
