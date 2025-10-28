@@ -50,7 +50,7 @@ function TopNav() {
       {/* Right-side actions - pushed to the end with ml-auto */}
       <div className="flex items-center gap-2 ml-auto">
         <a
-          href="https://github.com/ARm8-2/refleks"
+          href="https://refleks-app.com/home/#support"
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs underline underline-offset-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
