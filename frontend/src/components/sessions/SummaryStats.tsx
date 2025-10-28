@@ -24,12 +24,14 @@ export function SummaryStats({
   ttk,
   firstPct,
   lastPct,
+  title = 'Session summary',
 }: {
   score: number[]
   acc: number[]
   ttk: number[]
   firstPct: number
   lastPct: number
+  title?: string
 }) {
   const triangle = (dir: 'up' | 'down', colorVar: string) => (
     <span
@@ -89,7 +91,7 @@ export function SummaryStats({
   return (
     <div className="rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
       <div className="px-3 py-2 border-b border-[var(--border-primary)] text-sm font-medium text-[var(--text-primary)] flex items-center justify-between">
-        <span>Session summary</span>
+        <span>{title}</span>
         <span className="text-xs text-[var(--text-secondary)]">Δ window: last {lastPct}% vs first {firstPct}%</span>
       </div>
       <div className="p-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
