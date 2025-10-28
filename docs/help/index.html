@@ -44,9 +44,8 @@
                   target="_blank"
                   class="text-[var(--accent-primary)] hover:text-[var(--accent-hover)] transition-colors">GitHub
                   releases page</a></li>
-              <li>Extract the downloaded ZIP file to a folder of your choice</li>
-              <li>Run <code class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">RefleKs.exe</code></li>
-              <li>RefleK's will automatically detect your KovaaK's stats folder</li>
+              <li>Run <code class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">refleks.exe</code></li>
+              <li>RefleK's will automatically detect your KovaaK's stats folder and start tracking your practice sessions.</li>
             </ol>
             <p class="text-sm text-[var(--text-muted)] mt-4">
               <strong>Note:</strong> On first launch, Windows may show a security warning. Click "More info" and then
@@ -100,7 +99,7 @@
               <li><strong>Navigation:</strong> Quickly jump between scenarios in a session</li>
             </ul>
             <p class="mt-3">Adjust the session gap in <code
-                class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">Settings → Session Gap</code></p>
+                class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">Settings → General → Session Gap</code></p>
           </div>
         </details>
 
@@ -123,7 +122,8 @@
           <div class="details-body">
             <p>Enable mouse tracking to record and analyze your mouse paths:</p>
             <ul class="bullets space-y-2 mt-3">
-              <li><strong>Enable in settings:</strong> Settings → Mouse Tracking</li>
+              <li><strong>Enable in settings:</strong> <code
+                class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">Settings → Advanced → Mouse Tracking</code></li>
               <li><strong>When active:</strong> Records during KovaaK's scenarios only</li>
               <li><strong>Playback:</strong> Replay with pause, scrub, and speed controls</li>
               <li><strong>Privacy:</strong> All recordings stored locally, never uploaded</li>
@@ -150,7 +150,7 @@
           <div class="details-body">
             <p>RefleK's includes several built-in themes to match your setup:</p>
             <ul class="bullets space-y-2 mt-3">
-              <li>Go to <code class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">Settings → Appearance → Theme</code>
+              <li>Go to <code class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">Settings → General → Theme</code>
               </li>
               <li>Choose from Dark (default), Light, Nord, Dracula, and more</li>
               <li>Theme changes apply instantly</li>
@@ -175,12 +175,10 @@
           <div class="details-body">
             <p>If RefleK's can't find your KovaaK's stats folder:</p>
             <ol class="list-decimal list-inside space-y-2 ml-2 mt-3">
-              <li>Go to <code class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">Settings → General</code></li>
-              <li>Click "Browse" next to Stats Folder Path</li>
-              <li>Navigate to your KovaaK's stats folder (usually <code
+              <li>Go to <code class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">Settings → General → Stats Folder</code></li>
+              <li>Enter the path to your KovaaK's stats folder (usually <code
                   class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">C:\Program Files (x86)\Steam\steamapps\common\FPSAimTrainer\FPSAimTrainer\stats</code>)
               </li>
-              <li>Select the folder and click OK</li>
             </ol>
           </div>
         </details>
@@ -203,7 +201,7 @@
             <p>If mouse tracking isn't recording:</p>
             <ul class="bullets space-y-2 mt-3">
               <li>Verify it's enabled in <code
-                  class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">Settings → Mouse Tracking</code></li>
+                  class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">Settings → Advanced → Mouse Tracking</code></li>
               <li>Make sure RefleK's is running while you play KovaaK's</li>
               <li>Verify you're on Windows (mouse tracking is Windows-only)</li>
             </ul>
@@ -216,7 +214,7 @@
             <p>If your benchmark ranks aren't updating:</p>
             <ul class="bullets space-y-2 mt-3">
               <li>Ensure you have an internet connection</li>
-              <li>Verify Steam is running and you're logged in</li>
+              <li>Verify Steam is installed and you're logged in</li>
               <li>Check that the scenario name exactly matches the benchmark requirement</li>
             </ul>
           </div>
