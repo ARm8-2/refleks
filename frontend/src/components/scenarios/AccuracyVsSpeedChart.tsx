@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { Scatter } from 'react-chartjs-2';
 import { ChartBox } from '..';
+import { useChartTheme } from '../../hooks/useChartTheme';
 import { AccuracyVsSpeedDetails } from './AccuracyVsSpeedDetails';
 
-export function AccuracyVsSpeedChart({ points, colors, scatter }: {
-  points: Array<{ x: number; y: number; i: number }>; colors: any; scatter: {
+export function AccuracyVsSpeedChart({ points, scatter }: {
+  points: Array<{ x: number; y: number; i: number }>; scatter: {
     corrKpmAcc: number
     meanBinStdAcc: number
     binsUsed: number
@@ -14,6 +15,7 @@ export function AccuracyVsSpeedChart({ points, colors, scatter }: {
     clusterCompactness?: number
   }
 }) {
+  const colors = useChartTheme()
   const data = useMemo(() => ({
     datasets: [
       {

@@ -63,4 +63,6 @@ export function cellFill(index: number, scenarioRank: number, score: number, thr
   return Math.max(0, Math.min(1, frac))
 }
 
-export const gridCols = (count: number) => `minmax(220px,1fr) 40px 90px ${Array.from({ length: count }).map(() => '120px').join(' ')}`
+// Grid columns for BenchmarkProgress rows:
+// Scenario | Recom | Play | Score | Rank1..N
+export const gridCols = (count: number) => `minmax(220px,1fr) 80px 40px 90px ${Array.from({ length: count }).map(() => '120px').join(' ')}`

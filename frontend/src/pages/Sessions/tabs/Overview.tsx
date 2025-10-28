@@ -3,28 +3,14 @@ import { ChartBox, Findings, MetricsControls, MetricsLineChart, ScenarioMixRadar
 import { buildRankDefs, cellFill, hexToRgba, numberFmt } from '../../../components/benchmarks/utils'
 import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkProgress'
 import { useRoute } from '../../../hooks/useRoute'
+import { buildChartSeries, groupByScenario } from '../../../lib/analysis/metrics'
 import { getScenarioName } from '../../../lib/utils'
 import type { Session } from '../../../types/domain'
 
 export function OverviewTab({ session }: { session: Session | null }) {
   const items = session?.items ?? []
   // Group per scenario name and collect metrics (newest -> oldest order)
-  const byName = useMemo(() => {
-    const m = new Map<string, { score: number[]; acc: number[]; ttk: number[] }>()
-    for (const it of items) {
-      const name = getScenarioName(it)
-      const score = Number(it.stats['Score'] ?? 0)
-      const accRaw = Number(it.stats['Accuracy'] ?? 0) // 0..1 from backend
-      const acc = Number.isFinite(accRaw) ? accRaw * 100 : 0
-      const ttk = Number(it.stats['Real Avg TTK'] ?? NaN)
-      const prev = m.get(name) ?? { score: [], acc: [], ttk: [] }
-      prev.score.push(Number.isFinite(score) ? score : 0)
-      prev.acc.push(Number.isFinite(acc) ? acc : 0)
-      prev.ttk.push(Number.isFinite(ttk) ? ttk : 0)
-      m.set(name, prev)
-    }
-    return m
-  }, [items])
+  const byName = useMemo(() => groupByScenario(items), [items])
 
   const names = useMemo(() => Array.from(byName.keys()), [byName])
   const [selectedName, setSelectedName] = useState(names[0] ?? '')
@@ -48,11 +34,7 @@ export function OverviewTab({ session }: { session: Session | null }) {
   }, [names, selectedName])
 
   const metrics = byName.get(selectedName) ?? { score: [], acc: [], ttk: [] }
-  // Labels oldest -> newest, data reversed to match labels
-  const labels = metrics.score.map((_, i) => `#${metrics.score.length - i}`)
-  const scoreSeries = [...metrics.score].reverse()
-  const accSeries = [...metrics.acc].reverse()
-  const ttkSeries = [...metrics.ttk].reverse()
+  const { labels, score: scoreSeries, acc: accSeries, ttk: ttkSeries } = buildChartSeries(metrics)
 
   // Scenario counts for radar chart (top N by frequency)
   const radar = useMemo(() => {

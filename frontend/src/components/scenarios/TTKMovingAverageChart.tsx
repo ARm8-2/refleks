@@ -1,13 +1,13 @@
 import { useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
+import { useChartTheme } from '../../hooks/useChartTheme'
 import { TTKMovingAverageDetails } from './TTKMovingAverageDetails'
 
-export function TTKMovingAverageChart({ labels, realTTK, ma5, colors, movingAvg }: {
+export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: {
   labels: string[]
   realTTK: number[]
   ma5: number[]
-  colors: any
   movingAvg: {
     slope: number
     intercept?: number
@@ -19,6 +19,7 @@ export function TTKMovingAverageChart({ labels, realTTK, ma5, colors, movingAvg 
     stableSegments: Array<{ start: number; end: number }>
   }
 }) {
+  const colors = useChartTheme()
   const trend = useMemo(() => ma5.map((_, i) => (movingAvg.intercept ?? 0) + movingAvg.slope * i), [ma5, movingAvg])
   const data = useMemo(() => ({
     labels,

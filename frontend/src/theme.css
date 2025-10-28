@@ -155,3 +155,93 @@
   --scrollbar-thumb-active: rgba(0, 0, 0, 0.3);
   --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 80%, black);
 }
+
+/* Nord (dark) theme */
+.theme-nord {
+  --bg-primary: #2e3440;
+  --bg-secondary: #3b4252;
+  --bg-tertiary: #434c5e;
+  --bg-card: #3b4252;
+  --bg-hover: #4c566a;
+  --text-primary: #eceff4;
+  --text-secondary: #d8dee9;
+  --text-muted: #a7b0c0;
+  --accent-primary: #88c0d0;
+  --accent-hover: #81a1c1;
+  --accent-light: #a3cee0;
+  --border-primary: #4c566a;
+  --border-secondary: #5e6a7d;
+  --success: #a3be8c;
+  --warning: #ebcb8b;
+  --error: #bf616a;
+  --gradient-bg: linear-gradient(135deg, #2e3440 0%, #3b4252 50%, #2e3440 100%);
+  --gradient-card: linear-gradient(135deg, #3b4252 0%, #434c5e 100%);
+  --gradient-accent: linear-gradient(135deg, #88c0d0 0%, #5e81ac 100%);
+
+  --scrollbar-size: 10px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-active: rgba(255, 255, 255, 0.28);
+  --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 85%, white);
+}
+
+/* Gruvbox (dark) theme */
+.theme-gruvbox {
+  --bg-primary: #282828;
+  --bg-secondary: #3c3836;
+  --bg-tertiary: #504945;
+  --bg-card: #3c3836;
+  --bg-hover: #504945;
+  --text-primary: #ebdbb2;
+  --text-secondary: #d5c4a1;
+  --text-muted: #a89984;
+  --accent-primary: #fabd2f;
+  --accent-hover: #d79921;
+  --accent-light: #ffd75f;
+  --border-primary: #504945;
+  --border-secondary: #665c54;
+  --success: #b8bb26;
+  --warning: #fabd2f;
+  --error: #fb4934;
+  --gradient-bg: linear-gradient(135deg, #282828 0%, #3c3836 50%, #282828 100%);
+  --gradient-card: linear-gradient(135deg, #3c3836 0%, #504945 100%);
+  --gradient-accent: linear-gradient(135deg, #fabd2f 0%, #d79921 100%);
+
+  --scrollbar-size: 10px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-active: rgba(255, 255, 255, 0.28);
+  --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 85%, white);
+}
+
+/* Solarized (dark) theme */
+.theme-solarized-dark {
+  --bg-primary: #002b36;
+  --bg-secondary: #073642;
+  --bg-tertiary: #0a3a46;
+  --bg-card: #073642;
+  --bg-hover: #0d4856;
+  --text-primary: #eee8d5;
+  --text-secondary: #93a1a1;
+  --text-muted: #839496;
+  --accent-primary: #268bd2;
+  --accent-hover: #1d6fa5;
+  --accent-light: #5fb3d7;
+  --border-primary: #0a3942;
+  --border-secondary: #0e4a57;
+  --success: #2aa198;
+  --warning: #b58900;
+  --error: #dc322f;
+  --gradient-bg: linear-gradient(135deg, #002b36 0%, #073642 50%, #003845 100%);
+  --gradient-card: linear-gradient(135deg, #073642 0%, #0a3a46 100%);
+  --gradient-accent: linear-gradient(135deg, #268bd2 0%, #2aa198 100%);
+
+  --scrollbar-size: 10px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-active: rgba(255, 255, 255, 0.28);
+  --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 85%, white);
+}

@@ -1,4 +1,5 @@
 import { Dropdown } from '../shared/Dropdown';
+import { SegmentedControl } from '../shared/SegmentedControl';
 import { Toggle } from '../shared/Toggle';
 
 export function MetricsControls({
@@ -11,6 +12,8 @@ export function MetricsControls({
   lastPct,
   onFirstPct,
   onLastPct,
+  mode = 'scenarios',
+  onModeChange,
 }: {
   names: string[]
   selectedName: string
@@ -21,6 +24,8 @@ export function MetricsControls({
   lastPct: number
   onFirstPct: (n: number) => void
   onLastPct: (n: number) => void
+  mode?: 'scenarios' | 'sessions'
+  onModeChange?: (m: 'scenarios' | 'sessions') => void
 }) {
   const pctOptions = [20, 25, 30, 40, 50]
   return (
@@ -31,6 +36,19 @@ export function MetricsControls({
         onChange={(v: string) => onSelect(v)}
         options={names.map(n => ({ label: n, value: n }))}
       />
+      {onModeChange && (
+        <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+          <span>View</span>
+          <SegmentedControl
+            options={[
+              { label: 'Scenarios', value: 'scenarios' },
+              { label: 'Sessions', value: 'sessions' },
+            ]}
+            value={mode}
+            onChange={(v) => onModeChange(v as 'scenarios' | 'sessions')}
+          />
+        </div>
+      )}
       <Toggle
         label="Auto"
         checked={autoSelectLast}

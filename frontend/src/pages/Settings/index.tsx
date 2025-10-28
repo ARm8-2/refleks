@@ -89,7 +89,10 @@ export function SettingsPage() {
               <Dropdown
                 value={theme}
                 onChange={(v: string) => setThemeState(v as Theme)}
-                options={THEMES.map(t => ({ label: t[0].toUpperCase() + t.slice(1), value: t }))}
+                options={THEMES.map(t => ({
+                  label: t.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
+                  value: t,
+                }))}
                 size="md"
               />
             </Field>
