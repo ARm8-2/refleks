@@ -153,7 +153,7 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
           <span>Benchmark: {bench ? `${bench.abbreviation} ${bench.benchmarkName}` : id}</span>
           <button
             onClick={() => onToggleFav(id)}
-            className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] align-[2px]"
+            className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] mb-1"
             aria-label={favorites.includes(id) ? 'Unfavorite' : 'Favorite'}
             title={favorites.includes(id) ? 'Unfavorite' : 'Favorite'}
           >
