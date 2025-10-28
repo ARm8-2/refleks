@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
-import { Metric, collectRunsBySession, expectedBestVsLength, expectedByIndex, recommendLengths } from '../../lib/analysis/sessionLength'
+import { Metric, collectRunsBySession, expectedAvgVsLength, expectedBestVsLength, expectedByIndex, recommendLengths } from '../../lib/analysis/sessionLength'
 import type { Session } from '../../types/domain'
 
 export function SessionLengthInsights({ sessions, scenarioName }: { sessions: Session[]; scenarioName: string }) {
@@ -12,7 +12,8 @@ export function SessionLengthInsights({ sessions, scenarioName }: { sessions: Se
   const runs = useMemo(() => collectRunsBySession(sessions, scenarioName), [sessions, scenarioName])
   const byIdx = useMemo(() => expectedByIndex(runs, metric), [runs, metric])
   const bestVsL = useMemo(() => expectedBestVsLength(runs, metric), [runs, metric])
-  const rec = useMemo(() => recommendLengths(byIdx, bestVsL), [byIdx, bestVsL])
+  const avgVsL = useMemo(() => expectedAvgVsLength(runs, metric), [runs, metric])
+  const rec = useMemo(() => recommendLengths(byIdx, bestVsL, avgVsL), [byIdx, bestVsL, avgVsL])
 
   const idxData = useMemo(() => ({
     labels: byIdx.mean.map((_, i) => `#${i + 1}`),
@@ -100,11 +101,81 @@ export function SessionLengthInsights({ sessions, scenarioName }: { sessions: Se
     },
   }), [theme])
 
+  const avgData = useMemo(() => ({
+    labels: avgVsL.mean.map((_, i) => `#${i + 1}`),
+    datasets: [
+      {
+        label: metric === 'score' ? 'Avg of first L runs' : 'Avg Accuracy of first L runs (%)',
+        data: avgVsL.mean,
+        borderColor: 'rgb(34,197,94)',
+        backgroundColor: 'rgba(34,197,94,0.15)',
+        pointRadius: 0,
+        tension: 0.25,
+      },
+      {
+        label: 'Min (per-session avg at L)',
+        data: avgVsL.min,
+        borderColor: 'rgba(239,68,68,0.9)',
+        backgroundColor: 'rgba(239,68,68,0.1)',
+        pointRadius: 0,
+        tension: 0.25,
+      },
+      {
+        label: 'Max (per-session avg at L)',
+        data: avgVsL.max,
+        borderColor: 'rgba(16,185,129,0.9)',
+        backgroundColor: 'rgba(16,185,129,0.1)',
+        pointRadius: 0,
+        tension: 0.25,
+      },
+    ],
+  }), [avgVsL, metric])
+
+  const avgOptions = useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true, labels: { color: theme.textPrimary } },
+      tooltip: {
+        backgroundColor: theme.tooltipBg,
+        titleColor: theme.textPrimary,
+        bodyColor: theme.textSecondary,
+        borderColor: theme.tooltipBorder,
+        borderWidth: 1,
+      },
+    },
+    scales: {
+      x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
+      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
+    },
+  }), [theme])
+
   const NotEnough = runs.length === 0 || (byIdx.mean.length === 0)
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Emphasized recommendations summary */}
+      {!NotEnough && (
+        <div className="rounded-md border border-[var(--border-primary)] bg-[var(--bg-secondary)] p-3 text-sm">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[var(--text-secondary)]">
+            <div>
+              <span className="mr-2">Recommended Session length:</span>
+              <b className="text-[var(--text-primary)]">{rec.optimalAvgRuns}</b> runs (avg)
+            </div>
+            <div>
+              • Consistency: <b className="text-[var(--text-primary)]">{rec.optimalConsistentRuns}</b> runs
+            </div>
+            <div>
+              • High‑score: <b className="text-[var(--text-primary)]">{rec.optimalHighscoreRuns}</b> runs
+            </div>
+            <div>
+              • Warm‑up ~ <b className="text-[var(--text-primary)]">{rec.warmupRuns}</b> runs
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ChartBox
           title="Optimal session length — performance by run index"
           info={<div>
@@ -151,14 +222,27 @@ export function SessionLengthInsights({ sessions, scenarioName }: { sessions: Se
             </div>
           )}
         </ChartBox>
+        <ChartBox
+          title="Avg performance vs session length"
+          info={<div>
+            <div className="mb-2">For each length L, we compute each session’s average over its first L runs, then aggregate across sessions. This shows the typical average performance and its bounds at different lengths.</div>
+            <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+              <li>Mean = expected average if you play L runs.</li>
+              <li>Min/Max = lowest/highest per-session averages at L (across your data).</li>
+              <li>Use this with the Best vs L chart to balance consistency vs. peak hunting.</li>
+            </ul>
+          </div>}
+          height={240}
+        >
+          {NotEnough ? (
+            <div className="h-full grid place-items-center text-sm text-[var(--text-secondary)]">Not enough data to estimate yet.</div>
+          ) : (
+            <div className="h-full">
+              <Line data={avgData as any} options={avgOptions as any} />
+            </div>
+          )}
+        </ChartBox>
       </div>
-
-      {/* Summary line */}
-      {!NotEnough && (
-        <div className="text-xs text-[var(--text-secondary)]">
-          Recommended length: <b className="text-[var(--text-primary)]">{rec.optimalAvgRuns}</b> runs (avg)&nbsp;• Consistency: <b className="text-[var(--text-primary)]">{rec.optimalConsistentRuns}</b>&nbsp;• High‑score: <b className="text-[var(--text-primary)]">{rec.optimalHighscoreRuns}</b>&nbsp;• Warm‑up ~ <b className="text-[var(--text-primary)]">{rec.warmupRuns}</b>
-        </div>
-      )}
     </div>
   )
 }

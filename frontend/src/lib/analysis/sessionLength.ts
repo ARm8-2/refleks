@@ -69,6 +69,68 @@ export function expectedBestVsLength(runs: ScenarioRecord[][], metric: Metric): 
   return curve
 }
 
+export type LengthStats = {
+  mean: number[]
+  min: number[]
+  max: number[]
+  std: number[]
+  p10: number[]
+  p90: number[]
+  count: number[]
+}
+
+/**
+ * For each possible session length L, compute the distribution of per-session
+ * prefix averages over the first L runs. This answers: "If I play L runs,
+ * what is the typical average performance, and how wide is the spread?"
+ */
+export function expectedAvgVsLength(runs: ScenarioRecord[][], metric: Metric): LengthStats {
+  const maxLen = runs.reduce((m, r) => Math.max(m, r.length), 0)
+  const mean: number[] = []
+  const min: number[] = []
+  const max: number[] = []
+  const std: number[] = []
+  const p10: number[] = []
+  const p90: number[] = []
+  const count: number[] = []
+
+  for (let L = 1; L <= maxLen; L++) {
+    const avgs: number[] = []
+    for (const sessRuns of runs) {
+      if (sessRuns.length >= L) {
+        const vals = sessRuns.slice(0, L).map(r => metricOf(r, metric))
+        if (vals.length) {
+          const m = vals.reduce((a, b) => a + b, 0) / vals.length
+          if (Number.isFinite(m)) avgs.push(m)
+        }
+      }
+    }
+
+    const n = avgs.length
+    count.push(n)
+    if (n === 0) {
+      mean.push(0)
+      min.push(0)
+      max.push(0)
+      std.push(0)
+      p10.push(0)
+      p90.push(0)
+      continue
+    }
+
+    const m = avgs.reduce((a, b) => a + b, 0) / n
+    const variance = avgs.reduce((a, b) => a + (b - m) * (b - m), 0) / n
+    mean.push(m)
+    min.push(Math.min(...avgs))
+    max.push(Math.max(...avgs))
+    std.push(Math.sqrt(Math.max(0, variance)))
+    p10.push(percentile(avgs, 10))
+    p90.push(percentile(avgs, 90))
+  }
+
+  return { mean, min, max, std, p10, p90, count }
+}
+
 export type LengthRecommendations = {
   warmupRuns: number
   optimalAvgRuns: number
@@ -76,7 +138,11 @@ export type LengthRecommendations = {
   optimalHighscoreRuns: number
 }
 
-export function recommendLengths(byIndex: { mean: number[]; std: number[] }, bestVsL: number[]): LengthRecommendations {
+export function recommendLengths(
+  byIndex: { mean: number[]; std: number[] },
+  bestVsL: number[],
+  lengthStats?: LengthStats,
+): LengthRecommendations {
   const { mean, std } = byIndex
   const n = mean.length
   // Warm-up: first index where slope becomes small and std drops near median
@@ -94,30 +160,62 @@ export function recommendLengths(byIndex: { mean: number[]; std: number[] }, bes
     }
   }
 
-  // Optimal average: choose L maximizing cumulative mean of expected values; prefer smaller L within 1% of max
-  let bestL = 1
-  let bestVal = -Infinity
-  const cum: number[] = []
-  let sum = 0
-  for (let L = 1; L <= n; L++) {
-    sum += mean[L - 1] || 0
-    const v = sum / L
-    cum.push(v)
-    if (v > bestVal) { bestVal = v; bestL = L }
-  }
-  const eps = 0.01 * (bestVal || 1)
-  let avgL = bestL
-  for (let L = 1; L <= n; L++) {
-    if (bestVal - cum[L - 1] <= eps) { avgL = L; break }
+  // Optimal average:
+  // If per-length stats available, use their mean curve; otherwise fall back to cumulative mean of by-index expectations.
+  let avgL = 1
+  if (lengthStats && lengthStats.mean.length) {
+    let bestVal = -Infinity
+    let bestIdx = 0
+    for (let i = 0; i < lengthStats.mean.length; i++) {
+      const v = lengthStats.mean[i] ?? 0
+      if (v > bestVal) { bestVal = v; bestIdx = i }
+    }
+    const eps = 0.01 * (Math.abs(bestVal) || 1)
+    for (let L = 1; L <= lengthStats.mean.length; L++) {
+      const v = lengthStats.mean[L - 1] ?? -Infinity
+      if ((bestVal - v) <= eps) { avgL = L; break }
+    }
+  } else {
+    let bestL = 1
+    let bestVal = -Infinity
+    const cum: number[] = []
+    let sum = 0
+    for (let L = 1; L <= n; L++) {
+      sum += mean[L - 1] || 0
+      const v = sum / L
+      cum.push(v)
+      if (v > bestVal) { bestVal = v; bestL = L }
+    }
+    const eps = 0.01 * (bestVal || 1)
+    avgL = bestL
+    for (let L = 1; L <= n; L++) {
+      if (bestVal - cum[L - 1] <= eps) { avgL = L; break }
+    }
   }
 
-  // Consistency: smallest L where recent std is below median of std
+  // Consistency: prefer smallest L where recent variability is below typical.
+  // Use per-length interdecile range if available; else fall back to by-index std.
   let consL = n
-  for (let L = 2; L <= n; L++) {
-    const k = Math.min(3, L)
-    const window = std.slice(L - k, L)
-    const wMean = window.length ? window.reduce((a, b) => a + b, 0) / window.length : Infinity
-    if (wMean <= stdMed) { consL = L; break }
+  if (lengthStats && lengthStats.mean.length) {
+    const variability = lengthStats.mean.map((_, i) => {
+      const lo = lengthStats.p10[i] ?? 0
+      const hi = lengthStats.p90[i] ?? 0
+      return Math.max(0, hi - lo)
+    })
+    const varMed = median(variability)
+    for (let L = 2; L <= variability.length; L++) {
+      const k = Math.min(3, L)
+      const window = variability.slice(L - k, L)
+      const wMean = window.length ? window.reduce((a, b) => a + b, 0) / window.length : Infinity
+      if (wMean <= varMed) { consL = L; break }
+    }
+  } else {
+    for (let L = 2; L <= n; L++) {
+      const k = Math.min(3, L)
+      const window = std.slice(L - k, L)
+      const wMean = window.length ? window.reduce((a, b) => a + b, 0) / window.length : Infinity
+      if (wMean <= stdMed) { consL = L; break }
+    }
   }
 
   // Highscore: expected best-of-L curve; choose smallest L within 1% of max and where marginal gain < 2%
@@ -145,4 +243,14 @@ function median(arr: number[]): number {
   if (!n) return 0
   const mid = Math.floor(n / 2)
   return n % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2
+}
+
+function percentile(arr: number[], p: number): number {
+  const v = arr.filter(n => Number.isFinite(n)).slice().sort((a, b) => a - b)
+  const n = v.length
+  if (!n) return 0
+  const clamped = Math.min(100, Math.max(0, p))
+  const rank = Math.ceil((clamped / 100) * n) - 1
+  const idx = Math.min(n - 1, Math.max(0, rank))
+  return v[idx]
 }
