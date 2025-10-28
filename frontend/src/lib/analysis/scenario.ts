@@ -1,4 +1,4 @@
-import type { ScenarioRecord } from '../types/ipc'
+import type { ScenarioRecord } from '../../types/ipc'
 
 export type ScenarioComputed = {
   labels: string[]

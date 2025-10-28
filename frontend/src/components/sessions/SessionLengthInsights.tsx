@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
-import { Metric, collectRunsBySession, expectedBestVsLength, expectedByIndex, recommendLengths } from '../../lib/sessionLength'
+import { Metric, collectRunsBySession, expectedBestVsLength, expectedByIndex, recommendLengths } from '../../lib/analysis/sessionLength'
 import type { Session } from '../../types/domain'
 
 export function SessionLengthInsights({ sessions, scenarioName }: { sessions: Session[]; scenarioName: string }) {

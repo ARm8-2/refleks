@@ -3,7 +3,7 @@ import { ChartBox, Findings, MetricsControls, MetricsLineChart, ScenarioMixRadar
 import { buildRankDefs, cellFill, hexToRgba, numberFmt } from '../../../components/benchmarks/utils'
 import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkProgress'
 import { useRoute } from '../../../hooks/useRoute'
-import { buildChartSeries, groupByScenario } from '../../../lib/metrics'
+import { buildChartSeries, groupByScenario } from '../../../lib/analysis/metrics'
 import { getScenarioName } from '../../../lib/utils'
 import type { Session } from '../../../types/domain'
 

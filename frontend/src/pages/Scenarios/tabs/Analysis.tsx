@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { AccuracyVsSpeedChart, EventsOverTimeChart, TTKMovingAverageChart } from '../../../components'
-import { computeScenarioAnalysis } from '../../../lib/compute'
+import { computeScenarioAnalysis } from '../../../lib/analysis/scenario'
 import type { ScenarioRecord } from '../../../types/ipc'
 
 export function AnalysisTab({ item }: { item: ScenarioRecord }) {

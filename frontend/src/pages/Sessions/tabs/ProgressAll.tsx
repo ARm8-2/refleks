@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChartBox, MetricsControls, MetricsLineChart, SessionLengthInsights, SummaryStats, TimeOfDayAreaChart } from '../../../components'
 import { useStore } from '../../../hooks/useStore'
-import { buildChartSeries, computeSessionAverages, groupByScenario } from '../../../lib/metrics'
+import { buildChartSeries, computeSessionAverages, groupByScenario } from '../../../lib/analysis/metrics'
 import { getScenarioName } from '../../../lib/utils'
 
 export function ProgressAllTab() {

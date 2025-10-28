@@ -1,6 +1,6 @@
-import type { Session } from '../types/domain';
-import type { ScenarioRecord } from '../types/ipc';
-import { getScenarioName } from './utils';
+import type { Session } from '../../types/domain';
+import type { ScenarioRecord } from '../../types/ipc';
+import { getScenarioName } from '../utils';
 
 export type MetricsSeries = { score: number[]; acc: number[]; ttk: number[] }
 
