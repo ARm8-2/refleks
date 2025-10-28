@@ -32,34 +32,54 @@
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-extrabold mb-8 sm:mb-10">Releases</h2>
       <div class="timeline">
+        <!-- <div class="timeline-item">
+          <span class="timeline-dot" aria-hidden="true"></span>
+          <div class="timeline-date">Oct 2025</div>
+          <div class="timeline-body">
+            <div class="timeline-version">v0.1.1 - Patch</div>
+            <ul class="timeline-features">
+              <li>Updated links to the Help page</li>
+            </ul>
+          </div>
+        </div> -->
+
         <div class="timeline-item">
           <span class="timeline-dot" aria-hidden="true"></span>
           <div class="timeline-date">Oct 2025</div>
           <div class="timeline-body">
-            <div class="timeline-version">v0.1.0 — Beta</div>
+            <div class="timeline-version">v0.1.0 - Minor release</div>
             <ul class="timeline-features">
-              <li>Automatic tracking and session grouping</li>
-              <li>Benchmarks: browse lists + Steam progress (Windows)</li>
-              <li>Mouse tracking and replay (Windows)</li>
-              <li>Deep analysis with trend charts and consistency metrics</li>
+              <li>Proper app versioning (semantic version, exposed via the app API)</li>
+              <li>Updated settings system with advanced options (theme, traces dir, parse-existing limit, mouse buffer)
+              </li>
+              <li>New Raw Stats tab for scenarios with smart formatting and categories</li>
+              <li>Benchmark progress shown inside the Sessions view for the selected scenario</li>
+              <li>Various UI improvements and bug fixes</li>
             </ul>
           </div>
         </div>
 
         <div class="timeline-item">
           <span class="timeline-dot" aria-hidden="true"></span>
-          <div class="timeline-date">Sep 2025</div>
+          <div class="timeline-date">Oct 2025</div>
           <div class="timeline-body">
-            <div class="timeline-version">v0.0.0 — Alpha</div>
+            <div class="timeline-version">v0.0.0 - Initial release</div>
             <ul class="timeline-features">
-              <li>Initial import and proof‑of‑concept analysis</li>
-              <li>Basic session grouping and run history</li>
+              <li>Automatic tracking of KovaaK's stats with live updates</li>
+              <li>Session grouping by time gap, with session summaries and recent sessions list</li>
+              <li>Scenario analysis: events over time, accuracy trend, Real Avg TTK, moving averages, and consistency
+              </li>
+              <li>Sessions overview: score/accuracy/TTK chart, findings (best/worst runs), and scenario‑mix radar</li>
+              <li>Benchmarks: explore official lists, favorite benchmarks, and fetch progress via Steam (Windows)</li>
+              <li>Mouse movement capture and replay (Windows), saved locally to your traces folder</li>
+              <li>Launch scenarios in KovaaK's directly from the app</li>
+              <li>Themes and a basic settings page</li>
             </ul>
           </div>
         </div>
       </div>
-      <p class="mt-8 text-sm text-[var(--text-muted)] text-center">Note: versions shown are prerelease and subject to
-        change.</p>
+      <p class="mt-8 text-sm text-[var(--text-muted)] text-center">We follow semantic versioning (MAJOR.MINOR.PATCH).
+        Release entries are marked as Minor release or Patch to help distinguish feature releases from small fixes.</p>
     </div>
   </section>
 
@@ -82,9 +102,19 @@
             how optimal your mouse control is and where to improve.</p>
         </div>
         <div class="card">
-          <div class="card-title">Cross‑platform support</div>
-          <p class="card-copy">Experimental builds for Linux and macOS with file watcher parity (mouse tracking
-            remains Windows‑only for now).</p>
+          <div class="card-title">Sensitivity analysis</div>
+          <p class="card-copy">Analyze how your performance changes with different sensitivities. Compare score,
+            accuracy, and Real Avg TTK across runs in the Sessions tab to dial in your best settings.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Deeper benchmark analysis</div>
+          <p class="card-copy">Richer progress breakdowns across benchmark categories to highlight specific weaknesses
+            and suggest where to focus next for the biggest gains.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Long‑term trends</div>
+          <p class="card-copy">Look beyond a single session. Aggregate multiple sessions to spot time‑of‑day patterns,
+            fatigue effects, and how total time played impacts performance.</p>
         </div>
       </div>
     </div>
@@ -99,33 +129,17 @@
       </p>
       <div class="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         <div class="card">
-          <div class="card-title">Encrypted cloud sync</div>
-          <p class="card-copy">Optional encrypted backups and sync for settings, favorites, and local analytics across
-            devices.</p>
-        </div>
-        <div class="card">
-          <div class="card-title">Multi‑profile support</div>
-          <p class="card-copy">Separate profiles for multiple players on the same machine, each with their own stats
-            and settings.</p>
-        </div>
-        <div class="card">
-          <div class="card-title">Mobile companion app</div>
-          <p class="card-copy">Read‑only view of your sessions, benchmarks, and trends on your phone for quick
-            on‑the‑go review.</p>
-        </div>
-        <div class="card">
-          <div class="card-title">Aim Lab import</div>
-          <p class="card-copy">Import stats from other aim trainers to compare your progress across different
-            platforms holistically.</p>
-        </div>
-        <div class="card">
           <div class="card-title">Custom themes</div>
           <p class="card-copy">Design and share your own color themes to make RefleK's match your setup perfectly.</p>
         </div>
         <div class="card">
-          <div class="card-title">Session sharing</div>
-          <p class="card-copy">Export a shareable session summary you can send to coaches or friends for review and
-            feedback.</p>
+          <div class="card-title">Custom benchmarks</div>
+          <p class="card-copy">Create your own benchmark lists and track progress just like the official ones.</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Benchmark leaderboards</div>
+          <p class="card-copy">Leaderboards for benchmarks so you can compare progress with friends and the
+            community.</p>
         </div>
       </div>
     </div>
