@@ -126,7 +126,7 @@ export function SessionLengthInsights({ sessions, scenarioName }: { sessions: Se
               ],
             },
           }}
-          height={320}
+          height={240}
         >
           {NotEnough ? (
             <div className="h-full grid place-items-center text-sm text-[var(--text-secondary)]">Not enough data to estimate yet.</div>
@@ -141,7 +141,7 @@ export function SessionLengthInsights({ sessions, scenarioName }: { sessions: Se
           info={<div>
             <div className="mb-2">Expected best performance within the first L runs of a session. We pick the smallest L within 1% of the maximum and with low marginal gains.</div>
           </div>}
-          height={320}
+          height={240}
         >
           {NotEnough ? (
             <div className="h-full grid place-items-center text-sm text-[var(--text-secondary)]">Not enough data to estimate yet.</div>

@@ -77,6 +77,8 @@ export function ProgressAllTab() {
 
       <SummaryStats title="Progress summary" score={metrics.score} acc={metrics.acc} ttk={metrics.ttk} firstPct={firstPct} lastPct={lastPct} />
 
+      <SessionLengthInsights sessions={sessions} scenarioName={selectedName} />
+
       <ChartBox
         title="Practice time-of-day"
         info={<div>
@@ -92,9 +94,6 @@ export function ProgressAllTab() {
           <TimeOfDayAreaChart items={scenarios} />
         </div>
       </ChartBox>
-
-      {/* Session length insights for the selected scenario across sessions */}
-      <SessionLengthInsights sessions={sessions} scenarioName={selectedName} />
     </div>
   )
 }
