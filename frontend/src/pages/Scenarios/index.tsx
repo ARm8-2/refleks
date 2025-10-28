@@ -76,7 +76,7 @@ export function ScenariosPage() {
               <div className="text-xs text-[var(--text-secondary)]">Score: {it.stats['Score'] ?? '?'} • Acc: {formatPct(it.stats['Accuracy'])}</div>
             </button>
           )}
-          emptyPlaceholder={<div className="text-sm text-[var(--text-secondary)]">Drop new Kovaak's CSV files into {prettyPath} to see live updates.</div>}
+          emptyPlaceholder={<div className="p-3 text-sm text-[var(--text-secondary)]">Play a scenario in KovaaK's to see its stats here. Make sure your stats are being saved to the <code className="font-mono">{prettyPath}</code> folder.</div>}
           detailHeader={active ? (
             <div className="flex items-center gap-2 min-w-0">
               <div className="text-base font-medium text-[var(--text-primary)] truncate" title={String(active.stats['Scenario'] ?? getScenarioName(active))}>
