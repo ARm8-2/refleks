@@ -6,7 +6,7 @@ package constants
 const (
 	// AppVersion is the human-readable semantic version of the application.
 	// Bump this on every release. Follow SemVer: MAJOR.MINOR.PATCH
-	AppVersion = "0.1.0"
+	AppVersion = "0.1.1"
 
 	// Kovaaks player progress endpoint. Use fmt.Sprintf with benchmarkId and steamId.
 	KovaaksPlayerProgressURL = "https://kovaaks.com/webapp-backend/benchmarks/player-progress-rank-benchmark?benchmarkId=%d&steamId=%s"

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { EventsOn } from '../wailsjs/runtime'
+import { BrowserOpenURL, EventsOn } from '../wailsjs/runtime'
 import { navigate } from './hooks/useRoute'
 import { StoreProvider, useStore } from './hooks/useStore'
 import { getRecentScenarios, getSettings, getVersion, startWatcher } from './lib/internal'
@@ -51,8 +51,7 @@ function TopNav() {
       <div className="flex items-center gap-2 ml-auto">
         <a
           href="https://refleks-app.com/home/#support"
-          target="_blank"
-          rel="noopener noreferrer"
+          onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/home/#support') }}
           className="text-xs underline underline-offset-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           Support & Feedback
