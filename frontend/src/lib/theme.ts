@@ -1,4 +1,12 @@
-export const THEMES = ['dark', 'light', 'dracula', 'ocean'] as const
+export const THEMES = [
+  'dark',
+  'light',
+  'dracula',
+  'ocean',
+  'nord',
+  'gruvbox',
+  'solarized-dark',
+] as const
 export type Theme = typeof THEMES[number]
 
 const STORAGE_KEY = 'refleks.theme'
