@@ -3,7 +3,7 @@ import { ListDetail, Tabs } from '../../components'
 import { useStore } from '../../hooks/useStore'
 import { useUIState } from '../../hooks/useUIState'
 import type { Session } from '../../types/domain'
-import { AiTab, OverviewTab } from './tabs'
+import { AiTab, OverviewTab, ProgressAllTab } from './tabs'
 
 function formatDuration(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000))
@@ -68,9 +68,10 @@ export function SessionsPage() {
 }
 
 function SessionDetail({ session }: { session: Session | null }) {
-  const [tab, setTab] = useUIState<'overview' | 'ai'>('tabs:session', 'overview')
+  const [tab, setTab] = useUIState<'overview' | 'progress' | 'ai'>('tabs:session', 'overview')
   const tabs = [
     { id: 'overview', label: 'Overview', content: <OverviewTab session={session} /> },
+    { id: 'progress', label: 'Progress (all)', content: <ProgressAllTab /> },
     { id: 'ai', label: 'AI Insights', content: <AiTab /> },
   ]
   return <Tabs tabs={tabs} active={tab} onChange={(id) => setTab(id as any)} />

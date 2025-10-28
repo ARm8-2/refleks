@@ -13,6 +13,7 @@ import {
 import { Info } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
+import { useChartTheme } from '../../hooks/useChartTheme'
 import { Dropdown } from './Dropdown'
 import { Toggle } from './Toggle'
 
@@ -108,6 +109,7 @@ export function LineChart({
   data: number[]
   color?: string
 }) {
+  const theme = useChartTheme()
   const chartData = useMemo(() => ({
     labels,
     datasets: [
@@ -127,13 +129,21 @@ export function LineChart({
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
-      tooltip: { intersect: false, mode: 'index' as const },
+      tooltip: {
+        intersect: false,
+        mode: 'index' as const,
+        backgroundColor: theme.tooltipBg,
+        titleColor: theme.textPrimary,
+        bodyColor: theme.textSecondary,
+        borderColor: theme.tooltipBorder,
+        borderWidth: 1,
+      },
     },
     scales: {
-      x: { grid: { color: 'rgba(255,255,255,0.05)' } },
-      y: { grid: { color: 'rgba(255,255,255,0.05)' } },
+      x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
+      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
     },
-  }), [])
+  }), [theme])
 
   return <Line options={options as any} data={chartData} />
 }

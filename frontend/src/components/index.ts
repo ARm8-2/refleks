@@ -1,3 +1,4 @@
+export { useChartTheme } from '../hooks/useChartTheme';
 export { BenchmarkCard } from './benchmarks/BenchmarkCard';
 export { BenchmarkProgress } from './benchmarks/BenchmarkProgress';
 export { AccuracyVsSpeedChart } from './scenarios/AccuracyVsSpeedChart';
@@ -12,6 +13,7 @@ export { MetricsControls } from './sessions/MetricsControls';
 export { MetricsLineChart } from './sessions/MetricsLineChart';
 export { ScenarioMixRadarChart } from './sessions/ScenarioMixRadarChart';
 export { SummaryStats } from './sessions/SummaryStats';
+export { TimeOfDayAreaChart } from './sessions/TimeOfDayAreaChart';
 export { Button } from './shared/Button';
 export { ChartBox, LineChart } from './shared/ChartBox';
 export { Dropdown } from './shared/Dropdown';

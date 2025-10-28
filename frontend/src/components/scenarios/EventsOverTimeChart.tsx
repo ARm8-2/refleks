@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
+import { useChartTheme } from '../../hooks/useChartTheme'
 import { EventsOverTimeDetails } from './EventsOverTimeDetails'
 
 export function EventsOverTimeChart({
@@ -8,14 +9,12 @@ export function EventsOverTimeChart({
   accOverTime,
   realTTK,
   cumKills,
-  colors,
   summary,
 }: {
   timeSec: number[]
   accOverTime: number[]
   realTTK: number[]
   cumKills: number[]
-  colors: any
   summary: {
     kills: number
     shots: number
@@ -31,6 +30,7 @@ export function EventsOverTimeChart({
     meanKPM?: number
   }
 }) {
+  const colors = useChartTheme()
   const data = useMemo(() => {
     const acc = timeSec.map((x, i) => ({ x, y: accOverTime[i] }))
     const ttk = timeSec.map((x, i) => ({ x, y: realTTK[i] }))

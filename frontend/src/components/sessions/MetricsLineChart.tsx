@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
+import { useChartTheme } from '../../hooks/useChartTheme';
 
 export function MetricsLineChart({ labels, score, acc, ttk }: { labels: string[]; score: number[]; acc: number[]; ttk: number[] }) {
-  const css = getComputedStyle(document.documentElement)
-  const textColor = css.getPropertyValue('--text-primary').trim() || '#e6e6e6'
-  const gridColor = 'rgba(255,255,255,0.06)'
+  const colors = useChartTheme()
 
   const data = useMemo(() => ({
     labels,
@@ -44,16 +43,24 @@ export function MetricsLineChart({ labels, score, acc, ttk }: { labels: string[]
     maintainAspectRatio: false,
     interaction: { mode: 'index', intersect: false },
     plugins: {
-      legend: { position: 'top' as const, labels: { color: textColor } },
-      tooltip: { intersect: false, mode: 'index' as const },
+      legend: { position: 'top' as const, labels: { color: colors.textPrimary } },
+      tooltip: {
+        intersect: false,
+        mode: 'index' as const,
+        backgroundColor: colors.tooltipBg,
+        titleColor: colors.textPrimary,
+        bodyColor: colors.textSecondary,
+        borderColor: colors.tooltipBorder,
+        borderWidth: 1,
+      },
     },
     scales: {
-      x: { grid: { color: gridColor }, ticks: { color: textColor } },
-      yScore: { type: 'linear' as const, position: 'left' as const, grid: { color: gridColor }, ticks: { color: textColor } },
-      yAcc: { type: 'linear' as const, position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: textColor, callback: (v: any) => `${v}%` } },
-      yTTK: { type: 'linear' as const, position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: textColor } },
+      x: { grid: { color: colors.grid }, ticks: { color: colors.textSecondary } },
+      yScore: { type: 'linear' as const, position: 'left' as const, grid: { color: colors.grid }, ticks: { color: colors.textSecondary } },
+      yAcc: { type: 'linear' as const, position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: colors.textSecondary, callback: (v: any) => `${v}%` } },
+      yTTK: { type: 'linear' as const, position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: colors.textSecondary } },
     },
-  }), [textColor])
+  }), [colors])
 
   return <Line data={data as any} options={options as any} />
 }

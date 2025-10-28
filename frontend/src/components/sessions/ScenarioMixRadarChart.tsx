@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
 import { Radar } from 'react-chartjs-2';
+import { useChartTheme } from '../../hooks/useChartTheme';
 
 export function ScenarioMixRadarChart({ labels, counts }: { labels: string[]; counts: number[] }) {
-  const css = getComputedStyle(document.documentElement)
-  const textColor = css.getPropertyValue('--text-primary').trim() || '#e6e6e6'
-  const gridColor = 'rgba(255,255,255,0.06)'
+  const { textSecondary, grid } = useChartTheme()
   const stroke = 'rgb(34, 197, 94)'
   const fill = 'rgba(34, 197, 94, 0.25)'
 
@@ -31,11 +30,11 @@ export function ScenarioMixRadarChart({ labels, counts }: { labels: string[]; co
     scales: {
       r: {
         beginAtZero: true,
-        grid: { color: gridColor },
-        angleLines: { color: gridColor },
-        pointLabels: { color: textColor, font: { size: 11 } },
+        grid: { color: grid },
+        angleLines: { color: grid },
+        pointLabels: { color: textSecondary, font: { size: 11 } },
         ticks: {
-          color: textColor,
+          color: textSecondary,
           showLabelBackdrop: false,
           backdropColor: 'transparent',
           z: 1,
@@ -43,7 +42,7 @@ export function ScenarioMixRadarChart({ labels, counts }: { labels: string[]; co
         },
       },
     },
-  }), [textColor])
+  }), [textSecondary, grid])
 
   return <Radar data={data as any} options={options as any} />
 }
