@@ -23,8 +23,6 @@ export type HighscorePrediction = {
 
 const DAY = 24 * 3600 * 1000
 
-function pad(n: number, w = 2) { return n.toString().padStart(w, '0') }
-
 function humanizeETA(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) return 'soon'
   const totalMin = Math.round(ms / (60 * 1000))
@@ -113,24 +111,34 @@ function weightedLinReg(xs: number[], ys: number[], ws: number[]): { a: number; 
   return { a, b, r2 }
 }
 
-export function collectScenarioHistory(items: ScenarioRecord[], name: string): Array<{ t: number; score: number }> {
-  const out: Array<{ t: number; score: number }> = []
+export function collectScenarioHistory(items: ScenarioRecord[], name: string): Array<{ t: number; score: number; sessionId: number }> {
+  // Group by sessions using a fixed gap threshold (minutes). If user changes app settings,
+  // this can be wired later, but here we keep a sane default independent of UI store.
+  const SESSION_GAP_MIN = 30
+  const gapMs = SESSION_GAP_MIN * 60 * 1000
+  const runs: Array<{ t: number; score: number; sessionId: number }> = []
+  // Filter to scenario and collect raw with end timestamps
+  const filtered: Array<{ t: number; score: number; fileName: string }> = []
   for (const it of items) {
     if (getScenarioName(it) !== name) continue
     const score = Number(it.stats['Score'] ?? 0)
     if (!Number.isFinite(score)) continue
-    out.push({ t: parseRecordTimestamp(it), score })
+    filtered.push({ t: parseRecordTimestamp(it), score, fileName: String(it.fileName || '') })
   }
-  // oldest -> newest
-  out.sort((a, b) => a.t - b.t)
-  return out
+  // Order oldest -> newest
+  filtered.sort((a, b) => a.t - b.t)
+  // Assign session ids by gap
+  let sid = 0
+  let lastT = Number.NEGATIVE_INFINITY
+  for (const f of filtered) {
+    if (!Number.isFinite(lastT) || (f.t - lastT) > gapMs) sid++
+    runs.push({ t: f.t, score: f.score, sessionId: sid })
+    lastT = f.t
+  }
+  return runs
 }
 
 function clamp(n: number, a: number, b: number) { return Math.max(a, Math.min(b, n)) }
-
-function linRegWeighted(xs: number[], ys: number[], ws: number[]): { a: number; b: number; r2: number } {
-  return weightedLinReg(xs, ys, ws)
-}
 
 function quantile(arr: number[], q: number): number {
   if (arr.length === 0) return 0
@@ -143,15 +151,22 @@ function quantile(arr: number[], q: number): number {
 
 // Fit deltaScore per run as a function of pause between runs: delta ~= a * (1 - exp(-dt/tau)) + b
 function fitDeltaVsPause(dtDays: number[], deltas: number[], pairWeights: number[]) {
-  const taus = [] as number[]
-  for (let x = -1.2; x <= 1.2; x += 0.1) { // log10 grid ~ 0.06 to ~15 days
-    const tau = Math.pow(10, x)
-    taus.push(tau)
+  // Adapt the time constant search to the observed within-session gaps (minutes-scale)
+  const safe = dtDays.filter(Number.isFinite).filter(v => v > 0)
+  const minDt = safe.length ? Math.max(1 / (24 * 60), Math.min(...safe)) : 5 / (24 * 60) // >=1min (default 5min)
+  const maxDt = safe.length ? Math.max(minDt * 5, quantile(safe, 0.9)) : 2 / 24 // default 2h
+  const lo = Math.log10(minDt / 3)
+  const hi = Math.log10(maxDt * 3)
+  const taus: number[] = []
+  const steps = 25
+  for (let i = 0; i < steps; i++) {
+    const x = lo + (hi - lo) * (i / (steps - 1))
+    taus.push(Math.pow(10, x))
   }
-  let best = { tau: 1, a: 0, b: 0, r2: 0 }
+  let best = { tau: Math.sqrt(minDt * maxDt), a: 0, b: 0, r2: 0 }
   for (const tau of taus) {
     const x = dtDays.map(d => 1 - Math.exp(-Math.max(0, d) / tau))
-    const { a, b, r2 } = linRegWeighted(x, deltas, pairWeights)
+    const { a, b, r2 } = weightedLinReg(x, deltas, pairWeights)
     if (r2 > best.r2) best = { tau, a, b, r2 }
   }
   return best
@@ -163,8 +178,9 @@ function expectedDeltaAtPause(a: number, b: number, tau: number, dtDays: number)
 }
 
 function findOptimalPauseAndRuns(deficit: number, fit: { a: number; b: number; tau: number },
-  dtMinDays = 0.08, dtMaxDays = 7, dtStepDays = 0.04) {
-  // Minimize total time = runs * dt, with runs = deficit / expectedDelta(dt)
+  dtMinDays: number, dtMaxDays: number, dtStepDays: number) {
+  // Minimize total time = runs * dt, with runs = deficit / expectedDelta(dt),
+  // constrained to a realistic within-session pause range.
   let best = { dtDays: 1, runs: Number.POSITIVE_INFINITY, delta: 0 }
   for (let d = dtMinDays; d <= dtMaxDays + 1e-9; d += dtStepDays) {
     const delta = Math.max(0, expectedDeltaAtPause(fit.a, fit.b, fit.tau, d))
@@ -190,50 +206,45 @@ export function predictNextHighscore(items: ScenarioRecord[], name: string): Hig
   const best = Math.max(...hist.map(h => h.score))
   const last = hist[n - 1]
   const lastPlayedDays = (now - last.t) / DAY
-  // Build inputs
+  // Basic arrays (for diagnostics)
   const t0 = hist[0].t
   const xsDays = hist.map(h => (h.t - t0) / DAY)
   const ys = hist.map(h => h.score)
-  // recency weighting half-life (days, a bit shorter than before)
-  const halfLifeDays = 21
-  const wsDays = hist.map(h => Math.pow(0.5, (now - h.t) / (halfLifeDays * DAY)))
-  // Also slope per run with runs-referenced recency
+  // Recency weighting by runs for diagnostics (not used to drive the model decisions)
   const idx = ys.map((_, i) => i)
-  const halfLifeRuns = 12
+  const halfLifeRuns = 6
   const wsRuns = idx.map(i => Math.pow(0.5, (n - 1 - i) / halfLifeRuns))
-  // drop very old low-weight points if we have many (time-weighted)
+  // Diagnostics: compute slopes but do not use them to drive predictions
+  const { b: slopePerRun } = weightedLinReg(idx, ys, wsRuns)
+  const halfLifeDays = 21
+  const wsDaysDiag = hist.map(h => Math.pow(0.5, (now - h.t) / (halfLifeDays * DAY)))
   const MIN_W = 0.04
   const xs2: number[] = []
   const ys2: number[] = []
   const ws2: number[] = []
   for (let i = 0; i < xsDays.length; i++) {
-    if (n > 40 && wsDays[i] < MIN_W) continue
-    xs2.push(xsDays[i]); ys2.push(ys[i]); ws2.push(wsDays[i])
+    if (n > 40 && wsDaysDiag[i] < MIN_W) continue
+    xs2.push(xsDays[i]); ys2.push(ys[i]); ws2.push(wsDaysDiag[i])
   }
-  const { a, b, r2 } = weightedLinReg(xs2, ys2, ws2)
-  let slopePerDay = b
+  const { b: slopePerDay } = weightedLinReg(xs2, ys2, ws2)
 
-  // Slope per run (runs as x)
-  const { b: bRun } = weightedLinReg(idx, ys, wsRuns)
-  const slopePerRun = bRun
-  // idle penalty: if not played recently, decay slope towards zero
-  const idleHalf = 7
-  const idleDecay = Math.pow(0.5, Math.max(0, lastPlayedDays) / idleHalf)
-  slopePerDay *= idleDecay
-
-  // Prepare runs-based delta model across observed adjacent runs
-  const dtDays: number[] = []
+  // Prepare runs-based delta model across observed adjacent runs, but strictly within the same session
+  const dtDays: number[] = [] // gap in days (we'll convert to minutes for reasoning)
   const deltas: number[] = []
   const pairWeights: number[] = []
   for (let i = 1; i < n; i++) {
+    if (hist[i].sessionId !== hist[i - 1].sessionId) continue // cross-session gap: skip
     const d = (hist[i].t - hist[i - 1].t) / DAY
     const ds = ys[i] - ys[i - 1]
-    dtDays.push(Math.max(0.01, d))
+    // guard very small dt to 1 minute to avoid numeric issues
+    const MIN_DAY = 1 / (24 * 60)
+    dtDays.push(Math.max(MIN_DAY, d))
     deltas.push(ds)
     // weight more recent pairs and moderate by magnitude to reduce outlier impact
     const w = Math.pow(0.5, (n - 1 - i) / halfLifeRuns)
     pairWeights.push(w)
   }
+  const havePairs = dtDays.length >= 2
   // Robustify deltas: clip to IQR
   if (deltas.length >= 6) {
     const q1 = quantile(deltas, 0.25)
@@ -243,41 +254,59 @@ export function predictNextHighscore(items: ScenarioRecord[], name: string): Hig
       deltas[i] = clamp(deltas[i], q1 - 1.5 * iqr, q3 + 1.5 * iqr)
     }
   }
+  // Positive delta stats for fallback and confidence
+  const pos = deltas.map(x => Math.max(0, x))
+  const meanPos = pos.reduce((a, b) => a + b, 0) / Math.max(1, pos.length)
+  const varPos = pos.reduce((a, b) => a + (b - meanPos) * (b - meanPos), 0) / Math.max(1, pos.length)
+  const stdPos = Math.sqrt(Math.max(0, varPos))
 
-  const fit = fitDeltaVsPause(dtDays, deltas, pairWeights)
+  const fit = havePairs ? fitDeltaVsPause(dtDays, deltas, pairWeights) : { a: 0, b: 0, tau: 5 / (24 * 60), r2: 0 }
   const deficitMargin = Math.max(1, Math.round(best * 0.003))
   const target = best + deficitMargin
   const deficit = target - last.score
-
-  // If no upward trend from time regression and delta model poor, bail
-  const modelWeak = (!Number.isFinite(slopePerDay) || slopePerDay <= 0.00001 || r2 < 0.05)
-  if (deficit <= 0) {
-    const soonTs = now + (2 * DAY) * (1 - Math.min(1, r2)) * (lastPlayedDays > 2 ? 1.5 : 1)
-    return { etaTs: soonTs, etaHuman: humanizeETA(soonTs - now), runsExpected: 1, runsLo: 1, runsHi: 2, optPauseHours: 24, confidence: r2 > 0.35 ? 'high' : (r2 > 0.15 ? 'med' : 'low'), sample: xs2.length, best, lastScore: last.score, lastPlayedDays, slopePerDay, slopePerRun }
+  // Near-best shortcut: if already within a tiny margin, expect 1–2 runs soon.
+  const epsImprovement = Math.max(1, Math.round(best * 0.0002)) // ~0.02% of best, at least 1 point
+  if (best - last.score <= epsImprovement) {
+    const soonPauseH = Math.max(1, Math.round(quantile(dtDays, 0.25) * 24))
+    const soonTs = now + Math.max(DAY * 0.25, soonPauseH * (60 * 60 * 1000))
+    const pairSample = dtDays.length
+    const sizeFactor = Math.min(1, pairSample / 24)
+    const confScore = Math.max(0, Math.min(1, 0.4 * fit.r2 + 0.6 * sizeFactor))
+    const confidence: HighscorePrediction['confidence'] = confScore > 0.6 ? 'high' : (confScore > 0.3 ? 'med' : 'low')
+    return { etaTs: soonTs, etaHuman: humanizeETA(soonTs - now), runsExpected: 1, runsLo: 1, runsHi: 2, optPauseHours: soonPauseH, confidence, sample: n, best, lastScore: last.score, lastPlayedDays, slopePerDay, slopePerRun }
   }
 
-  const opt = findOptimalPauseAndRuns(deficit, fit)
+  // Derive a realistic search range in minutes based on observed within-session gaps
+  const SESSION_GAP_MIN = 30 // minutes
+  const sessionGapDays = SESSION_GAP_MIN / (24 * 60)
+  const dtMinObs = havePairs ? Math.max(1 / (24 * 60), quantile(dtDays, 0.1) * 0.7) : 2 / (24 * 60)
+  const dtMaxObs = havePairs ? Math.max(dtMinObs * 1.2, Math.min(sessionGapDays, quantile(dtDays, 0.9) * 1.4)) : Math.min(sessionGapDays, 15 / (24 * 60))
+  const dtStepDays = Math.max(0.5 / (24 * 60), (dtMaxObs - dtMinObs) / 60) // ~30 steps
+  const opt = findOptimalPauseAndRuns(deficit, fit, dtMinObs, dtMaxObs, dtStepDays)
   // Reasonable caps and guards
   const MAX_RUNS_REASONABLE = 500
-  const epsImprovement = Math.max(1, Math.round(best * 0.0002)) // ~0.02% of best, at least 1 point
-
-  if (!opt || modelWeak || !Number.isFinite(opt.runs) || opt.runs > MAX_RUNS_REASONABLE || opt.delta < epsImprovement) {
-    // Fallback to runs from slope per run and pause from median observed gap
-    const medDt = quantile(dtDays, 0.5) || 1
-    const spr = Math.max(1e-6, slopePerRun)
+  if (!opt || !Number.isFinite(opt.runs) || opt.runs > MAX_RUNS_REASONABLE || opt.delta < epsImprovement) {
+    // Fallback: use robust recent improvement per run (non-negative deltas) and median observed pause
+    const medDt = (havePairs ? quantile(dtDays, 0.5) : 5 / (24 * 60)) || 5 / (24 * 60)
+    const spr = Math.max(1e-6, meanPos)
     const runsRaw = deficit / spr
     if (!Number.isFinite(runsRaw) || runsRaw > MAX_RUNS_REASONABLE || spr < epsImprovement * 0.25) {
-      // Too many runs or essentially flat improvement: report unknown like the old model
+      // Too many runs or essentially flat improvement: report unknown
       return { etaTs: null, etaHuman: 'unknown', runsExpected: null, runsLo: null, runsHi: null, optPauseHours: null, confidence: 'low', sample: n, best, lastScore: last.score, lastPlayedDays, slopePerDay, slopePerRun, reason: 'No upward trend detected yet' }
     }
     const runs = Math.ceil(runsRaw)
-    const confScore = Math.max(0, Math.min(1, 0.6 * r2 + 0.4 * Math.min(1, n / 20)))
-    const widen = 0.35 + 0.35 * (1 - confScore)
+    // Confidence from sample size and stability (lower variability => higher confidence)
+    const pairSample = dtDays.length
+    const sizeFactor = Math.min(1, pairSample / 24)
+    const stability = meanPos > 1e-6 ? clamp(1 - Math.min(2, stdPos / Math.max(1, meanPos)), 0, 1) : 0
+    const recencyPenalty = clamp(lastPlayedDays / 21, 0, 1)
+    const confScore = clamp(0.15 + 0.55 * (0.6 * sizeFactor + 0.4 * stability) - 0.15 * recencyPenalty, 0, 1)
+    const widen = 0.28 + 0.32 * (1 - confScore) + 0.12 * (1 - stability)
     const lo = Math.max(1, Math.floor(runs * (1 - widen)))
     const hi = Math.max(lo + 1, Math.ceil(runs * (1 + widen)))
     const eta = now + Math.max(1, runs) * medDt * DAY
-    const confidence: HighscorePrediction['confidence'] = confScore > 0.55 ? 'high' : (confScore > 0.28 ? 'med' : 'low')
-    return { etaTs: eta, etaHuman: humanizeETA(eta - now), runsExpected: runs, runsLo: lo, runsHi: hi, optPauseHours: Math.round(medDt * 24), confidence, sample: n, best, lastScore: last.score, lastPlayedDays, slopePerDay, slopePerRun, reason: modelWeak ? 'Weak trend; using fallback' : undefined }
+    const confidence: HighscorePrediction['confidence'] = confScore > 0.6 ? 'high' : (confScore > 0.3 ? 'med' : 'low')
+    return { etaTs: eta, etaHuman: humanizeETA(eta - now), runsExpected: runs, runsLo: lo, runsHi: hi, optPauseHours: Math.round(medDt * 24), confidence, sample: n, best, lastScore: last.score, lastPlayedDays, slopePerDay, slopePerRun, reason: 'Using robust recent trend' }
   }
 
   const runs = Math.max(1, Math.ceil(opt.runs))
@@ -285,18 +314,15 @@ export function predictNextHighscore(items: ScenarioRecord[], name: string): Hig
   // confidence combines fit.r2 and sample size of pairs
   const pairSample = dtDays.length
   const sizeFactor = Math.min(1, pairSample / 24)
-  const confScore = Math.max(0, Math.min(1, 0.65 * fit.r2 + 0.35 * sizeFactor))
+  const stability = meanPos > 1e-6 ? clamp(1 - Math.min(2, stdPos / Math.max(1, meanPos)), 0, 1) : 0
+  const recencyPenalty = clamp(lastPlayedDays / 21, 0, 1)
+  const confScore = clamp(0.15 + 0.55 * (0.7 * fit.r2 + 0.3 * sizeFactor) + 0.3 * stability - 0.2 * recencyPenalty, 0, 1)
   const confidence: HighscorePrediction['confidence'] = confScore > 0.6 ? 'high' : (confScore > 0.3 ? 'med' : 'low')
   // Range based on uncertainty
-  const widen = 0.25 + 0.35 * (1 - confScore)
+  const widen = 0.22 + 0.30 * (1 - confScore) + 0.12 * (1 - stability)
   const lo = Math.max(1, Math.floor(runs * (1 - widen)))
   const hi = Math.max(lo + 1, Math.ceil(runs * (1 + widen)))
-  const optPauseHours = Math.max(1, Math.round(opt.dtDays * 24))
+  // Final recommended pause in hours, but do not exceed session gap; keep at least 1 minute
+  const optPauseHours = Math.max(1 / 60, Math.min(opt.dtDays * 24, SESSION_GAP_MIN / 60))
   return { etaTs: eta, etaHuman: humanizeETA(eta - now), runsExpected: runs, runsLo: lo, runsHi: hi, optPauseHours, confidence, sample: n, best, lastScore: last.score, lastPlayedDays, slopePerDay, slopePerRun }
-}
-
-export function formatEtaDate(ts: number | null): string {
-  if (!ts) return ''
-  const d = new Date(ts)
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }

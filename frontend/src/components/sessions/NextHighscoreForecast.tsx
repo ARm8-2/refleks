@@ -22,7 +22,7 @@ export function NextHighscoreForecast({ items, scenarioName }: { items: Scenario
           The model focuses on runs, not hours, and computes an optimal pause between runs for fastest progress.
         </div>
         <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-          <li>Recent runs matter more (recency half‑life ~12 runs).</li>
+          <li>Recent runs matter more.</li>
           <li>Optimal pause is learned from your data; it is not a historical average.</li>
           <li>Confidence reflects fit quality (R²), sample size, and recency.</li>
         </ul>
