@@ -37,3 +37,11 @@ export interface Settings {
   mouseBufferMinutes?: number
   maxExistingOnStart?: number
 }
+
+export interface UpdateInfo {
+  currentVersion: string
+  latestVersion: string
+  hasUpdate: boolean
+  downloadUrl?: string
+  releaseNotes?: string
+}

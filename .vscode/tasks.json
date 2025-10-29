@@ -40,6 +40,56 @@
 		},
 		{
 			"type": "shell",
+			"label": "Version: Bump",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"set -e; V='${input:newVersion}'; if ! [[ \"$V\" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then echo \"Invalid version: $V\"; exit 1; fi; sed -i -E \"s/(AppVersion[[:space:]]*=[[:space:]]*\\\")([^\\\"]+)(\\\")/\\1${V}\\3/\" internal/constants/constants.go; sed -i -E \"s/(\\\"productVersion\\\"[[:space:]]*:[[:space:]]*\\\")([^\\\"]+)(\\\")/\\1${V}\\3/\" wails.json; echo \"Bumped to $V\";"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "none"
+			},
+			"detail": "Prompt for a version and update AppVersion (Go) and wails.json info.productVersion"
+		},
+		{
+			"type": "shell",
+			"label": "Wails: Build for Windows (Installer)",
+			"command": "wails",
+			"args": [
+				"build",
+				"-nsis",
+				"-platform",
+				"windows/amd64"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$go"
+			],
+			"group": {
+				"kind": "build"
+			},
+			"detail": "Build Windows app and NSIS installer (versioned filename)"
+		},
+		{
+			"label": "Release: Bump + Build Installer",
+			"dependsOn": [
+				"Version: Bump",
+				"Wails: Build for Windows (Installer)"
+			],
+			"dependsOrder": "sequence",
+			"group": {
+				"kind": "build"
+			},
+			"detail": "Prompt for a version, update files, then build Windows installer"
+		},
+		{
+			"type": "shell",
 			"label": "Serve Docs (static)",
 			"command": "python3",
 			"args": [
@@ -57,6 +107,14 @@
 				"kind": "none"
 			},
 			"detail": "Serve the static docs/ folder at http://localhost:8080/"
+		}
+	],
+	"inputs": [
+		{
+			"id": "newVersion",
+			"type": "promptString",
+			"description": "Enter new semantic version (e.g., 4.2.0)",
+			"default": "0.0.0"
 		}
 	]
 }

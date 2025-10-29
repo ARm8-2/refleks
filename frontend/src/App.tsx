@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { BrowserOpenURL, EventsOn } from '../wailsjs/runtime'
 import { navigate } from './hooks/useRoute'
 import { StoreProvider, useStore } from './hooks/useStore'
-import { getRecentScenarios, getSettings, getVersion, startWatcher } from './lib/internal'
+import { checkForUpdates, downloadAndInstallUpdate, getRecentScenarios, getSettings, getVersion, startWatcher } from './lib/internal'
 import { applyTheme, getSavedTheme } from './lib/theme'
 import { BenchmarksPage } from './pages/Benchmarks'
 import { ScenariosPage } from './pages/Scenarios'
 import { SessionsPage } from './pages/Sessions'
 import { SettingsPage } from './pages/Settings'
+import type { UpdateInfo } from './types/ipc'
 
 function Link({ to, children }: { to: string, children: React.ReactNode }) {
   const onClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
@@ -29,7 +30,17 @@ function Link({ to, children }: { to: string, children: React.ReactNode }) {
 
 function TopNav() {
   const [version, setVersion] = useState<string>('')
-  useEffect(() => { getVersion().then(v => setVersion(v)).catch(() => setVersion('')) }, [])
+  const [update, setUpdate] = useState<UpdateInfo | null>(null)
+  useEffect(() => {
+    getVersion().then(v => setVersion(v)).catch(() => setVersion(''))
+    // Proactive check (also handled by backend event)
+    checkForUpdates().then((info) => { if (info?.hasUpdate) setUpdate(info) }).catch(() => { })
+    // Listen for backend event
+    const off = EventsOn('UpdateAvailable', (data: any) => {
+      if (data && typeof data === 'object' && data.latestVersion) setUpdate(data as UpdateInfo)
+    })
+    return () => { try { off() } catch { /* noop */ } }
+  }, [])
   const link = (to: string, label: string) => (
     <Link to={to}>{label}</Link>
   )
@@ -38,6 +49,34 @@ function TopNav() {
       <div className="flex items-center gap-2">
         <div className="font-semibold">RefleK's</div>
         {version && <span className="text-[10px] px-2 py-0.5 rounded-full border border-[var(--border-primary)] text-[var(--text-secondary)]">v{version}</span>}
+        {update?.hasUpdate && (
+          <div className="flex items-center gap-2">
+            <button
+              className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent-primary)] text-black hover:opacity-90"
+              title="Click to update"
+              onClick={async () => {
+                if (!update?.latestVersion) return
+                const ok = window.confirm(`Download and install v${update.latestVersion} now? The app will close.`)
+                if (!ok) return
+                try {
+                  await downloadAndInstallUpdate(update.latestVersion)
+                } catch (e) {
+                  console.error('Update failed', e)
+                  alert('Update failed: ' + (e as Error)?.message)
+                }
+              }}
+            >
+              Update to v{update.latestVersion}
+            </button>
+            <a
+              href="https://refleks-app.com/updates/"
+              onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/updates/') }}
+              className="text-[10px] underline underline-offset-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            >
+              What’s new
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Centered tabs - absolutely centered so side content doesn't affect position */}

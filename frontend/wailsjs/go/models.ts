@@ -164,6 +164,26 @@ export namespace models {
 	        this.maxExistingOnStart = source["maxExistingOnStart"];
 	    }
 	}
+	export class UpdateInfo {
+	    currentVersion: string;
+	    latestVersion: string;
+	    hasUpdate: boolean;
+	    downloadUrl?: string;
+	    releaseNotes?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.currentVersion = source["currentVersion"];
+	        this.latestVersion = source["latestVersion"];
+	        this.hasUpdate = source["hasUpdate"];
+	        this.downloadUrl = source["downloadUrl"];
+	        this.releaseNotes = source["releaseNotes"];
+	    }
+	}
 
 }
 

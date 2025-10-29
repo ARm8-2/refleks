@@ -60,3 +60,14 @@ type MousePoint struct {
 	X  int32     `json:"x"`
 	Y  int32     `json:"y"`
 }
+
+// UpdateInfo describes application update availability and metadata exchanged over IPC.
+type UpdateInfo struct {
+	CurrentVersion string `json:"currentVersion"`
+	LatestVersion  string `json:"latestVersion"`
+	HasUpdate      bool   `json:"hasUpdate"`
+	// Direct URL to download the installer for the current OS (Windows only for now)
+	DownloadURL string `json:"downloadUrl,omitempty"`
+	// Optional plain-text notes (best-effort, may be empty)
+	ReleaseNotes string `json:"releaseNotes,omitempty"`
+}

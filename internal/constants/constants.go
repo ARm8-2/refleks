@@ -45,4 +45,25 @@ const (
 	EnvSteamIDVar = "REFLEKS_STEAM_ID"
 	// If set, this overrides the default stats directory (useful in dev containers)
 	EnvStatsDirVar = "REFLEKS_STATS_DIR"
+
+	// --- Updater/GitHub release info ---
+	// GitHub repository owner/name used for update checks and downloads
+	GitHubOwner = "ARm8-2"
+	GitHubRepo  = "refleks"
+	// GitHub API endpoint to retrieve the latest release metadata
+	GitHubLatestReleaseAPI = "https://api.github.com/repos/%s/%s/releases/latest"
+	// Direct download URL format for release assets
+	// Usage: fmt.Sprintf(GitHubDownloadURLFmt, GitHubOwner, GitHubRepo, version, assetName)
+	GitHubDownloadURLFmt = "https://github.com/%s/%s/releases/download/%s/%s"
+
+	// Windows asset naming convention, e.g. "refleks-0.3.0.exe"
+	// New convention: lowercase, platform + arch + version, URL/FS safe
+	// Example produced installer asset: "refleks-windows-amd64-0.3.0.exe"
+	WindowsInstallerNameFmt = "refleks-windows-amd64-%s.exe"
+
+	// Updater default timeouts (in seconds)
+	// UpdaterHTTPTimeoutSeconds is used for quick API calls (e.g., GitHub latest release). Keep small.
+	UpdaterHTTPTimeoutSeconds = 10
+	// UpdaterDownloadTimeoutSeconds is used for downloading installer assets. Larger to accommodate slow links.
+	UpdaterDownloadTimeoutSeconds = 600
 )

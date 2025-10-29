@@ -27,11 +27,17 @@
         Get started with RefleK's, troubleshoot common issues, and learn how to make the most of your aim training
         analytics.
       </p>
+      <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="#getting-started" class="btn">Getting started</a>
+        <a href="#troubleshooting" class="btn-outline">Troubleshooting</a>
+        <a href="#features" class="btn-outline">Features</a>
+        <a href="#support" class="btn-outline">Support</a>
+      </div>
     </div>
   </section>
 
   <!-- Getting Started -->
-  <section class="py-12 sm:py-16">
+  <section id="getting-started" class="py-12 sm:py-16">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-bold mb-6">Getting Started</h2>
 
@@ -40,24 +46,18 @@
           <h3 class="card-title">Installation</h3>
           <div class="card-copy space-y-3">
             <ol class="list-decimal list-inside space-y-2 ml-2">
-              <li>Download the latest version from the <a href="https://github.com/ARm8-2/refleks/releases"
-                  target="_blank"
+              <li>Download the latest version <a href="https://github.com/ARm8-2/refleks/releases/latest"
+                  target="_blank" rel="noopener" data-download-latest
+                  class="text-[var(--accent-primary)] hover:text-[var(--accent-hover)] transition-colors">directly</a>
+                or from the <a href="https://github.com/ARm8-2/refleks/releases" target="_blank"
                   class="text-[var(--accent-primary)] hover:text-[var(--accent-hover)] transition-colors">GitHub
                   releases page</a></li>
-              <li>Run <code class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">refleks.exe</code></li>
+              <li>Run the installer you downloaded (<code
+                  class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">refleks-windows-amd64-x.y.z.exe</code>) and
+                follow the prompts</li>
               <li>RefleK's will automatically detect your KovaaK's stats folder and start tracking your practice
                 sessions.</li>
             </ol>
-            <p class="text-sm text-[var(--text-muted)] mt-4">
-              <strong>Note:</strong> On first run, RefleK's creates two folders on your system:
-              <br />
-              1) <code class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">~/.refleks</code> — stores app settings and
-              local traces.
-              <br />
-              2) <code class="px-2 py-1 bg-[var(--bg-card)] rounded text-sm">%AppData%/refleks-x.y.z</code> — Windows
-              roaming
-              data used by the app's renderer (x.y.z is the app version).
-            </p>
           </div>
         </div>
 
@@ -77,7 +77,7 @@
   </section>
 
   <!-- Features Guide -->
-  <section class="py-12 sm:py-16 bg-[var(--bg-tertiary)] border-y border-[var(--border-primary)]">
+  <section id="features" class="py-12 sm:py-16 bg-[var(--bg-tertiary)] border-y border-[var(--border-primary)]">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-bold mb-6">Features Guide</h2>
 
@@ -172,7 +172,7 @@
   </section>
 
   <!-- Troubleshooting -->
-  <section class="py-12 sm:py-16">
+  <section id="troubleshooting" class="py-12 sm:py-16">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-bold mb-6">Troubleshooting</h2>
 
@@ -259,7 +259,7 @@
   </section>
 
   <!-- Support -->
-  <section class="py-12 sm:py-16 bg-[var(--bg-tertiary)] border-y border-[var(--border-primary)]">
+  <section id="support" class="py-12 sm:py-16 bg-[var(--bg-tertiary)] border-y border-[var(--border-primary)]">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-bold mb-6 text-center">Still need help?</h2>
       <div class="grid gap-4 sm:gap-6 md:grid-cols-2">

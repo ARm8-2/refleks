@@ -24,11 +24,16 @@
       <p class="mt-4 sm:mt-5 text-base sm:text-lg text-[var(--text-muted)] max-w-2xl mx-auto">
         See what's new, what we're working on, and what's coming next.
       </p>
+      <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="#releases" class="btn">Releases</a>
+        <a href="#in-progress" class="btn-outline">In progress</a>
+        <a href="#under-consideration" class="btn-outline">Under consideration</a>
+      </div>
     </div>
   </section>
 
   <!-- Releases timeline -->
-  <section class="py-16 sm:py-20">
+  <section id="releases" class="py-16 sm:py-20">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-extrabold mb-8 sm:mb-10">Releases</h2>
       <div class="timeline">
@@ -37,12 +42,19 @@
           <div class="timeline-date">Oct 2025</div>
           <div class="timeline-body">
             <div class="timeline-version">v0.3.0 - Minor release</div>
+            <div class="timeline-preview">
+              <span class="dot" aria-hidden="true"></span>
+              <div>
+                <strong>Preview:</strong> Sessions — “Next high score forecast” in the Progress (all) tab predicts runs
+                to the next PB, with an optimal pause (minutes) and a confidence estimate.
+              </div>
+            </div>
+            <div class="timeline-sep" aria-hidden="true"></div>
             <ul class="timeline-features">
+              <li>Auto‑update (Windows): the app now checks for updates on startup and lets you install the latest
+                version with one click. You can also trigger a manual check from Settings → Updates.</li>
               <li>Benchmarks: new “Analysis” tab with side‑by‑side charts for strengths/weaknesses and rank
                 distribution.</li>
-              <li>Sessions: added “Next high score forecast (preview)” to the Progress (all) tab — predicts runs to the
-                next PB
-                with an optimal pause between runs (in minutes) and a confidence estimate.</li>
               <li>Settings: Advanced “SteamID override” (Windows) — if set, RefleK's will use this SteamID for fetching
                 benchmark progress instead of parsing Steam's loginusers.vdf. The environment override
                 <code>REFLEKS_STEAM_ID</code> remains supported.
@@ -122,7 +134,7 @@
   </section>
 
   <!-- In progress -->
-  <section class="py-16 sm:py-20 bg-[var(--bg-tertiary)] border-y border-[var(--border-primary)]">
+  <section id="in-progress" class="py-16 sm:py-20 bg-[var(--bg-tertiary)] border-y border-[var(--border-primary)]">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-extrabold text-center mb-3 sm:mb-4">In progress</h2>
       <p class="text-sm sm:text-[15px] text-[var(--text-muted)] max-w-3xl mx-auto text-center mb-8 sm:mb-10 px-2">
@@ -155,7 +167,7 @@
   </section>
 
   <!-- Under consideration -->
-  <section class="py-16 sm:py-20">
+  <section id="under-consideration" class="py-16 sm:py-20">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-extrabold text-center mb-3 sm:mb-4">Under consideration</h2>
       <p class="text-sm sm:text-[15px] text-[var(--text-muted)] max-w-3xl mx-auto text-center mb-8 sm:mb-10 px-2">

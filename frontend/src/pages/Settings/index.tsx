@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
+import { BrowserOpenURL } from '../../../wailsjs/runtime'
 import { Button, Dropdown } from '../../components'
 import { useStore } from '../../hooks/useStore'
-import { getSettings, resetSettings, updateSettings } from '../../lib/internal'
+import { checkForUpdates, downloadAndInstallUpdate, getSettings, getVersion, resetSettings, updateSettings } from '../../lib/internal'
 import { applyTheme, getSavedTheme, setTheme, THEMES, type Theme } from '../../lib/theme'
-import type { Settings } from '../../types/ipc'
+import type { Settings, UpdateInfo } from '../../types/ipc'
 
 export function SettingsPage() {
   const setSessionGap = useStore(s => s.setSessionGap)
@@ -17,6 +18,11 @@ export function SettingsPage() {
   const [mouseBuffer, setMouseBuffer] = useState(10)
   const [maxExisting, setMaxExisting] = useState(500)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  // Updates state
+  const [currentVersion, setCurrentVersion] = useState<string>("")
+  const [update, setUpdate] = useState<UpdateInfo | null>(null)
+  const [checking, setChecking] = useState<boolean>(false)
+  const [checkError, setCheckError] = useState<string>("")
 
   useEffect(() => {
     // Load settings from backend and trust backend-sanitized values.
@@ -35,6 +41,8 @@ export function SettingsPage() {
         setMaxExisting(Number((s as any).maxExistingOnStart))
       })
       .catch(() => { })
+    // Load current version for display
+    getVersion().then(v => setCurrentVersion(String(v || ''))).catch(() => setCurrentVersion(''))
   }, [])
 
   const save = async () => {
@@ -69,6 +77,79 @@ export function SettingsPage() {
     <div className="space-y-4 h-full flex flex-col p-4">
       <div className="text-lg font-medium">Settings</div>
       <div className="space-y-6 max-w-5xl">
+        {/* Updates */}
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Updates</h3>
+          <div className="space-y-3 p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
+            <div className="text-sm text-[var(--text-secondary)]">
+              Current version: <span className="text-[var(--text-primary)]">v{currentVersion || '—'}</span>
+            </div>
+            {update?.hasUpdate ? (
+              <div className="flex items-center gap-2">
+                <div className="text-sm">Update available: v{update.latestVersion}</div>
+                <Button
+                  variant="accent"
+                  size="sm"
+                  onClick={async () => {
+                    if (!update?.latestVersion) return
+                    const ok = window.confirm(`Download and install v${update.latestVersion} now? The app will close.`)
+                    if (!ok) return
+                    try {
+                      await downloadAndInstallUpdate(update.latestVersion)
+                    } catch (e) {
+                      console.error('Update install failed', e)
+                      alert('Update failed: ' + (e as Error)?.message)
+                    }
+                  }}
+                >
+                  Install update
+                </Button>
+                <a
+                  className="text-xs underline underline-offset-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  href="https://refleks-app.com/updates/"
+                  onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/updates/') }}
+                >
+                  What’s new
+                </a>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={checking}
+                  onClick={async () => {
+                    setChecking(true)
+                    setCheckError('')
+                    try {
+                      const info = await checkForUpdates()
+                      setUpdate(info)
+                    } catch (e) {
+                      const msg = (e as Error)?.message || 'Update check failed'
+                      setCheckError(msg)
+                    } finally {
+                      setChecking(false)
+                    }
+                  }}
+                >
+                  {checking ? 'Checking…' : 'Check for updates'}
+                </Button>
+                {checkError && <span className="text-xs text-red-400">{checkError}</span>}
+                {update && !update.hasUpdate && !checking && (
+                  <span className="text-xs text-[var(--text-secondary)]">You’re up to date.</span>
+                )}
+                <a
+                  className="text-xs underline underline-offset-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  href="https://refleks-app.com/updates/"
+                  onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/updates/') }}
+                >
+                  View updates page
+                </a>
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* General (primary settings) */}
         <section className="space-y-3">
           <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">General</h3>

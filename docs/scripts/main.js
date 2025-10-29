@@ -13,6 +13,8 @@
           headerPlaceholder.innerHTML = await headerResponse.text()
           // Re-initialize mobile menu after header is loaded
           initMobileMenu()
+          // Update download buttons inside header if possible
+          updateDownloadLinks()
         }
       }
 
@@ -71,6 +73,37 @@
     document.addEventListener('DOMContentLoaded', loadPartials)
   } else {
     loadPartials()
+  }
+
+  // ===== DYNAMIC LATEST DOWNLOAD LINK =====
+  async function updateDownloadLinks() {
+    try {
+      const resp = await fetch('https://api.github.com/repos/ARm8-2/refleks/releases/latest', {
+        headers: {
+          'Accept': 'application/vnd.github+json'
+        }
+      })
+      if (!resp.ok) return
+      const data = await resp.json()
+      const assets = Array.isArray(data.assets) ? data.assets : []
+      const installer = assets.find(a => /^(refleks-windows-amd64-).*\.exe$/i.test(a.name))
+      if (!installer || !installer.browser_download_url) return
+      const url = installer.browser_download_url
+
+      document.querySelectorAll('[data-download-latest]').forEach(a => {
+        a.setAttribute('href', url)
+      })
+    } catch (e) {
+      // Silently ignore; fall back to releases page links
+      console.debug('Could not fetch latest release asset:', e)
+    }
+  }
+
+  // Try to update any download buttons present on the page immediately
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateDownloadLinks)
+  } else {
+    updateDownloadLinks()
   }
 
   // ===== PRODUCT TOUR SCROLL =====
