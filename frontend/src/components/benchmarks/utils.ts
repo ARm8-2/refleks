@@ -43,23 +43,19 @@ export function numberFmt(n: number | null | undefined): string {
 }
 
 // Compute fill fraction for rank cell index of a scenario
-export function cellFill(index: number, scenarioRank: number, score: number, thresholds: number[]): number {
+export function cellFill(index: number, score: number, thresholds: number[]): number {
   const n = thresholds?.length ?? 0
   if (n === 0) return 0
-  const current = Math.max(0, Math.min(n, Number(scenarioRank || 0))) - 1 // -1 when below first rank
-  if (current < 0) {
-    // below rank 1, partially fill first cell relative to first threshold
-    if (index !== 0) return 0
-    const t0 = thresholds[0] ?? 0
-    if (t0 <= 0) return 0
-    return Math.max(0, Math.min(1, (Number(score || 0)) / t0))
+
+  const prev = index === 0 ? 0 : (thresholds[index - 1] ?? 0)
+  const next = thresholds[index] ?? prev
+
+  if (next <= prev) {
+    // Degenerate interval: treat as filled if score >= next
+    return Number(score ?? 0) >= next ? 1 : 0
   }
-  if (index < current) return 1
-  if (index > current) return 0
-  const prev = thresholds[current] ?? 0
-  const next = thresholds[current + 1]
-  if (next == null || next <= prev) return 1
-  const frac = (Number(score || 0) - prev) / (next - prev)
+
+  const frac = (Number(score ?? 0) - prev) / (next - prev)
   return Math.max(0, Math.min(1, frac))
 }
 

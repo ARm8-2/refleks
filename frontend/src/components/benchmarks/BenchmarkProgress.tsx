@@ -340,7 +340,7 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
                                     </div>
                                     <div className="text-[12px] text-[var(--text-primary)] flex items-center">{numberFmt(score)}</div>
                                     {ranks.map((r, i) => {
-                                      const fill = cellFill(i, achieved, score, maxes)
+                                      const fill = cellFill(i, score, maxes)
                                       const border = r.color
                                       const value = maxes?.[i]
                                       return (

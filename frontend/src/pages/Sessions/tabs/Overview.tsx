@@ -144,7 +144,7 @@ export function OverviewTab({ session }: { session: Session | null }) {
                       <div className="text-[13px] text-[var(--text-primary)] truncate flex items-center">{selectedName}</div>
                       <div className="text-[12px] text-[var(--text-primary)] flex items-center">{numberFmt(score)}</div>
                       {ranks.map((r: { name: string; color: string }, i: number) => {
-                        const fill = cellFill(i, achieved, score, maxes)
+                        const fill = cellFill(i, score, maxes)
                         const border = r.color
                         const value = maxes?.[i]
                         return (
