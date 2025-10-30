@@ -1,6 +1,6 @@
 # Contributing to RefleK's
 
-Thanks for your interest—your help makes this project better. This guide keeps things simple and stable over time.
+Thanks for your interest - your help makes this project better. This guide keeps things simple and stable over time.
 
 
 ## Ways to contribute
@@ -23,7 +23,7 @@ Please include:
 - Steps to reproduce (1, 2, 3…)
 - Expected vs. actual result
 - A sample `… Stats.csv` (and/or trace file) if relevant
-- (Optional) Any environment overrides you used: the app loads a `.env` file from `$HOME/.refleks/.env` or from the current working directory. You can set values such as `REFLEKS_STATS_DIR` or `REFLEKS_STEAM_ID` — redact secrets before pasting.
+- (Optional) Any environment overrides you used: the app loads a `.env` file from `$HOME/.refleks/.env` or from the current working directory. You can set values such as `REFLEKS_STATS_DIR` or `REFLEKS_STEAM_ID` - redact secrets before pasting.
 
 
 ## Development setup (Dev Container recommended)
@@ -57,7 +57,7 @@ Required before merge:
 Nice to have:
 - Docs updated if behavior changed
 
-Note: You don’t need to manually regenerate Wails bindings—`wails dev/build` handles it. If bindings change, commit the generated `frontend/wailsjs/` updates.
+Note: You don’t need to manually regenerate Wails bindings - `wails dev/build` handles it. If bindings change, commit the generated `frontend/wailsjs/` updates.
 
 
 ## Code of Conduct
@@ -67,4 +67,4 @@ Be kind, constructive, and respectful. Assume good intent. If something isn’t 
 
 ## Thank you
 
-Your contributions—large or small—are appreciated!
+Your contributions - large or small - are appreciated!

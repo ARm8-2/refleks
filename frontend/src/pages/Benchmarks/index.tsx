@@ -6,7 +6,7 @@ import { navigate, useRoute } from '../../hooks/useRoute'
 import { useUIState } from '../../hooks/useUIState'
 import { getBenchmarks, getFavoriteBenchmarks, setFavoriteBenchmarks } from '../../lib/internal'
 import type { Benchmark } from '../../types/ipc'
-import { AiTab, OverviewTab } from './tabs'
+import { AiTab, AnalysisTab, OverviewTab } from './tabs'
 
 type BenchItem = { id: string; title: string; abbreviation: string; subtitle?: string; color?: string }
 
@@ -134,7 +134,7 @@ function BenchmarksExplore({ items, favorites, onToggleFav, onOpen, query, onQue
 }
 
 function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: string; bench?: Benchmark; favorites: string[]; onToggleFav: (id: string) => void; onBack: () => void }) {
-  const [tab, setTab] = useUIState<'overview' | 'ai'>(`Benchmark:${id}:tab`, 'overview')
+  const [tab, setTab] = useUIState<'overview' | 'analysis' | 'ai'>(`Benchmark:${id}:tab`, 'overview')
   // Use shared hook for progress + live updates and difficulty state
   const { progress, loading, error, difficultyIndex, setDifficultyIndex } = useOpenedBenchmarkProgress({ id, bench: bench ?? null })
 
@@ -178,6 +178,7 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
       ) : <div className="text-sm text-[var(--text-secondary)]">No difficulties info.</div>}
       <Tabs tabs={[
         { id: 'overview', label: 'Overview', content: <OverviewTab bench={bench} difficultyIndex={difficultyIndex} loading={loading} error={error} progress={progress} /> },
+        { id: 'analysis', label: 'Analysis', content: <AnalysisTab bench={bench} difficultyIndex={difficultyIndex} loading={loading} error={error} progress={progress} /> },
         { id: 'ai', label: 'AI Insights', content: <AiTab /> },
       ]} active={tab} onChange={(id) => setTab(id as any)} />
     </div>

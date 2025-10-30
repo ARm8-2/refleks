@@ -614,6 +614,33 @@ header {
   color: var(--text-secondary);
 }
 
+/* Preview callout and separator for Updates page */
+.timeline-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.timeline-preview .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--warning);
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
+  margin-top: 0.45rem;
+  flex-shrink: 0;
+}
+
+.timeline-sep {
+  height: 1px;
+  background: var(--border-primary);
+  margin: 8px 0 10px;
+}
+
 /* Details (accordion) */
 details {
   border: 1px solid var(--border-primary);

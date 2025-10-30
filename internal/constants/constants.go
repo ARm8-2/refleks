@@ -6,7 +6,7 @@ package constants
 const (
 	// AppVersion is the human-readable semantic version of the application.
 	// Bump this on every release. Follow SemVer: MAJOR.MINOR.PATCH
-	AppVersion = "0.2.0"
+	AppVersion = "0.3.0"
 
 	// Kovaaks player progress endpoint. Use fmt.Sprintf with benchmarkId and steamId.
 	KovaaksPlayerProgressURL = "https://kovaaks.com/webapp-backend/benchmarks/player-progress-rank-benchmark?benchmarkId=%d&steamId=%s"
@@ -45,4 +45,33 @@ const (
 	EnvSteamIDVar = "REFLEKS_STEAM_ID"
 	// If set, this overrides the default stats directory (useful in dev containers)
 	EnvStatsDirVar = "REFLEKS_STATS_DIR"
+
+	// --- Updater/GitHub release info ---
+	// GitHub repository owner/name used for update checks and downloads
+	GitHubOwner = "ARm8-2"
+	GitHubRepo  = "refleks"
+	// GitHub API endpoint to retrieve the latest release metadata
+	GitHubLatestReleaseAPI = "https://api.github.com/repos/%s/%s/releases/latest"
+	// Direct download URL format for release assets
+	// Usage: fmt.Sprintf(GitHubDownloadURLFmt, GitHubOwner, GitHubRepo, version, assetName)
+	GitHubDownloadURLFmt = "https://github.com/%s/%s/releases/download/%s/%s"
+
+	// Conventional, explicit filename for release assets. Keep in sync with build/windows/installer/project.nsi
+	// Result example: "refleks-0.3.0-windows-amd64-installer.exe"
+	WindowsInstallerNameFmt = "refleks-%s-windows-amd64-installer.exe"
+
+	// Updater default timeouts (in seconds)
+	// UpdaterHTTPTimeoutSeconds is used for quick API calls (e.g., GitHub latest release). Keep small.
+	UpdaterHTTPTimeoutSeconds = 10
+	// UpdaterDownloadTimeoutSeconds is used for downloading installer assets. Larger to accommodate slow links.
+	UpdaterDownloadTimeoutSeconds = 600
+)
+
+// --- Sensitivity conversion defaults ---
+// Default yaw (deg/count) constants for supported game scales. These are used
+// by the sensitivity converter to derive cm/360 for linear engines where
+// rotation = sensitivity * yaw * counts.
+const (
+	// Counter‑Strike (CS:GO / CS2) default m_yaw
+	YawDegPerCountCSGO = 0.022
 )

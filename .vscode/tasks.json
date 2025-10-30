@@ -40,6 +40,56 @@
 		},
 		{
 			"type": "shell",
+			"label": "Version: Bump",
+			"command": "bash",
+			"args": [
+				"scripts/bump_version.sh",
+				"${input:newVersion}"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "none"
+			},
+			"detail": "Prompt for a version and update AppVersion (Go) and wails.json info.productVersion"
+		},
+		{
+			"type": "shell",
+			"label": "Wails: Build for Windows (Installer)",
+			"command": "wails",
+			"args": [
+				"build",
+				"-nsis",
+				"-platform",
+				"windows/amd64"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$go"
+			],
+			"group": {
+				"kind": "build"
+			},
+			"detail": "Build Windows app and NSIS installer (versioned filename)"
+		},
+		{
+			"label": "Release: Bump + Build Installer",
+			"dependsOn": [
+				"Version: Bump",
+				"Wails: Build for Windows (Installer)"
+			],
+			"dependsOrder": "sequence",
+			"group": {
+				"kind": "build"
+			},
+			"detail": "Prompt for a version, update files, then build Windows installer"
+		},
+		{
+			"type": "shell",
 			"label": "Serve Docs (static)",
 			"command": "python3",
 			"args": [
@@ -57,6 +107,43 @@
 				"kind": "none"
 			},
 			"detail": "Serve the static docs/ folder at http://localhost:8080/"
+		},
+		{
+			"type": "shell",
+			"label": "Windows: Build Portable ZIP",
+			"command": "bash",
+			"args": [
+				"scripts/build_portable_zip.sh"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "build"
+			},
+			"detail": "Build portable ZIP: refleks-<version>-windows-amd64-portable.zip and write checksums"
+		},
+		{
+			"label": "Release: Bump + Build Installer + Portable ZIP",
+			"dependsOn": [
+				"Version: Bump",
+				"Wails: Build for Windows (Installer)",
+				"Windows: Build Portable ZIP"
+			],
+			"dependsOrder": "sequence",
+			"group": {
+				"kind": "build"
+			},
+			"detail": "Prompt for a version, build the Windows installer, package portable zip, and write checksums"
+		}
+	],
+	"inputs": [
+		{
+			"id": "newVersion",
+			"type": "promptString",
+			"description": "Enter new semantic version (e.g., 4.2.0)",
+			"default": "0.0.0"
 		}
 	]
 }

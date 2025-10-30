@@ -70,13 +70,26 @@ func GetPlayerProgressRaw(benchmarkId int) (string, error) {
 }
 
 func GetSteamID() string {
+	// Priority 1: explicit override in settings (Advanced)
+	if s, err := settings.Load(); err == nil {
+		s = settings.Sanitize(s)
+		if v := strings.TrimSpace(s.SteamIDOverride); v != "" {
+			return v
+		}
+	} else {
+		// If settings are not present, still allow runtime defaults to be considered for path building below
+		_ = err
+	}
+
+	// Priority 2: environment variable override (useful for dev containers/CI)
+	if env := settings.GetEnv(constants.EnvSteamIDVar); strings.TrimSpace(env) != "" {
+		return strings.TrimSpace(env)
+	}
+
+	// Priority 3: parse Steam's loginusers.vdf to find MostRecent user
 	loginUsersPath := steamLoginUsersPath()
 	id, err := parseMostRecentSteamID(loginUsersPath)
 	if err != nil {
-		// Fallback: allow override via .env/ENV variable
-		if env := settings.GetEnv(constants.EnvSteamIDVar); strings.TrimSpace(env) != "" {
-			return strings.TrimSpace(env)
-		}
 		return ""
 	}
 	return id

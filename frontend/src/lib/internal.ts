@@ -1,4 +1,6 @@
 import {
+  CheckForUpdates as _CheckForUpdates,
+  DownloadAndInstallUpdate as _DownloadAndInstallUpdate,
   GetBenchmarkProgress as _GetBenchmarkProgress,
   GetBenchmarks as _GetBenchmarks,
   GetDefaultSettings as _GetDefaultSettings,
@@ -14,7 +16,7 @@ import {
   UpdateSettings as _UpdateSettings
 } from '../../wailsjs/go/main/App'
 import type { models } from '../../wailsjs/go/models'
-import type { Benchmark, ScenarioRecord, Settings } from '../types/ipc'
+import type { Benchmark, ScenarioRecord, Settings, UpdateInfo } from '../types/ipc'
 
 export type { models }
 
@@ -36,7 +38,6 @@ export async function stopWatcher(): Promise<void> {
 
 export async function getRecentScenarios(limit: number): Promise<ScenarioRecord[]> {
   const res = await _GetRecentScenarios(limit)
-  // Convert generated model type to our UI type (same shape)
   return (Array.isArray(res) ? res : []) as unknown as ScenarioRecord[]
 }
 
@@ -69,10 +70,21 @@ export async function getVersion(): Promise<string> {
   return String(v || '')
 }
 
+export async function checkForUpdates(): Promise<UpdateInfo> {
+  const info = await _CheckForUpdates()
+  return info as unknown as UpdateInfo
+}
+
+export async function downloadAndInstallUpdate(version = ''): Promise<void> {
+  const res = await _DownloadAndInstallUpdate(version)
+  if (res !== true) {
+    throw new Error(typeof res === 'string' ? res : 'DownloadAndInstallUpdate failed')
+  }
+}
+
 export async function getBenchmarks(): Promise<Benchmark[]> {
   const benchmarks = await _GetBenchmarks()
   if (!Array.isArray(benchmarks)) throw new Error('GetBenchmarks failed')
-  // The generated type is models.Benchmark[], which is structurally compatible with our UI's Benchmark
   return benchmarks as unknown as Benchmark[]
 }
 

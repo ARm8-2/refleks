@@ -51,8 +51,13 @@ func ParseStatsFile(path string) (events [][]string, stats map[string]any, err e
 	}
 	defer f.Close()
 
+	wrapped, werr := WrapReaderWithUTF8(f)
+	if werr != nil {
+		return nil, nil, werr
+	}
+
 	// We'll read line by line to detect the transition from CSV to key-value section.
-	r := bufio.NewReader(f)
+	r := bufio.NewReader(wrapped)
 	var csvLines [][]string
 	var kvLines []string
 	isKV := false
@@ -60,17 +65,19 @@ func ParseStatsFile(path string) (events [][]string, stats map[string]any, err e
 	for {
 		line, readErr := r.ReadString('\n')
 		if errors.Is(readErr, io.EOF) {
-			if len(line) > 0 {
-				// process last line
-			} else {
+			if len(line) == 0 {
 				break
 			}
+			// otherwise, process last line then break after loop
 		} else if readErr != nil {
 			return nil, nil, readErr
 		}
 		trimmed := strings.TrimRight(line, "\r\n")
 		if len(trimmed) == 0 {
 			// skip pure empty lines but preserve section state
+			if errors.Is(readErr, io.EOF) {
+				break
+			}
 			continue
 		}
 
@@ -96,6 +103,10 @@ func ParseStatsFile(path string) (events [][]string, stats map[string]any, err e
 			}
 			// Otherwise, ignore non-event CSV rows (headers, summaries, etc.).
 		}
+
+		if errors.Is(readErr, io.EOF) {
+			break
+		}
 	}
 
 	// Parse kv lines into a map[string]any
@@ -112,8 +123,8 @@ func ParseStatsFile(path string) (events [][]string, stats map[string]any, err e
 			statsMap[key] = i
 			continue
 		}
-		if f, ferr := strconv.ParseFloat(val, 64); ferr == nil {
-			statsMap[key] = f
+		if fval, ferr := strconv.ParseFloat(val, 64); ferr == nil {
+			statsMap[key] = fval
 			continue
 		}
 		statsMap[key] = val

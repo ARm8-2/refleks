@@ -27,6 +27,7 @@ import type { Theme } from '../lib/theme'
 
 export interface Settings {
   steamInstallDir?: string
+  steamIdOverride?: string
   statsDir: string
   tracesDir: string
   sessionGapMinutes: number
@@ -35,4 +36,12 @@ export interface Settings {
   mouseTrackingEnabled?: boolean
   mouseBufferMinutes?: number
   maxExistingOnStart?: number
+}
+
+export interface UpdateInfo {
+  currentVersion: string
+  latestVersion: string
+  hasUpdate: boolean
+  downloadUrl?: string
+  releaseNotes?: string
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChartBox, Findings, MetricsControls, MetricsLineChart, ScenarioMixRadarChart, SummaryStats } from '../../../components'
+import { ChartBox, Findings, MetricsControls, MetricsLineChart, ScenarioMixRadarChart, SensVsScoreChart, SummaryStats } from '../../../components'
 import { buildRankDefs, cellFill, hexToRgba, numberFmt } from '../../../components/benchmarks/utils'
 import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkProgress'
 import { useRoute } from '../../../hooks/useRoute'
@@ -144,7 +144,7 @@ export function OverviewTab({ session }: { session: Session | null }) {
                       <div className="text-[13px] text-[var(--text-primary)] truncate flex items-center">{selectedName}</div>
                       <div className="text-[12px] text-[var(--text-primary)] flex items-center">{numberFmt(score)}</div>
                       {ranks.map((r: { name: string; color: string }, i: number) => {
-                        const fill = cellFill(i, achieved, score, maxes)
+                        const fill = cellFill(i, score, maxes)
                         const border = r.color
                         const value = maxes?.[i]
                         return (
@@ -170,24 +170,26 @@ export function OverviewTab({ session }: { session: Session | null }) {
       {/* Findings: best/worst runs for this scenario in this session */}
       <Findings items={items.filter(it => getScenarioName(it) === selectedName)} />
 
-      {/* Radar chart: scenario mix in this session */}
-      <ChartBox
-        title="Session mix (scenarios played)"
-        info={<div>
-          <div className="mb-2">Number of runs per scenario name within this session. Useful to see what you’ve been practicing.</div>
-          <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-            <li>Shows up to the top 12 scenarios by frequency for readability.</li>
-            <li>Values start at zero and reflect raw counts.</li>
-          </ul>
-        </div>}
-        height={340}
-      >
-        {radar.labels.length > 0 ? (
-          <ScenarioMixRadarChart labels={radar.labels} counts={radar.counts} />
-        ) : (
-          <div className="h-full flex items-center justify-center text-sm text-[var(--text-secondary)]">No scenarios in this session.</div>
-        )}
-      </ChartBox>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <SensVsScoreChart items={items} scenarioName={selectedName} />
+        <ChartBox
+          title="Session mix (scenarios played)"
+          info={<div>
+            <div className="mb-2">Number of runs per scenario name within this session. Useful to see what you’ve been practicing.</div>
+            <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+              <li>Shows up to the top 12 scenarios by frequency for readability.</li>
+              <li>Values start at zero and reflect raw counts.</li>
+            </ul>
+          </div>}
+          height={300}
+        >
+          {radar.labels.length > 0 ? (
+            <ScenarioMixRadarChart labels={radar.labels} counts={radar.counts} />
+          ) : (
+            <div className="h-full flex items-center justify-center text-sm text-[var(--text-secondary)]">No scenarios in this session.</div>
+          )}
+        </ChartBox>
+      </div>
     </div>
   )
 }

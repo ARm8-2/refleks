@@ -23,7 +23,9 @@ type WatcherConfig struct {
 
 // Settings represents persisted application settings.
 type Settings struct {
-	SteamInstallDir      string   `json:"steamInstallDir"`
+	SteamInstallDir string `json:"steamInstallDir"`
+	// SteamIDOverride, if set, forces the SteamID used for Kovaak's API calls instead of parsing loginusers.vdf.
+	SteamIDOverride      string   `json:"steamIdOverride,omitempty"`
 	StatsDir             string   `json:"statsDir"`
 	TracesDir            string   `json:"tracesDir"`
 	SessionGapMinutes    int      `json:"sessionGapMinutes"`
@@ -57,4 +59,15 @@ type MousePoint struct {
 	TS time.Time `json:"ts"`
 	X  int32     `json:"x"`
 	Y  int32     `json:"y"`
+}
+
+// UpdateInfo describes application update availability and metadata exchanged over IPC.
+type UpdateInfo struct {
+	CurrentVersion string `json:"currentVersion"`
+	LatestVersion  string `json:"latestVersion"`
+	HasUpdate      bool   `json:"hasUpdate"`
+	// Direct URL to download the installer for the current OS (Windows only for now)
+	DownloadURL string `json:"downloadUrl,omitempty"`
+	// Optional plain-text notes (best-effort, may be empty)
+	ReleaseNotes string `json:"releaseNotes,omitempty"`
 }

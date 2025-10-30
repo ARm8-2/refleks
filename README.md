@@ -1,6 +1,6 @@
-# RefleK's — Kovaak's analytics, sessions, and mouse trace
+# RefleK's - Kovaak's analytics, sessions, and mouse trace
 
-RefleK's is a local desktop app (Wails: Go + React) that watches your Kovaak's exported CSV stats, turns them into useful insights, groups scenarios into sessions, and—on Windows—captures a time‑aligned mouse trace you can visualize and study.
+RefleK's is a local desktop app (Wails: Go + React) that watches your Kovaak's exported CSV stats, turns them into useful insights, groups scenarios into sessions, and captures a time‑aligned mouse trace you can visualize and study.
 
 Everything runs on your machine. The only network call happens when you open Benchmarks to fetch your player progress from Kovaak's API.
 
@@ -58,12 +58,12 @@ Windows artifacts and installer scripts live under `build/windows/`.
 ## Project overview
 
 - Backend (Go, Wails)
-  - `internal/watcher` — polls for new stats, emits ScenarioAdded/Updated events
-  - `internal/parser` — parses Stats.csv + derives metrics
-  - `internal/mouse` — Windows raw‑input tracker (no‑op elsewhere)
-  - `internal/traces` — persists per‑scenario JSON (e.g., mouse trace) under `$HOME/.refleks/traces`
-  - `internal/settings` — settings file at `$HOME/.refleks/settings.json`
-  - `internal/benchmarks` — embedded data + player progress (via Kovaak's API)
+  - `internal/watcher` - polls for new stats, emits ScenarioAdded/Updated events
+  - `internal/parser` - parses Stats.csv + derives metrics
+  - `internal/mouse` - Windows raw‑input tracker (no‑op elsewhere)
+  - `internal/traces` - persists per‑scenario JSON (e.g., mouse trace) under `$HOME/.refleks/traces`
+  - `internal/settings` - settings file at `$HOME/.refleks/settings.json`
+  - `internal/benchmarks` - embedded data + player progress (via Kovaak's API)
 - Frontend (React + Vite + Tailwind)
   - Pages: Scenarios, Sessions, Benchmarks, Settings
   - Auto‑generated bindings live in `frontend/wailsjs/`
@@ -75,9 +75,9 @@ Windows artifacts and installer scripts live under `build/windows/`.
 - Filenames like: `VT … - Challenge - 2025.10.02-18.36.37 Stats.csv`
 
 Derived fields you’ll see in the UI:
-- Date Played — from filename timestamp (ISO)
-- Accuracy — Hit Count / (Hit Count + Miss Count)
-- Real Avg TTK — average time between consecutive kill events (seconds)
+- Date Played - from filename timestamp (ISO)
+- Accuracy - Hit Count / (Hit Count + Miss Count)
+- Real Avg TTK - average time between consecutive kill events (seconds)
 
 
 ## Privacy and SteamID note
@@ -92,8 +92,8 @@ Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for
 ## Acknowledgments & Data Sources
 
 Primary sources:
-- KovaaK's Benchmark Tracker — https://kovaaks.com/kovaaks/benchmark-tracker
-- Benchmark Data Reference — The tier structure and visual design principles used for our internal benchmark tracking were heavily informed by the excellent work done by EviL behind the webapp [**evxl.app**](https://evxl.app/) (Discord: _evxl).
+- KovaaK's Benchmark Tracker - https://kovaaks.com/kovaaks/benchmark-tracker
+- Benchmark Data Reference - The tier structure and visual design principles used for our internal benchmark tracking were heavily informed by the excellent work done by EviL behind the webapp [**evxl.app**](https://evxl.app/) (Discord: _evxl).
 
 If you'd like a different credit or link (or to request removal), please open an issue or submit a PR.
 

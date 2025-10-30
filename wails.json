@@ -8,5 +8,10 @@
   "frontend:dev:serverUrl": "auto",
   "author": {
     "name": "ARm8-2"
+  },
+  "info": {
+    "productName": "RefleK's",
+    "companyName": "Refleks",
+    "productVersion": "0.3.0"
   }
 }

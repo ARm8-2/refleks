@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RefleK's — KovaaK's Analytics & Insights</title>
+  <title>RefleK's - KovaaK's Analytics & Insights</title>
   <meta name="description"
     content="RefleK's is a free, open‑source desktop app that analyzes your KovaaK's stats in real-time. Track sessions, explore benchmarks, capture mouse paths, and gain actionable insights. Built with Go + React." />
   <!-- Tailwind (CDN) for quick static layout -->
@@ -28,18 +28,23 @@
       </p>
       <p class="mt-4 sm:mt-6 text-sm sm:text-[15px] leading-relaxed text-[var(--text-muted)] max-w-2xl mx-auto px-2">
         RefleK's is a free, open‑source desktop app that automatically tracks your KovaaK's practice sessions, shows
-        what you're improving at, and helps you see where to focus next — all running on your computer with zero setup.
+        what you're improving at, and helps you see where to focus next - all running on your computer with zero setup.
       </p>
       <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 justify-center px-4">
-        <a href="https://github.com/ARm8-2/refleks/releases" target="_blank"
+        <a href="https://github.com/ARm8-2/refleks/releases/latest" target="_blank" rel="noopener" data-download-latest
           class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-[var(--accent-primary)] text-black font-semibold hover:bg-[var(--accent-hover)] transition-colors min-h-[48px]">
           Download for Windows
         </a>
-        <a href="#features"
+        <a href="/help/#getting-started"
           class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl border border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors min-h-[48px]">
-          See what's inside
+          Get started
         </a>
+
       </div>
+      <p class="mt-2 text-sm text-[var(--text-muted)]">
+        Prefer to support development? <a class="text-[var(--accent-primary)] hover:text-[var(--accent-hover)]"
+          href="#support">See Support →</a>
+      </p>
     </div>
   </section>
 
@@ -103,7 +108,7 @@
             <span class="eyebrow">Automatic</span>
             <h3 class="step-title">Always up to date</h3>
             <p class="step-copy">RefleK's monitors your KovaaK's stats folder and automatically pulls in new runs as you
-              finish them. No need to click "import" or upload files — it just works.</p>
+              finish them. No need to click "import" or upload files - it just works.</p>
             <ul class="bullets space-y-2">
               <li>Automatically monitors when you open the app</li>
               <li>Newest runs always appear at the top</li>
@@ -115,7 +120,7 @@
             <span class="eyebrow">Clear insights</span>
             <h3 class="step-title">Stats that make sense</h3>
             <p class="step-copy">RefleK's analyzes your runs to show accuracy trends, consistency patterns, and
-              performance trajectories — helping you understand if you're actually improving over time.</p>
+              performance trajectories - helping you understand if you're actually improving over time.</p>
             <ul class="bullets space-y-2">
               <li>Trend analysis showing improvement over time</li>
               <li>Performance consistency tracking</li>
@@ -156,7 +161,7 @@
             <p class="step-copy">Turn on mouse tracking to record and replay your mouse movements during scenarios.
               Perfect for studying precision and spotting bad habits.</p>
             <ul class="bullets space-y-2">
-              <li>Optional — turn it on in settings</li>
+              <li>Optional - turn it on in settings</li>
               <li>No performance impact</li>
               <li>Replay with pause and scrub controls</li>
               <li>Saved locally to your computer, never uploaded</li>
@@ -189,7 +194,7 @@
       <div class="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         <div class="card">
           <div class="card-title">Automatic tracking</div>
-          <p class="card-copy">RefleK's watches your KovaaK's folder and brings in new runs as you finish them — no
+          <p class="card-copy">RefleK's watches your KovaaK's folder and brings in new runs as you finish them - no
             clicking "import" or uploading files.</p>
         </div>
         <div class="card">
@@ -209,7 +214,7 @@
         </div>
         <div class="card">
           <div class="card-title">Mouse movement replay</div>
-          <p class="card-copy">Turn on mouse tracking to record and replay your mouse path with pause/scrub controls —
+          <p class="card-copy">Turn on mouse tracking to record and replay your mouse path with pause/scrub controls -
             great for spotting bad habits.</p>
         </div>
         <div class="card">
@@ -223,40 +228,13 @@
         </div>
         <div class="card">
           <div class="card-title">Launch scenarios instantly</div>
-          <p class="card-copy">Click any scenario in RefleK's to launch it directly in KovaaK's — no copying names or
+          <p class="card-copy">Click any scenario in RefleK's to launch it directly in KovaaK's - no copying names or
             searching.</p>
         </div>
         <div class="card">
           <div class="card-title">Free & open‑source</div>
           <p class="card-copy">RefleK's is completely free and the code is public on GitHub. You can view it, report
             bugs, or contribute improvements.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Roadmap preview -->
-  <section class="py-16 sm:py-20">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 class="text-2xl sm:text-3xl font-extrabold text-center mb-3 sm:mb-4">Coming soon</h2>
-      <p class="text-sm sm:text-[15px] text-[var(--text-muted)] max-w-3xl mx-auto text-center mb-8 sm:mb-10 px-2">
-        Planned features. Timelines may change based on feedback and testing.
-      </p>
-      <div class="grid gap-4 sm:gap-6 md:grid-cols-3">
-        <div class="card">
-          <div class="card-title">AI‑powered insights</div>
-          <p class="card-copy">Get intelligent feedback on your sessions with pattern recognition, strengths and
-            weaknesses analysis, and personalized recommendations on what to practice next.</p>
-        </div>
-        <div class="card">
-          <div class="card-title">Mouse movement analysis</div>
-          <p class="card-copy">Automatic detection of overshoots, undershoots, and inefficient movements. See exactly
-            how optimal your mouse control is and where to improve.</p>
-        </div>
-        <div class="card">
-          <div class="card-title">Sensitivity analysis</div>
-          <p class="card-copy">Analyze how your performance changes with different sensitivities. Compare score,
-            accuracy, and Real Avg TTK across runs in the Sessions tab to dial in your best settings.</p>
         </div>
       </div>
     </div>
@@ -290,11 +268,11 @@
           <p class="panel-copy">RefleK's is free and always will be. If you find it useful, here are a few easy ways to
             help:</p>
           <div class="panel-links space-y-2">
+            <a class="panel-link block" target="_blank" href="https://ko-fi.com/arm8_">Donate on Ko‑fi →</a>
             <a class="panel-link block" target="_blank" href="https://github.com/ARm8-2/refleks">Star the project on
               GitHub →</a>
             <a class="panel-link block" target="_blank"
               href="https://github.com/ARm8-2/refleks/blob/dev/CONTRIBUTING.md">Contribute code or docs →</a>
-            <a class="panel-link block" target="_blank" href="https://ko-fi.com/arm8_">Support on Ko‑fi →</a>
           </div>
         </div>
         <div class="panel">
@@ -340,11 +318,6 @@
           <div class="details-body">No. Mouse tracking is turned off by default. When you turn it on, it only records
             during KovaaK's scenarios and saves everything to your computer. You can turn it off anytime in settings.
           </div>
-        </details>
-        <details>
-          <summary>How do I help improve RefleK's?</summary>
-          <div class="details-body">Open an issue on GitHub to report bugs or suggest features. If you want to
-            contribute code, check CONTRIBUTING.md in the repository for guidelines.</div>
         </details>
         <details>
           <summary>Where do I report bugs?</summary>

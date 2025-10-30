@@ -136,6 +136,7 @@ export namespace models {
 	}
 	export class Settings {
 	    steamInstallDir: string;
+	    steamIdOverride?: string;
 	    statsDir: string;
 	    tracesDir: string;
 	    sessionGapMinutes: number;
@@ -152,6 +153,7 @@ export namespace models {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.steamInstallDir = source["steamInstallDir"];
+	        this.steamIdOverride = source["steamIdOverride"];
 	        this.statsDir = source["statsDir"];
 	        this.tracesDir = source["tracesDir"];
 	        this.sessionGapMinutes = source["sessionGapMinutes"];
@@ -160,6 +162,26 @@ export namespace models {
 	        this.mouseTrackingEnabled = source["mouseTrackingEnabled"];
 	        this.mouseBufferMinutes = source["mouseBufferMinutes"];
 	        this.maxExistingOnStart = source["maxExistingOnStart"];
+	    }
+	}
+	export class UpdateInfo {
+	    currentVersion: string;
+	    latestVersion: string;
+	    hasUpdate: boolean;
+	    downloadUrl?: string;
+	    releaseNotes?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.currentVersion = source["currentVersion"];
+	        this.latestVersion = source["latestVersion"];
+	        this.hasUpdate = source["hasUpdate"];
+	        this.downloadUrl = source["downloadUrl"];
+	        this.releaseNotes = source["releaseNotes"];
 	    }
 	}
 

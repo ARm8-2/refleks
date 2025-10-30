@@ -14,6 +14,7 @@ import (
 	"refleks/internal/mouse"
 	appsettings "refleks/internal/settings"
 	"refleks/internal/traces"
+	"refleks/internal/updater"
 	"refleks/internal/watcher"
 )
 
@@ -69,6 +70,21 @@ func (a *App) startup(ctx context.Context) {
 			runtime.LogInfo(a.ctx, "mouse tracker started")
 		}
 	}
+
+	// Fire-and-forget check for app updates; emit event if available
+	go func() {
+		// Small delay to avoid competing with startup I/O
+		time.Sleep(2 * time.Second)
+		info, err := a.CheckForUpdates()
+		if err != nil {
+			runtime.LogDebugf(a.ctx, "update check: %v", err)
+			return
+		}
+		if info.HasUpdate {
+			runtime.LogInfof(a.ctx, "update available: %s -> %s", info.CurrentVersion, info.LatestVersion)
+			runtime.EventsEmit(a.ctx, "UpdateAvailable", info)
+		}
+	}()
 }
 
 // StartWatcher begins monitoring the given directory for new Kovaak's CSV files.
@@ -265,5 +281,61 @@ func (a *App) LaunchKovaaksScenario(name string, mode string) (bool, string) {
 	m := url.PathEscape(mode)
 	deeplink := fmt.Sprintf("steam://run/%d/?action=jump-to-scenario;name=%s;mode=%s", constants.KovaaksSteamAppID, n, m)
 	runtime.BrowserOpenURL(a.ctx, deeplink)
+	return true, "ok"
+}
+
+// --- Updater IPC ---
+
+// CheckForUpdates queries GitHub releases and returns update availability and download URL.
+func (a *App) CheckForUpdates() (models.UpdateInfo, error) {
+	u := updater.New(constants.GitHubOwner, constants.GitHubRepo, constants.AppVersion)
+	ctx, cancel := context.WithTimeout(a.ctx, 15*time.Second)
+	defer cancel()
+	latest, notes, err := u.Latest(ctx)
+	if err != nil {
+		return models.UpdateInfo{CurrentVersion: constants.AppVersion}, err
+	}
+	has := updater.CompareSemver(constants.AppVersion, latest) < 0
+	info := models.UpdateInfo{
+		CurrentVersion: constants.AppVersion,
+		LatestVersion:  latest,
+		HasUpdate:      has,
+		ReleaseNotes:   notes,
+	}
+	if has {
+		if url, err := u.BuildDownloadURL(latest); err == nil {
+			info.DownloadURL = url
+		}
+	}
+	return info, nil
+}
+
+// DownloadAndInstallUpdate downloads the specified (or latest) installer and starts it, then quits the app.
+// version may be empty to auto-detect latest.
+func (a *App) DownloadAndInstallUpdate(version string) (bool, string) {
+	u := updater.New(constants.GitHubOwner, constants.GitHubRepo, constants.AppVersion)
+	if version == "" {
+		ctx, cancel := context.WithTimeout(a.ctx, 15*time.Second)
+		defer cancel()
+		latest, _, err := u.Latest(ctx)
+		if err != nil {
+			return false, err.Error()
+		}
+		version = latest
+	}
+	ctx, cancel := context.WithTimeout(a.ctx, 5*time.Minute)
+	defer cancel()
+	path, err := u.Download(ctx, version)
+	if err != nil {
+		return false, err.Error()
+	}
+	if err := u.LaunchInstaller(ctx, path); err != nil {
+		return false, err.Error()
+	}
+	// Gracefully quit current app so installer can proceed
+	go func() {
+		time.Sleep(1 * time.Second)
+		runtime.Quit(a.ctx)
+	}()
 	return true, "ok"
 }

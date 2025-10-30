@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Updates — RefleK's</title>
+  <title>Updates - RefleK's</title>
   <meta name="description" content="RefleK's changelog and roadmap." />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -24,17 +24,72 @@
       <p class="mt-4 sm:mt-5 text-base sm:text-lg text-[var(--text-muted)] max-w-2xl mx-auto">
         See what's new, what we're working on, and what's coming next.
       </p>
+      <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="#releases" class="btn">Releases</a>
+        <a href="#in-progress" class="btn-outline">In progress</a>
+        <a href="#under-consideration" class="btn-outline">Under consideration</a>
+      </div>
     </div>
   </section>
 
   <!-- Releases timeline -->
-  <section class="py-16 sm:py-20">
+  <section id="releases" class="py-16 sm:py-20">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-extrabold mb-8 sm:mb-10">Releases</h2>
       <div class="timeline">
         <div class="timeline-item">
           <span class="timeline-dot" aria-hidden="true"></span>
-          <div class="timeline-date">Oct 2025</div>
+          <div class="timeline-date">30 Oct 2025</div>
+          <div class="timeline-body">
+            <div class="timeline-version">v0.3.0 - Minor release</div>
+            <div class="timeline-preview">
+              <span class="dot" aria-hidden="true"></span>
+              <div>
+                <strong>Preview:</strong> Sessions - “Next high score forecast” in the Progress (all) tab predicts
+                number of runs
+                to the next PB, with an optimal pause (minutes) and a confidence estimate.
+              </div>
+            </div>
+            <div class="timeline-preview">
+              <span class="dot" aria-hidden="true"></span>
+              <div>
+                <strong>Preview:</strong> Sensitivity analysis - see "Score vs Sensitivity (cm/360)" in Sessions
+                (Overview &amp; Progress all). Supports cm/360, in/360, and CSGO scales; unsupported scales are omitted.
+              </div>
+            </div>
+
+            <!-- Simple inline preview explainer (toggle) -->
+            <div class="preview-dropdown mt-2">
+              <button class="preview-toggle text-sm text-[var(--accent-primary)]" aria-expanded="false"
+                aria-controls="preview-text-1" id="preview-toggle-1">
+                What are preview features ▾
+              </button>
+              <div id="preview-text-1" class="preview-text hidden text-sm text-[var(--text-muted)] mt-2">
+                Preview features are early, experimental additions we ship to collect feedback. They are functional
+                but may change as we refine the model and UI. To report feedback, click Support &amp; Feedback in the
+                app or go to
+                <a href="/home/#support"
+                  class="text-[var(--accent-primary)] hover:text-[var(--accent-hover)] transition-colors">support</a>.
+              </div>
+            </div>
+
+            <div class="timeline-sep" aria-hidden="true"></div>
+            <ul class="timeline-features">
+              <li>Auto‑update (Windows): the app now checks for updates on startup and lets you install the latest
+                version with one click. You can also trigger a manual check from Settings → Updates.</li>
+              <li>Benchmarks: new “Analysis” tab with side‑by‑side charts for strengths/weaknesses and rank
+                distribution.</li>
+              <li>Settings: Advanced “SteamID override” (Windows) - if set, RefleK's will use this SteamID for fetching
+                benchmark progress instead of parsing Steam's loginusers.vdf. The environment override
+                <code>REFLEKS_STEAM_ID</code> remains supported.
+              </li>
+              <li>Various UI improvements and bug fixes.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <span class="timeline-dot" aria-hidden="true"></span>
+          <div class="timeline-date">28 Oct 2025</div>
           <div class="timeline-body">
             <div class="timeline-version">v0.2.0 - Minor release</div>
             <ul class="timeline-features">
@@ -53,7 +108,7 @@
 
         <div class="timeline-item">
           <span class="timeline-dot" aria-hidden="true"></span>
-          <div class="timeline-date">Oct 2025</div>
+          <div class="timeline-date">28 Oct 2025</div>
           <div class="timeline-body">
             <div class="timeline-version">v0.1.1 - Patch</div>
             <ul class="timeline-features">
@@ -64,7 +119,7 @@
 
         <div class="timeline-item">
           <span class="timeline-dot" aria-hidden="true"></span>
-          <div class="timeline-date">Oct 2025</div>
+          <div class="timeline-date">28 Oct 2025</div>
           <div class="timeline-body">
             <div class="timeline-version">v0.1.0 - Minor release</div>
             <ul class="timeline-features">
@@ -80,7 +135,7 @@
 
         <div class="timeline-item">
           <span class="timeline-dot" aria-hidden="true"></span>
-          <div class="timeline-date">Oct 2025</div>
+          <div class="timeline-date">25 Oct 2025</div>
           <div class="timeline-body">
             <div class="timeline-version">v0.0.0 - Initial release</div>
             <ul class="timeline-features">
@@ -103,7 +158,7 @@
   </section>
 
   <!-- In progress -->
-  <section class="py-16 sm:py-20 bg-[var(--bg-tertiary)] border-y border-[var(--border-primary)]">
+  <section id="in-progress" class="py-16 sm:py-20 bg-[var(--bg-tertiary)] border-y border-[var(--border-primary)]">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-extrabold text-center mb-3 sm:mb-4">In progress</h2>
       <p class="text-sm sm:text-[15px] text-[var(--text-muted)] max-w-3xl mx-auto text-center mb-8 sm:mb-10 px-2">
@@ -123,12 +178,8 @@
         <div class="card">
           <div class="card-title">Sensitivity analysis</div>
           <p class="card-copy">Analyze how your performance changes with different sensitivities. Compare score,
-            accuracy, and Real Avg TTK across runs in the Sessions tab to dial in your best settings.</p>
-        </div>
-        <div class="card">
-          <div class="card-title">Deeper benchmark analysis</div>
-          <p class="card-copy">Richer progress breakdowns across benchmark categories to highlight specific weaknesses
-            and suggest where to focus next for the biggest gains.</p>
+            accuracy, and Real Avg TTK across runs in the Sessions tab to dial in your best settings and improve overall
+            performance.</p>
         </div>
         <div class="card">
           <div class="card-title">Always improving</div>
@@ -141,7 +192,7 @@
   </section>
 
   <!-- Under consideration -->
-  <section class="py-16 sm:py-20">
+  <section id="under-consideration" class="py-16 sm:py-20">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl sm:text-3xl font-extrabold text-center mb-3 sm:mb-4">Under consideration</h2>
       <p class="text-sm sm:text-[15px] text-[var(--text-muted)] max-w-3xl mx-auto text-center mb-8 sm:mb-10 px-2">
@@ -166,6 +217,7 @@
   </section>
 
   <div id="footer-placeholder"></div>
+
   <script src="/scripts/main.js"></script>
 </body>
 

@@ -1,4 +1,6 @@
 import {
+  ArcElement,
+  BarElement,
   CategoryScale,
   Chart as ChartJS,
   Filler,
@@ -15,10 +17,24 @@ import React, { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { Dropdown } from './Dropdown'
+import { SegmentedControl } from './SegmentedControl'
 import { Toggle } from './Toggle'
 
 // Register common chart.js components once
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, RadialLinearScale, Title, Tooltip, Legend, Filler)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  RadialLinearScale,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  // Added for bar & doughnut charts used in benchmark stats
+  BarElement,
+  ArcElement,
+)
 
 type DropdownOption = { label: string; value: string }
 
@@ -34,6 +50,12 @@ export type ChartBoxControls = {
     checked: boolean
     onChange: (checked: boolean) => void
   }
+  segment?: {
+    label?: string
+    value: string
+    options: DropdownOption[]
+    onChange: (value: string) => void
+  }
 }
 
 export function ChartBox({
@@ -43,7 +65,7 @@ export function ChartBox({
   controls,
   height = 280,
 }: {
-  title: string
+  title: React.ReactNode
   info?: React.ReactNode
   children: React.ReactNode
   controls?: ChartBoxControls
@@ -51,11 +73,12 @@ export function ChartBox({
 }) {
   const [showInfo, setShowInfo] = useState(false)
   const bodyStyle: React.CSSProperties = useMemo(() => ({ height: height - 44 }), [height]) // 44px header
+  const titleText = typeof title === 'string' ? title : undefined
 
   return (
     <div className="bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)]" style={{ height }}>
       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-primary)]">
-        <div className="text-sm font-medium text-[var(--text-primary)] truncate" title={title}>{title}</div>
+        <div className="text-sm font-medium text-[var(--text-primary)] truncate" title={titleText}>{title}</div>
         <div className="flex items-center gap-2">
           {controls?.dropdown && (
             <Dropdown
@@ -65,6 +88,17 @@ export function ChartBox({
               onChange={(v) => controls.dropdown!.onChange(v)}
               options={controls.dropdown.options}
             />
+          )}
+          {controls?.segment && (
+            <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+              {controls.segment.label && <span>{controls.segment.label}</span>}
+              <SegmentedControl
+                size="sm"
+                options={controls.segment.options}
+                value={controls.segment.value}
+                onChange={(v) => controls.segment!.onChange(v)}
+              />
+            </div>
           )}
           {controls?.toggle && (
             <Toggle
