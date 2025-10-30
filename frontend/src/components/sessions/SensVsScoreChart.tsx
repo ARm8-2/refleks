@@ -25,6 +25,24 @@ export function SensVsScoreChart({ items, scenarioName }: { items: ScenarioRecor
     return pts
   }, [items, scenarioName])
 
+  // Oldest -> newest gradient coloring
+  const maxIndex = useMemo(() => points.reduce((m, p) => Math.max(m, p.i), -1), [points])
+
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+  // Slate(older) -> Amber(newer)
+  const colorAt = (t: number, forBorder = false) => {
+    // clamp
+    if (t < 0) t = 0
+    if (t > 1) t = 1
+    const o = { r: 148, g: 163, b: 184, a: forBorder ? 0.7 : 0.45 }
+    const n = { r: 234, g: 179, b: 8, a: forBorder ? 0.95 : 0.8 }
+    const r = Math.round(lerp(o.r, n.r, t))
+    const g = Math.round(lerp(o.g, n.g, t))
+    const b = Math.round(lerp(o.b, n.b, t))
+    const a = lerp(o.a, n.a, t)
+    return `rgba(${r}, ${g}, ${b}, ${a})`
+  }
+
   const data = useMemo(() => ({
     datasets: [
       {
@@ -32,13 +50,24 @@ export function SensVsScoreChart({ items, scenarioName }: { items: ScenarioRecor
         data: points,
         parsing: false,
         showLine: false,
+        // Fallback colors (overridden per-point below)
         borderColor: 'rgb(234, 179, 8)',
         backgroundColor: 'rgba(234, 179, 8, 0.45)',
+        pointBackgroundColor: (ctx: any) => {
+          const p = ctx.raw as { i: number }
+          const t = maxIndex > 0 ? p.i / maxIndex : 1
+          return colorAt(t, false)
+        },
+        pointBorderColor: (ctx: any) => {
+          const p = ctx.raw as { i: number }
+          const t = maxIndex > 0 ? p.i / maxIndex : 1
+          return colorAt(t, true)
+        },
         pointRadius: 3,
         pointHoverRadius: 4,
       },
     ],
-  }), [points])
+  }), [points, maxIndex])
 
   const xMax = useMemo(() => points.reduce((m, p) => Math.max(m, p.x), 0), [points])
   const xMin = useMemo(() => points.reduce((m, p) => Math.min(m, p.x), Number.POSITIVE_INFINITY), [points])
@@ -88,6 +117,7 @@ export function SensVsScoreChart({ items, scenarioName }: { items: ScenarioRecor
         <ul className="list-disc pl-5 text-[var(--text-secondary)]">
           <li>We only plot runs where sensitivity could be computed. Unsupported scales appear as cm/360 = 0 and are omitted.</li>
           <li>Lower cm/360 means higher sensitivity. Try comparing clusters to find your sweet spot.</li>
+          <li>Point color shows recency: greyish = older, amber = newer.</li>
         </ul>
       </div>}
       height={300}
