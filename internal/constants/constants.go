@@ -56,10 +56,9 @@ const (
 	// Usage: fmt.Sprintf(GitHubDownloadURLFmt, GitHubOwner, GitHubRepo, version, assetName)
 	GitHubDownloadURLFmt = "https://github.com/%s/%s/releases/download/%s/%s"
 
-	// Windows asset naming convention, e.g. "refleks-0.3.0.exe"
-	// New convention: lowercase, platform + arch + version, URL/FS safe
-	// Example produced installer asset: "refleks-windows-amd64-0.3.0.exe"
-	WindowsInstallerNameFmt = "refleks-windows-amd64-%s.exe"
+	// Conventional, explicit filename for release assets. Keep in sync with build/windows/installer/project.nsi
+	// Result example: "refleks-0.3.0-windows-amd64-installer.exe"
+	WindowsInstallerNameFmt = "refleks-%s-windows-amd64-installer.exe"
 
 	// Updater default timeouts (in seconds)
 	// UpdaterHTTPTimeoutSeconds is used for quick API calls (e.g., GitHub latest release). Keep small.

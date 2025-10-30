@@ -43,8 +43,8 @@
 			"label": "Version: Bump",
 			"command": "bash",
 			"args": [
-				"-lc",
-				"set -e; V='${input:newVersion}'; if ! [[ \"$V\" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then echo \"Invalid version: $V\"; exit 1; fi; sed -i -E \"s/(AppVersion[[:space:]]*=[[:space:]]*\\\")([^\\\"]+)(\\\")/\\1${V}\\3/\" internal/constants/constants.go; sed -i -E \"s/(\\\"productVersion\\\"[[:space:]]*:[[:space:]]*\\\")([^\\\"]+)(\\\")/\\1${V}\\3/\" wails.json; echo \"Bumped to $V\";"
+				"scripts/bump_version.sh",
+				"${input:newVersion}"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
@@ -107,6 +107,35 @@
 				"kind": "none"
 			},
 			"detail": "Serve the static docs/ folder at http://localhost:8080/"
+		},
+		{
+			"type": "shell",
+			"label": "Windows: Build Portable ZIP",
+			"command": "bash",
+			"args": [
+				"scripts/build_portable_zip.sh"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "build"
+			},
+			"detail": "Build portable ZIP: refleks-<version>-windows-amd64-portable.zip and write checksums"
+		},
+		{
+			"label": "Release: Bump + Build Installer + Portable ZIP",
+			"dependsOn": [
+				"Version: Bump",
+				"Wails: Build for Windows (Installer)",
+				"Windows: Build Portable ZIP"
+			],
+			"dependsOrder": "sequence",
+			"group": {
+				"kind": "build"
+			},
+			"detail": "Prompt for a version, build the Windows installer, package portable zip, and write checksums"
 		}
 	],
 	"inputs": [
