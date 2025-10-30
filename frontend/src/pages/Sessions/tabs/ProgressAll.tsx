@@ -82,23 +82,21 @@ export function ProgressAllTab() {
       <SessionLengthInsights sessions={sessions} scenarioName={selectedName} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <SensVsScoreChart items={scenarios} scenarioName={selectedName} />
         <ChartBox
           title="Practice time-of-day"
           info={<div>
             <div className="mb-2">Distribution of your practice runs by hour of day. Useful to spot when you train most often.</div>
             <ul className="list-disc pl-5 text-[var(--text-secondary)]">
               <li>Computed from each run’s “Challenge Start” time (local clock).</li>
-              <li>Shaded area highlights the volume under the curve.</li>
             </ul>
           </div>}
-          height={260}
+          height={300}
         >
           <div className="h-full">
             <TimeOfDayAreaChart items={scenarios} />
           </div>
         </ChartBox>
-
-        <SensVsScoreChart items={scenarios} scenarioName={selectedName} />
       </div>
     </div>
   )

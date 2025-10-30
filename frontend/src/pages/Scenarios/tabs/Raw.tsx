@@ -8,7 +8,7 @@ const CATEGORY_DEFS: Record<string, StatKey[]> = {
   'Overview': ['Score', 'Kills', 'Hit Count', 'Accuracy'],
   'Accuracy Details': ['Hit Count', 'Miss Count', 'Total Overshots', 'Damage Done', 'Damage Taken'],
   'Timing': ['Fight Time', 'Time Remaining', 'Avg TTK', 'Real Avg TTK', 'Pause Count', 'Pause Duration', 'Challenge Start'],
-  'Controls': ['Sens Scale', 'Sens Increment', 'Horiz Sens', 'Vert Sens', 'DPI'],
+  'Controls': ['Sens Scale', 'Sens Increment', 'Horiz Sens', 'Vert Sens', 'DPI', 'cm/360'],
   'Display': ['FOV', 'FOVScale', 'Resolution', 'Hide Gun', 'Crosshair', 'Crosshair Scale', 'Crosshair Color'],
   'Technical': ['Input Lag', 'Max FPS (config)', 'Avg FPS', 'Resolution Scale'],
   'Game Information': ['Scenario', 'Hash', 'Game Version', 'Score', 'Date Played', 'Distance Traveled', 'MBS Points', 'Challenge Start'],

@@ -202,7 +202,7 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
           {labels.length === 0 ? (
             <div className="h-full flex items-center justify-center text-sm text-[var(--text-secondary)]">No data.</div>
           ) : (
-            <div className="h-full">
+            <div className="h-full pb-4">
               <Doughnut data={data as any} options={options as any} />
             </div>
           )}

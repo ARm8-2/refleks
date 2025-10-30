@@ -99,9 +99,6 @@ export function OverviewTab({ session }: { session: Session | null }) {
 
       <SummaryStats score={metrics.score} acc={metrics.acc} ttk={metrics.ttk} firstPct={firstPct} lastPct={lastPct} />
 
-      {/* Score vs Sensitivity scatter for this scenario in this session */}
-      <SensVsScoreChart items={items} scenarioName={selectedName} />
-
       {/* Benchmark progress for the selected scenario (if available) */}
       <ChartBox
         title="Benchmark progress for this scenario"
@@ -173,24 +170,26 @@ export function OverviewTab({ session }: { session: Session | null }) {
       {/* Findings: best/worst runs for this scenario in this session */}
       <Findings items={items.filter(it => getScenarioName(it) === selectedName)} />
 
-      {/* Radar chart: scenario mix in this session */}
-      <ChartBox
-        title="Session mix (scenarios played)"
-        info={<div>
-          <div className="mb-2">Number of runs per scenario name within this session. Useful to see what you’ve been practicing.</div>
-          <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-            <li>Shows up to the top 12 scenarios by frequency for readability.</li>
-            <li>Values start at zero and reflect raw counts.</li>
-          </ul>
-        </div>}
-        height={340}
-      >
-        {radar.labels.length > 0 ? (
-          <ScenarioMixRadarChart labels={radar.labels} counts={radar.counts} />
-        ) : (
-          <div className="h-full flex items-center justify-center text-sm text-[var(--text-secondary)]">No scenarios in this session.</div>
-        )}
-      </ChartBox>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <SensVsScoreChart items={items} scenarioName={selectedName} />
+        <ChartBox
+          title="Session mix (scenarios played)"
+          info={<div>
+            <div className="mb-2">Number of runs per scenario name within this session. Useful to see what you’ve been practicing.</div>
+            <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+              <li>Shows up to the top 12 scenarios by frequency for readability.</li>
+              <li>Values start at zero and reflect raw counts.</li>
+            </ul>
+          </div>}
+          height={300}
+        >
+          {radar.labels.length > 0 ? (
+            <ScenarioMixRadarChart labels={radar.labels} counts={radar.counts} />
+          ) : (
+            <div className="h-full flex items-center justify-center text-sm text-[var(--text-secondary)]">No scenarios in this session.</div>
+          )}
+        </ChartBox>
+      </div>
     </div>
   )
 }
