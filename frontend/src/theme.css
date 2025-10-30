@@ -64,6 +64,11 @@
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.16);
   --scrollbar-thumb-active: rgba(255, 255, 255, 0.24);
   --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 80%, white);
+
+  /* Preview tag */
+  --preview-bg: rgba(234, 179, 8, 0.18);
+  --preview-text: #facc15;
+  --preview-border: rgba(234, 179, 8, 0.35);
 }
 
 /* Light theme */
@@ -94,6 +99,11 @@
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
   --scrollbar-thumb-active: rgba(0, 0, 0, 0.35);
   --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 80%, black);
+
+  /* Preview tag */
+  --preview-bg: rgba(245, 158, 11, 0.12);
+  --preview-text: #a16207;
+  --preview-border: rgba(245, 158, 11, 0.35);
 }
 
 /* Dracula theme */
@@ -124,6 +134,11 @@
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
   --scrollbar-thumb-active: rgba(255, 255, 255, 0.28);
   --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 85%, white);
+
+  /* Preview tag */
+  --preview-bg: rgba(234, 179, 8, 0.18);
+  --preview-text: #facc15;
+  --preview-border: rgba(234, 179, 8, 0.35);
 }
 
 /* Ocean (light) theme */
@@ -154,6 +169,11 @@
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
   --scrollbar-thumb-active: rgba(0, 0, 0, 0.3);
   --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 80%, black);
+
+  /* Preview tag */
+  --preview-bg: rgba(245, 158, 11, 0.12);
+  --preview-text: #a16207;
+  --preview-border: rgba(245, 158, 11, 0.35);
 }
 
 /* Nord (dark) theme */
@@ -184,6 +204,11 @@
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
   --scrollbar-thumb-active: rgba(255, 255, 255, 0.28);
   --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 85%, white);
+
+  /* Preview tag */
+  --preview-bg: rgba(234, 179, 8, 0.18);
+  --preview-text: #facc15;
+  --preview-border: rgba(234, 179, 8, 0.35);
 }
 
 /* Gruvbox (dark) theme */
@@ -214,6 +239,11 @@
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
   --scrollbar-thumb-active: rgba(255, 255, 255, 0.28);
   --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 85%, white);
+
+  /* Preview tag */
+  --preview-bg: rgba(234, 179, 8, 0.18);
+  --preview-text: #facc15;
+  --preview-border: rgba(234, 179, 8, 0.35);
 }
 
 /* Solarized (dark) theme */
@@ -244,4 +274,9 @@
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
   --scrollbar-thumb-active: rgba(255, 255, 255, 0.28);
   --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 85%, white);
+
+  /* Preview tag */
+  --preview-bg: rgba(234, 179, 8, 0.18);
+  --preview-text: #facc15;
+  --preview-border: rgba(234, 179, 8, 0.35);
 }

@@ -12,7 +12,7 @@ export function SettingsPage() {
   const [steamIdOverride, setSteamIdOverride] = useState('')
   const [statsPath, setStatsPath] = useState('')
   const [tracesPath, setTracesPath] = useState('')
-  const [gap, setGap] = useState(30)
+  const [gap, setGap] = useState(15)
   const [theme, setThemeState] = useState<Theme>(getSavedTheme())
   const [mouseEnabled, setMouseEnabled] = useState(false)
   const [mouseBuffer, setMouseBuffer] = useState(10)
@@ -161,6 +161,14 @@ export function SettingsPage() {
                 className="w-full px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
               />
             </Field>
+            <Field label="Enable mouse tracking (Windows)">
+              <Dropdown
+                value={mouseEnabled ? 'on' : 'off'}
+                onChange={(v: string) => setMouseEnabled(v === 'on')}
+                options={[{ label: 'On', value: 'on' }, { label: 'Off', value: 'off' }]}
+                size="md"
+              />
+            </Field>
             <Field label="Session gap (minutes)">
               <input
                 type="number"
@@ -216,14 +224,6 @@ export function SettingsPage() {
                   value={tracesPath}
                   onChange={e => setTracesPath(e.target.value)}
                   className="w-full px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
-                />
-              </Field>
-              <Field label="Enable mouse tracking (Windows)">
-                <Dropdown
-                  value={mouseEnabled ? 'on' : 'off'}
-                  onChange={(v: string) => setMouseEnabled(v === 'on')}
-                  options={[{ label: 'On', value: 'on' }, { label: 'Off', value: 'off' }]}
-                  size="md"
                 />
               </Field>
               <Field label="Mouse buffer (minutes)">

@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -16,7 +15,9 @@ import (
 	"refleks/internal/constants"
 	"refleks/internal/models"
 	"refleks/internal/parser"
+	"refleks/internal/sens"
 	"refleks/internal/traces"
+	"refleks/internal/util"
 )
 
 // Watcher monitors a directory for new stats files and emits events.
@@ -204,10 +205,10 @@ func (w *Watcher) parseFile(fullPath string) (models.ScenarioRecord, error) {
 	// Accuracy = Hit Count / (Hit Count + Miss Count)
 	var hit, miss float64
 	if v, ok := stats["Hit Count"]; ok {
-		hit = toFloat(v)
+		hit = util.ToFloat(v)
 	}
 	if v, ok := stats["Miss Count"]; ok {
-		miss = toFloat(v)
+		miss = util.ToFloat(v)
 	}
 	denom := hit + miss
 	if denom > 0 {
@@ -240,6 +241,11 @@ func (w *Watcher) parseFile(fullPath string) (models.ScenarioRecord, error) {
 				stats["Real Avg TTK"] = sum.Seconds() / float64(intervals)
 			}
 		}
+	}
+
+	// Sensitivity normalized to cm/360 for filtering and charts. Always set; 0 means unsupported.
+	if cm, _ := sens.Cm360FromStats(stats); true {
+		stats["cm/360"] = cm
 	}
 
 	rec := models.ScenarioRecord{
@@ -333,21 +339,7 @@ func parseTODOnDate(s string, date time.Time) (time.Time, bool) {
 	return time.Time{}, false
 }
 
-func toFloat(v any) float64 {
-	switch t := v.(type) {
-	case int:
-		return float64(t)
-	case int64:
-		return float64(t)
-	case float64:
-		return t
-	case string:
-		f, _ := strconv.ParseFloat(t, 64)
-		return f
-	default:
-		return 0
-	}
-}
+// removed duplicate toFloat: use util.ToFloat instead
 
 // GetRecent returns up to limit most recent scenarios.
 func (w *Watcher) GetRecent(limit int) []models.ScenarioRecord {

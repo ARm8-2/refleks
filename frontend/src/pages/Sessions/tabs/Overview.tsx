@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChartBox, Findings, MetricsControls, MetricsLineChart, ScenarioMixRadarChart, SummaryStats } from '../../../components'
+import { ChartBox, Findings, MetricsControls, MetricsLineChart, ScenarioMixRadarChart, SensVsScoreChart, SummaryStats } from '../../../components'
 import { buildRankDefs, cellFill, hexToRgba, numberFmt } from '../../../components/benchmarks/utils'
 import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkProgress'
 import { useRoute } from '../../../hooks/useRoute'
@@ -98,6 +98,9 @@ export function OverviewTab({ session }: { session: Session | null }) {
       </ChartBox>
 
       <SummaryStats score={metrics.score} acc={metrics.acc} ttk={metrics.ttk} firstPct={firstPct} lastPct={lastPct} />
+
+      {/* Score vs Sensitivity scatter for this scenario in this session */}
+      <SensVsScoreChart items={items} scenarioName={selectedName} />
 
       {/* Benchmark progress for the selected scenario (if available) */}
       <ChartBox

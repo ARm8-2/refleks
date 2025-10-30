@@ -65,7 +65,7 @@ export function ChartBox({
   controls,
   height = 280,
 }: {
-  title: string
+  title: React.ReactNode
   info?: React.ReactNode
   children: React.ReactNode
   controls?: ChartBoxControls
@@ -73,11 +73,12 @@ export function ChartBox({
 }) {
   const [showInfo, setShowInfo] = useState(false)
   const bodyStyle: React.CSSProperties = useMemo(() => ({ height: height - 44 }), [height]) // 44px header
+  const titleText = typeof title === 'string' ? title : undefined
 
   return (
     <div className="bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)]" style={{ height }}>
       <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-primary)]">
-        <div className="text-sm font-medium text-[var(--text-primary)] truncate" title={title}>{title}</div>
+        <div className="text-sm font-medium text-[var(--text-primary)] truncate" title={titleText}>{title}</div>
         <div className="flex items-center gap-2">
           {controls?.dropdown && (
             <Dropdown

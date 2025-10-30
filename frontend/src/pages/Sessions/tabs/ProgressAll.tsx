@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChartBox, MetricsControls, MetricsLineChart, NextHighscoreForecast, SessionLengthInsights, SummaryStats, TimeOfDayAreaChart } from '../../../components'
+import { ChartBox, MetricsControls, MetricsLineChart, NextHighscoreForecast, SensVsScoreChart, SessionLengthInsights, SummaryStats, TimeOfDayAreaChart } from '../../../components'
 import { useStore } from '../../../hooks/useStore'
 import { buildChartSeries, computeSessionAverages, groupByScenario } from '../../../lib/analysis/metrics'
 import { getScenarioName } from '../../../lib/utils'
@@ -81,21 +81,25 @@ export function ProgressAllTab() {
 
       <SessionLengthInsights sessions={sessions} scenarioName={selectedName} />
 
-      <ChartBox
-        title="Practice time-of-day"
-        info={<div>
-          <div className="mb-2">Distribution of your practice runs by hour of day. Useful to spot when you train most often.</div>
-          <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-            <li>Computed from each run’s “Challenge Start” time (local clock).</li>
-            <li>Shaded area highlights the volume under the curve.</li>
-          </ul>
-        </div>}
-        height={260}
-      >
-        <div className="h-full">
-          <TimeOfDayAreaChart items={scenarios} />
-        </div>
-      </ChartBox>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ChartBox
+          title="Practice time-of-day"
+          info={<div>
+            <div className="mb-2">Distribution of your practice runs by hour of day. Useful to spot when you train most often.</div>
+            <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+              <li>Computed from each run’s “Challenge Start” time (local clock).</li>
+              <li>Shaded area highlights the volume under the curve.</li>
+            </ul>
+          </div>}
+          height={260}
+        >
+          <div className="h-full">
+            <TimeOfDayAreaChart items={scenarios} />
+          </div>
+        </ChartBox>
+
+        <SensVsScoreChart items={scenarios} scenarioName={selectedName} />
+      </div>
     </div>
   )
 }

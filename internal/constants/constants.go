@@ -67,3 +67,12 @@ const (
 	// UpdaterDownloadTimeoutSeconds is used for downloading installer assets. Larger to accommodate slow links.
 	UpdaterDownloadTimeoutSeconds = 600
 )
+
+// --- Sensitivity conversion defaults ---
+// Default yaw (deg/count) constants for supported game scales. These are used
+// by the sensitivity converter to derive cm/360 for linear engines where
+// rotation = sensitivity * yaw * counts.
+const (
+	// Counter‑Strike (CS:GO / CS2) default m_yaw
+	YawDegPerCountCSGO = 0.022
+)

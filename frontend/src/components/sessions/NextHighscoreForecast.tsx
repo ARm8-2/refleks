@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { predictNextHighscore } from '../../lib/analysis';
 import type { ScenarioRecord } from '../../types/ipc';
 import { InfoBox } from '../shared/InfoBox';
+import { PreviewTag } from '../shared/PreviewTag';
 
 export function NextHighscoreForecast({ items, scenarioName }: { items: ScenarioRecord[]; scenarioName: string }) {
   const pred = useMemo(() => predictNextHighscore(items, scenarioName), [items, scenarioName])
@@ -16,7 +17,7 @@ export function NextHighscoreForecast({ items, scenarioName }: { items: Scenario
 
   return (
     <InfoBox
-      title="Next high score forecast (preview)"
+      title={<span className="inline-flex items-center gap-1">Next high score forecast <PreviewTag /></span>}
       info={<div>
         <div className="mb-2">Estimates when you are likely to beat your current personal best for the selected scenario.
           The model focuses on runs, not hours, and computes an optimal pause between runs for fastest progress.
