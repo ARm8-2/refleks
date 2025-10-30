@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Updates — RefleK's</title>
+  <title>Updates - RefleK's</title>
   <meta name="description" content="RefleK's changelog and roadmap." />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -39,23 +39,40 @@
       <div class="timeline">
         <div class="timeline-item">
           <span class="timeline-dot" aria-hidden="true"></span>
-          <div class="timeline-date">Oct 2025</div>
+          <div class="timeline-date">31 Oct 2025</div>
           <div class="timeline-body">
             <div class="timeline-version">v0.3.0 - Minor release</div>
             <div class="timeline-preview">
               <span class="dot" aria-hidden="true"></span>
               <div>
-                <strong>Preview:</strong> Sessions — “Next high score forecast” in the Progress (all) tab predicts runs
+                <strong>Preview:</strong> Sessions - “Next high score forecast” in the Progress (all) tab predicts
+                number of runs
                 to the next PB, with an optimal pause (minutes) and a confidence estimate.
               </div>
             </div>
+
+            <!-- Simple inline preview explainer (toggle) -->
+            <div class="preview-dropdown mt-2">
+              <button class="preview-toggle text-sm text-[var(--accent-primary)]" aria-expanded="false"
+                aria-controls="preview-text-1" id="preview-toggle-1">
+                What are preview features ▾
+              </button>
+              <div id="preview-text-1" class="preview-text hidden text-sm text-[var(--text-muted)] mt-2">
+                Preview features are early, experimental additions we ship to collect feedback. They are functional
+                but may change as we refine the model and UI. To report feedback, click Support &amp; Feedback in the
+                app or go to
+                <a href="/home/#support"
+                  class="text-[var(--accent-primary)] hover:text-[var(--accent-hover)] transition-colors">support</a>.
+              </div>
+            </div>
+
             <div class="timeline-sep" aria-hidden="true"></div>
             <ul class="timeline-features">
               <li>Auto‑update (Windows): the app now checks for updates on startup and lets you install the latest
                 version with one click. You can also trigger a manual check from Settings → Updates.</li>
               <li>Benchmarks: new “Analysis” tab with side‑by‑side charts for strengths/weaknesses and rank
                 distribution.</li>
-              <li>Settings: Advanced “SteamID override” (Windows) — if set, RefleK's will use this SteamID for fetching
+              <li>Settings: Advanced “SteamID override” (Windows) - if set, RefleK's will use this SteamID for fetching
                 benchmark progress instead of parsing Steam's loginusers.vdf. The environment override
                 <code>REFLEKS_STEAM_ID</code> remains supported.
               </li>
@@ -65,7 +82,7 @@
         </div>
         <div class="timeline-item">
           <span class="timeline-dot" aria-hidden="true"></span>
-          <div class="timeline-date">Oct 2025</div>
+          <div class="timeline-date">28 Oct 2025</div>
           <div class="timeline-body">
             <div class="timeline-version">v0.2.0 - Minor release</div>
             <ul class="timeline-features">
@@ -84,7 +101,7 @@
 
         <div class="timeline-item">
           <span class="timeline-dot" aria-hidden="true"></span>
-          <div class="timeline-date">Oct 2025</div>
+          <div class="timeline-date">28 Oct 2025</div>
           <div class="timeline-body">
             <div class="timeline-version">v0.1.1 - Patch</div>
             <ul class="timeline-features">
@@ -95,7 +112,7 @@
 
         <div class="timeline-item">
           <span class="timeline-dot" aria-hidden="true"></span>
-          <div class="timeline-date">Oct 2025</div>
+          <div class="timeline-date">28 Oct 2025</div>
           <div class="timeline-body">
             <div class="timeline-version">v0.1.0 - Minor release</div>
             <ul class="timeline-features">
@@ -111,7 +128,7 @@
 
         <div class="timeline-item">
           <span class="timeline-dot" aria-hidden="true"></span>
-          <div class="timeline-date">Oct 2025</div>
+          <div class="timeline-date">25 Oct 2025</div>
           <div class="timeline-body">
             <div class="timeline-version">v0.0.0 - Initial release</div>
             <ul class="timeline-features">
@@ -192,6 +209,7 @@
   </section>
 
   <div id="footer-placeholder"></div>
+
   <script src="/scripts/main.js"></script>
 </body>
 

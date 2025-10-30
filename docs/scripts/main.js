@@ -110,84 +110,85 @@
   const tourSteps = Array.from(document.querySelectorAll('.tour-step'))
   const tourSlides = Array.from(document.querySelectorAll('.tour-slide'))
 
-  if (tourSteps.length === 0 || tourSlides.length === 0) return
+  // Only initialize the product tour logic when both steps and slides exist on the page.
+  if (tourSteps.length > 0 && tourSlides.length > 0) {
+    let currentSlide = 1
+    let ticking = false
 
-  let currentSlide = 1
-  let ticking = false
+    function activateSlide(slideNumber) {
+      if (slideNumber === currentSlide) return
+      currentSlide = slideNumber
 
-  function activateSlide(slideNumber) {
-    if (slideNumber === currentSlide) return
-    currentSlide = slideNumber
+      tourSlides.forEach(slide => {
+        if (parseInt(slide.dataset.slide) === slideNumber) {
+          slide.classList.add('active')
+        } else {
+          slide.classList.remove('active')
+        }
+      })
+    }
 
-    tourSlides.forEach(slide => {
-      if (parseInt(slide.dataset.slide) === slideNumber) {
-        slide.classList.add('active')
-      } else {
-        slide.classList.remove('active')
-      }
-    })
-  }
+    function updateTour() {
+      if (ticking) return
+      ticking = true
 
-  function updateTour() {
-    if (ticking) return
-    ticking = true
+      requestAnimationFrame(() => {
+        ticking = false
 
-    requestAnimationFrame(() => {
-      ticking = false
+        const isDesktop = window.matchMedia('(min-width: 1024px)').matches
+        if (!isDesktop) {
+          // On mobile, all steps visible when in viewport
+          tourSteps.forEach(step => {
+            const rect = step.getBoundingClientRect()
+            const vh = window.innerHeight
+            if (rect.top < vh * 0.8 && rect.bottom > vh * 0.2) {
+              step.classList.add('visible')
+            } else {
+              step.classList.remove('visible')
+            }
+          })
+          return
+        }
 
-      const isDesktop = window.matchMedia('(min-width: 1024px)').matches
-      if (!isDesktop) {
-        // On mobile, all steps visible when in viewport
-        tourSteps.forEach(step => {
+        const vh = window.innerHeight
+
+        // Find which step should be active based on scroll position
+        let activeStep = 1
+
+        for (let i = 0; i < tourSteps.length; i++) {
+          const step = tourSteps[i]
           const rect = step.getBoundingClientRect()
-          const vh = window.innerHeight
-          if (rect.top < vh * 0.8 && rect.bottom > vh * 0.2) {
+          const stepNum = parseInt(step.dataset.step)
+
+          const activationPoint = vh * (stepNum / (tourSteps.length + 1)) * 0.9
+
+          // When step enters activation point and hasn't left viewport, activate it
+          if (rect.top < activationPoint && rect.bottom > 0) {
+            activeStep = stepNum
+          }
+        }
+
+        activateSlide(activeStep)
+
+        // Only highlight the active step, dim all others
+        tourSteps.forEach(step => {
+          const stepNum = parseInt(step.dataset.step)
+          if (stepNum === activeStep) {
             step.classList.add('visible')
           } else {
             step.classList.remove('visible')
           }
         })
-        return
-      }
-
-      const vh = window.innerHeight
-
-      // Find which step should be active based on scroll position
-      let activeStep = 1
-
-      for (let i = 0; i < tourSteps.length; i++) {
-        const step = tourSteps[i]
-        const rect = step.getBoundingClientRect()
-        const stepNum = parseInt(step.dataset.step)
-
-        const activationPoint = vh * (stepNum / (tourSteps.length + 1)) * 0.9
-
-        // When step enters activation point and hasn't left viewport, activate it
-        if (rect.top < activationPoint && rect.bottom > 0) {
-          activeStep = stepNum
-        }
-      }
-
-      activateSlide(activeStep)
-
-      // Only highlight the active step, dim all others
-      tourSteps.forEach(step => {
-        const stepNum = parseInt(step.dataset.step)
-        if (stepNum === activeStep) {
-          step.classList.add('visible')
-        } else {
-          step.classList.remove('visible')
-        }
       })
-    })
+    }
+
+    // Initial setup
+    updateTour()
+
+    // Update on scroll and resize
+    window.addEventListener('scroll', updateTour, { passive: true })
+    window.addEventListener('resize', updateTour)
   }
-
-  // Initial setup
-  updateTour()
-
-  // Update on scroll and resize
-  window.addEventListener('scroll', updateTour, { passive: true })
-  window.addEventListener('resize', updateTour)
 
   // ===== SMOOTH ANCHOR SCROLL =====
   function initSmoothScroll() {
@@ -219,5 +220,28 @@
     document.addEventListener('DOMContentLoaded', initSmoothScroll)
   } else {
     initSmoothScroll()
+  }
+
+  // ===== PREVIEW DROPDOWN (Updates page) =====
+  function initPreviewDropdown() {
+    function setupPreviewToggle(toggleId, panelId) {
+      const btn = document.getElementById(toggleId)
+      const panel = document.getElementById(panelId)
+      if (!btn || !panel) return
+      btn.addEventListener('click', () => {
+        const isHidden = panel.classList.toggle('hidden')
+        const expanded = !isHidden
+        btn.setAttribute('aria-expanded', String(expanded))
+        const base = 'What are preview features '
+        btn.textContent = base + (expanded ? '▴' : '▾')
+      })
+    }
+    setupPreviewToggle('preview-toggle-1', 'preview-text-1')
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPreviewDropdown)
+  } else {
+    initPreviewDropdown()
   }
 })()
