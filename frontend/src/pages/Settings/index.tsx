@@ -74,7 +74,7 @@ export function SettingsPage() {
     }
   }
   return (
-    <div className="space-y-4 h-full flex flex-col p-4">
+    <div className="space-y-4 h-full overflow-auto p-4">
       <div className="text-lg font-medium">Settings</div>
       <div className="space-y-6 max-w-5xl">
         {/* Updates */}
