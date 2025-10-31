@@ -77,24 +77,34 @@
 
   // ===== DYNAMIC LATEST DOWNLOAD LINK =====
   async function updateDownloadLinks() {
+    const targets = document.querySelectorAll('[data-download-latest]')
+    if (targets.length === 0) return
     try {
       const resp = await fetch('https://api.github.com/repos/ARm8-2/refleks/releases/latest', {
-        headers: {
-          'Accept': 'application/vnd.github+json'
-        }
+        headers: { 'Accept': 'application/vnd.github+json' }
       })
       if (!resp.ok) return
       const data = await resp.json()
       const assets = Array.isArray(data.assets) ? data.assets : []
-      const installer = assets.find(a => /^(refleks-windows-amd64-).*\.exe$/i.test(a.name))
-      if (!installer || !installer.browser_download_url) return
-      const url = installer.browser_download_url
+      const match = assets.find(a => /refleks-.*-windows-amd64-installer\.exe$/i.test(a?.name || ''))
 
-      document.querySelectorAll('[data-download-latest]').forEach(a => {
+      // Prefer the asset URL; otherwise construct from the tag name
+      const rawTag = String(data?.tag_name || '').trim()
+      const version = rawTag.replace(/^v/i, '')
+      const assetName = version ? `refleks-${version}-windows-amd64-installer.exe` : ''
+      const url = (match && match.browser_download_url) || (version ? `https://github.com/ARm8-2/refleks/releases/download/${version}/${assetName}` : '')
+      if (!url) return
+
+      targets.forEach(a => {
         a.setAttribute('href', url)
+        // Same-tab, no extra tab flash
+        a.removeAttribute('target')
+        a.removeAttribute('rel')
+        // Hint download; some browsers may ignore cross-origin
+        a.setAttribute('download', assetName || '')
       })
     } catch (e) {
-      // Silently ignore; fall back to releases page links
+      // Silently ignore; anchors fall back to their default hrefs
       console.debug('Could not fetch latest release asset:', e)
     }
   }
