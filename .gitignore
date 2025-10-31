@@ -1,5 +1,6 @@
 build/bin
 build/windows/installer/tmp/
+build/windows/installer/wails_tools.nsh
 node_modules
 frontend/dist
 
