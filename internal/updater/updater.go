@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -18,6 +17,8 @@ import (
 )
 
 // Updater provides update checking and installation helpers.
+// It targets Windows with an NSIS installer.
+// API is consumed by app.go; keep method names stable.
 type Updater struct {
 	Owner   string
 	Repo    string
@@ -44,13 +45,13 @@ func sanitizeVer(v string) string {
 	return v
 }
 
-// CompareSemver compares version strings like 1.2.3. Returns -1 if a<b, 0 if equal, +1 if a>b.
+// CompareSemver compares version strings like 1.2.3.
+// Returns -1 if a<b, 0 if equal, +1 if a>b.
 func CompareSemver(a, b string) int {
 	a = sanitizeVer(a)
 	b = sanitizeVer(b)
 	as := strings.Split(a, ".")
 	bs := strings.Split(b, ".")
-	// normalize length to 3
 	for len(as) < 3 {
 		as = append(as, "0")
 	}
@@ -101,7 +102,7 @@ func (u *Updater) Latest(ctx context.Context) (string, string, error) {
 		return "", "", err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return "", "", fmt.Errorf("github api status %d", resp.StatusCode)
 	}
 	var r ghRelease
@@ -118,7 +119,6 @@ func (u *Updater) Latest(ctx context.Context) (string, string, error) {
 
 // BuildDownloadURL builds the expected installer URL for a given version and current OS.
 func (u *Updater) BuildDownloadURL(version string) (string, error) {
-	// Canonical convention: v-prefixed tag and explicit OS/arch asset name.
 	version = sanitizeVer(version)
 	if version == "" {
 		return "", errors.New("empty version")
@@ -127,14 +127,12 @@ func (u *Updater) BuildDownloadURL(version string) (string, error) {
 		return "", errors.New("auto-update currently supported on Windows only")
 	}
 	asset := fmt.Sprintf(constants.WindowsInstallerNameFmt, version)
-
 	url := fmt.Sprintf(constants.GitHubDownloadURLFmt, u.Owner, u.Repo, version, asset)
 	return url, nil
 }
 
 // Download downloads the installer to a temporary path. Returns the absolute filepath.
 func (u *Updater) Download(ctx context.Context, version string) (string, error) {
-	// Single canonical candidate per our convention
 	url, err := u.BuildDownloadURL(version)
 	if err != nil {
 		return "", err
@@ -151,14 +149,13 @@ func (u *Updater) Download(ctx context.Context, version string) (string, error) 
 		return "", err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("download status %d", resp.StatusCode)
 	}
 	tmpDir, err := os.MkdirTemp("", "refleks-update-")
 	if err != nil {
 		return "", err
 	}
-	// Ensure file has .exe name for Windows smartscreen reputation
 	fileName := fmt.Sprintf(constants.WindowsInstallerNameFmt, version)
 	path := filepath.Join(tmpDir, fileName)
 	f, err := os.Create(path)
@@ -169,7 +166,6 @@ func (u *Updater) Download(ctx context.Context, version string) (string, error) 
 	if _, err := io.Copy(f, resp.Body); err != nil {
 		return "", err
 	}
-	// make sure it's executable
 	_ = os.Chmod(path, 0o755)
 	return path, nil
 }
@@ -177,10 +173,10 @@ func (u *Updater) Download(ctx context.Context, version string) (string, error) 
 // LaunchInstaller starts the downloaded installer and returns immediately.
 // The caller is expected to quit the app after this returns nil.
 func (u *Updater) LaunchInstaller(ctx context.Context, path string) error {
+	// Intentionally ignore ctx for the child process to avoid cancellation
+	// when the app quits. The installer must continue independently.
 	if runtime.GOOS != "windows" {
 		return errors.New("auto-update currently supported on Windows only")
 	}
-	// Use 'start' to detach the installer and avoid blocking
-	cmd := exec.CommandContext(ctx, "cmd", "/C", "start", "", path)
-	return cmd.Start()
+	return launchInstallerDetached(path)
 }
