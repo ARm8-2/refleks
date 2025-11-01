@@ -3,6 +3,7 @@ import { ListDetail, Tabs } from '../../components'
 import { usePageState } from '../../hooks/usePageState'
 import { useStore } from '../../hooks/useStore'
 import { useUIState } from '../../hooks/useUIState'
+import { formatRelativeDate } from '../../lib/utils'
 import type { Session } from '../../types/domain'
 import { AiTab, OverviewTab, ProgressAllTab } from './tabs'
 
@@ -43,7 +44,30 @@ export function SessionsPage() {
           renderItem={(sess) => (
             <button key={sess.id} onClick={() => setActive(sess.id)} className={`w-full text-left p-2 rounded border ${active === sess.id ? 'bg-[var(--bg-tertiary)] border-[var(--border-primary)]' : 'border-[var(--border-primary)] hover:bg-[var(--bg-tertiary)]'}`}>
               <div className="font-medium text-[var(--text-primary)] flex items-center gap-1">
-                <span>{new Date(sess.start).toLocaleString()}</span>
+                {(() => {
+                  const ts = Number.isFinite(Number(sess.start)) ? Number(sess.start) : Date.parse(String(sess.start))
+                  if (!Number.isFinite(ts)) {
+                    const raw = String(sess.start ?? '')
+                    return <span title={raw}>{formatRelativeDate(raw)}</span>
+                  }
+                  const DAY = 24 * 3600 * 1000
+                  const diff = Date.now() - ts
+                  const d = new Date(ts)
+                  const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+                  if (diff < 0 || diff < DAY) {
+                    return <span title={d.toLocaleString()}>{formatRelativeDate(ts)}{` • ${timeStr}`}</span>
+                  }
+                  const days = Math.floor(diff / DAY)
+                  if (days < 7) {
+                    return <span title={d.toLocaleString()}>{formatRelativeDate(ts)}{` • ${timeStr}`}</span>
+                  }
+                  // Older than a week: show full date but keep the same separator (•) between
+                  // date and time for visual consistency.
+                  const fullTitle = d.toLocaleString()
+                  const dateOnly = d.toLocaleDateString()
+                  const display = `${dateOnly} • ${timeStr}`
+                  return <span title={fullTitle}>{display}</span>
+                })()}
               </div>
               <div className="text-xs text-[var(--text-secondary)]">
                 {sess.items.length} scenarios
