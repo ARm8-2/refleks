@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ChartBox, Findings, MetricsControls, MetricsLineChart, ScenarioMixRadarChart, SensVsScoreChart, SummaryStats } from '../../../components'
+import { useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { ChartBox, Findings, MetricsControls, MetricsLineChart, PerformanceVsSensChart, ScenarioMixRadarChart, SummaryStats } from '../../../components'
 import { buildRankDefs, cellFill, hexToRgba, numberFmt } from '../../../components/benchmarks/utils'
 import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkProgress'
-import { useRoute } from '../../../hooks/useRoute'
+import { usePageState } from '../../../hooks/usePageState'
+import { useUIState } from '../../../hooks/useUIState'
 import { buildChartSeries, groupByScenario } from '../../../lib/analysis/metrics'
 import { getScenarioName } from '../../../lib/utils'
 import type { Session } from '../../../types/domain'
@@ -13,11 +15,11 @@ export function OverviewTab({ session }: { session: Session | null }) {
   const byName = useMemo(() => groupByScenario(items), [items])
 
   const names = useMemo(() => Array.from(byName.keys()), [byName])
-  const [selectedName, setSelectedName] = useState(names[0] ?? '')
-  const [autoSelectLast, setAutoSelectLast] = useState(true)
+  const [selectedName, setSelectedName] = usePageState<string>('overview:selectedName', names[0] ?? '')
+  const [autoSelectLast, setAutoSelectLast] = usePageState<boolean>('overview:autoSelectLast', true)
   // Windowed comparison percentages for trend deltas
-  const [firstPct, setFirstPct] = useState<number>(30)
-  const [lastPct, setLastPct] = useState<number>(30)
+  const [firstPct, setFirstPct] = usePageState<number>('overview:firstPct', 30)
+  const [lastPct, setLastPct] = usePageState<number>('overview:lastPct', 30)
 
   // When auto-select is enabled, follow the last played scenario name
   useEffect(() => {
@@ -51,8 +53,10 @@ export function OverviewTab({ session }: { session: Session | null }) {
   }, [byName, items.length])
 
   // Opened benchmark and progress (shared hook)
-  const { query } = useRoute()
-  const { selectedBenchId, bench, difficultyIndex: benchDifficultyIdx, progress: benchProgress, loading: benchLoading, error: benchError } = useOpenedBenchmarkProgress({ id: query.b || null })
+  const [sp] = useSearchParams()
+  const [openBenchId] = useUIState<string | null>('global:openBenchmark', null)
+  const selId = sp.get('b') || openBenchId || null
+  const { selectedBenchId, bench, difficultyIndex: benchDifficultyIdx, progress: benchProgress, loading: benchLoading, error: benchError } = useOpenedBenchmarkProgress({ id: selId })
 
   // Locate scenario progress in the opened benchmark
   const scenarioProgress = useMemo(() => {
@@ -171,7 +175,7 @@ export function OverviewTab({ session }: { session: Session | null }) {
       <Findings items={items.filter(it => getScenarioName(it) === selectedName)} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SensVsScoreChart items={items} scenarioName={selectedName} />
+        <PerformanceVsSensChart items={items} scenarioName={selectedName} />
         <ChartBox
           title="Session mix (scenarios played)"
           info={<div>

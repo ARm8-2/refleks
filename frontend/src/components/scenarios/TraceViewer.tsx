@@ -1,5 +1,6 @@
 import { Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePageState } from '../../hooks/usePageState';
 import type { Point } from '../../types/domain';
 import { SegmentedControl } from '../shared/SegmentedControl';
 import { Toggle } from '../shared/Toggle';
@@ -17,10 +18,10 @@ export function TraceViewer({ points, stats }: { points: Point[]; stats: Record<
 
   const [isPlaying, setIsPlaying] = useState(false)
   const [playIndex, setPlayIndex] = useState<number>(points.length)
-  const [zoom, setZoom] = useState<number>(1)
-  const [trailMode, setTrailMode] = useState<'all' | 'last2'>('all')
+  const [zoom, setZoom] = usePageState<number>('trace:zoom', 1)
+  const [trailMode, setTrailMode] = usePageState<'all' | 'last2'>('trace:trailMode', 'all')
   const [transformTick, setTransformTick] = useState(0)
-  const [autoFollow, setAutoFollow] = useState(false)
+  const [autoFollow, setAutoFollow] = usePageState<boolean>('trace:autoFollow', false)
   const autoFollowRef = useRef<boolean>(false)
 
   useEffect(() => {

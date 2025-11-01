@@ -111,7 +111,7 @@ export function ChartBox({
           <button
             aria-label="Info"
             className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
-            onClick={() => setShowInfo(v => !v)}
+            onClick={() => setShowInfo(prev => !prev)}
             title={showInfo ? 'Show chart' : 'Show info'}
           >
             <Info size={16} />

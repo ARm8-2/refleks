@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react'
-import { navigate } from '../../hooks/useRoute'
+import { ChevronRight } from 'lucide-react'
+import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { usePageState } from '../../hooks/usePageState'
 import { getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 import { Dropdown } from '../shared/Dropdown'
@@ -24,7 +26,8 @@ function normalize(arr: number[]): (x: number) => number {
 }
 
 export function Findings({ items }: { items: ScenarioRecord[] }) {
-  const [openTab, setOpenTab] = useState<'analysis' | 'raw'>('analysis')
+  const [openTab, setOpenTab] = usePageState<'analysis' | 'raw'>('findings:openIn', 'analysis')
+  const navigate = useNavigate()
 
   const ranked = useMemo(() => {
     if (!Array.isArray(items) || items.length === 0) return [] as Array<{ rec: ScenarioRecord, score: number }>
@@ -59,19 +62,27 @@ export function Findings({ items }: { items: ScenarioRecord[] }) {
   }
 
   const Row = ({ rec }: { rec: ScenarioRecord }) => (
-    <div className="flex items-center justify-between gap-3 p-2 rounded border border-[var(--border-primary)] bg-[var(--bg-tertiary)]">
-      <div className="flex flex-col">
-        <div className="text-sm text-[var(--text-primary)] font-medium">{getScenarioName(rec)}</div>
-        <div className="text-xs text-[var(--text-secondary)]">
-          Score: <b className="text-[var(--text-primary)]">{Math.round(Number(rec.stats['Score'] ?? 0))}</b>
-          {' '}• Acc: <b className="text-[var(--text-primary)]">{fmtPct01(rec.stats['Accuracy'])}</b>
-          {' '}• TTK: <b className="text-[var(--text-primary)]">{fmtSec(rec.stats['Real Avg TTK'])}</b>
+    <div
+      onClick={() => openItem(rec)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openItem(rec) } }}
+      className="relative group cursor-pointer p-2 pr-10 rounded border border-[var(--border-primary)] bg-[var(--bg-tertiary)] transform transition-all duration-150 ease-out hover:bg-[var(--bg-hover)] hover:translate-x-1 hover:shadow-sm"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col">
+          <div className="text-sm text-[var(--text-primary)] font-medium">{getScenarioName(rec)}</div>
+          <div className="text-xs text-[var(--text-secondary)]">
+            Score: <b className="text-[var(--text-primary)]">{Math.round(Number(rec.stats['Score'] ?? 0))}</b>
+            {' '}• Acc: <b className="text-[var(--text-primary)]">{fmtPct01(rec.stats['Accuracy'])}</b>
+            {' '}• TTK: <b className="text-[var(--text-primary)]">{fmtSec(rec.stats['Real Avg TTK'])}</b>
+          </div>
+        </div>
+        {/* Chevron on the right - non-interactive */}
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] transition-colors duration-150 group-hover:text-[var(--text-primary)] pointer-events-none">
+          <ChevronRight size={16} />
         </div>
       </div>
-      <button
-        className="text-xs px-2 py-1 rounded border border-[var(--border-primary)] hover:bg-[var(--bg-hover)]"
-        onClick={() => openItem(rec)}
-      >Open</button>
     </div>
   )
 

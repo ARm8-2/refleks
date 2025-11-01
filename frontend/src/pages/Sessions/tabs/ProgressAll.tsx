@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ChartBox, MetricsControls, MetricsLineChart, NextHighscoreForecast, SensVsScoreChart, SessionLengthInsights, SummaryStats, TimeOfDayAreaChart } from '../../../components'
+import { useEffect, useMemo } from 'react'
+import { ChartBox, MetricsControls, MetricsLineChart, NextHighscoreForecast, PerformanceVsSensChart, SessionLengthInsights, SummaryStats, TimeOfDayAreaChart } from '../../../components'
+import { usePageState } from '../../../hooks/usePageState'
 import { useStore } from '../../../hooks/useStore'
 import { buildChartSeries, computeSessionAverages, groupByScenario } from '../../../lib/analysis/metrics'
 import { getScenarioName } from '../../../lib/utils'
@@ -13,12 +14,12 @@ export function ProgressAllTab() {
   const byName = useMemo(() => groupByScenario(scenarios), [scenarios])
 
   const names = useMemo(() => Array.from(byName.keys()), [byName])
-  const [selectedName, setSelectedName] = useState(names[0] ?? '')
-  const [autoSelectLast, setAutoSelectLast] = useState(true)
-  const [mode, setMode] = useState<'scenarios' | 'sessions'>('scenarios')
+  const [selectedName, setSelectedName] = usePageState<string>('progressAll:selectedName', names[0] ?? '')
+  const [autoSelectLast, setAutoSelectLast] = usePageState<boolean>('progressAll:autoSelectLast', true)
+  const [mode, setMode] = usePageState<'scenarios' | 'sessions'>('progressAll:mode', 'scenarios')
   // Windowed comparison percentages for trend deltas
-  const [firstPct, setFirstPct] = useState<number>(30)
-  const [lastPct, setLastPct] = useState<number>(30)
+  const [firstPct, setFirstPct] = usePageState<number>('progressAll:firstPct', 30)
+  const [lastPct, setLastPct] = usePageState<number>('progressAll:lastPct', 30)
 
   // Follow last played scenario name globally when auto-select is enabled
   useEffect(() => {
@@ -82,7 +83,7 @@ export function ProgressAllTab() {
       <SessionLengthInsights sessions={sessions} scenarioName={selectedName} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SensVsScoreChart items={scenarios} scenarioName={selectedName} />
+        <PerformanceVsSensChart items={scenarios} scenarioName={selectedName} />
         <ChartBox
           title="Practice time-of-day"
           info={<div>

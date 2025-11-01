@@ -1,8 +1,9 @@
 import { Play } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { EventsOn } from '../../../wailsjs/runtime'
 import { ListDetail, Tabs } from '../../components'
-import { setQuery, useRoute } from '../../hooks/useRoute'
+import { usePageState } from '../../hooks/usePageState'
 import { useStore } from '../../hooks/useStore'
 import { useUIState } from '../../hooks/useUIState'
 import { getSettings, launchScenario } from '../../lib/internal'
@@ -13,14 +14,14 @@ import { AiTab, AnalysisTab, MouseTraceTab, RawTab } from './tabs'
 export function ScenariosPage() {
   const scenarios = useStore(s => s.scenarios)
   const newCount = useStore(s => s.newScenarios)
-  const { query: routeQuery } = useRoute()
-  const [activeId, setActiveId] = useState<string | null>(scenarios[0]?.filePath ?? null)
+  const [sp, setSp] = useSearchParams()
+  const [activeId, setActiveId] = usePageState<string | null>('activeFile', scenarios[0]?.filePath ?? null)
   const active = useMemo(() => scenarios.find(s => s.filePath === activeId) ?? scenarios[0] ?? null, [scenarios, activeId])
   const [watchPath, setWatchPath] = useState<string>('stats')
 
   // Sync selection with URL: /scenario?file=...
   useEffect(() => {
-    const qFile = routeQuery.file
+    const qFile = sp.get('file')
     if (qFile && scenarios.some(s => s.filePath === qFile)) {
       if (activeId !== qFile) setActiveId(qFile)
     } else {
@@ -30,7 +31,7 @@ export function ScenariosPage() {
         setActiveId(scenarios[0]?.filePath ?? null)
       }
     }
-  }, [routeQuery.file, scenarios, activeId])
+  }, [sp, scenarios, activeId])
 
   // Resolve current watch path for placeholder text; update on watcher restarts
   useEffect(() => {
@@ -69,7 +70,7 @@ export function ScenariosPage() {
           items={scenarios}
           getKey={(it) => it.filePath}
           renderItem={(it) => (
-            <button key={it.filePath} onClick={() => { setActiveId(it.filePath); setQuery({ file: it.filePath }) }}
+            <button key={it.filePath} onClick={() => { setActiveId(it.filePath); const p = new URLSearchParams(sp); p.set('file', it.filePath); setSp(p) }}
               className={`w-full text-left p-2 rounded border ${active?.filePath === it.filePath ? 'bg-[var(--bg-tertiary)] border-[var(--border-primary)]' : 'border-[var(--border-primary)] hover:bg-[var(--bg-tertiary)]'}`}>
               <div className="font-medium text-[var(--text-primary)]">{getScenarioName(it)}</div>
               <div className="text-xs text-[var(--text-secondary)]">{getDatePlayed(it.stats)}</div>
@@ -104,14 +105,14 @@ export function ScenariosPage() {
 
 function ScenarioDetail({ item }: { item: ScenarioRecord | null }) {
   const [tab, setTab] = useUIState<'raw' | 'analysis' | 'mouse' | 'ai'>('tabs:scenario', 'raw')
-  const { query: routeQuery } = useRoute()
+  const [sp, setSp] = useSearchParams()
   useEffect(() => {
     // Keep tab in sync with URL if present
-    const t = routeQuery.tab
+    const t = sp.get('tab')
     if (t && (t === 'raw' || t === 'analysis' || t === 'mouse' || t === 'ai')) {
       setTab(t as any)
     }
-  }, [routeQuery.tab])
+  }, [sp])
   if (!item) return <div className="text-sm text-[var(--text-secondary)]">No scenario selected.</div>
   const tabs = [
     { id: 'raw', label: 'Raw Stats', content: <RawTab item={item} /> },
@@ -119,7 +120,7 @@ function ScenarioDetail({ item }: { item: ScenarioRecord | null }) {
     { id: 'mouse', label: 'Mouse Trace', content: <MouseTraceTab item={item} /> },
     { id: 'ai', label: 'AI Insights', content: <AiTab /> },
   ]
-  return <Tabs tabs={tabs} active={tab} onChange={(id) => { setTab(id as any); setQuery({ tab: String(id) }) }} />
+  return <Tabs tabs={tabs} active={tab} onChange={(id) => { setTab(id as any); const p = new URLSearchParams(sp); p.set('tab', String(id)); setSp(p) }} />
 }
 
 function formatPct(v: any) {

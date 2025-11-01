@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Bar, Radar } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
+import { usePageState } from '../../hooks/usePageState'
 import type { Benchmark } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
 import { buildRankDefs, hexToRgba, normalizedRankProgress } from './utils'
@@ -12,9 +13,10 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
   const theme = useChartTheme()
 
   type Level = 'category' | 'subcategory' | 'scenario'
-  const [level, setLevel] = useState<Level>('category')
+  const benchKey = `${bench.abbreviation}-${bench.benchmarkName}`
+  const [level, setLevel] = usePageState<Level>(`bench:${benchKey}:diff:${difficultyIndex}:strengths:level`, 'category')
   type Mode = 'bar' | 'radar'
-  const [mode, setMode] = useState<Mode>('bar')
+  const [mode, setMode] = usePageState<Mode>(`bench:${benchKey}:diff:${difficultyIndex}:strengths:mode`, 'bar')
 
   // Build metadata from difficulty
   const metaDefs = useMemo(() => {

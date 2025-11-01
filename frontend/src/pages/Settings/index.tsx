@@ -251,7 +251,6 @@ export function SettingsPage() {
           <div className="flex items-center gap-2">
             <Button variant="accent" size="md" onClick={save}>Save</Button>
             <Button variant="secondary" size="md" onClick={onReset}>Reset to defaults</Button>
-            <div className="text-xs text-[var(--text-secondary)] ml-2">Settings persist to your OS config folder. Theme applies immediately.</div>
           </div>
         </section>
       </div>

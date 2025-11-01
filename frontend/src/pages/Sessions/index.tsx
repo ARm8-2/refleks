@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { ListDetail, Tabs } from '../../components'
+import { usePageState } from '../../hooks/usePageState'
 import { useStore } from '../../hooks/useStore'
 import { useUIState } from '../../hooks/useUIState'
 import type { Session } from '../../types/domain'
@@ -19,15 +20,15 @@ function formatDuration(ms: number): string {
 
 export function SessionsPage() {
   const sessions = useStore(s => s.sessions)
-  const [active, setActive] = useState<string | null>(sessions[0]?.id ?? null)
+  const [active, setActive] = usePageState<string | null>('activeSession', sessions[0]?.id ?? null)
 
   // Auto-select most recent session when sessions list updates
   useEffect(() => {
     const newest = sessions[0]?.id ?? null
-    if (newest && newest !== active) {
-      setActive(newest)
-    } else if (!newest && active !== null) {
-      setActive(null)
+    // If current active is missing or null, fall back to newest; otherwise preserve user's selection
+    const exists = active ? sessions.some(s => s.id === active) : false
+    if (!exists) {
+      setActive(newest ?? null)
     }
   }, [sessions])
 

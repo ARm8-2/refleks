@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { NavLink, Outlet, Route, Routes } from 'react-router-dom'
 import { BrowserOpenURL, EventsOn } from '../wailsjs/runtime'
-import { navigate } from './hooks/useRoute'
 import { StoreProvider, useStore } from './hooks/useStore'
 import { checkForUpdates, downloadAndInstallUpdate, getRecentScenarios, getSettings, getVersion, startWatcher } from './lib/internal'
 import { applyTheme, getSavedTheme } from './lib/theme'
@@ -10,21 +10,15 @@ import { SessionsPage } from './pages/Sessions'
 import { SettingsPage } from './pages/Settings'
 import type { UpdateInfo } from './types/ipc'
 
-function Link({ to, children }: { to: string, children: React.ReactNode }) {
-  const onClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
-    e.preventDefault()
-    navigate(to, { preserveSearch: !to.includes('?') })
-  }
-  const target = new URL(to, window.location.origin)
-  const active = window.location.pathname === target.pathname
+function Link({ to, children, end = false }: { to: string, children: React.ReactNode, end?: boolean }) {
   return (
-    <a
-      href={target.toString()}
-      onClick={onClick}
-      className={`px-3 py-1 rounded hover:bg-[var(--bg-tertiary)] ${active ? 'bg-[var(--bg-tertiary)]' : ''}`}
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) => `px-3 py-1 rounded hover:bg-[var(--bg-tertiary)] ${isActive ? 'bg-[var(--bg-tertiary)]' : ''}`}
     >
       {children}
-    </a>
+    </NavLink>
   )
 }
 
@@ -41,8 +35,8 @@ function TopNav() {
     })
     return () => { try { off() } catch { /* noop */ } }
   }, [])
-  const link = (to: string, label: string) => (
-    <Link to={to}>{label}</Link>
+  const link = (to: string, label: string, end = false) => (
+    <Link to={to} end={end}>{label}</Link>
   )
   return (
     <div className="relative flex items-center px-4 py-2 bg-[var(--bg-secondary)] text-[var(--text-primary)] border-b border-[var(--border-primary)]">
@@ -82,7 +76,7 @@ function TopNav() {
       {/* Centered tabs - absolutely centered so side content doesn't affect position */}
       <div className="absolute left-1/2 transform -translate-x-1/2 flex gap-2 items-center">
         {link('/scenarios', 'Scenarios')}
-        {link('/', 'Sessions')}
+        {link('/', 'Sessions', true)}
         {link('/benchmarks', 'Benchmarks')}
       </div>
 
@@ -101,14 +95,13 @@ function TopNav() {
   )
 }
 
-function Shell() {
+function AppLayout() {
   const addScenario = useStore(s => s.addScenario)
   const updateScenario = useStore(s => s.updateScenario)
   const incNew = useStore(s => s.incNew)
   const resetNew = useStore(s => s.resetNew)
   const setScenarios = useStore(s => s.setScenarios)
   const setSessionGap = useStore(s => s.setSessionGap)
-  const [path, setPath] = useState(window.location.pathname)
   const startedRef = useRef(false)
 
   // Startup effect: run once to start watcher and load initial data
@@ -152,14 +145,10 @@ function Shell() {
       resetNew()
     })
 
-    const onPop = () => setPath(window.location.pathname)
-    window.addEventListener('popstate', onPop)
-
     return () => {
       try { off() } catch (e) { /* ignore */ }
       try { offUpd() } catch (e) { /* ignore */ }
       try { offWatcher() } catch (e) { /* ignore */ }
-      window.removeEventListener('popstate', onPop)
     }
   }, [addScenario, updateScenario, incNew, setScenarios, resetNew])
 
@@ -167,10 +156,7 @@ function Shell() {
     <div className="flex flex-col h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
       <TopNav />
       <div className="flex-1 min-h-0 overflow-hidden">
-        {path === '/scenarios' && <ScenariosPage />}
-        {path === '/' && <SessionsPage />}
-        {path === '/benchmarks' && <BenchmarksPage />}
-        {path === '/settings' && <SettingsPage />}
+        <Outlet />
       </div>
     </div>
   )
@@ -183,7 +169,14 @@ export default function App() {
   }, [])
   return (
     <StoreProvider>
-      <Shell />
+      <Routes>
+        <Route path="/" element={<AppLayout />}>
+          <Route index element={<SessionsPage />} />
+          <Route path="scenarios" element={<ScenariosPage />} />
+          <Route path="benchmarks" element={<BenchmarksPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
+      </Routes>
     </StoreProvider>
   )
 }
