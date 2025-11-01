@@ -8,6 +8,7 @@ import {
   GetRecentScenarios as _GetRecentScenarios,
   GetSettings as _GetSettings,
   GetVersion as _GetVersion,
+  LaunchKovaaksPlaylist as _LaunchKovaaksPlaylist,
   LaunchKovaaksScenario as _LaunchKovaaksScenario,
   ResetSettings as _ResetSettings,
   SetFavoriteBenchmarks as _SetFavoriteBenchmarks,
@@ -111,5 +112,13 @@ export async function launchScenario(name: string, mode: string = 'challenge'): 
   const res = await _LaunchKovaaksScenario(String(name || ''), String(mode || 'challenge'))
   if (res !== true) {
     throw new Error(typeof res === 'string' ? res : 'LaunchKovaaksScenario failed')
+  }
+}
+
+// Launch a Kovaak's playlist via Steam deeplink using a sharecode
+export async function launchPlaylist(sharecode: string): Promise<void> {
+  const res = await _LaunchKovaaksPlaylist(String(sharecode || ''))
+  if (res !== true) {
+    throw new Error(typeof res === 'string' ? res : 'LaunchKovaaksPlaylist failed')
   }
 }

@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@types/react-virtualized": "^9.22.3",
     "autoprefixer": "^10.4.21",
     "chart.js": "^4.5.1",
     "lucide-react": "^0.548.0",
@@ -24,6 +23,7 @@
   "devDependencies": {
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
+    "@types/react-virtualized": "^9.22.3",
     "@vitejs/plugin-react": "^2.0.1",
     "typescript": "^4.6.4",
     "vite": "^3.0.7"

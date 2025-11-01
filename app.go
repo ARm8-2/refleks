@@ -284,6 +284,18 @@ func (a *App) LaunchKovaaksScenario(name string, mode string) (bool, string) {
 	return true, "ok"
 }
 
+// LaunchKovaaksPlaylist opens a Steam deep-link that jumps directly to a shared playlist by sharecode.
+// Returns (true, "ok") on success or (false, reason) on failure.
+func (a *App) LaunchKovaaksPlaylist(sharecode string) (bool, string) {
+	sc := url.PathEscape(sharecode)
+	if sc == "" {
+		return false, "missing sharecode"
+	}
+	deeplink := fmt.Sprintf("steam://run/%d/?action=jump-to-playlist;sharecode=%s", constants.KovaaksSteamAppID, sc)
+	runtime.BrowserOpenURL(a.ctx, deeplink)
+	return true, "ok"
+}
+
 // --- Updater IPC ---
 
 // CheckForUpdates queries GitHub releases and returns update availability and download URL.

@@ -42,6 +42,20 @@ export function ProgressAllTab() {
   const metrics = mode === 'sessions' ? metricsSessions : metricsRuns
   // Labels oldest -> newest, data reversed to match labels
   const { labels, score: scoreSeries, acc: accSeries, ttk: ttkSeries } = buildChartSeries(metrics)
+  const [historyLimit, setHistoryLimit] = usePageState<string>('progressAll:historyLimit', 'all')
+
+  const limitedSeries = useMemo(() => {
+    if (!labels || historyLimit === 'all') return { labels, scoreSeries, accSeries, ttkSeries }
+    const n = parseInt(historyLimit || '0', 10)
+    if (!isFinite(n) || n <= 0) return { labels, scoreSeries, accSeries, ttkSeries }
+    const start = Math.max(0, labels.length - n)
+    return {
+      labels: labels.slice(start),
+      scoreSeries: scoreSeries.slice(start),
+      accSeries: accSeries.slice(start),
+      ttkSeries: ttkSeries.slice(start),
+    }
+  }, [labels, scoreSeries, accSeries, ttkSeries, historyLimit])
 
   return (
     <div className="space-y-3">
@@ -65,6 +79,20 @@ export function ProgressAllTab() {
 
       <ChartBox
         title="Score, Accuracy and Real Avg TTK (all-time)"
+        controls={{
+          dropdown: {
+            label: 'Points',
+            value: historyLimit,
+            onChange: (v: string) => setHistoryLimit(v),
+            options: [
+              { label: 'All', value: 'all' },
+              { label: '5', value: '5' },
+              { label: '10', value: '10' },
+              { label: '20', value: '20' },
+              { label: '50', value: '50' },
+            ],
+          },
+        }}
         info={<div>
           <div className="mb-2">Metrics for the selected scenario across all your recorded runs. In Sessions view, values are averaged per session. Latest point is the most recent.</div>
           <ul className="list-disc pl-5 text-[var(--text-secondary)]">
@@ -73,7 +101,7 @@ export function ProgressAllTab() {
           </ul>
         </div>}
       >
-        <MetricsLineChart labels={labels} score={scoreSeries} acc={accSeries} ttk={ttkSeries} />
+        <MetricsLineChart labels={limitedSeries.labels} score={limitedSeries.scoreSeries} acc={limitedSeries.accSeries} ttk={limitedSeries.ttkSeries} />
       </ChartBox>
 
       <SummaryStats title="Progress summary" score={metrics.score} acc={metrics.acc} ttk={metrics.ttk} firstPct={firstPct} lastPct={lastPct} />

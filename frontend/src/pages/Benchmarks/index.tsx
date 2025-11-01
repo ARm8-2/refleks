@@ -1,11 +1,11 @@
-import { ChevronLeft, Search, Star } from 'lucide-react'
+import { ChevronLeft, Play, Search, Star } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { BenchmarkCard, Dropdown, Tabs } from '../../components'
 import { useOpenedBenchmarkProgress } from '../../hooks/useOpenedBenchmarkProgress'
 import { usePageState } from '../../hooks/usePageState'
 import { useUIState } from '../../hooks/useUIState'
-import { getBenchmarks, getFavoriteBenchmarks, setFavoriteBenchmarks } from '../../lib/internal'
+import { getBenchmarks, getFavoriteBenchmarks, launchPlaylist, setFavoriteBenchmarks } from '../../lib/internal'
 import type { Benchmark } from '../../types/ipc'
 import { AiTab, AnalysisTab, OverviewTab } from './tabs'
 
@@ -180,6 +180,23 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
         </button>
         <div className="text-lg font-medium flex items-center gap-2">
           <span>Benchmark: {bench ? `${bench.abbreviation} ${bench.benchmarkName}` : id}</span>
+          {bench?.difficulties?.[difficultyIndex]?.sharecode && (
+            <button
+              onClick={() => {
+                try {
+                  const sc = String(bench.difficulties[difficultyIndex].sharecode)
+                  launchPlaylist(sc).catch(() => { /* ignore */ })
+                } catch (e) {
+                  // ignore
+                }
+              }}
+              className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] mb-1"
+              aria-label="Play benchmark playlist"
+              title="Play benchmark playlist"
+            >
+              <Play size={18} />
+            </button>
+          )}
           <button
             onClick={() => onToggleFav(id)}
             className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] mb-1"

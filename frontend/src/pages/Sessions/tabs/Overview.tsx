@@ -37,6 +37,20 @@ export function OverviewTab({ session }: { session: Session | null }) {
 
   const metrics = byName.get(selectedName) ?? { score: [], acc: [], ttk: [] }
   const { labels, score: scoreSeries, acc: accSeries, ttk: ttkSeries } = buildChartSeries(metrics)
+  const [historyLimit, setHistoryLimit] = usePageState<string>('overview:historyLimit', 'all')
+
+  const limitedSeries = useMemo(() => {
+    if (!labels || historyLimit === 'all') return { labels, scoreSeries, accSeries, ttkSeries }
+    const n = parseInt(historyLimit || '0', 10)
+    if (!isFinite(n) || n <= 0) return { labels, scoreSeries, accSeries, ttkSeries }
+    const start = Math.max(0, labels.length - n)
+    return {
+      labels: labels.slice(start),
+      scoreSeries: scoreSeries.slice(start),
+      accSeries: accSeries.slice(start),
+      ttkSeries: ttkSeries.slice(start),
+    }
+  }, [labels, scoreSeries, accSeries, ttkSeries, historyLimit])
 
   // Scenario counts for radar chart (top N by frequency)
   const radar = useMemo(() => {
@@ -90,6 +104,20 @@ export function OverviewTab({ session }: { session: Session | null }) {
 
       <ChartBox
         title="Score, Accuracy and Real Avg TTK"
+        controls={{
+          dropdown: {
+            label: 'Points',
+            value: historyLimit,
+            onChange: (v: string) => setHistoryLimit(v),
+            options: [
+              { label: 'All', value: 'all' },
+              { label: '5', value: '5' },
+              { label: '10', value: '10' },
+              { label: '20', value: '20' },
+              { label: '50', value: '50' },
+            ],
+          },
+        }}
         info={<div>
           <div className="mb-2">Metrics for the selected scenario within this session. Latest point is the most recent run.</div>
           <ul className="list-disc pl-5 text-[var(--text-secondary)]">
@@ -98,7 +126,7 @@ export function OverviewTab({ session }: { session: Session | null }) {
           </ul>
         </div>}
       >
-        <MetricsLineChart labels={labels} score={scoreSeries} acc={accSeries} ttk={ttkSeries} />
+        <MetricsLineChart labels={limitedSeries.labels} score={limitedSeries.scoreSeries} acc={limitedSeries.accSeries} ttk={limitedSeries.ttkSeries} />
       </ChartBox>
 
       <SummaryStats score={metrics.score} acc={metrics.acc} ttk={metrics.ttk} firstPct={firstPct} lastPct={lastPct} />
