@@ -1,5 +1,5 @@
 import { Play } from 'lucide-react'
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../../hooks/useStore'
 import { groupByScenario } from '../../lib/analysis/metrics'
 import { collectRunsBySession, expectedBestVsLength, expectedByIndex, recommendLengths } from '../../lib/analysis/sessionLength'
@@ -23,6 +23,39 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
   // Global data: recent scenarios and sessions to inform recommendations
   const scenarios = useStore(s => s.scenarios)
   const sessions = useStore(s => s.sessions)
+
+  // Ref to the horizontal scroll container so we can map vertical wheel -> horizontal scroll
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
+  // Attach a native wheel listener with { passive: false } so preventDefault() works
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const handler = (e: WheelEvent) => {
+      // Only convert vertical wheel gestures to horizontal scroll when there is overflow
+      if (el.scrollWidth <= el.clientWidth) return
+
+      const deltaX = e.deltaX
+      const deltaY = e.deltaY
+      // If the user is primarily scrolling horizontally, don't interfere
+      if (Math.abs(deltaY) <= Math.abs(deltaX)) return
+
+      const atLeft = el.scrollLeft === 0
+      const atRight = Math.ceil(el.scrollLeft + el.clientWidth) >= el.scrollWidth
+      const goingRight = deltaY > 0
+      const goingLeft = deltaY < 0
+      const willScroll = (goingRight && !atRight) || (goingLeft && !atLeft)
+      if (willScroll) {
+        el.scrollLeft += deltaY
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }
+
+    el.addEventListener('wheel', handler, { passive: false })
+    return () => el.removeEventListener('wheel', handler)
+  }, [])
 
   // Helper: small triangle glyph like SummaryStats
   const triangle = (dir: 'up' | 'down', colorVar: string) => (
@@ -253,7 +286,7 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
       </div>
 
       {categories && (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" ref={containerRef}>
           <div className="min-w-max">
             {/* Single sticky header aligned with all categories */}
             <div className="sticky top-0 z-10">
