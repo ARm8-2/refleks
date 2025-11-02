@@ -241,13 +241,47 @@ export function TraceViewer({ points, stats }: { points: Point[]; stats: Record<
       if (trailMode === 'all' && drawn.length >= 2) {
         ctx.fillStyle = 'rgba(59,130,246,0.9)'
         ctx.beginPath()
-        ctx.arc(toX(first.x), toY(first.y), 3, 0, Math.PI * 2)
+        ctx.arc(toX(first.x), toY(first.y), 2, 0, Math.PI * 2)
         ctx.fill()
       }
       ctx.fillStyle = 'rgba(239,68,68,0.9)'
       ctx.beginPath()
-      ctx.arc(toX(last.x), toY(last.y), 3, 0, Math.PI * 2)
+      ctx.arc(toX(last.x), toY(last.y), 2, 0, Math.PI * 2)
       ctx.fill()
+    }
+
+    // Draw left-click press/release markers (white, smaller).
+    if (drawn.length >= 1) {
+      const markers: { x: number; y: number; pressed: boolean }[] = []
+      let prevLeft = ((drawn[0].buttons ?? 0) & 1) !== 0
+      if (prevLeft) markers.push({ x: drawn[0].x, y: drawn[0].y, pressed: true })
+      for (let i = 1; i < drawn.length; i++) {
+        const p = drawn[i]
+        const curLeft = ((p.buttons ?? 0) & 1) !== 0
+        if (curLeft !== prevLeft) markers.push({ x: p.x, y: p.y, pressed: curLeft })
+        prevLeft = curLeft
+      }
+
+      for (const m of markers) {
+        const sx = toX(m.x)
+        const sy = toY(m.y)
+        const col = 'rgba(255,255,255,0.95)'
+        if (m.pressed) {
+          ctx.fillStyle = col
+          ctx.beginPath()
+          ctx.arc(sx, sy, 2, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.strokeStyle = 'rgba(0,0,0,0.12)'
+          ctx.lineWidth = 1
+          ctx.stroke()
+        } else {
+          ctx.strokeStyle = col
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.arc(sx, sy, 2, 0, Math.PI * 2)
+          ctx.stroke()
+        }
+      }
     }
   }, [drawn, base, zoom, playIndex, trailMode, transformTick])
 

@@ -33,6 +33,8 @@ type trackerWin struct {
 	// accumulation
 	vx int32
 	vy int32
+	// current button state bitmask (left/right/middle/etc.)
+	buttons uint32
 }
 
 // New returns a new Windows mouse tracker using Raw Input.
@@ -149,6 +151,17 @@ const (
 	RIDEV_INPUTSINK = 0x00000100
 )
 
+// Raw input mouse button flags (from WinUser.h)
+const (
+	RI_MOUSE_LEFT_BUTTON_DOWN = 0x0001
+	RI_MOUSE_LEFT_BUTTON_UP   = 0x0002
+)
+
+// Local bitmask mapping for models.MousePoint.Buttons
+const (
+	mbLeft = 1 << 0
+)
+
 type WNDCLASSEX struct {
 	CbSize        uint32
 	Style         uint32
@@ -188,9 +201,10 @@ type RAWINPUTHEADER struct {
 }
 
 type RAWMOUSE struct {
-	UsFlags            uint16
-	UsButtonFlags      uint16
-	UsButtonData       uint16
+	// usFlags (USHORT)
+	UsFlags uint16
+	// union: ulButtons (ULONG) or { usButtonFlags (USHORT), usButtonData (USHORT) }
+	UlButtons          uint32
 	UlRawButtons       uint32
 	LLastX             int32
 	LLastY             int32
@@ -337,25 +351,51 @@ func (t *trackerWin) handleRawInput(lparam uintptr) {
 	// RAWMOUSE follows the header in the buffer
 	mouse := (*RAWMOUSE)(unsafe.Pointer(uintptr(unsafe.Pointer(&buf[0])) + uintptr(unsafe.Sizeof(RAWINPUTHEADER{}))))
 
-	// Use relative motion deltas (unclipped)
+	// Use relative motion deltas (unclipped) and button flags
 	dx := mouse.LLastX
 	dy := mouse.LLastY
-	if dx == 0 && dy == 0 {
-		return
-	}
+	// The RAWMOUSE union places either ulButtons (32-bit) or two USHORTs for
+	// usButtonFlags/usButtonData. Read the low WORD of UlButtons to get usButtonFlags.
+	ulButtons := mouse.UlButtons
+	flags := uint16(ulButtons & 0xFFFF)
 	now := time.Now()
 	t.mu.Lock()
-	t.vx += dx
-	t.vy += dy
-	t.buf = append(t.buf, models.MousePoint{TS: now, X: t.vx, Y: t.vy})
-	// prune old samples
-	cutoff := now.Add(-t.bufDur)
-	i := 0
-	for i < len(t.buf) && t.buf[i].TS.Before(cutoff) {
-		i++
+	// Diagnostic: log when we receive button flags or raw buttons to help debug missing captures.
+	// (previously logged diagnostics here; removed in cleanup)
+	changed := false
+	// Update left-button state only (we only care about left clicks)
+	if flags&uint16(RI_MOUSE_LEFT_BUTTON_DOWN) != 0 {
+		if t.buttons&mbLeft == 0 {
+			t.buttons |= mbLeft
+			changed = true
+		}
 	}
-	if i > 0 {
-		t.buf = append([]models.MousePoint(nil), t.buf[i:]...)
+	if flags&uint16(RI_MOUSE_LEFT_BUTTON_UP) != 0 {
+		if t.buttons&mbLeft != 0 {
+			t.buttons &^= mbLeft
+			changed = true
+		}
+	}
+
+	// Apply motion deltas if present
+	if dx != 0 || dy != 0 {
+		t.vx += dx
+		t.vy += dy
+		changed = true
+	}
+
+	// Append a sample when motion or button-state changed.
+	if changed {
+		t.buf = append(t.buf, models.MousePoint{TS: now, X: t.vx, Y: t.vy, Buttons: int32(t.buttons)})
+		// prune old samples
+		cutoff := now.Add(-t.bufDur)
+		i := 0
+		for i < len(t.buf) && t.buf[i].TS.Before(cutoff) {
+			i++
+		}
+		if i > 0 {
+			t.buf = append([]models.MousePoint(nil), t.buf[i:]...)
+		}
 	}
 	t.mu.Unlock()
 }
