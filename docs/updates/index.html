@@ -42,6 +42,29 @@
           <div class="timeline-date">3 Nov 2025</div>
           <div class="timeline-body">
             <div class="timeline-version">v0.4.0 - Minor release</div>
+            <div class="timeline-preview">
+              <span class="dot" aria-hidden="true"></span>
+              <div>
+                <strong>Preview:</strong> Mouse movement analysis - automatic detection of overshoots, undershoots, and
+                inefficient mouse paths. View per‑kill breakdowns in the Mouse Trace tab and click any analyzed kill to
+                highlight the analyzed approach in the trace viewer.
+              </div>
+            </div>
+            <div class="preview-dropdown mt-2">
+              <button class="preview-toggle text-sm text-[var(--accent-primary)]" aria-expanded="false"
+                aria-controls="preview-text-2" id="preview-toggle-2">
+                What are preview features ▾
+              </button>
+              <div id="preview-text-2" class="preview-text hidden text-sm text-[var(--text-muted)] mt-2">
+                Preview features are early, experimental additions we ship to collect feedback. They are functional but
+                may change as we refine the model and UI. To report feedback, click Support &amp; Feedback in the app or
+                go to
+                <a href="/home/#support"
+                  class="text-[var(--accent-primary)] hover:text-[var(--accent-hover)] transition-colors">support</a>.
+              </div>
+            </div>
+            <div class="timeline-sep" aria-hidden="true"></div>
+            
             <ul class="timeline-features">
               <li>Share your progress: a new <strong>Share</strong> button in the benchmark view copies a polished image
                 of your progress so you can paste it into chats or social media.</li>
@@ -101,8 +124,8 @@
                   class="text-[var(--accent-primary)] hover:text-[var(--accent-hover)] transition-colors">support</a>.
               </div>
             </div>
-
             <div class="timeline-sep" aria-hidden="true"></div>
+
             <ul class="timeline-features">
               <li>Auto‑update (Windows): the app now checks for updates on startup and lets you install the latest
                 version with one click. You can also trigger a manual check from Settings → Updates.</li>
