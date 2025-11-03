@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ChartBox, Findings, MetricsControls, MetricsLineChart, PerformanceVsSensChart, ScenarioMixRadarChart, SummaryStats } from '../../../components'
-import { ScenarioBenchmarkProgress } from '../../../components/benchmarks/ScenarioBenchmarkProgress'
+import { ChartBox, Findings, MetricsControls, MetricsLineChart, PerformanceVsSensChart, ScenarioBenchmarkProgress, ScenarioMixRadarChart, SummaryStats } from '../../../components'
 import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkProgress'
 import { usePageState } from '../../../hooks/usePageState'
 import { useUIState } from '../../../hooks/useUIState'

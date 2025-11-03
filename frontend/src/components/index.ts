@@ -13,6 +13,7 @@ export { MetricsControls } from './sessions/MetricsControls';
 export { MetricsLineChart } from './sessions/MetricsLineChart';
 export { NextHighscoreForecast } from './sessions/NextHighscoreForecast';
 export { PerformanceVsSensChart } from './sessions/PerformanceVsSensChart';
+export { ScenarioBenchmarkProgress } from './sessions/ScenarioBenchmarkProgress';
 export { ScenarioMixRadarChart } from './sessions/ScenarioMixRadarChart';
 export { SessionLengthInsights } from './sessions/SessionLengthInsights';
 export { SummaryStats } from './sessions/SummaryStats';
