@@ -30,13 +30,13 @@ export function InfoBox({
           </button>
         </div>
       </div>
-      <div className="p-3 overflow-hidden" style={bodyStyle}>
+      <div className="overflow-hidden" style={bodyStyle}>
         {showInfo ? (
-          <div className="h-full overflow-y-auto text-sm text-[var(--text-primary)] pr-1">
+          <div className="h-full overflow-y-auto text-sm text-[var(--text-primary)] p-3">
             {info ?? <div>No additional info.</div>}
           </div>
         ) : (
-          <div className="h-full overflow-y-auto text-xs text-[var(--text-secondary)] pr-1">
+          <div className="h-full overflow-y-auto text-xs text-[var(--text-secondary)] p-3">
             {children}
           </div>
         )}
