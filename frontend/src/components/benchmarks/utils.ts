@@ -42,12 +42,30 @@ export function numberFmt(n: number | null | undefined): string {
   }
 }
 
+// For the initial rank interval (below the first threshold) compute a reasonable
+// lower bound instead of using 0. We take the average difference between
+// successive thresholds and subtract it from the first threshold, clamped to 0.
+export function initialThresholdBaseline(thresholds: number[]): number {
+  const n = thresholds?.length ?? 0
+  if (n <= 1) return 0
+  const diffs: number[] = []
+  for (let i = 1; i < thresholds.length; i++) {
+    const a = Number(thresholds[i] ?? 0)
+    const b = Number(thresholds[i - 1] ?? 0)
+    const d = a - b
+    if (isFinite(d) && d > 0) diffs.push(d)
+  }
+  if (diffs.length === 0) return 0
+  const avg = diffs.reduce((s, x) => s + x, 0) / diffs.length
+  const prev = (thresholds[0] ?? 0) - avg
+  return prev > 0 ? prev : 0
+}
+
 // Compute fill fraction for rank cell index of a scenario
 export function cellFill(index: number, score: number, thresholds: number[]): number {
   const n = thresholds?.length ?? 0
   if (n === 0) return 0
-
-  const prev = index === 0 ? 0 : (thresholds[index - 1] ?? 0)
+  const prev = index === 0 ? initialThresholdBaseline(thresholds) : (thresholds[index - 1] ?? 0)
   const next = thresholds[index] ?? prev
 
   if (next <= prev) {
@@ -67,8 +85,10 @@ export function normalizedRankProgress(scenarioRank: number, score: number, thre
   const r = Math.max(0, Math.min(n, Number(scenarioRank || 0)))
   if (r <= 0) {
     const t0 = thresholds[0] ?? 0
-    if (t0 <= 0) return 0
-    const frac = Math.max(0, Math.min(1, Number(score || 0) / t0))
+    const prev = initialThresholdBaseline(thresholds)
+    const denom = t0 - prev
+    if (denom <= 0) return 0
+    const frac = Math.max(0, Math.min(1, (Number(score || 0) - prev) / denom))
     return frac * (1 / n)
   }
   if (r >= n) return 1

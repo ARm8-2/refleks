@@ -6,7 +6,7 @@ import { collectRunsBySession, expectedBestVsLength, expectedByIndex, recommendL
 import { launchScenario } from '../../lib/internal'
 import { getScenarioName } from '../../lib/utils'
 import type { Benchmark } from '../../types/ipc'
-import { buildRankDefs, cellFill, gridCols, hexToRgba, numberFmt } from './utils'
+import { buildRankDefs, cellFill, gridCols, hexToRgba, initialThresholdBaseline, numberFmt } from './utils'
 
 type Props = {
   bench: Benchmark
@@ -207,7 +207,6 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
   // Recommendation score per scenario name
   const recScore = useMemo(() => {
     const now = Date.now()
-    const rankCount = Math.max(1, rankDefs.length)
     const out = new Map<string, number>()
     // Median total runs across the currently listed scenarios
     const counts: number[] = wantedNames.map(n => byName.get(n)?.score.length ?? 0)
@@ -343,7 +342,7 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
                                 let thPts = 0
                                 if (Array.isArray(maxes) && maxes.length > 0) {
                                   const idx = Math.max(0, Math.min(maxes.length, achieved))
-                                  const prev = idx > 0 ? (maxes[idx - 1] ?? 0) : 0
+                                  const prev = idx > 0 ? (maxes[idx - 1] ?? 0) : initialThresholdBaseline(maxes)
                                   const next = maxes[idx] ?? null
                                   if (next != null && next > prev) {
                                     const frac = Math.max(0, Math.min(1, (score - prev) / (next - prev)))
