@@ -7,4 +7,4 @@ export interface Session {
   items: ScenarioRecord[]
 }
 
-export type Point = { ts: any; x: number; y: number }
+export type Point = { ts: any; x: number; y: number; buttons?: number }

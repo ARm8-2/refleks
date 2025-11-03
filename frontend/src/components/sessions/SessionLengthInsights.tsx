@@ -177,7 +177,7 @@ export function SessionLengthInsights({ sessions, scenarioName }: { sessions: Se
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ChartBox
-          title="Optimal session length — performance by run index"
+          title="Optimal session length"
           info={<div>
             <div className="mb-2">Shows expected performance and variability at each run index across your sessions. We estimate warm‑up and suggest a session length based on average, consistency, and high‑score goals.</div>
             <ul className="list-disc pl-5 text-[var(--text-secondary)]">

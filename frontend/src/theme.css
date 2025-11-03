@@ -141,33 +141,68 @@
   --preview-border: rgba(234, 179, 8, 0.35);
 }
 
-/* Ocean (light) theme */
-.theme-ocean {
-  --bg-primary: #eaf2fb;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #ecf2f9;
-  --bg-card: #ffffff;
-  --bg-hover: #e3edf8;
-  --text-primary: #17202a;
-  --text-secondary: #5b6b7c;
-  --text-muted: #7a8b9c;
-  --accent-primary: #06b6d4;
-  --accent-hover: #0891b2;
-  --accent-light: #22d3ee;
-  --border-primary: #d6e1ef;
-  --border-secondary: #c5d5e7;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --gradient-bg: linear-gradient(135deg, #ffffff 0%, #eaf2fb 50%, #dae6f8 100%);
-  --gradient-card: linear-gradient(135deg, #ffffff 0%, #ecf2f9 100%);
-  --gradient-accent: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+/* Gruvbox (dark) theme */
+.theme-gruvbox {
+  --bg-primary: #282828;
+  --bg-secondary: #3c3836;
+  --bg-tertiary: #504945;
+  --bg-card: #3c3836;
+  --bg-hover: #504945;
+  --text-primary: #ebdbb2;
+  --text-secondary: #d5c4a1;
+  --text-muted: #a89984;
+  --accent-primary: #fabd2f;
+  --accent-hover: #d79921;
+  --accent-light: #ffd75f;
+  --border-primary: #504945;
+  --border-secondary: #665c54;
+  --success: #b8bb26;
+  --warning: #fabd2f;
+  --error: #fb4934;
+  --gradient-bg: linear-gradient(135deg, #282828 0%, #3c3836 50%, #282828 100%);
+  --gradient-card: linear-gradient(135deg, #3c3836 0%, #504945 100%);
+  --gradient-accent: linear-gradient(135deg, #fabd2f 0%, #d79921 100%);
 
   --scrollbar-size: 10px;
   --scrollbar-track: transparent;
-  --scrollbar-thumb: rgba(0, 0, 0, 0.14);
-  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
-  --scrollbar-thumb-active: rgba(0, 0, 0, 0.3);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-active: rgba(255, 255, 255, 0.28);
+  --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 85%, white);
+
+  /* Preview tag */
+  --preview-bg: rgba(234, 179, 8, 0.18);
+  --preview-text: #facc15;
+  --preview-border: rgba(234, 179, 8, 0.35);
+}
+
+/* Gruvbox (light) theme */
+.theme-gruvbox-light {
+  --bg-primary: #fbf1c7;
+  --bg-secondary: #ebdbb2;
+  --bg-tertiary: #d5c4a1;
+  --bg-card: #ebdbb2;
+  --bg-hover: #d5c4a1;
+  --text-primary: #282828;
+  --text-secondary: #504945;
+  --text-muted: #7c6f64;
+  --accent-primary: #fabd2f;
+  --accent-hover: #d79921;
+  --accent-light: #ffd75f;
+  --border-primary: #a89984;
+  --border-secondary: #bdae93;
+  --success: #b8bb26;
+  --warning: #fabd2f;
+  --error: #fb4934;
+  --gradient-bg: linear-gradient(135deg, #fbf1c7 0%, #ebdbb2 50%, #f0e4c8 100%);
+  --gradient-card: linear-gradient(135deg, #ebdbb2 0%, #d5c4a1 100%);
+  --gradient-accent: linear-gradient(135deg, #fabd2f 0%, #d79921 100%);
+
+  --scrollbar-size: 10px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --scrollbar-thumb-active: rgba(0, 0, 0, 0.35);
   --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 80%, black);
 
   /* Preview tag */
@@ -211,39 +246,39 @@
   --preview-border: rgba(234, 179, 8, 0.35);
 }
 
-/* Gruvbox (dark) theme */
-.theme-gruvbox {
-  --bg-primary: #282828;
-  --bg-secondary: #3c3836;
-  --bg-tertiary: #504945;
-  --bg-card: #3c3836;
-  --bg-hover: #504945;
-  --text-primary: #ebdbb2;
-  --text-secondary: #d5c4a1;
-  --text-muted: #a89984;
-  --accent-primary: #fabd2f;
-  --accent-hover: #d79921;
-  --accent-light: #ffd75f;
-  --border-primary: #504945;
-  --border-secondary: #665c54;
-  --success: #b8bb26;
-  --warning: #fabd2f;
-  --error: #fb4934;
-  --gradient-bg: linear-gradient(135deg, #282828 0%, #3c3836 50%, #282828 100%);
-  --gradient-card: linear-gradient(135deg, #3c3836 0%, #504945 100%);
-  --gradient-accent: linear-gradient(135deg, #fabd2f 0%, #d79921 100%);
+/* Ocean (light) theme */
+.theme-ocean {
+  --bg-primary: #eaf2fb;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #ecf2f9;
+  --bg-card: #ffffff;
+  --bg-hover: #e3edf8;
+  --text-primary: #17202a;
+  --text-secondary: #5b6b7c;
+  --text-muted: #7a8b9c;
+  --accent-primary: #06b6d4;
+  --accent-hover: #0891b2;
+  --accent-light: #22d3ee;
+  --border-primary: #d6e1ef;
+  --border-secondary: #c5d5e7;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --gradient-bg: linear-gradient(135deg, #ffffff 0%, #eaf2fb 50%, #dae6f8 100%);
+  --gradient-card: linear-gradient(135deg, #ffffff 0%, #ecf2f9 100%);
+  --gradient-accent: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
 
   --scrollbar-size: 10px;
   --scrollbar-track: transparent;
-  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
-  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
-  --scrollbar-thumb-active: rgba(255, 255, 255, 0.28);
-  --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 85%, white);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.14);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.22);
+  --scrollbar-thumb-active: rgba(0, 0, 0, 0.3);
+  --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 80%, black);
 
   /* Preview tag */
-  --preview-bg: rgba(234, 179, 8, 0.18);
-  --preview-text: #facc15;
-  --preview-border: rgba(234, 179, 8, 0.35);
+  --preview-bg: rgba(245, 158, 11, 0.12);
+  --preview-text: #a16207;
+  --preview-border: rgba(245, 158, 11, 0.35);
 }
 
 /* Solarized (dark) theme */
@@ -279,4 +314,39 @@
   --preview-bg: rgba(234, 179, 8, 0.18);
   --preview-text: #facc15;
   --preview-border: rgba(234, 179, 8, 0.35);
+}
+
+/* Solarized (light) theme */
+.theme-solarized-light {
+  --bg-primary: #fdf6e3;
+  --bg-secondary: #eee8d5;
+  --bg-tertiary: #f5efd8;
+  --bg-card: #eee8d5;
+  --bg-hover: #e8dcc0;
+  --text-primary: #002b36;
+  --text-secondary: #586e75;
+  --text-muted: #839496;
+  --accent-primary: #268bd2;
+  --accent-hover: #1d6fa5;
+  --accent-light: #5fb3d7;
+  --border-primary: #93a1a1;
+  --border-secondary: #839496;
+  --success: #2aa198;
+  --warning: #b58900;
+  --error: #dc322f;
+  --gradient-bg: linear-gradient(135deg, #fdf6e3 0%, #eee8d5 50%, #f0e4c8 100%);
+  --gradient-card: linear-gradient(135deg, #eee8d5 0%, #f5efd8 100%);
+  --gradient-accent: linear-gradient(135deg, #268bd2 0%, #2aa198 100%);
+
+  --scrollbar-size: 10px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+  --scrollbar-thumb-active: rgba(0, 0, 0, 0.35);
+  --scrollbar-accent: color-mix(in oklab, var(--accent-primary) 80%, black);
+
+  /* Preview tag */
+  --preview-bg: rgba(245, 158, 11, 0.12);
+  --preview-text: #a16207;
+  --preview-border: rgba(245, 158, 11, 0.35);
 }

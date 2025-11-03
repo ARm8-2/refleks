@@ -111,20 +111,20 @@ export function ChartBox({
           <button
             aria-label="Info"
             className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
-            onClick={() => setShowInfo(v => !v)}
+            onClick={() => setShowInfo(prev => !prev)}
             title={showInfo ? 'Show chart' : 'Show info'}
           >
             <Info size={16} />
           </button>
         </div>
       </div>
-      <div className="p-3 overflow-hidden" style={bodyStyle}>
+      <div className="overflow-hidden" style={bodyStyle}>
         {showInfo ? (
-          <div className="h-full overflow-y-auto text-sm text-[var(--text-primary)] pr-1">
+          <div className="h-full overflow-y-auto text-sm text-[var(--text-primary)] p-3">
             {info ?? <div>No additional info.</div>}
           </div>
         ) : (
-          <div className="h-full">
+          <div className="h-full p-3">
             {children}
           </div>
         )}

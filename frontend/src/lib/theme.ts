@@ -2,10 +2,12 @@ export const THEMES = [
   'dark',
   'light',
   'dracula',
-  'ocean',
-  'nord',
   'gruvbox',
+  'gruvbox-light',
+  'nord',
+  'ocean',
   'solarized-dark',
+  'solarized-light',
 ] as const
 export type Theme = typeof THEMES[number]
 

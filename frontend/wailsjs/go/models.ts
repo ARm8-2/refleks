@@ -66,6 +66,7 @@ export namespace models {
 	    ts: any;
 	    x: number;
 	    y: number;
+	    buttons?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new MousePoint(source);
@@ -76,6 +77,7 @@ export namespace models {
 	        this.ts = this.convertValues(source["ts"], null);
 	        this.x = source["x"];
 	        this.y = source["y"];
+	        this.buttons = source["buttons"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

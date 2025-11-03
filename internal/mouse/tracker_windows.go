@@ -5,6 +5,7 @@ package mouse
 import (
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 	"unsafe"
@@ -33,6 +34,22 @@ type trackerWin struct {
 	// accumulation
 	vx int32
 	vy int32
+	// current button state bitmask (left/right/middle/etc.)
+	buttons uint32
+	// logical start index into buf for lazy pruning/compaction
+	start int
+	// reusable raw input buffer to avoid per-event allocations
+	rawBuf []byte
+	// ring buffer for raw events (SPSC)
+	rb      []rawEvent
+	rbMask  uint32
+	rbWrite uint32 // producer index
+	rbRead  uint32 // consumer index
+	// wake signal when ring transitions from empty->non-empty (buffered, coalesced)
+	wakeCh     chan struct{}
+	workerDone chan struct{}
+	// last time we pruned the buffer (rate-limit pruning)
+	lastPrune time.Time
 }
 
 // New returns a new Windows mouse tracker using Raw Input.
@@ -51,8 +68,17 @@ func (t *trackerWin) Start() error {
 	}
 	t.running = true
 	t.doneCh = make(chan struct{})
+	// allocate ring buffer (power-of-two size for cheap masking)
+	const rbSize = 1 << 14 // 16384 events
+	t.rb = make([]rawEvent, rbSize)
+	t.rbMask = uint32(rbSize - 1)
+	atomic.StoreUint32(&t.rbWrite, 0)
+	atomic.StoreUint32(&t.rbRead, 0)
+	t.wakeCh = make(chan struct{}, 1)
+	t.workerDone = make(chan struct{})
+	t.lastPrune = time.Now()
 	t.mu.Unlock()
-
+	go t.eventLoop()
 	go t.winLoop()
 	return nil
 }
@@ -75,20 +101,34 @@ func (t *trackerWin) Stop() {
 	case <-done:
 	case <-time.After(1 * time.Second):
 	}
+	// Window thread has exited; close wake channel to stop worker and wait
+	if t.wakeCh != nil {
+		close(t.wakeCh)
+		select {
+		case <-t.workerDone:
+		case <-time.After(500 * time.Millisecond):
+		}
+		t.wakeCh = nil
+	}
 }
 
 func (t *trackerWin) SetBufferDuration(d time.Duration) {
 	t.mu.Lock()
 	t.bufDur = d
-	// prune immediately
+	// prune immediately (lazy: update start index, compact only occasionally)
 	now := time.Now()
 	cutoff := now.Add(-d)
-	i := 0
-	for i < len(t.buf) && t.buf[i].TS.Before(cutoff) {
-		i++
+	j := t.start
+	for j < len(t.buf) && t.buf[j].TS.Before(cutoff) {
+		j++
 	}
-	if i > 0 {
-		t.buf = append([]models.MousePoint(nil), t.buf[i:]...)
+	if j > t.start {
+		t.start = j
+		// Compact underlying slice only when start grows large to avoid frequent copies
+		if t.start > 2048 {
+			t.buf = append([]models.MousePoint(nil), t.buf[t.start:]...)
+			t.start = 0
+		}
 	}
 	t.mu.Unlock()
 }
@@ -106,7 +146,8 @@ func (t *trackerWin) GetRange(start, end time.Time) []models.MousePoint {
 		return nil
 	}
 	out := make([]models.MousePoint, 0, 256)
-	for _, p := range t.buf {
+	for i := t.start; i < len(t.buf); i++ {
+		p := t.buf[i]
 		if p.TS.Before(start) {
 			continue
 		}
@@ -149,6 +190,17 @@ const (
 	RIDEV_INPUTSINK = 0x00000100
 )
 
+// Raw input mouse button flags (from WinUser.h)
+const (
+	RI_MOUSE_LEFT_BUTTON_DOWN = 0x0001
+	RI_MOUSE_LEFT_BUTTON_UP   = 0x0002
+)
+
+// Local bitmask mapping for models.MousePoint.Buttons
+const (
+	mbLeft = 1 << 0
+)
+
 type WNDCLASSEX struct {
 	CbSize        uint32
 	Style         uint32
@@ -188,13 +240,23 @@ type RAWINPUTHEADER struct {
 }
 
 type RAWMOUSE struct {
-	UsFlags            uint16
-	UsButtonFlags      uint16
-	UsButtonData       uint16
+	// usFlags (USHORT)
+	UsFlags uint16
+	// union: ulButtons (ULONG) or { usButtonFlags (USHORT), usButtonData (USHORT) }
+	UlButtons          uint32
 	UlRawButtons       uint32
 	LLastX             int32
 	LLastY             int32
 	UlExtraInformation uint32
+}
+
+// rawEvent is a lightweight representation of parsed raw input passed from
+// the window thread to the background worker to do accumulation and buffering.
+type rawEvent struct {
+	dx    int32
+	dy    int32
+	flags uint16
+	ts    time.Time
 }
 
 // Global tracker for window proc routing (single instance)
@@ -324,7 +386,11 @@ func (t *trackerWin) handleRawInput(lparam uintptr) {
 	if size == 0 || size > 4096 {
 		return
 	}
-	buf := make([]byte, size)
+	// Reuse a buffer to avoid per-event allocations.
+	if cap(t.rawBuf) < int(size) {
+		t.rawBuf = make([]byte, size)
+	}
+	buf := t.rawBuf[:size]
 	ret, _, _ := procGetRawInputData.Call(lparam, RID_INPUT, uintptr(unsafe.Pointer(&buf[0])), uintptr(unsafe.Pointer(&size)), unsafe.Sizeof(RAWINPUTHEADER{}))
 	if ret == 0 {
 		return
@@ -337,25 +403,100 @@ func (t *trackerWin) handleRawInput(lparam uintptr) {
 	// RAWMOUSE follows the header in the buffer
 	mouse := (*RAWMOUSE)(unsafe.Pointer(uintptr(unsafe.Pointer(&buf[0])) + uintptr(unsafe.Sizeof(RAWINPUTHEADER{}))))
 
-	// Use relative motion deltas (unclipped)
+	// Use relative motion deltas (unclipped) and button flags
 	dx := mouse.LLastX
 	dy := mouse.LLastY
-	if dx == 0 && dy == 0 {
+	// The RAWMOUSE union places either ulButtons (32-bit) or two USHORTs for
+	// usButtonFlags/usButtonData. Read the low WORD of UlButtons to get usButtonFlags.
+	ulButtons := mouse.UlButtons
+	flags := uint16(ulButtons & 0xFFFF)
+
+	// Enqueue into ring buffer with lock-free SPSC semantics.
+	write := atomic.LoadUint32(&t.rbWrite)
+	read := atomic.LoadUint32(&t.rbRead)
+	if uint32(len(t.rb))-(write-read) == 0 {
+		// ring full -> drop event
 		return
 	}
-	now := time.Now()
-	t.mu.Lock()
-	t.vx += dx
-	t.vy += dy
-	t.buf = append(t.buf, models.MousePoint{TS: now, X: t.vx, Y: t.vy})
-	// prune old samples
-	cutoff := now.Add(-t.bufDur)
-	i := 0
-	for i < len(t.buf) && t.buf[i].TS.Before(cutoff) {
-		i++
+	needWake := (write == read)
+	t.rb[write&t.rbMask] = rawEvent{dx: dx, dy: dy, flags: flags}
+	atomic.StoreUint32(&t.rbWrite, write+1)
+	if needWake && t.wakeCh != nil {
+		select {
+		case t.wakeCh <- struct{}{}:
+		default:
+		}
 	}
-	if i > 0 {
-		t.buf = append([]models.MousePoint(nil), t.buf[i:]...)
+}
+
+// eventLoop consumes parsed raw input events and performs accumulation and
+// buffering on a background goroutine so the window thread stays lightweight.
+func (t *trackerWin) eventLoop() {
+	defer func() {
+		if t.workerDone != nil {
+			close(t.workerDone)
+		}
+	}()
+	for {
+		// Drain all pending events
+		for {
+			read := atomic.LoadUint32(&t.rbRead)
+			write := atomic.LoadUint32(&t.rbWrite)
+			if read == write {
+				break
+			}
+			ev := t.rb[read&t.rbMask]
+
+			t.mu.Lock()
+			changed := false
+			if ev.dx != 0 || ev.dy != 0 {
+				t.vx += ev.dx
+				t.vy += ev.dy
+				changed = true
+			}
+			// Only track left button changes
+			if ev.flags&uint16(RI_MOUSE_LEFT_BUTTON_DOWN) != 0 {
+				if t.buttons&mbLeft == 0 {
+					t.buttons |= mbLeft
+					changed = true
+				}
+			}
+			if ev.flags&uint16(RI_MOUSE_LEFT_BUTTON_UP) != 0 {
+				if t.buttons&mbLeft != 0 {
+					t.buttons &^= mbLeft
+					changed = true
+				}
+			}
+			if changed {
+				now := time.Now()
+				t.buf = append(t.buf, models.MousePoint{TS: now, X: t.vx, Y: t.vy, Buttons: int32(t.buttons)})
+				// prune occasionally
+				if time.Since(t.lastPrune) > time.Second || (len(t.buf)-t.start) > 16384 {
+					cutoff := now.Add(-t.bufDur)
+					j := t.start
+					for j < len(t.buf) && t.buf[j].TS.Before(cutoff) {
+						j++
+					}
+					if j > t.start {
+						t.start = j
+						if t.start > 2048 {
+							t.buf = append([]models.MousePoint(nil), t.buf[t.start:]...)
+							t.start = 0
+						}
+					}
+					t.lastPrune = now
+				}
+			}
+			t.mu.Unlock()
+
+			atomic.StoreUint32(&t.rbRead, read+1)
+		}
+		// Wait until new events arrive or wake channel is closed
+		if t.wakeCh == nil {
+			return
+		}
+		if _, ok := <-t.wakeCh; !ok {
+			return
+		}
 	}
-	t.mu.Unlock()
 }

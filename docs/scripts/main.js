@@ -247,6 +247,7 @@
       })
     }
     setupPreviewToggle('preview-toggle-1', 'preview-text-1')
+    setupPreviewToggle('preview-toggle-2', 'preview-text-2')
   }
 
   if (document.readyState === 'loading') {

@@ -15,10 +15,14 @@ export function metricOf(rec: ScenarioRecord, metric: Metric): number {
 }
 
 export function runDurationMs(rec: ScenarioRecord): number {
-  const end = Date.parse(String(rec.stats['Date Played'] ?? ''))
+  const datePlayedStr = String(rec.stats['Date Played'] ?? '')
+  const end = Date.parse(datePlayedStr)
   const startTime = String(rec.stats['Challenge Start'] ?? '')
-  const datePart = String(rec.stats['Date Played'] ?? '').split('T')[0]
-  const startIso = `${datePart}T${startTime}Z`
+  const datePart = datePlayedStr.split('T')[0]
+  // Preserve the timezone suffix from Date Played when building the start ISO.
+  const tzMatch = datePlayedStr.match(/([+-]\d{2}:\d{2}|Z)$/)
+  const tz = tzMatch ? tzMatch[0] : 'Z'
+  const startIso = `${datePart}T${startTime}${tz}`
   const start = Date.parse(startIso)
   const d = end - start
   return Number.isFinite(d) ? Math.max(0, d) : 0

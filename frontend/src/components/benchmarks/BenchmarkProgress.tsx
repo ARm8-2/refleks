@@ -1,12 +1,12 @@
 import { Play } from 'lucide-react'
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../../hooks/useStore'
 import { groupByScenario } from '../../lib/analysis/metrics'
-import { collectRunsBySession, expectedBestVsLength, expectedByIndex, recommendLengths } from '../../lib/analysis/sessionLength'
+import { computeRecommendationScores } from '../../lib/benchmarks/recommendation'
+import { buildRankDefs, cellFill, gridCols, hexToRgba, initialThresholdBaseline, numberFmt } from '../../lib/benchmarks/utils'
 import { launchScenario } from '../../lib/internal'
 import { getScenarioName } from '../../lib/utils'
 import type { Benchmark } from '../../types/ipc'
-import { buildRankDefs, cellFill, gridCols, hexToRgba, numberFmt } from './utils'
 
 type Props = {
   bench: Benchmark
@@ -23,6 +23,39 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
   // Global data: recent scenarios and sessions to inform recommendations
   const scenarios = useStore(s => s.scenarios)
   const sessions = useStore(s => s.sessions)
+
+  // Ref to the horizontal scroll container so we can map vertical wheel -> horizontal scroll
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
+  // Attach a native wheel listener with { passive: false } so preventDefault() works
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const handler = (e: WheelEvent) => {
+      // Only convert vertical wheel gestures to horizontal scroll when there is overflow
+      if (el.scrollWidth <= el.clientWidth) return
+
+      const deltaX = e.deltaX
+      const deltaY = e.deltaY
+      // If the user is primarily scrolling horizontally, don't interfere
+      if (Math.abs(deltaY) <= Math.abs(deltaX)) return
+
+      const atLeft = el.scrollLeft === 0
+      const atRight = Math.ceil(el.scrollLeft + el.clientWidth) >= el.scrollWidth
+      const goingRight = deltaY > 0
+      const goingLeft = deltaY < 0
+      const willScroll = (goingRight && !atRight) || (goingLeft && !atLeft)
+      if (willScroll) {
+        el.scrollLeft += deltaY
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }
+
+    el.addEventListener('wheel', handler, { passive: false })
+    return () => el.removeEventListener('wheel', handler)
+  }, [])
 
   // Helper: small triangle glyph like SummaryStats
   const triangle = (dir: 'up' | 'down', colorVar: string) => (
@@ -140,111 +173,8 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
     return map
   }, [scenarios])
 
-  // Numeric helpers
-  const mean = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
-  const stddev = (arr: number[]) => {
-    if (!arr.length) return 0
-    const m = mean(arr)
-    const v = arr.reduce((s, x) => s + (x - m) * (x - m), 0) / arr.length
-    return Math.sqrt(v)
-  }
-  // Exponentially weighted slope (recent runs count more)
-  const weightedSlope = (arr: number[], alpha = 0.25): number => {
-    const y = [...arr].reverse() // oldest -> newest
-    const n = y.length
-    if (n < 2) return 0
-    // weights increase towards newer points
-    const w: number[] = []
-    for (let i = 0; i < n; i++) w.push(Math.exp(alpha * i))
-    const sw = w.reduce((a, b) => a + b, 0)
-    const mx = w.reduce((a, wi, i) => a + wi * (i + 1), 0) / sw
-    const my = w.reduce((a, wi, i) => a + wi * (Number.isFinite(y[i]) ? y[i] : 0), 0) / sw
-    let num = 0, den = 0
-    for (let i = 0; i < n; i++) {
-      const x = i + 1
-      const yi = Number.isFinite(y[i]) ? y[i] : 0
-      const dx = x - mx
-      num += w[i] * dx * (yi - my)
-      den += w[i] * dx * dx
-    }
-    return den === 0 ? 0 : num / den
-  }
-  const recentStd = (arr: number[], k = 6) => stddev(arr.slice(0, Math.min(k, arr.length)))
-
-  // Recommendation score per scenario name
-  const recScore = useMemo(() => {
-    const now = Date.now()
-    const rankCount = Math.max(1, rankDefs.length)
-    const out = new Map<string, number>()
-    // Median total runs across the currently listed scenarios
-    const counts: number[] = wantedNames.map(n => byName.get(n)?.score.length ?? 0)
-    const sorted = counts.slice().sort((a, b) => a - b)
-    const med = sorted.length ? (sorted[Math.floor(sorted.length / 2)] ?? 0) : 0
-
-    for (const name of wantedNames) {
-      // Historical metrics
-      const hist = byName.get(name)
-      const histScores: number[] = hist?.score ?? []
-      const histAcc: number[] = hist?.acc ?? []
-      const histTtk: number[] = hist?.ttk ?? []
-      // Trend signals (normalized by variability), weighted to prefer recent evidence
-      const sSlope = weightedSlope(histScores)
-      const sStd = stddev(histScores)
-      const slopeNorm = sStd > 0 ? Math.max(-1, Math.min(1, sSlope / (3 * sStd))) : 0 // ~within +/-3σ per run
-      const slopePts = 10 * slopeNorm // -10..+10
-
-      const aSlope = weightedSlope(histAcc)
-      const aStd = stddev(histAcc)
-      const aNorm = aStd > 0 ? Math.max(-1, Math.min(1, aSlope / (3 * aStd))) : 0
-      const accPts = 5 * aNorm // -5..+5
-
-      const tSlope = weightedSlope(histTtk)
-      const tStd = stddev(histTtk)
-      const tNorm = tStd > 0 ? Math.max(-1, Math.min(1, tSlope / (3 * tStd))) : 0
-      const ttkPts = -5 * tNorm // lower TTK is better
-
-      // Plateau detection: flat trend and low recent variance
-      const isPlateau = Math.abs(slopeNorm) < 0.05 && recentStd(histScores) < (0.25 * (sStd || 1))
-      const plateauPts = isPlateau ? -10 : 0
-
-      const playedMs = lastPlayedMs.get(name) ?? 0
-      const hours = playedMs ? Math.max(0, (now - playedMs) / 3_600_000) : 999
-      const recencyPts = Math.max(-5, Math.min(10, (hours - 4) / 4)) // negative if replayed very recently
-
-      const inLastSess = lastSessionCount.get(name) ?? 0
-      // Estimate optimal session length for this scenario if we have enough data
-      let lenPts = 0
-      try {
-        const runs = collectRunsBySession(sessions, name)
-        const byIdx = expectedByIndex(runs, 'score')
-        const bestVsL = expectedBestVsLength(runs, 'score')
-        const rec = recommendLengths(byIdx, bestVsL)
-        const opt = rec.optimalAvgRuns || 0
-        if (opt > 0) {
-          if (inLastSess === 0) {
-            lenPts = 0
-          } else if (inLastSess < opt) {
-            lenPts = Math.min(15, opt - inLastSess)
-          } else if (inLastSess > opt) {
-            lenPts = -Math.min(25, 2 * (inLastSess - opt))
-          }
-        }
-      } catch { /* ignore */ }
-
-      // Under-practiced bonus: encourage scenarios with few total runs
-      const totalRuns = histScores.length
-      let practicePts = 0
-      if (totalRuns < Math.max(3, med)) {
-        // Scale from +8 (very few) to ~0 near median
-        const denom = Math.max(1, med)
-        practicePts = Math.max(0, Math.min(8, Math.round(8 * (1 - totalRuns / denom))))
-      }
-
-      // Default combine without thresholds; thresholds contribution is added per-row below where we have scenario data
-      out.set(name, Math.round(slopePts + accPts + ttkPts + plateauPts + recencyPts + lenPts + practicePts))
-    }
-    return out
-  }, [wantedNames, byName, lastPlayedMs, lastSessionCount, sessions, rankDefs.length])
+  // Recommendation score per scenario name (base score without threshold proximity)
+  const recScore = useMemo(() => computeRecommendationScores({ wantedNames, byName, lastPlayedMs, lastSessionCount, sessions }), [wantedNames, byName, lastPlayedMs, lastSessionCount, sessions])
 
   return (
     <div className="space-y-4">
@@ -253,7 +183,7 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
       </div>
 
       {categories && (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" ref={containerRef}>
           <div className="min-w-max">
             {/* Single sticky header aligned with all categories */}
             <div className="sticky top-0 z-10">
@@ -310,7 +240,7 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
                                 let thPts = 0
                                 if (Array.isArray(maxes) && maxes.length > 0) {
                                   const idx = Math.max(0, Math.min(maxes.length, achieved))
-                                  const prev = idx > 0 ? (maxes[idx - 1] ?? 0) : 0
+                                  const prev = idx > 0 ? (maxes[idx - 1] ?? 0) : initialThresholdBaseline(maxes)
                                   const next = maxes[idx] ?? null
                                   if (next != null && next > prev) {
                                     const frac = Math.max(0, Math.min(1, (score - prev) / (next - prev)))

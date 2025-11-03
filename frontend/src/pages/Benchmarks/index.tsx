@@ -1,26 +1,33 @@
-import { ChevronLeft, Search, Star } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { Camera, ChevronLeft, Play, Search, Star } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { BenchmarkCard, Dropdown, Tabs } from '../../components'
+import ShareBenchmarkProgress from '../../components/benchmarks/ShareBenchmarkProgress'
 import { useOpenedBenchmarkProgress } from '../../hooks/useOpenedBenchmarkProgress'
-import { navigate, useRoute } from '../../hooks/useRoute'
+import { usePageState } from '../../hooks/usePageState'
 import { useUIState } from '../../hooks/useUIState'
-import { getBenchmarks, getFavoriteBenchmarks, setFavoriteBenchmarks } from '../../lib/internal'
+import { copyNodeToClipboard } from '../../lib/copyNodeToClipboard'
+import { getBenchmarks, getFavoriteBenchmarks, launchPlaylist, setFavoriteBenchmarks } from '../../lib/internal'
 import type { Benchmark } from '../../types/ipc'
 import { AiTab, AnalysisTab, OverviewTab } from './tabs'
 
 type BenchItem = { id: string; title: string; abbreviation: string; subtitle?: string; color?: string }
 
 export function BenchmarksPage() {
-  const { query: routeQuery } = useRoute()
-  const selected = routeQuery.b || null
+  const [sp, setSp] = useSearchParams()
+  const selected = sp.get('b') || null
+  // Global open benchmark id (shared across pages)
+  const [openBenchId, setOpenBenchId] = useUIState<string | null>('global:openBenchmark', null)
   const [items, setItems] = useState<BenchItem[]>([])
   const [byId, setById] = useState<Record<string, Benchmark>>({})
-  const [query, setQuery] = useState('')
-  const [showFavOnly, setShowFavOnly] = useState(false)
+  const [benchLoading, setBenchLoading] = useState<boolean>(true)
+  const [query, setQuery] = usePageState<string>('explore:query', '')
+  const [showFavOnly, setShowFavOnly] = usePageState<boolean>('explore:showFavOnly', false)
   const [favorites, setFavorites] = useState<string[]>([])
 
   useEffect(() => {
     let isMounted = true
+    setBenchLoading(true)
     getBenchmarks()
       .then((list: Benchmark[]) => {
         if (!isMounted) return
@@ -37,9 +44,11 @@ export function BenchmarksPage() {
           map[`${b.abbreviation}-${b.benchmarkName}`] = b
         }
         setById(map)
+        setBenchLoading(false)
       })
       .catch(err => {
         console.warn('getBenchmarks failed', err)
+        setBenchLoading(false)
       })
     getFavoriteBenchmarks()
       .then(ids => { if (isMounted) setFavorites(ids) })
@@ -68,16 +77,32 @@ export function BenchmarksPage() {
     const list = filtered.length ? filtered : items
     if (list.length === 0) return
     const r = list[Math.floor(Math.random() * list.length)]
-    navigate(`/benchmarks?b=${encodeURIComponent(r.id)}`)
+    setOpenBenchId(r.id)
+    setSp({ b: r.id })
   }
 
+  // Keep last selected benchmark in per-page state
+  useEffect(() => {
+    if (selected && selected !== openBenchId) setOpenBenchId(selected)
+  }, [selected, openBenchId, setOpenBenchId])
+
+  // On first mount, if no selection in URL but we have a remembered one, restore it
+  useEffect(() => {
+    if (!selected && openBenchId) {
+      const params = new URLSearchParams(sp)
+      params.set('b', openBenchId)
+      setSp(params, { replace: true })
+    }
+  }, [selected, openBenchId, setSp, sp])
+
   return selected
-    ? <BenchmarksDetail bench={byId[selected!]} id={selected} favorites={favorites} onToggleFav={toggleFavorite} onBack={() => navigate('/benchmarks')} />
+    ? <BenchmarksDetail bench={byId[selected!]} id={selected} favorites={favorites} onToggleFav={toggleFavorite} onBack={() => { const p = new URLSearchParams(sp); p.delete('b'); setSp(p); setOpenBenchId(null) }} />
     : <BenchmarksExplore
       items={filtered}
       favorites={favorites}
+      loading={benchLoading}
       onToggleFav={toggleFavorite}
-      onOpen={(id) => navigate(`/benchmarks?b=${encodeURIComponent(id)}`)}
+      onOpen={(id) => { setOpenBenchId(id); setSp({ b: id }) }}
       query={query}
       onQuery={setQuery}
       showFavOnly={showFavOnly}
@@ -86,8 +111,8 @@ export function BenchmarksPage() {
     />
 }
 
-function BenchmarksExplore({ items, favorites, onToggleFav, onOpen, query, onQuery, showFavOnly, onToggleFavOnly, onRandom }:
-  { items: BenchItem[]; favorites: string[]; onToggleFav: (id: string) => void; onOpen: (id: string) => void; query: string; onQuery: (v: string) => void; showFavOnly: boolean; onToggleFavOnly: () => void; onRandom: () => void }) {
+function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, query, onQuery, showFavOnly, onToggleFavOnly, onRandom }:
+  { items: BenchItem[]; favorites: string[]; loading: boolean; onToggleFav: (id: string) => void; onOpen: (id: string) => void; query: string; onQuery: (v: string) => void; showFavOnly: boolean; onToggleFavOnly: () => void; onRandom: () => void }) {
   return (
     <div className="space-y-4 h-full p-4 overflow-auto">
       <div className="flex items-center justify-between gap-3">
@@ -106,7 +131,7 @@ function BenchmarksExplore({ items, favorites, onToggleFav, onOpen, query, onQue
           <button onClick={onRandom} className="px-2 py-1.5 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)] text-sm hover:bg-[var(--bg-secondary)]">Random</button>
           <button
             onClick={onToggleFavOnly}
-            className={`px-2 py-1.5 rounded border text-sm flex items-center gap-2 ${showFavOnly ? 'bg-[var(--accent-primary)]/20 border-[var(--accent-primary)] text-[var(--text-primary)]' : 'bg-[var(--bg-tertiary)] border-[var(--border-primary)]'}`}
+            className={`px-2 py-1.5 rounded border text-sm flex items-center gap-2 focus:outline-none focus:ring-1 focus:ring-[var(--border-primary)] ${showFavOnly ? 'bg-[var(--accent-primary)]/20 border-[var(--accent-primary)] text-[var(--text-primary)] hover:bg-[var(--accent-primary)]/30' : 'bg-[var(--bg-tertiary)] border-[var(--border-primary)] hover:bg-[var(--bg-secondary)]'}`}
             title={showFavOnly ? 'Showing favorites' : 'Show all'}
           >
             <Star size={16} strokeWidth={1.5} style={{ color: showFavOnly ? 'var(--accent-primary)' as any : undefined, fill: showFavOnly ? 'var(--accent-primary)' : 'none' }} />
@@ -127,7 +152,13 @@ function BenchmarksExplore({ items, favorites, onToggleFav, onOpen, query, onQue
             onToggleFavorite={onToggleFav}
           />
         ))}
-        {items.length === 0 && <div className="text-sm text-[var(--text-secondary)]">{query ? 'No results.' : 'Loading benchmarks…'}</div>}
+        {items.length === 0 && (
+          <div className="text-sm text-[var(--text-secondary)]">
+            {loading ? 'Loading benchmarks…' : (
+              showFavOnly ? (favorites.length ? 'No favorites match your filters.' : 'No favorites yet.') : (query ? 'No results.' : 'No benchmarks found.')
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -137,6 +168,44 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
   const [tab, setTab] = useUIState<'overview' | 'analysis' | 'ai'>(`Benchmark:${id}:tab`, 'overview')
   // Use shared hook for progress + live updates and difficulty state
   const { progress, loading, error, difficultyIndex, setDifficultyIndex } = useOpenedBenchmarkProgress({ id, bench: bench ?? null })
+
+  // Share image: render offscreen card on demand and copy to clipboard
+  const [renderShare, setRenderShare] = useState(false)
+  const shareRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!renderShare) return
+    let cancelled = false
+    const doCapture = async () => {
+      const node = shareRef.current
+      if (!node) { setRenderShare(false); return }
+      try {
+        // Wait for any images inside the share node to finish loading so html-to-image captures them
+        const imgs = Array.from(node.querySelectorAll('img')) as HTMLImageElement[]
+        await Promise.all(imgs.map(img => new Promise<void>(resolve => {
+          if (img.complete && img.naturalWidth !== 0) return resolve()
+          const done = () => resolve()
+          img.addEventListener('load', done, { once: true })
+          img.addEventListener('error', done, { once: true })
+        })))
+
+        if (cancelled) return
+        const bg = getComputedStyle(node).backgroundColor
+        const res = await copyNodeToClipboard(node, { pixelRatio: 2, backgroundColor: bg })
+        if (res.copied) {
+          alert('Share image copied to clipboard!')
+        } else {
+          alert('Clipboard not available. Saved image instead.')
+        }
+      } catch (e) {
+        alert('Failed to copy image: ' + (e as Error)?.message)
+      } finally {
+        setRenderShare(false)
+      }
+    }
+    void doCapture()
+    return () => { cancelled = true }
+  }, [renderShare])
 
   return (
     <div className="space-y-3 p-4 h-full overflow-auto">
@@ -151,6 +220,33 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
         </button>
         <div className="text-lg font-medium flex items-center gap-2">
           <span>Benchmark: {bench ? `${bench.abbreviation} ${bench.benchmarkName}` : id}</span>
+          {bench?.difficulties?.[difficultyIndex]?.sharecode && (
+            <button
+              onClick={() => {
+                try {
+                  const sc = String(bench.difficulties[difficultyIndex].sharecode)
+                  launchPlaylist(sc).catch(() => { /* ignore */ })
+                } catch (e) {
+                  // ignore
+                }
+              }}
+              className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] mb-1"
+              aria-label="Play benchmark playlist"
+              title="Play benchmark playlist"
+            >
+              <Play size={18} />
+            </button>
+          )}
+          {/* Share (screenshot) button */}
+          <button
+            onClick={() => { if (bench && progress) setRenderShare(true) }}
+            disabled={!bench || !progress}
+            className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] mb-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Copy share image"
+            title="Copy share image to clipboard"
+          >
+            <Camera size={18} />
+          </button>
           <button
             onClick={() => onToggleFav(id)}
             className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] mb-1"
@@ -181,6 +277,15 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
         { id: 'analysis', label: 'Analysis', content: <AnalysisTab bench={bench} difficultyIndex={difficultyIndex} loading={loading} error={error} progress={progress} /> },
         { id: 'ai', label: 'AI Insights', content: <AiTab /> },
       ]} active={tab} onChange={(id) => setTab(id as any)} />
+
+      {/* Offscreen share renderer */}
+      {bench && progress && renderShare && (
+        <div style={{ position: 'fixed', left: -99999, top: -99999, pointerEvents: 'none' }} aria-hidden>
+          <div ref={shareRef}>
+            <ShareBenchmarkProgress bench={bench} difficultyIndex={difficultyIndex} progress={progress as any} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

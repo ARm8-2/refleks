@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ChartBox, Findings, MetricsControls, MetricsLineChart, ScenarioMixRadarChart, SensVsScoreChart, SummaryStats } from '../../../components'
-import { buildRankDefs, cellFill, hexToRgba, numberFmt } from '../../../components/benchmarks/utils'
+import { useEffect, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { ChartBox, Findings, MetricsControls, MetricsLineChart, PerformanceVsSensChart, ScenarioBenchmarkProgress, ScenarioMixRadarChart, SummaryStats } from '../../../components'
 import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkProgress'
-import { useRoute } from '../../../hooks/useRoute'
+import { usePageState } from '../../../hooks/usePageState'
+import { useUIState } from '../../../hooks/useUIState'
 import { buildChartSeries, groupByScenario } from '../../../lib/analysis/metrics'
 import { getScenarioName } from '../../../lib/utils'
 import type { Session } from '../../../types/domain'
@@ -13,11 +14,11 @@ export function OverviewTab({ session }: { session: Session | null }) {
   const byName = useMemo(() => groupByScenario(items), [items])
 
   const names = useMemo(() => Array.from(byName.keys()), [byName])
-  const [selectedName, setSelectedName] = useState(names[0] ?? '')
-  const [autoSelectLast, setAutoSelectLast] = useState(true)
+  const [selectedName, setSelectedName] = usePageState<string>('overview:selectedName', names[0] ?? '')
+  const [autoSelectLast, setAutoSelectLast] = usePageState<boolean>('overview:autoSelectLast', true)
   // Windowed comparison percentages for trend deltas
-  const [firstPct, setFirstPct] = useState<number>(30)
-  const [lastPct, setLastPct] = useState<number>(30)
+  const [firstPct, setFirstPct] = usePageState<number>('overview:firstPct', 30)
+  const [lastPct, setLastPct] = usePageState<number>('overview:lastPct', 30)
 
   // When auto-select is enabled, follow the last played scenario name
   useEffect(() => {
@@ -35,6 +36,20 @@ export function OverviewTab({ session }: { session: Session | null }) {
 
   const metrics = byName.get(selectedName) ?? { score: [], acc: [], ttk: [] }
   const { labels, score: scoreSeries, acc: accSeries, ttk: ttkSeries } = buildChartSeries(metrics)
+  const [historyLimit, setHistoryLimit] = usePageState<string>('overview:historyLimit', 'all')
+
+  const limitedSeries = useMemo(() => {
+    if (!labels || historyLimit === 'all') return { labels, scoreSeries, accSeries, ttkSeries }
+    const n = parseInt(historyLimit || '0', 10)
+    if (!isFinite(n) || n <= 0) return { labels, scoreSeries, accSeries, ttkSeries }
+    const start = Math.max(0, labels.length - n)
+    return {
+      labels: labels.slice(start),
+      scoreSeries: scoreSeries.slice(start),
+      accSeries: accSeries.slice(start),
+      ttkSeries: ttkSeries.slice(start),
+    }
+  }, [labels, scoreSeries, accSeries, ttkSeries, historyLimit])
 
   // Scenario counts for radar chart (top N by frequency)
   const radar = useMemo(() => {
@@ -51,23 +66,12 @@ export function OverviewTab({ session }: { session: Session | null }) {
   }, [byName, items.length])
 
   // Opened benchmark and progress (shared hook)
-  const { query } = useRoute()
-  const { selectedBenchId, bench, difficultyIndex: benchDifficultyIdx, progress: benchProgress, loading: benchLoading, error: benchError } = useOpenedBenchmarkProgress({ id: query.b || null })
+  const [sp] = useSearchParams()
+  const [openBenchId] = useUIState<string | null>('global:openBenchmark', null)
+  const selId = sp.get('b') || openBenchId || null
+  const { selectedBenchId, bench, difficultyIndex: benchDifficultyIdx, progress: benchProgress, loading: benchLoading, error: benchError } = useOpenedBenchmarkProgress({ id: selId })
 
-  // Locate scenario progress in the opened benchmark
-  const scenarioProgress = useMemo(() => {
-    if (!benchProgress || !selectedName) return null
-    const categories = benchProgress.categories as Record<string, any> | undefined
-    if (!categories || typeof categories !== 'object') return null
-    for (const catName of Object.keys(categories)) {
-      const cat = categories[catName]
-      const scenMap = cat?.scenarios as Record<string, any> | undefined
-      if (scenMap && selectedName in scenMap) {
-        return { catName, data: scenMap[selectedName] as any }
-      }
-    }
-    return null
-  }, [benchProgress, selectedName])
+  // Scenario progress UI is encapsulated in its own component below
 
   return (
     <div className="space-y-3">
@@ -78,14 +82,24 @@ export function OverviewTab({ session }: { session: Session | null }) {
         onSelect={(v) => { setSelectedName(v); setAutoSelectLast(false) }}
         autoSelectLast={autoSelectLast}
         onToggleAuto={setAutoSelectLast}
-        firstPct={firstPct}
-        lastPct={lastPct}
-        onFirstPct={setFirstPct}
-        onLastPct={setLastPct}
       />
 
       <ChartBox
         title="Score, Accuracy and Real Avg TTK"
+        controls={{
+          dropdown: {
+            label: 'Points',
+            value: historyLimit,
+            onChange: (v: string) => setHistoryLimit(v),
+            options: [
+              { label: 'All', value: 'all' },
+              { label: '5', value: '5' },
+              { label: '10', value: '10' },
+              { label: '20', value: '20' },
+              { label: '50', value: '50' },
+            ],
+          },
+        }}
         info={<div>
           <div className="mb-2">Metrics for the selected scenario within this session. Latest point is the most recent run.</div>
           <ul className="list-disc pl-5 text-[var(--text-secondary)]">
@@ -94,84 +108,27 @@ export function OverviewTab({ session }: { session: Session | null }) {
           </ul>
         </div>}
       >
-        <MetricsLineChart labels={labels} score={scoreSeries} acc={accSeries} ttk={ttkSeries} />
+        <MetricsLineChart labels={limitedSeries.labels} score={limitedSeries.scoreSeries} acc={limitedSeries.accSeries} ttk={limitedSeries.ttkSeries} />
       </ChartBox>
 
-      <SummaryStats score={metrics.score} acc={metrics.acc} ttk={metrics.ttk} firstPct={firstPct} lastPct={lastPct} />
+      <SummaryStats score={metrics.score} acc={metrics.acc} ttk={metrics.ttk} firstPct={firstPct} lastPct={lastPct} onFirstPct={setFirstPct} onLastPct={setLastPct} />
 
       {/* Benchmark progress for the selected scenario (if available) */}
-      <ChartBox
-        title="Benchmark progress for this scenario"
-        info={<div>
-          <div className="mb-2">Shows your progress towards benchmark ranks for the currently selected scenario. This follows the benchmark you have open on the Benchmarks page.</div>
-          <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-            <li>Open a benchmark in the Benchmarks tab to display its progress here.</li>
-            <li>If this scenario isn’t part of the opened benchmark, an info message is shown.</li>
-          </ul>
-        </div>}
-        height={125}
-      >
-        <div className="h-full overflow-x-auto">
-          {(!selectedBenchId) && (
-            <div className="h-full flex items-center justify-center text-sm text-[var(--text-secondary)]">
-              Open a benchmark in “Benchmarks” to see progress for this scenario here.
-            </div>
-          )}
-          {(selectedBenchId && benchError) && (
-            <div className="h-full flex items-center justify-center text-sm text-red-400">{benchError}</div>
-          )}
-          {(selectedBenchId && benchLoading) && (
-            <div className="h-full flex items-center justify-center text-sm text-[var(--text-secondary)]">Loading benchmark progress…</div>
-          )}
-          {(selectedBenchId && !benchLoading && !benchError) && (
-            bench && benchProgress && scenarioProgress ? (
-              <div className="p-1">
-                {(() => {
-                  const difficulty = bench.difficulties[Math.min(Math.max(0, benchDifficultyIdx), bench.difficulties.length - 1)]
-                  const ranks = buildRankDefs(difficulty, benchProgress)
-                  const cols = `minmax(220px,1fr) 90px ${Array.from({ length: ranks.length }).map(() => '120px').join(' ')}`
-                  const achieved = Number(scenarioProgress.data?.scenario_rank || 0)
-                  const maxes: number[] = Array.isArray(scenarioProgress.data?.rank_maxes) ? scenarioProgress.data.rank_maxes : []
-                  const raw = Number(scenarioProgress.data?.score || 0)
-                  const score = raw / 100
-                  return (
-                    <div className="grid gap-1" style={{ gridTemplateColumns: cols }}>
-                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">Scenario</div>
-                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">Score</div>
-                      {ranks.map((r: { name: string; color: string }) => (
-                        <div key={r.name} className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center">{r.name}</div>
-                      ))}
-                      <div className="text-[13px] text-[var(--text-primary)] truncate flex items-center">{selectedName}</div>
-                      <div className="text-[12px] text-[var(--text-primary)] flex items-center">{numberFmt(score)}</div>
-                      {ranks.map((r: { name: string; color: string }, i: number) => {
-                        const fill = cellFill(i, score, maxes)
-                        const border = r.color
-                        const value = maxes?.[i]
-                        return (
-                          <div key={r.name + i} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center" style={{ border: `1px solid ${border}` }}>
-                            <div className="absolute inset-y-0 left-0" style={{ width: `${Math.round(fill * 100)}%`, background: hexToRgba(r.color, 0.35) }} />
-                            <span className="relative z-10">{value != null ? numberFmt(value) : '—'}</span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )
-                })()}
-              </div>
-            ) : (
-              <div className="h-full flex items-center justify-center text-sm text-[var(--text-secondary)]">
-                {bench && benchProgress ? 'This scenario isn’t part of the opened benchmark.' : 'Open a benchmark in “Benchmarks” to see progress for this scenario here.'}
-              </div>
-            )
-          )}
-        </div>
-      </ChartBox>
+      <ScenarioBenchmarkProgress
+        bench={bench || null}
+        progress={benchProgress}
+        difficultyIndex={benchDifficultyIdx}
+        scenarioName={selectedName}
+        selectedBenchId={selectedBenchId}
+        loading={benchLoading}
+        error={benchError}
+      />
 
       {/* Findings: best/worst runs for this scenario in this session */}
       <Findings items={items.filter(it => getScenarioName(it) === selectedName)} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SensVsScoreChart items={items} scenarioName={selectedName} />
+        <PerformanceVsSensChart items={items} scenarioName={selectedName} />
         <ChartBox
           title="Session mix (scenarios played)"
           info={<div>

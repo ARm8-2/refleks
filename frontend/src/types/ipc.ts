@@ -3,7 +3,7 @@ export interface ScenarioRecord {
   fileName: string
   stats: Record<string, any>
   events: string[][]
-  mouseTrace?: Array<{ ts: string; x: number; y: number }>
+  mouseTrace?: Array<{ ts: string; x: number; y: number; buttons?: number }>
 }
 
 export interface BenchmarkDifficulty {

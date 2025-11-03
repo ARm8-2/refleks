@@ -1,10 +1,14 @@
 import { Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePageState } from '../../hooks/usePageState';
 import type { Point } from '../../types/domain';
 import { SegmentedControl } from '../shared/SegmentedControl';
 import { Toggle } from '../shared/Toggle';
 
-export function TraceViewer({ points, stats }: { points: Point[]; stats: Record<string, any> }) {
+type Highlight = { startTs?: any; endTs?: any; color?: string }
+type Marker = { ts: any; color?: string; radius?: number; type?: 'circle' | 'cross' }
+
+export function TraceViewer({ points, stats, highlight, markers, seekToTs, centerOnTs, onReset }: { points: Point[]; stats: Record<string, any>; highlight?: Highlight; markers?: Marker[]; seekToTs?: any; centerOnTs?: any; onReset?: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const rafRef = useRef<number | null>(null)
@@ -17,10 +21,10 @@ export function TraceViewer({ points, stats }: { points: Point[]; stats: Record<
 
   const [isPlaying, setIsPlaying] = useState(false)
   const [playIndex, setPlayIndex] = useState<number>(points.length)
-  const [zoom, setZoom] = useState<number>(1)
-  const [trailMode, setTrailMode] = useState<'all' | 'last2'>('all')
+  const [zoom, setZoom] = usePageState<number>('trace:zoom', 1)
+  const [trailMode, setTrailMode] = usePageState<'all' | 'last2'>('trace:trailMode', 'all')
   const [transformTick, setTransformTick] = useState(0)
-  const [autoFollow, setAutoFollow] = useState(false)
+  const [autoFollow, setAutoFollow] = usePageState<boolean>('trace:autoFollow', false)
   const autoFollowRef = useRef<boolean>(false)
 
   useEffect(() => {
@@ -72,6 +76,44 @@ export function TraceViewer({ points, stats }: { points: Point[]; stats: Record<
     centerRef.current = { cx: (base as any).cx ?? 0, cy: (base as any).cy ?? 0 }
   }, [points])
 
+  // External seek
+  useEffect(() => {
+    if (seekToTs == null || points.length === 0) return
+    const abs = tsMs(seekToTs)
+    if (!Number.isFinite(abs)) return
+    // binary search
+    let lo = 0, hi = points.length - 1
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi) / 2)
+      if (tsMs(points[mid].ts) < abs) lo = mid + 1
+      else hi = mid
+    }
+    const i = lo
+    curIndexRef.current = i
+    setPlayIndex(i)
+    if (autoFollowRef.current) {
+      const p = points[Math.max(0, Math.min(points.length - 1, i))]
+      if (p) centerRef.current = { cx: p.x, cy: p.y }
+    }
+  }, [seekToTs])
+
+  // External center
+  useEffect(() => {
+    if (centerOnTs == null || points.length === 0) return
+    const abs = tsMs(centerOnTs)
+    if (!Number.isFinite(abs)) return
+    let lo = 0, hi = points.length - 1
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi) / 2)
+      if (tsMs(points[mid].ts) < abs) lo = mid + 1
+      else hi = mid
+    }
+    const i = Math.max(0, Math.min(points.length - 1, lo))
+    const p = points[i]
+    centerRef.current = { cx: p.x, cy: p.y }
+    setTransformTick(t => t + 1)
+  }, [centerOnTs])
+
   // Playback
   const play = () => {
     if (isPlaying || points.length < 2) return
@@ -92,6 +134,8 @@ export function TraceViewer({ points, stats }: { points: Point[]; stats: Record<
     curIndexRef.current = points.length
     setPlayIndex(points.length)
     centerRef.current = { cx: (base as any).cx ?? 0, cy: (base as any).cy ?? 0 }
+    // Notify parent so it can clear any selection/highlight
+    try { onReset && onReset() } catch { }
   }
   function stopAnim() {
     if (rafRef.current != null) {
@@ -240,13 +284,103 @@ export function TraceViewer({ points, stats }: { points: Point[]; stats: Record<
       if (trailMode === 'all' && drawn.length >= 2) {
         ctx.fillStyle = 'rgba(59,130,246,0.9)'
         ctx.beginPath()
-        ctx.arc(toX(first.x), toY(first.y), 3, 0, Math.PI * 2)
+        ctx.arc(toX(first.x), toY(first.y), 2, 0, Math.PI * 2)
         ctx.fill()
       }
       ctx.fillStyle = 'rgba(239,68,68,0.9)'
       ctx.beginPath()
-      ctx.arc(toX(last.x), toY(last.y), 3, 0, Math.PI * 2)
+      ctx.arc(toX(last.x), toY(last.y), 2, 0, Math.PI * 2)
       ctx.fill()
+    }
+
+    // Draw left-click press/release markers (white, smaller).
+    if (drawn.length >= 1) {
+      const markers: { x: number; y: number; pressed: boolean }[] = []
+      let prevLeft = ((drawn[0].buttons ?? 0) & 1) !== 0
+      if (prevLeft) markers.push({ x: drawn[0].x, y: drawn[0].y, pressed: true })
+      for (let i = 1; i < drawn.length; i++) {
+        const p = drawn[i]
+        const curLeft = ((p.buttons ?? 0) & 1) !== 0
+        if (curLeft !== prevLeft) markers.push({ x: p.x, y: p.y, pressed: curLeft })
+        prevLeft = curLeft
+      }
+
+      for (const m of markers) {
+        const sx = toX(m.x)
+        const sy = toY(m.y)
+        const col = 'rgba(255,255,255,0.95)'
+        if (m.pressed) {
+          ctx.fillStyle = col
+          ctx.beginPath()
+          ctx.arc(sx, sy, 2, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.strokeStyle = 'rgba(0,0,0,0.12)'
+          ctx.lineWidth = 1
+          ctx.stroke()
+        } else {
+          ctx.strokeStyle = col
+          ctx.lineWidth = 1
+          ctx.beginPath()
+          ctx.arc(sx, sy, 2, 0, Math.PI * 2)
+          ctx.stroke()
+        }
+      }
+    }
+
+    // Highlight overlay for selected segment
+    if (highlight && (highlight.startTs || highlight.endTs)) {
+      const hStartMs = tsMs(highlight.startTs ?? points[0].ts)
+      const hEndMs = tsMs(highlight.endTs ?? points[points.length - 1].ts)
+      if (Number.isFinite(hStartMs) && Number.isFinite(hEndMs)) {
+        // indices
+        let lo = 0, hi = points.length - 1
+        while (lo < hi) { const mid = (lo + hi) >>> 1; if (tsMs(points[mid].ts) < hStartMs) lo = mid + 1; else hi = mid }
+        const i0 = Math.max(0, Math.min(points.length - 1, lo))
+        lo = 0; hi = points.length - 1
+        while (lo < hi) { const mid = (lo + hi) >>> 1; if (tsMs(points[mid].ts) < hEndMs) lo = mid + 1; else hi = mid }
+        const i1 = Math.max(0, Math.min(points.length - 1, lo))
+        if (i1 > i0) {
+          ctx.lineWidth = 2
+          ctx.strokeStyle = highlight.color || 'rgba(16,185,129,0.9)'
+          ctx.beginPath()
+          ctx.moveTo(toX(points[i0].x), toY(points[i0].y))
+          for (let i = i0 + 1; i <= i1; i++) {
+            ctx.lineTo(toX(points[i].x), toY(points[i].y))
+          }
+          ctx.stroke()
+          ctx.lineWidth = 1
+        }
+      }
+    }
+
+    // Draw optional external markers
+    if (Array.isArray(markers) && markers.length > 0) {
+      for (const m of markers) {
+        const ms = tsMs(m.ts)
+        let lo = 0, hi = points.length - 1
+        while (lo < hi) { const mid = (lo + hi) >>> 1; if (tsMs(points[mid].ts) < ms) lo = mid + 1; else hi = mid }
+        const i = Math.max(0, Math.min(points.length - 1, lo))
+        const sx = toX(points[i].x)
+        const sy = toY(points[i].y)
+        const col = m.color || 'rgba(255,255,255,0.95)'
+        const r = m.radius ?? 3
+        if (m.type === 'cross') {
+          ctx.strokeStyle = col
+          ctx.beginPath()
+          ctx.moveTo(sx - r, sy)
+          ctx.lineTo(sx + r, sy)
+          ctx.moveTo(sx, sy - r)
+          ctx.lineTo(sx, sy + r)
+          ctx.stroke()
+        } else {
+          ctx.strokeStyle = 'rgba(0,0,0,0.12)'
+          ctx.fillStyle = col
+          ctx.beginPath()
+          ctx.arc(sx, sy, r, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.stroke()
+        }
+      }
     }
   }, [drawn, base, zoom, playIndex, trailMode, transformTick])
 

@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
+import { usePageState } from '../../hooks/usePageState'
+import { buildRankDefs } from '../../lib/benchmarks/utils'
 import type { Benchmark } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
-import { buildRankDefs } from './utils'
 
 export function RankDistributionDonut({ bench, progress, difficultyIndex, height = 360 }:
   { bench: Benchmark; progress: Record<string, any>; difficultyIndex: number; height?: number }) {
@@ -12,9 +13,10 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
   const theme = useChartTheme()
 
   type ScopeLevel = 'all' | 'category' | 'subcategory'
-  const [level, setLevel] = useState<ScopeLevel>('all')
-  const [catIdx, setCatIdx] = useState<number>(0)
-  const [subIdx, setSubIdx] = useState<number>(0)
+  const benchKey = `${bench.abbreviation}-${bench.benchmarkName}`
+  const [level, setLevel] = usePageState<ScopeLevel>(`bench:${benchKey}:diff:${difficultyIndex}:ranks:level`, 'all')
+  const [catIdx, setCatIdx] = usePageState<number>(`bench:${benchKey}:diff:${difficultyIndex}:ranks:catIdx`, 0)
+  const [subIdx, setSubIdx] = usePageState<number>(`bench:${benchKey}:diff:${difficultyIndex}:ranks:subIdx`, 0)
 
   // Build metadata + normalized mapping like BenchmarkProgress to resolve scenario lists per scope
   const metaDefs = useMemo(() => {

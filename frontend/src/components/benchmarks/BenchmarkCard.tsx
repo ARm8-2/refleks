@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react';
+import { ChevronRight, Star } from 'lucide-react';
 import React from 'react';
 
 type BenchmarkCardProps = {
@@ -15,11 +15,11 @@ export function BenchmarkCard({ id, title, abbreviation, color, isFavorite, onOp
     e.stopPropagation()
     onToggleFavorite(id)
   }
-  
+
   return (
     <div
       onClick={() => onOpen(id)}
-      className="cursor-pointer pl-2 pr-4 py-2 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)]"
+      className="relative group cursor-pointer pl-2 pr-10 py-2 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)] transform transition-all duration-150 ease-out hover:bg-[var(--bg-tertiary)] hover:translate-x-1 hover:shadow-md"
     >
       <div className="flex items-center gap-3">
         <button
@@ -40,6 +40,10 @@ export function BenchmarkCard({ id, title, abbreviation, color, isFavorite, onOp
         >
           {abbreviation}
         </span>
+        {/* Right arrow hint (non-interactive) */}
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] transition-colors duration-150 group-hover:text-[var(--text-primary)] pointer-events-none">
+          <ChevronRight size={16} />
+        </div>
       </div>
     </div>
   )

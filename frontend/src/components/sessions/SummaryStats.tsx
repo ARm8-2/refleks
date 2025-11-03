@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Dropdown } from '../shared/Dropdown'
 
 function slope(arr: number[]): number {
   const y = [...arr].reverse() // oldest -> newest
@@ -25,6 +26,8 @@ export function SummaryStats({
   firstPct,
   lastPct,
   title = 'Session summary',
+  onFirstPct,
+  onLastPct,
 }: {
   score: number[]
   acc: number[]
@@ -32,7 +35,10 @@ export function SummaryStats({
   firstPct: number
   lastPct: number
   title?: string
+  onFirstPct?: (n: number) => void
+  onLastPct?: (n: number) => void
 }) {
+  const pctOptions = [20, 25, 30, 40, 50]
   const triangle = (dir: 'up' | 'down', colorVar: string) => (
     <span
       className="inline-block align-[-2px] text-[10px] leading-none"
@@ -92,7 +98,24 @@ export function SummaryStats({
     <div className="rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
       <div className="px-3 py-2 border-b border-[var(--border-primary)] text-sm font-medium text-[var(--text-primary)] flex items-center justify-between">
         <span>{title}</span>
-        <span className="text-xs text-[var(--text-secondary)]">Δ window: last {lastPct}% vs first {firstPct}%</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-[var(--text-secondary)]">Δ window:</span>
+          <span className="text-xs text-[var(--text-secondary)]">last</span>
+          <Dropdown
+            value={lastPct}
+            onChange={(v: string) => onLastPct ? onLastPct(Number(v)) : undefined}
+            options={pctOptions.map(p => ({ label: `${p}%`, value: p }))}
+            size="sm"
+          />
+          <span className="text-xs text-[var(--text-secondary)]">vs</span>
+          <span className="text-xs text-[var(--text-secondary)]">first</span>
+          <Dropdown
+            value={firstPct}
+            onChange={(v: string) => onFirstPct ? onFirstPct(Number(v)) : undefined}
+            options={pctOptions.map(p => ({ label: `${p}%`, value: p }))}
+            size="sm"
+          />
+        </div>
       </div>
       <div className="p-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Stat label="Score" value={data.latest.score} fmt={(n) => Math.round(n).toString()} delta={data.delta.score} slopeVal={data.slope.score} />

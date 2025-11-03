@@ -420,7 +420,7 @@ func equalMouseTrace(a, b []models.MousePoint) bool {
 		return false
 	}
 	for i := range a {
-		if !a[i].TS.Equal(b[i].TS) || a[i].X != b[i].X || a[i].Y != b[i].Y {
+		if !a[i].TS.Equal(b[i].TS) || a[i].X != b[i].X || a[i].Y != b[i].Y || a[i].Buttons != b[i].Buttons {
 			return false
 		}
 	}
