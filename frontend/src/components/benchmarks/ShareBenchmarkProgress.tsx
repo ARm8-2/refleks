@@ -178,7 +178,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
 
         {/* Footer note */}
         <div className="mt-4 text-[11px] text-[var(--text-secondary)]">
-          Generated with RefleK's — share your progress and tag @refleks
+          Generated with RefleK's — share your progress
         </div>
       </div>
     </div>
