@@ -82,10 +82,6 @@ export function OverviewTab({ session }: { session: Session | null }) {
         onSelect={(v) => { setSelectedName(v); setAutoSelectLast(false) }}
         autoSelectLast={autoSelectLast}
         onToggleAuto={setAutoSelectLast}
-        firstPct={firstPct}
-        lastPct={lastPct}
-        onFirstPct={setFirstPct}
-        onLastPct={setLastPct}
       />
 
       <ChartBox
@@ -115,7 +111,7 @@ export function OverviewTab({ session }: { session: Session | null }) {
         <MetricsLineChart labels={limitedSeries.labels} score={limitedSeries.scoreSeries} acc={limitedSeries.accSeries} ttk={limitedSeries.ttkSeries} />
       </ChartBox>
 
-      <SummaryStats score={metrics.score} acc={metrics.acc} ttk={metrics.ttk} firstPct={firstPct} lastPct={lastPct} />
+      <SummaryStats score={metrics.score} acc={metrics.acc} ttk={metrics.ttk} firstPct={firstPct} lastPct={lastPct} onFirstPct={setFirstPct} onLastPct={setLastPct} />
 
       {/* Benchmark progress for the selected scenario (if available) */}
       <ScenarioBenchmarkProgress
