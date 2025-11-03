@@ -2,9 +2,9 @@ import { useMemo } from 'react'
 import { Bar, Radar } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
+import { buildRankDefs, hexToRgba, normalizedRankProgress } from '../../lib/benchmarks/utils'
 import type { Benchmark } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
-import { buildRankDefs, hexToRgba, normalizedRankProgress } from './utils'
 
 export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 360 }:
   { bench: Benchmark; progress: Record<string, any>; difficultyIndex: number; height?: number }) {

@@ -1,10 +1,12 @@
-import { ChevronLeft, Play, Search, Star } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { Camera, ChevronLeft, Play, Search, Star } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { BenchmarkCard, Dropdown, Tabs } from '../../components'
+import ShareBenchmarkProgress from '../../components/benchmarks/ShareBenchmarkProgress'
 import { useOpenedBenchmarkProgress } from '../../hooks/useOpenedBenchmarkProgress'
 import { usePageState } from '../../hooks/usePageState'
 import { useUIState } from '../../hooks/useUIState'
+import { copyNodeToClipboard } from '../../lib/copyNodeToClipboard'
 import { getBenchmarks, getFavoriteBenchmarks, launchPlaylist, setFavoriteBenchmarks } from '../../lib/internal'
 import type { Benchmark } from '../../types/ipc'
 import { AiTab, AnalysisTab, OverviewTab } from './tabs'
@@ -167,6 +169,44 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
   // Use shared hook for progress + live updates and difficulty state
   const { progress, loading, error, difficultyIndex, setDifficultyIndex } = useOpenedBenchmarkProgress({ id, bench: bench ?? null })
 
+  // Share image: render offscreen card on demand and copy to clipboard
+  const [renderShare, setRenderShare] = useState(false)
+  const shareRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!renderShare) return
+    let cancelled = false
+    const doCapture = async () => {
+      const node = shareRef.current
+      if (!node) { setRenderShare(false); return }
+      try {
+        // Wait for any images inside the share node to finish loading so html-to-image captures them
+        const imgs = Array.from(node.querySelectorAll('img')) as HTMLImageElement[]
+        await Promise.all(imgs.map(img => new Promise<void>(resolve => {
+          if (img.complete && img.naturalWidth !== 0) return resolve()
+          const done = () => resolve()
+          img.addEventListener('load', done, { once: true })
+          img.addEventListener('error', done, { once: true })
+        })))
+
+        if (cancelled) return
+        const bg = getComputedStyle(node).backgroundColor
+        const res = await copyNodeToClipboard(node, { pixelRatio: 2, backgroundColor: bg })
+        if (res.copied) {
+          alert('Share image copied to clipboard!')
+        } else {
+          alert('Clipboard not available. Saved image instead.')
+        }
+      } catch (e) {
+        alert('Failed to copy image: ' + (e as Error)?.message)
+      } finally {
+        setRenderShare(false)
+      }
+    }
+    void doCapture()
+    return () => { cancelled = true }
+  }, [renderShare])
+
   return (
     <div className="space-y-3 p-4 h-full overflow-auto">
       <div className="flex items-center gap-2">
@@ -197,6 +237,16 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
               <Play size={18} />
             </button>
           )}
+          {/* Share (screenshot) button */}
+          <button
+            onClick={() => { if (bench && progress) setRenderShare(true) }}
+            disabled={!bench || !progress}
+            className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] mb-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Copy share image"
+            title="Copy share image to clipboard"
+          >
+            <Camera size={18} />
+          </button>
           <button
             onClick={() => onToggleFav(id)}
             className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] mb-1"
@@ -227,6 +277,15 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: s
         { id: 'analysis', label: 'Analysis', content: <AnalysisTab bench={bench} difficultyIndex={difficultyIndex} loading={loading} error={error} progress={progress} /> },
         { id: 'ai', label: 'AI Insights', content: <AiTab /> },
       ]} active={tab} onChange={(id) => setTab(id as any)} />
+
+      {/* Offscreen share renderer */}
+      {bench && progress && renderShare && (
+        <div style={{ position: 'fixed', left: -99999, top: -99999, pointerEvents: 'none' }} aria-hidden>
+          <div ref={shareRef}>
+            <ShareBenchmarkProgress bench={bench} difficultyIndex={difficultyIndex} progress={progress as any} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

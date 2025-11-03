@@ -102,3 +102,7 @@ export function normalizedRankProgress(scenarioRank: number, score: number, thre
 // Grid columns for BenchmarkProgress rows:
 // Scenario | Recom | Play | Score | Rank1..N
 export const gridCols = (count: number) => `minmax(220px,1fr) 80px 40px 90px ${Array.from({ length: count }).map(() => '120px').join(' ')}`
+
+// Grid columns for shareable image (no Recom/Play):
+// Scenario | Score | Rank1..N
+export const gridColsShare = (count: number) => `minmax(260px,1fr) 110px ${Array.from({ length: count }).map(() => '130px').join(' ')}`

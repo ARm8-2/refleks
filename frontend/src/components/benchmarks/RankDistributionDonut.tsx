@@ -2,9 +2,9 @@ import { useMemo } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
+import { buildRankDefs } from '../../lib/benchmarks/utils'
 import type { Benchmark } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
-import { buildRankDefs } from './utils'
 
 export function RankDistributionDonut({ bench, progress, difficultyIndex, height = 360 }:
   { bench: Benchmark; progress: Record<string, any>; difficultyIndex: number; height?: number }) {

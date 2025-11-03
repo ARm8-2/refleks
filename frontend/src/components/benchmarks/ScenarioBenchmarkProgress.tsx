@@ -1,7 +1,7 @@
 import { Info } from 'lucide-react'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { buildRankDefs, cellFill, hexToRgba, numberFmt } from '../../lib/benchmarks/utils'
 import type { Benchmark } from '../../types/ipc'
-import { buildRankDefs, cellFill, hexToRgba, numberFmt } from './utils'
 
 type Props = {
   bench?: Benchmark | null
