@@ -3,6 +3,7 @@ import { ChartBox, MetricsControls, MetricsLineChart, NextHighscoreForecast, Per
 import { usePageState } from '../../../hooks/usePageState'
 import { useStore } from '../../../hooks/useStore'
 import { buildChartSeries, computeSessionAverages, groupByScenario } from '../../../lib/analysis/metrics'
+import { predictNextHighscore } from '../../../lib/analysis'
 import { getScenarioName } from '../../../lib/utils'
 
 export function ProgressAllTab() {
@@ -102,7 +103,7 @@ export function ProgressAllTab() {
 
       <SummaryStats title="Progress summary" score={metrics.score} acc={metrics.acc} ttk={metrics.ttk} firstPct={firstPct} lastPct={lastPct} onFirstPct={setFirstPct} onLastPct={setLastPct} />
 
-      <NextHighscoreForecast items={scenarios} scenarioName={selectedName} />
+  <NextHighscoreForecast pred={useMemo(() => predictNextHighscore(scenarios, selectedName), [scenarios, selectedName])} />
 
       <SessionLengthInsights sessions={sessions} scenarioName={selectedName} />
 

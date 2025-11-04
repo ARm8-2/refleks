@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { computeMouseTraceAnalysis, type KillAnalysis, type MouseTraceAnalysis } from '../../lib/analysis/mouse'
+import { useState } from 'react'
+import type { KillAnalysis, MouseTraceAnalysis } from '../../lib/analysis/mouse'
 import type { ScenarioRecord } from '../../types/ipc'
 import { InfoBox } from '../shared/InfoBox'
 import { PreviewTag } from '../shared/PreviewTag'
@@ -19,7 +19,7 @@ export function TraceAnalysisPreview({
   onLimitChange,
   onSelect
 }: TraceAnalysisPreviewProps) {
-  const analysis: MouseTraceAnalysis | null = propAnalysis ?? useMemo(() => computeMouseTraceAnalysis(item), [item])
+  const analysis: MouseTraceAnalysis | null = propAnalysis ?? null
   if (!analysis) return null
   const total = analysis.kills.length
   const [internalLimit, setInternalLimit] = useState<number>(total)

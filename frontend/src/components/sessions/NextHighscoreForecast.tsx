@@ -1,13 +1,10 @@
-import { useMemo } from 'react';
-import { predictNextHighscore } from '../../lib/analysis';
-import type { ScenarioRecord } from '../../types/ipc';
+import type { HighscorePrediction } from '../../lib/analysis/prediction';
 import { InfoBox } from '../shared/InfoBox';
 import { PreviewTag } from '../shared/PreviewTag';
 
-type NextHighscoreForecastProps = { items: ScenarioRecord[]; scenarioName: string }
+type NextHighscoreForecastProps = { pred: HighscorePrediction }
 
-export function NextHighscoreForecast({ items, scenarioName }: NextHighscoreForecastProps) {
-  const pred = useMemo(() => predictNextHighscore(items, scenarioName), [items, scenarioName])
+export function NextHighscoreForecast({ pred }: NextHighscoreForecastProps) {
 
   const badge = (c: 'low' | 'med' | 'high') => {
     const cls = c === 'high' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'

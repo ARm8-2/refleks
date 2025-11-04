@@ -5,6 +5,7 @@ import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkPro
 import { usePageState } from '../../../hooks/usePageState'
 import { useUIState } from '../../../hooks/useUIState'
 import { buildChartSeries, groupByScenario } from '../../../lib/analysis/metrics'
+import { computeFindings } from '../../../lib/analysis/findings'
 import { getScenarioName } from '../../../lib/utils'
 import type { Session } from '../../../types/domain'
 
@@ -75,6 +76,9 @@ export function OverviewTab({ session }: OverviewTabProps) {
 
   // Scenario progress UI is encapsulated in its own component below
 
+  const selectedItems = useMemo(() => items.filter(it => getScenarioName(it) === selectedName), [items, selectedName])
+  const { strongest, weakest } = useMemo(() => computeFindings(selectedItems), [selectedItems])
+
   return (
     <div className="space-y-3">
       {/* Global controls for this tab */}
@@ -127,7 +131,7 @@ export function OverviewTab({ session }: OverviewTabProps) {
       />
 
       {/* Findings: best/worst runs for this scenario in this session */}
-      <Findings items={items.filter(it => getScenarioName(it) === selectedName)} />
+      <Findings strongest={strongest} weakest={weakest} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <PerformanceVsSensChart items={items} scenarioName={selectedName} />
