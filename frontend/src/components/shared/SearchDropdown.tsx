@@ -1,6 +1,109 @@
 import React from 'react';
 export type SearchDropdownOption = { label: string; value: string | number }
 
+export function filterAndSortOptions(options: SearchDropdownOption[], search: string): SearchDropdownOption[] {
+  if (search.trim() === '') {
+    return [...options].sort((a, b) => a.label.localeCompare(b.label));
+  }
+  const searchLower = search.toLowerCase();
+  let searchWords = searchLower.split(/\s+/).filter(Boolean);
+  // If search ends with space, treat last word as whole word match only
+  const endsWithSpace = search.endsWith(' ');
+  // Only show options that contain ALL search words
+  let allWordOptions = options.filter(opt => {
+    const labelWords = opt.label.toLowerCase().split(/\s+/);
+    return searchWords.every((word, i) => {
+      if (endsWithSpace && i === searchWords.length - 1) {
+        // Only match whole word for last search word
+        return labelWords.includes(word);
+      } else {
+        return labelWords.some(w => w.startsWith(word));
+      }
+    });
+  });
+  // 1. Exact match (whole label)
+  const exact = allWordOptions.filter(opt => opt.label.toLowerCase() === searchLower);
+  // 2. First word exact match (not whole label)
+  const firstWordExact = allWordOptions.filter(opt => {
+    const firstWord = opt.label.split(/\s+/)[0].toLowerCase();
+    return firstWord === searchLower && opt.label.toLowerCase() !== searchLower;
+  });
+  // 3. First word starts with search term (not exact)
+  const firstWordPrefix = allWordOptions.filter(opt => {
+    const firstWord = opt.label.split(/\s+/)[0].toLowerCase();
+    return firstWord.startsWith(searchLower) && firstWord !== searchLower && opt.label.toLowerCase() !== searchLower;
+  });
+  // 4. Label starts with search term (not first word match)
+  // Removed redundant 'label starts with' criterion
+  // 5. Any word (not first) starts with search term
+  // Filter and sort in one step: map to index, filter, then sort
+  let wordStartsWith = allWordOptions
+    .map(opt => {
+      const words = opt.label.toLowerCase().split(/\s+/);
+      const matchIndex = words.findIndex((w, i) => i > 0 && w.startsWith(searchLower));
+      return {
+        opt,
+        matchIndex
+      };
+    })
+    .filter(({ opt, matchIndex }) =>
+      matchIndex !== -1 &&
+      opt.label.toLowerCase() !== searchLower &&
+      !firstWordExact.includes(opt) &&
+      !firstWordPrefix.includes(opt)
+    )
+    .sort((a, b) => {
+      if (a.matchIndex !== b.matchIndex) return a.matchIndex - b.matchIndex;
+      return a.opt.label.localeCompare(b.opt.label);
+    })
+    .map(({ opt }) => opt);
+  // 6. All words present (any order, not exact, not startsWith)
+  let allWords = allWordOptions.filter(opt =>
+    opt.label.toLowerCase() !== searchLower &&
+    !firstWordExact.includes(opt) &&
+    !firstWordPrefix.includes(opt) &&
+    !wordStartsWith.includes(opt)
+  );
+  // Sort allWords by position of matching words (multi-word: minimal distance, single-word: first match)
+  if (searchWords.length > 1) {
+    const sortByWordOrderAndDistance = (a: SearchDropdownOption, b: SearchDropdownOption) => {
+      const aWords = a.label.toLowerCase().split(/\s+/);
+      const bWords = b.label.toLowerCase().split(/\s+/);
+      const aIndices = searchWords.map(sw => aWords.findIndex(w => w.startsWith(sw)));
+      const bIndices = searchWords.map(sw => bWords.findIndex(w => w.startsWith(sw)));
+      const aValid = aIndices.every(idx => idx !== -1);
+      const bValid = bIndices.every(idx => idx !== -1);
+      if (aValid && bValid) {
+        const aDist = aIndices[aIndices.length-1] - aIndices[0];
+        const bDist = bIndices[bIndices.length-1] - bIndices[0];
+        if (aDist !== bDist) return aDist - bDist;
+        if (aIndices[0] !== bIndices[0]) return aIndices[0] - bIndices[0];
+        return a.label.localeCompare(b.label);
+      }
+      if (aValid) return -1;
+      if (bValid) return 1;
+      return a.label.localeCompare(b.label);
+    };
+    allWords = allWords.sort(sortByWordOrderAndDistance);
+  } else if (searchWords.length === 1) {
+    const word = searchWords[0];
+    const sortByMatchIndex = (a: SearchDropdownOption, b: SearchDropdownOption) => {
+      const aIndex = a.label.toLowerCase().split(/\s+/).findIndex(w => w.startsWith(word));
+      const bIndex = b.label.toLowerCase().split(/\s+/).findIndex(w => w.startsWith(word));
+      if (aIndex !== bIndex) return aIndex - bIndex;
+      return a.label.localeCompare(b.label);
+    };
+    allWords = allWords.sort(sortByMatchIndex);
+  }
+  return [
+    ...exact,
+    ...firstWordExact,
+    ...firstWordPrefix,
+    ...wordStartsWith,
+    ...allWords
+  ];
+}
+
 export function SearchDropdown({
   value,
   onChange,
@@ -24,25 +127,8 @@ export function SearchDropdown({
   const [isOpen, setIsOpen] = React.useState(false)
   const [search, setSearch] = React.useState('')
   const dropdownRef = React.useRef<HTMLDivElement>(null)
-  // Filter options to those that contain the search term
-  let filteredOptions = options.filter(opt =>
-    opt.label.toLowerCase().includes(search.toLowerCase())
-  )
-  if (search.trim() !== '' && filteredOptions.length > 1) {
-    // Split into startsWith and contains
-    // Sort first by startsWith, then by contains, both alphabetically
-    // Searches that have the search term at the start of the label appear higher
-    const startsWith = filteredOptions.filter(opt =>
-      opt.label.toLowerCase().startsWith(search.toLowerCase())
-    ).sort((a, b) => a.label.localeCompare(b.label))
-    const contains = filteredOptions.filter(opt =>
-      !opt.label.toLowerCase().startsWith(search.toLowerCase())
-    ).sort((a, b) => a.label.localeCompare(b.label))
-    filteredOptions = [...startsWith, ...contains]
-  } else if (search.trim() === '' && filteredOptions.length > 1) {
-    // If no search term, sort all options alphabetically
-    filteredOptions = filteredOptions.sort((a, b) => a.label.localeCompare(b.label))
-  }
+  // Use the shared filterAndSortOptions function for filtering and sorting
+  const filteredOptions = filterAndSortOptions(options, search);
   React.useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
