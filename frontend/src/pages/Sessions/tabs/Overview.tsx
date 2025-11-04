@@ -4,8 +4,8 @@ import { ChartBox, Findings, MetricsControls, MetricsLineChart, PerformanceVsSen
 import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkProgress'
 import { usePageState } from '../../../hooks/usePageState'
 import { useUIState } from '../../../hooks/useUIState'
-import { buildChartSeries, groupByScenario } from '../../../lib/analysis/metrics'
 import { computeFindings } from '../../../lib/analysis/findings'
+import { buildChartSeries, groupByScenario } from '../../../lib/analysis/metrics'
 import { getScenarioName } from '../../../lib/utils'
 import type { Session } from '../../../types/domain'
 

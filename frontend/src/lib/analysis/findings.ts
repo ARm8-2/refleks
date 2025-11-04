@@ -1,4 +1,4 @@
-import type { ScenarioRecord } from '../../types/ipc'
+import type { ScenarioRecord } from '../../types/ipc';
 
 // Compute 'findings' (strongest/weakest runs) from a list of ScenarioRecord.
 // This extracts the ranking logic out of the UI component so pages can compute
