@@ -82,9 +82,9 @@ describe("filterAndSortOptions", () => {
     expect(filterAndSortOptions(options, "Micro")).toEqual([
       { label: "Micro Angelic", value: "microAngelic" },
       { label: "Micro Angelic Easy", value: "microAngelicEasy" },
-      { label: "Microshot Flick", value: "microshot" },
       { label: "1w3ts Micro Angelic Easy", value: "1w3tsMicroAngelicEasy" },
       { label: "beanClick Micro 30% Smaller", value: "beanClick" },
+      { label: "Microshot Flick", value: "microshot" },
       { label: "400ms strafing Reflex Micro++", value: "400msReflexMicro" }
     ]);
   });

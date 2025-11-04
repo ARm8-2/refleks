@@ -6,99 +6,58 @@ export function filterAndSortOptions(options: SearchDropdownOption[], search: st
     return [...options].sort((a, b) => a.label.localeCompare(b.label));
   }
   const searchLower = search.toLowerCase();
-  let searchWords = searchLower.split(/\s+/).filter(Boolean);
-  // If search ends with space, treat last word as whole word match only
+  const searchWords = searchLower.split(/\s+/).filter(Boolean);
   const endsWithSpace = search.endsWith(' ');
-  // Only show options that contain ALL search words
-  let allWordOptions = options.filter(opt => {
-    const labelWords = opt.label.toLowerCase().split(/\s+/);
-    return searchWords.every((word, i) => {
+  // Precompute lowercased label and split words for each option
+  const optionMeta = options.map(opt => ({
+    opt,
+    labelLower: opt.label.toLowerCase(),
+    labelWords: opt.label.toLowerCase().split(/\s+/)
+  }));
+
+  // Scoring strategy
+  function getScore(meta: { opt: SearchDropdownOption; labelLower: string; labelWords: string[] }): number {
+    // Only show options that contain ALL search words
+    const allWordsPresent = searchWords.every((word, i) => {
       if (endsWithSpace && i === searchWords.length - 1) {
-        // Only match whole word for last search word
-        return labelWords.includes(word);
+        return meta.labelWords.includes(word);
       } else {
-        return labelWords.some(w => w.startsWith(word));
+        // Accept prefix or substring match
+        return meta.labelWords.some(w => w.startsWith(word) || w.includes(word));
       }
     });
-  });
-  // 1. Exact match (whole label)
-  const exact = allWordOptions.filter(opt => opt.label.toLowerCase() === searchLower);
-  // 2. First word exact match (not whole label)
-  const firstWordExact = allWordOptions.filter(opt => {
-    const firstWord = opt.label.split(/\s+/)[0].toLowerCase();
-    return firstWord === searchLower && opt.label.toLowerCase() !== searchLower;
-  });
-  // 3. First word starts with search term (not exact)
-  const firstWordPrefix = allWordOptions.filter(opt => {
-    const firstWord = opt.label.split(/\s+/)[0].toLowerCase();
-    return firstWord.startsWith(searchLower) && firstWord !== searchLower && opt.label.toLowerCase() !== searchLower;
-  });
-  // 4. Any word (not first) starts with search term
-  let wordStartsWith = allWordOptions
-    .map(opt => {
-      const words = opt.label.toLowerCase().split(/\s+/);
-      const matchIndex = words.findIndex((w, i) => i > 0 && w.startsWith(searchLower));
-      return {
-        opt,
-        matchIndex
-      };
-    })
-    .filter(({ opt, matchIndex }) =>
-      matchIndex !== -1 &&
-      opt.label.toLowerCase() !== searchLower &&
-      !firstWordExact.includes(opt) &&
-      !firstWordPrefix.includes(opt)
-    )
-    .sort((a, b) => {
-      if (a.matchIndex !== b.matchIndex) return a.matchIndex - b.matchIndex;
-      return a.opt.label.localeCompare(b.opt.label);
-    })
-    .map(({ opt }) => opt);
-  // 5. All words present (any order, not exact, not startsWith)
-  let allWords = allWordOptions.filter(opt =>
-    opt.label.toLowerCase() !== searchLower &&
-    !firstWordExact.includes(opt) &&
-    !firstWordPrefix.includes(opt) &&
-    !wordStartsWith.includes(opt)
-  );
-  // Sort allWords by position of matching words (multi-word: minimal distance, single-word: first match)
-  if (searchWords.length > 1) {
-    const sortByWordOrderAndDistance = (a: SearchDropdownOption, b: SearchDropdownOption) => {
-      const aWords = a.label.toLowerCase().split(/\s+/);
-      const bWords = b.label.toLowerCase().split(/\s+/);
-      const aIndices = searchWords.map(sw => aWords.findIndex(w => w.startsWith(sw)));
-      const bIndices = searchWords.map(sw => bWords.findIndex(w => w.startsWith(sw)));
-      const aValid = aIndices.every(idx => idx !== -1);
-      const bValid = bIndices.every(idx => idx !== -1);
-      if (aValid && bValid) {
-        const aDist = aIndices[aIndices.length-1] - aIndices[0];
-        const bDist = bIndices[bIndices.length-1] - bIndices[0];
-        if (aDist !== bDist) return aDist - bDist;
-        if (aIndices[0] !== bIndices[0]) return aIndices[0] - bIndices[0];
-        return a.label.localeCompare(b.label);
-      }
-      if (aValid) return -1;
-      if (bValid) return 1;
-      return a.label.localeCompare(b.label);
-    };
-    allWords = allWords.sort(sortByWordOrderAndDistance);
-  } else if (searchWords.length === 1) {
-    const word = searchWords[0];
-    const sortByMatchIndex = (a: SearchDropdownOption, b: SearchDropdownOption) => {
-      const aIndex = a.label.toLowerCase().split(/\s+/).findIndex(w => w.startsWith(word));
-      const bIndex = b.label.toLowerCase().split(/\s+/).findIndex(w => w.startsWith(word));
-      if (aIndex !== bIndex) return aIndex - bIndex;
-      return a.label.localeCompare(b.label);
-    };
-    allWords = allWords.sort(sortByMatchIndex);
+    if (!allWordsPresent) return -1;
+  // Highest score: exact match
+  if (meta.labelLower === searchLower) return 100;
+  // First word exact match (not whole label)
+  if (meta.labelWords[0] === searchLower && meta.labelLower !== searchLower) return 90;
+  // Any word (including first) exact match
+  if (meta.labelWords.some(w => w === searchLower) && meta.labelLower !== searchLower) return 85;
+  // First word starts with search term (not exact)
+  if (meta.labelWords[0].startsWith(searchLower) && meta.labelWords[0] !== searchLower && meta.labelLower !== searchLower) return 80;
+  // Any word (including first) starts with search term (not exact)
+  if (meta.labelWords.some(w => w.startsWith(searchLower) && w !== searchLower) && meta.labelLower !== searchLower) return 75;
+  // Any word contains search term (not startswith, not exact)
+  if (meta.labelWords.some(w => w.includes(searchLower) && !w.startsWith(searchLower) && w !== searchLower) && meta.labelLower !== searchLower) return 65;
+  // All words present (any order, not exact, not startsWith, not contains)
+  return 60;
   }
-  return [
-    ...exact,
-    ...firstWordExact,
-    ...firstWordPrefix,
-    ...wordStartsWith,
-    ...allWords
-  ];
+
+  // Score and filter
+  const scoredOptions = optionMeta
+    .map(meta => ({
+      opt: meta.opt,
+      score: getScore(meta)
+    }))
+    .filter(({ score }) => score > 0);
+
+  // Sort by score descending, then label
+  scoredOptions.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return a.opt.label.localeCompare(b.opt.label);
+  });
+
+  return scoredOptions.map(({ opt }) => opt);
 }
 
 export function SearchDropdown({
