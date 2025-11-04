@@ -33,10 +33,7 @@ export function filterAndSortOptions(options: SearchDropdownOption[], search: st
     const firstWord = opt.label.split(/\s+/)[0].toLowerCase();
     return firstWord.startsWith(searchLower) && firstWord !== searchLower && opt.label.toLowerCase() !== searchLower;
   });
-  // 4. Label starts with search term (not first word match)
-  // Removed redundant 'label starts with' criterion
-  // 5. Any word (not first) starts with search term
-  // Filter and sort in one step: map to index, filter, then sort
+  // 4. Any word (not first) starts with search term
   let wordStartsWith = allWordOptions
     .map(opt => {
       const words = opt.label.toLowerCase().split(/\s+/);
@@ -57,7 +54,7 @@ export function filterAndSortOptions(options: SearchDropdownOption[], search: st
       return a.opt.label.localeCompare(b.opt.label);
     })
     .map(({ opt }) => opt);
-  // 6. All words present (any order, not exact, not startsWith)
+  // 5. All words present (any order, not exact, not startsWith)
   let allWords = allWordOptions.filter(opt =>
     opt.label.toLowerCase() !== searchLower &&
     !firstWordExact.includes(opt) &&
