@@ -8,7 +8,9 @@ import { Toggle } from '../shared/Toggle';
 type Highlight = { startTs?: any; endTs?: any; color?: string }
 type Marker = { ts: any; color?: string; radius?: number; type?: 'circle' | 'cross' }
 
-export function TraceViewer({ points, stats, highlight, markers, seekToTs, centerOnTs, onReset }: { points: Point[]; stats: Record<string, any>; highlight?: Highlight; markers?: Marker[]; seekToTs?: any; centerOnTs?: any; onReset?: () => void }) {
+type TraceViewerProps = { points: Point[]; stats: Record<string, any>; highlight?: Highlight; markers?: Marker[]; seekToTs?: any; centerOnTs?: any; onReset?: () => void }
+
+export function TraceViewer({ points, stats, highlight, markers, seekToTs, centerOnTs, onReset }: TraceViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const rafRef = useRef<number | null>(null)

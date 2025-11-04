@@ -6,7 +6,9 @@ import { usePageState } from '../../hooks/usePageState'
 import { getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 
-export function PerformanceVsSensChart({ items, scenarioName }: { items: ScenarioRecord[]; scenarioName: string }) {
+type PerformanceVsSensChartProps = { items: ScenarioRecord[]; scenarioName: string }
+
+export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSensChartProps) {
   const colors = useChartTheme()
   // Persist the selected metric per-scenario so the user's choice sticks while browsing
   const [metric, setMetric] = usePageState<'score' | 'acc' | 'ttk'>(`sens:metric:${scenarioName}`, 'score')

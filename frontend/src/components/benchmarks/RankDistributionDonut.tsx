@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
-import { buildRankDefs } from '../../lib/benchmarks/utils'
+import { buildMetaDefs, buildRankDefs, computeRankCounts, computeScopeScenarios, normalizeProgress } from '../../lib/benchmarks/utils'
 import type { Benchmark } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
 
@@ -18,93 +18,12 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
   const [catIdx, setCatIdx] = usePageState<number>(`bench:${benchKey}:diff:${difficultyIndex}:ranks:catIdx`, 0)
   const [subIdx, setSubIdx] = usePageState<number>(`bench:${benchKey}:diff:${difficultyIndex}:ranks:subIdx`, 0)
 
-  // Build metadata + normalized mapping like BenchmarkProgress to resolve scenario lists per scope
-  const metaDefs = useMemo(() => {
-    const defs: Array<{
-      catName: string
-      catColor?: string
-      subDefs: Array<{ name: string; count: number; color?: string }>
-    }> = []
-    for (const c of difficulty?.categories || []) {
-      const catName = String((c as any)?.categoryName ?? '')
-      const catColor = (c as any)?.color as string | undefined
-      const subs = Array.isArray((c as any)?.subcategories) ? (c as any).subcategories : []
-      const subDefs = subs.map((s: any) => ({
-        name: String(s?.subcategoryName ?? ''),
-        count: Number(s?.scenarioCount ?? 0),
-        color: s?.color as string | undefined,
-      }))
-      defs.push({ catName, catColor, subDefs })
-    }
-    return defs
-  }, [difficulty])
+  const metaDefs = useMemo(() => buildMetaDefs(difficulty), [difficulty])
+  const normalized = useMemo(() => normalizeProgress(progress, metaDefs), [progress, metaDefs])
 
-  const normalized = useMemo(() => {
-    type ScenarioEntry = [string, any]
-    const categories = progress?.categories as Record<string, any> | undefined
-    const result: Array<{
-      catName: string
-      catColor?: string
-      groups: Array<{ name: string; color?: string; scenarios: ScenarioEntry[] }>
-    }> = []
+  const scopeScenarios = useMemo(() => computeScopeScenarios(normalized, level, catIdx, subIdx), [normalized, level, catIdx, subIdx])
 
-    const flat: ScenarioEntry[] = []
-    if (categories) {
-      for (const cat of Object.values(categories)) {
-        const scenEntries = Object.entries((cat as any)?.scenarios || {}) as ScenarioEntry[]
-        flat.push(...scenEntries)
-      }
-    }
-
-    let pos = 0
-    for (let i = 0; i < metaDefs.length; i++) {
-      const { catName, catColor, subDefs } = metaDefs[i]
-      const groups: Array<{ name: string; color?: string; scenarios: ScenarioEntry[] }> = []
-
-      if (subDefs.length > 0) {
-        for (const sd of subDefs) {
-          const take = Math.max(0, Math.min(sd.count, flat.length - pos))
-          const scenarios = take > 0 ? flat.slice(pos, pos + take) : []
-          pos += take
-          groups.push({ name: sd.name, color: sd.color, scenarios })
-        }
-      } else {
-        groups.push({ name: '', color: undefined, scenarios: [] })
-      }
-
-      if (i === metaDefs.length - 1 && pos < flat.length) {
-        groups.push({ name: '', color: undefined, scenarios: flat.slice(pos) })
-        pos = flat.length
-      }
-
-      result.push({ catName, catColor, groups })
-    }
-
-    return result
-  }, [progress, metaDefs])
-
-  const scopeScenarios = useMemo(() => {
-    if (level === 'all') {
-      return normalized.flatMap(c => c.groups.flatMap(g => g.scenarios))
-    }
-    const c = normalized[Math.min(Math.max(0, catIdx), Math.max(0, normalized.length - 1))]
-    if (!c) return []
-    if (level === 'category') return c.groups.flatMap(g => g.scenarios)
-    const g = c.groups[Math.min(Math.max(0, subIdx), Math.max(0, c.groups.length - 1))]
-    return g ? g.scenarios : []
-  }, [normalized, level, catIdx, subIdx])
-
-  const counts = useMemo(() => {
-    const n = rankDefs.length
-    const arr = Array.from({ length: n }, () => 0)
-    let below = 0
-    for (const [_, s] of scopeScenarios) {
-      const r = Number(s?.scenario_rank || 0)
-      if (r <= 0) below++
-      else arr[Math.min(n, r) - 1]++
-    }
-    return { byRank: arr, below }
-  }, [scopeScenarios, rankDefs])
+  const counts = useMemo(() => computeRankCounts(scopeScenarios, rankDefs), [scopeScenarios, rankDefs])
 
   const labels = useMemo(() => {
     const names = rankDefs.map(r => r.name)

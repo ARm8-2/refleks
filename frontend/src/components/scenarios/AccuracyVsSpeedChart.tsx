@@ -4,8 +4,9 @@ import { ChartBox } from '..';
 import { useChartTheme } from '../../hooks/useChartTheme';
 import { AccuracyVsSpeedDetails } from './AccuracyVsSpeedDetails';
 
-export function AccuracyVsSpeedChart({ points, scatter }: {
-  points: Array<{ x: number; y: number; i: number }>; scatter: {
+type AccuracyVsSpeedChartProps = {
+  points: Array<{ x: number; y: number; i: number }>
+  scatter: {
     corrKpmAcc: number
     meanBinStdAcc: number
     binsUsed: number
@@ -14,7 +15,9 @@ export function AccuracyVsSpeedChart({ points, scatter }: {
     centroidAcc?: number
     clusterCompactness?: number
   }
-}) {
+}
+
+export function AccuracyVsSpeedChart({ points, scatter }: AccuracyVsSpeedChartProps) {
   const colors = useChartTheme()
   const data = useMemo(() => ({
     datasets: [

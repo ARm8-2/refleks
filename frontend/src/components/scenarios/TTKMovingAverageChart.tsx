@@ -4,7 +4,7 @@ import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { TTKMovingAverageDetails } from './TTKMovingAverageDetails'
 
-export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: {
+type TTKMovingAverageChartProps = {
   labels: string[]
   realTTK: number[]
   ma5: number[]
@@ -18,7 +18,9 @@ export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: {
     meanRollStd5?: number
     stableSegments: Array<{ start: number; end: number }>
   }
-}) {
+}
+
+export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: TTKMovingAverageChartProps) {
   const colors = useChartTheme()
   const trend = useMemo(() => ma5.map((_, i) => (movingAvg.intercept ?? 0) + movingAvg.slope * i), [ma5, movingAvg])
   const data = useMemo(() => ({

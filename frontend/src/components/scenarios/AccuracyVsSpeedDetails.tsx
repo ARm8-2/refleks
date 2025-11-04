@@ -1,8 +1,6 @@
 import { InfoBox } from '..'
 
-export function AccuracyVsSpeedDetails({
-  scatter,
-}: {
+type AccuracyVsSpeedDetailsProps = {
   scatter: {
     corrKpmAcc: number
     meanBinStdAcc: number
@@ -12,7 +10,11 @@ export function AccuracyVsSpeedDetails({
     centroidAcc?: number
     clusterCompactness?: number
   }
-}) {
+}
+
+export function AccuracyVsSpeedDetails({
+  scatter,
+}: AccuracyVsSpeedDetailsProps) {
   const fmt = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? '-' : v.toFixed(3))
   const fmtPct = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? '-' : `${(v * 100).toFixed(1)}%`)
   const info = (

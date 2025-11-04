@@ -2,8 +2,9 @@ import { BenchmarkStrengths } from '../../../components/benchmarks/BenchmarkStre
 import { RankDistributionDonut } from '../../../components/benchmarks/RankDistributionDonut';
 import type { Benchmark } from '../../../types/ipc';
 
-export function AnalysisTab({ bench, difficultyIndex, loading, error, progress }:
-  { bench?: Benchmark; difficultyIndex: number; loading: boolean; error: string | null; progress: Record<string, any> | null }) {
+type BenchmarksAnalysisTabProps = { bench?: Benchmark; difficultyIndex: number; loading: boolean; error: string | null; progress: Record<string, any> | null }
+
+export function AnalysisTab({ bench, difficultyIndex, loading, error, progress }: BenchmarksAnalysisTabProps) {
   if (loading) return <div className="text-sm text-[var(--text-secondary)]">Loading progress…</div>
   if (error) return <div className="text-sm text-red-400">{error}</div>
   if (!bench || !progress) return <div className="text-sm text-[var(--text-secondary)]">No data.</div>

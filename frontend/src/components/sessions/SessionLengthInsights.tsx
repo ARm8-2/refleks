@@ -5,7 +5,9 @@ import { useChartTheme } from '../../hooks/useChartTheme'
 import { Metric, collectRunsBySession, expectedAvgVsLength, expectedBestVsLength, expectedByIndex, recommendLengths } from '../../lib/analysis/sessionLength'
 import type { Session } from '../../types/domain'
 
-export function SessionLengthInsights({ sessions, scenarioName }: { sessions: Session[]; scenarioName: string }) {
+type SessionLengthInsightsProps = { sessions: Session[]; scenarioName: string }
+
+export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthInsightsProps) {
   const theme = useChartTheme()
   const [metric, setMetric] = useState<Metric>('score')
 

@@ -2,7 +2,9 @@ import { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import { useChartTheme } from '../../hooks/useChartTheme';
 
-export function MetricsLineChart({ labels, score, acc, ttk }: { labels: string[]; score: number[]; acc: number[]; ttk: number[] }) {
+type MetricsLineChartProps = { labels: string[]; score: number[]; acc: number[]; ttk: number[] }
+
+export function MetricsLineChart({ labels, score, acc, ttk }: MetricsLineChartProps) {
   const colors = useChartTheme()
 
   const data = useMemo(() => ({

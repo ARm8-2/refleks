@@ -1,8 +1,9 @@
 import { BenchmarkProgress } from "../../../components";
 import type { Benchmark } from '../../../types/ipc';
 
-export function OverviewTab({ bench, difficultyIndex, loading, error, progress }:
-  { bench?: Benchmark; difficultyIndex: number; loading: boolean; error: string | null; progress: Record<string, any> | null }) {
+type BenchmarksOverviewTabProps = { bench?: Benchmark; difficultyIndex: number; loading: boolean; error: string | null; progress: Record<string, any> | null }
+
+export function OverviewTab({ bench, difficultyIndex, loading, error, progress }: BenchmarksOverviewTabProps) {
   return (
     <div className="space-y-3">
       {loading && <div className="text-sm text-[var(--text-secondary)]">Loading progress…</div>}

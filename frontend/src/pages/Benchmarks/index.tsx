@@ -164,7 +164,9 @@ function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, que
   )
 }
 
-function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: { id: string; bench?: Benchmark; favorites: string[]; onToggleFav: (id: string) => void; onBack: () => void }) {
+type BenchmarksDetailProps = { id: string; bench?: Benchmark; favorites: string[]; onToggleFav: (id: string) => void; onBack: () => void }
+
+function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: BenchmarksDetailProps) {
   const [tab, setTab] = useUIState<'overview' | 'analysis' | 'ai'>(`Benchmark:${id}:tab`, 'overview')
   // Use shared hook for progress + live updates and difficulty state
   const { progress, loading, error, difficultyIndex, setDifficultyIndex } = useOpenedBenchmarkProgress({ id, bench: bench ?? null })

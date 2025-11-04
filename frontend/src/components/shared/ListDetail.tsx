@@ -260,7 +260,15 @@ export function ListDetail<T = any>({
 }
 
 // Virtualized renderer for arbitrary item arrays using react-virtualized.
-function VirtualizedList<T>({ items, renderItem, getKey, rowHeight, isResizing = false }: { items: T[]; renderItem: (item: T, index: number) => React.ReactNode; getKey?: (item: T, index: number) => React.Key; rowHeight?: number; isResizing?: boolean }) {
+type VirtualizedListProps<T> = {
+  items: T[]
+  renderItem: (item: T, index: number) => React.ReactNode
+  getKey?: (item: T, index: number) => React.Key
+  rowHeight?: number
+  isResizing?: boolean
+}
+
+function VirtualizedList<T>({ items, renderItem, getKey, rowHeight, isResizing = false }: VirtualizedListProps<T>) {
   const listRef = useRef<List | null>(null)
 
   // Fixed height if provided, otherwise dynamic measurement cache

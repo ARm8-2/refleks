@@ -1,9 +1,7 @@
 import { ArrowRight } from 'lucide-react'
 import { InfoBox } from '..'
 
-export function TTKMovingAverageDetails({
-  movingAvg,
-}: {
+type TTKMovingAverageDetailsProps = {
   movingAvg: {
     slope: number
     r2: number
@@ -13,7 +11,11 @@ export function TTKMovingAverageDetails({
     meanRollStd5?: number
     stableSegments: Array<{ start: number; end: number }>
   }
-}) {
+}
+
+export function TTKMovingAverageDetails({
+  movingAvg,
+}: TTKMovingAverageDetailsProps) {
   const fmt = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? '-' : v.toFixed(3))
   const fmtIdx = (i: number) => `#${i + 1}`
   const info = (

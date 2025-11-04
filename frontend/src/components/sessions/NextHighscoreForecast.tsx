@@ -4,7 +4,9 @@ import type { ScenarioRecord } from '../../types/ipc';
 import { InfoBox } from '../shared/InfoBox';
 import { PreviewTag } from '../shared/PreviewTag';
 
-export function NextHighscoreForecast({ items, scenarioName }: { items: ScenarioRecord[]; scenarioName: string }) {
+type NextHighscoreForecastProps = { items: ScenarioRecord[]; scenarioName: string }
+
+export function NextHighscoreForecast({ items, scenarioName }: NextHighscoreForecastProps) {
   const pred = useMemo(() => predictNextHighscore(items, scenarioName), [items, scenarioName])
 
   const badge = (c: 'low' | 'med' | 'high') => {

@@ -24,6 +24,116 @@ export function buildRankDefs(
   return []
 }
 
+// Build metadata from a difficulty definition: categories -> subDefs
+export function buildMetaDefs(
+  difficulty: Benchmark['difficulties'][number] | undefined
+): Array<{
+  catName: string
+  catColor?: string
+  subDefs: Array<{ name: string; count: number; color?: string }>
+}> {
+  const defs: Array<{
+    catName: string
+    catColor?: string
+    subDefs: Array<{ name: string; count: number; color?: string }>
+  }> = []
+  if (!difficulty) return defs
+  for (const c of (difficulty as any)?.categories || []) {
+    const catName = String((c as any)?.categoryName ?? '')
+    const catColor = (c as any)?.color as string | undefined
+    const subs = Array.isArray((c as any)?.subcategories) ? (c as any).subcategories : []
+    const subDefs = subs.map((s: any) => ({
+      name: String(s?.subcategoryName ?? ''),
+      count: Number(s?.scenarioCount ?? 0),
+      color: s?.color as string | undefined,
+    }))
+    defs.push({ catName, catColor, subDefs })
+  }
+  return defs
+}
+
+// Normalize API progress into ordered categories/groups mapping using metaDefs
+export function normalizeProgress(
+  progress: Record<string, any> | undefined,
+  metaDefs: ReturnType<typeof buildMetaDefs>
+): Array<{
+  catName: string
+  catColor?: string
+  groups: Array<{ name: string; color?: string; scenarios: [string, any][] }>
+}> {
+  type ScenarioEntry = [string, any]
+  const categories = progress?.categories as Record<string, any> | undefined
+  const result: Array<{
+    catName: string
+    catColor?: string
+    groups: Array<{ name: string; color?: string; scenarios: ScenarioEntry[] }>
+  }> = []
+
+  const flat: ScenarioEntry[] = []
+  if (categories) {
+    for (const cat of Object.values(categories)) {
+      const scenEntries = Object.entries((cat as any)?.scenarios || {}) as ScenarioEntry[]
+      flat.push(...scenEntries)
+    }
+  }
+
+  let pos = 0
+  for (let i = 0; i < metaDefs.length; i++) {
+    const { catName, catColor, subDefs } = metaDefs[i]
+    const groups: Array<{ name: string; color?: string; scenarios: ScenarioEntry[] }> = []
+
+    if (subDefs.length > 0) {
+      for (const sd of subDefs) {
+        const take = Math.max(0, Math.min(sd.count, flat.length - pos))
+        const scenarios = take > 0 ? flat.slice(pos, pos + take) : []
+        pos += take
+        groups.push({ name: sd.name, color: sd.color, scenarios })
+      }
+    } else {
+      groups.push({ name: '', color: undefined, scenarios: [] })
+    }
+
+    if (i === metaDefs.length - 1 && pos < flat.length) {
+      groups.push({ name: '', color: undefined, scenarios: flat.slice(pos) })
+      pos = flat.length
+    }
+
+    result.push({ catName, catColor, groups })
+  }
+
+  return result
+}
+
+// Compute scope scenarios depending on level selection
+export function computeScopeScenarios(
+  normalized: ReturnType<typeof normalizeProgress>,
+  level: 'all' | 'category' | 'subcategory',
+  catIdx: number,
+  subIdx: number
+): [string, any][] {
+  if (level === 'all') {
+    return normalized.flatMap(c => c.groups.flatMap(g => g.scenarios))
+  }
+  const c = normalized[Math.min(Math.max(0, catIdx), Math.max(0, normalized.length - 1))]
+  if (!c) return []
+  if (level === 'category') return c.groups.flatMap(g => g.scenarios)
+  const g = c.groups[Math.min(Math.max(0, subIdx), Math.max(0, c.groups.length - 1))]
+  return g ? g.scenarios : []
+}
+
+// Compute rank counts array and below count for a given scope
+export function computeRankCounts(scopeScenarios: [string, any][], rankDefs: Array<{ name: string; color: string }>) {
+  const n = rankDefs.length
+  const arr = Array.from({ length: n }, () => 0)
+  let below = 0
+  for (const [_, s] of scopeScenarios) {
+    const r = Number(s?.scenario_rank || 0)
+    if (r <= 0) below++
+    else arr[Math.min(n, r) - 1]++
+  }
+  return { byRank: arr, below }
+}
+
 export function hexToRgba(hex: string, alpha = 0.18): string {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
   if (!m) return `rgba(255,255,255,${alpha})`

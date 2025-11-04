@@ -4,19 +4,21 @@ export type SegmentedOption<T extends string = string> = {
   value: T
 }
 
+type SegmentedControlProps<T extends string = string> = {
+  options: Array<SegmentedOption<T>>
+  value: T
+  onChange: (v: T) => void
+  className?: string
+  size?: 'sm' | 'md'
+}
+
 export function SegmentedControl<T extends string = string>({
   options,
   value,
   onChange,
   className = '',
   size = 'sm',
-}: {
-  options: Array<SegmentedOption<T>>
-  value: T
-  onChange: (v: T) => void
-  className?: string
-  size?: 'sm' | 'md'
-}) {
+}: SegmentedControlProps<T>) {
   const pad = size === 'md' ? 'px-3 py-1.5' : 'px-3 py-1'
   return (
     <div className={`inline-flex rounded overflow-hidden border border-[var(--border-primary)] bg-[var(--bg-secondary)] ${className}`} role="tablist" aria-orientation="horizontal">

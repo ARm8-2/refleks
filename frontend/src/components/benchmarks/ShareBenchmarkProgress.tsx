@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { buildRankDefs, cellFill, gridColsShare, hexToRgba, numberFmt } from '../../lib/benchmarks/utils'
+import { buildMetaDefs, buildRankDefs, cellFill, gridColsShare, hexToRgba, normalizeProgress, numberFmt } from '../../lib/benchmarks/utils'
 import type { Benchmark } from '../../types/ipc'
 
 const LOGO_URL = new URL('../../assets/logo.svg', import.meta.url).href
@@ -20,70 +20,8 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
 
   const overallRankName = rankDefs[(progress?.overall_rank ?? 0) - 1]?.name || '—'
 
-  // Build UI metadata from difficulty to normalize API categories
-  const metaDefs = useMemo(() => {
-    const defs: Array<{
-      catName: string
-      catColor?: string
-      subDefs: Array<{ name: string; count: number; color?: string }>
-    }> = []
-    for (const c of difficulty.categories || []) {
-      const catName = (c as any)?.categoryName as string
-      const catColor = (c as any)?.color as string | undefined
-      const subs = Array.isArray((c as any)?.subcategories) ? (c as any).subcategories : []
-      const subDefs = subs.map((s: any) => ({
-        name: String(s?.subcategoryName ?? ''),
-        count: Number(s?.scenarioCount ?? 0),
-        color: s?.color as string | undefined,
-      }))
-      defs.push({ catName, catColor, subDefs })
-    }
-    return defs
-  }, [difficulty])
-
-  // Normalize API categories to match the difficulty metadata ordering
-  const normalized = useMemo(() => {
-    type ScenarioEntry = [string, any]
-    const result: Array<{
-      catName: string
-      catColor?: string
-      groups: Array<{ name: string; color?: string; scenarios: ScenarioEntry[] }>
-    }> = []
-
-    const flat: ScenarioEntry[] = []
-    if (categories) {
-      for (const cat of Object.values(categories)) {
-        const scenEntries = Object.entries((cat as any)?.scenarios || {}) as ScenarioEntry[]
-        flat.push(...scenEntries)
-      }
-    }
-
-    let pos = 0
-    for (let i = 0; i < metaDefs.length; i++) {
-      const { catName, catColor, subDefs } = metaDefs[i]
-      const groups: Array<{ name: string; color?: string; scenarios: ScenarioEntry[] }> = []
-
-      if (subDefs.length > 0) {
-        for (const sd of subDefs) {
-          const take = Math.max(0, Math.min(sd.count, flat.length - pos))
-          const scenarios = take > 0 ? flat.slice(pos, pos + take) : []
-          pos += take
-          groups.push({ name: sd.name, color: sd.color, scenarios })
-        }
-      } else {
-        groups.push({ name: '', color: undefined, scenarios: [] })
-      }
-
-      if (i === metaDefs.length - 1 && pos < flat.length) {
-        groups.push({ name: '', color: undefined, scenarios: flat.slice(pos) })
-        pos = flat.length
-      }
-
-      result.push({ catName, catColor, groups })
-    }
-
-    return result
-  }, [categories, metaDefs])
+  const metaDefs = useMemo(() => buildMetaDefs(difficulty), [difficulty])
+  const normalized = useMemo(() => normalizeProgress(categories ? { categories } as any : undefined, metaDefs), [categories, metaDefs])
 
   const cols = gridColsShare(rankDefs.length)
 

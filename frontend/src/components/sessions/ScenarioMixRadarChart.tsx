@@ -2,7 +2,9 @@ import { useMemo } from 'react';
 import { Radar } from 'react-chartjs-2';
 import { useChartTheme } from '../../hooks/useChartTheme';
 
-export function ScenarioMixRadarChart({ labels, counts }: { labels: string[]; counts: number[] }) {
+type ScenarioMixRadarChartProps = { labels: string[]; counts: number[] }
+
+export function ScenarioMixRadarChart({ labels, counts }: ScenarioMixRadarChartProps) {
   const { textSecondary, grid } = useChartTheme()
   const stroke = 'rgb(34, 197, 94)'
   const fill = 'rgba(34, 197, 94, 0.25)'

@@ -3,18 +3,18 @@ import React, { useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../../hooks/useStore'
 import { groupByScenario } from '../../lib/analysis/metrics'
 import { computeRecommendationScores } from '../../lib/benchmarks/recommendation'
-import { buildRankDefs, cellFill, gridCols, hexToRgba, initialThresholdBaseline, numberFmt } from '../../lib/benchmarks/utils'
+import { buildMetaDefs, buildRankDefs, cellFill, gridCols, hexToRgba, initialThresholdBaseline, normalizeProgress, numberFmt } from '../../lib/benchmarks/utils'
 import { launchScenario } from '../../lib/internal'
 import { getScenarioName } from '../../lib/utils'
 import type { Benchmark } from '../../types/ipc'
 
-type Props = {
+type BenchmarkProgressProps = {
   bench: Benchmark
   difficultyIndex: number
   progress: Record<string, any>
 }
 
-export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
+export function BenchmarkProgress({ bench, difficultyIndex, progress }: BenchmarkProgressProps) {
   const difficulty = bench.difficulties[difficultyIndex]
   const rankDefs = useMemo(() => buildRankDefs(difficulty, progress), [difficulty, progress])
 
@@ -68,76 +68,14 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Props) {
     </span>
   )
 
-  const metaDefs = useMemo(() => {
-    const defs: Array<{
-      catName: string
-      catColor?: string
-      subDefs: Array<{ name: string; count: number; color?: string }>
-    }> = []
-    for (const c of difficulty.categories || []) {
-      const catName = (c as any)?.categoryName as string
-      const catColor = (c as any)?.color as string | undefined
-      const subs = Array.isArray((c as any)?.subcategories) ? (c as any).subcategories : []
-      const subDefs = subs.map((s: any) => ({
-        name: String(s?.subcategoryName ?? ''),
-        count: Number(s?.scenarioCount ?? 0),
-        color: s?.color as string | undefined
-      }))
-      defs.push({ catName, catColor, subDefs })
-    }
-    return defs
-  }, [difficulty])
+  const metaDefs = useMemo(() => buildMetaDefs(difficulty as any), [difficulty])
 
   const grid = gridCols
 
   const overallRankName = rankDefs[(progress?.overall_rank ?? 0) - 1]?.name || '—'
 
   // Map API progress to metadata strictly by order and counts; ignore API category names
-  const normalized = useMemo(() => {
-    type ScenarioEntry = [string, any]
-    const result: Array<{
-      catName: string
-      catColor?: string
-      groups: Array<{ name: string; color?: string; scenarios: ScenarioEntry[] }>
-    }> = []
-
-    // Flatten all scenarios from the API in their given order
-    const flat: ScenarioEntry[] = []
-    if (categories) {
-      for (const cat of Object.values(categories)) {
-        const scenEntries = Object.entries((cat as any)?.scenarios || {}) as ScenarioEntry[]
-        flat.push(...scenEntries)
-      }
-    }
-
-    let pos = 0
-    for (let i = 0; i < metaDefs.length; i++) {
-      const { catName, catColor, subDefs } = metaDefs[i]
-      const groups: Array<{ name: string; color?: string; scenarios: ScenarioEntry[] }> = []
-
-      if (subDefs.length > 0) {
-        for (const sd of subDefs) {
-          const take = Math.max(0, Math.min(sd.count, flat.length - pos))
-          const scenarios = take > 0 ? flat.slice(pos, pos + take) : []
-          pos += take
-          groups.push({ name: sd.name, color: sd.color, scenarios })
-        }
-      } else {
-        // Fallback: no subcategories defined — keep an empty placeholder group
-        groups.push({ name: '', color: undefined, scenarios: [] })
-      }
-
-      // Append any leftovers at the very end (final category only)
-      if (i === metaDefs.length - 1 && pos < flat.length) {
-        groups.push({ name: '', color: undefined, scenarios: flat.slice(pos) })
-        pos = flat.length
-      }
-
-      result.push({ catName, catColor, groups })
-    }
-
-    return result
-  }, [categories, metaDefs])
+  const normalized = useMemo(() => normalizeProgress(categories ? { categories } as any : undefined, metaDefs), [categories, metaDefs])
 
   // Build name sets and historical metrics used for recommendations
   const wantedNames = useMemo(() => {

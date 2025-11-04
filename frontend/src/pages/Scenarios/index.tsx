@@ -7,7 +7,7 @@ import { usePageState } from '../../hooks/usePageState'
 import { useStore } from '../../hooks/useStore'
 import { useUIState } from '../../hooks/useUIState'
 import { getSettings, launchScenario } from '../../lib/internal'
-import { getDatePlayed, getScenarioName } from '../../lib/utils'
+import { formatPct01, getDatePlayed, getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 import { AiTab, AnalysisTab, MouseTraceTab, RawTab } from './tabs'
 
@@ -74,7 +74,7 @@ export function ScenariosPage() {
               className={`w-full text-left p-2 rounded border ${active?.filePath === it.filePath ? 'bg-[var(--bg-tertiary)] border-[var(--border-primary)]' : 'border-[var(--border-primary)] hover:bg-[var(--bg-tertiary)]'}`}>
               <div className="font-medium text-[var(--text-primary)]">{getScenarioName(it)}</div>
               <div className="text-xs text-[var(--text-secondary)]">{getDatePlayed(it.stats)}</div>
-              <div className="text-xs text-[var(--text-secondary)]">Score: {it.stats['Score'] ?? '?'} • Acc: {formatPct(it.stats['Accuracy'])}</div>
+              <div className="text-xs text-[var(--text-secondary)]">Score: {it.stats['Score'] ?? '?'} • Acc: {formatPct01(it.stats['Accuracy'])}</div>
             </button>
           )}
           emptyPlaceholder={<div className="p-3 text-sm text-[var(--text-secondary)]">Play a scenario in KovaaK's to see its stats here. Make sure your stats are being saved to the <code className="font-mono">{prettyPath}</code> folder.</div>}
@@ -123,10 +123,6 @@ function ScenarioDetail({ item }: { item: ScenarioRecord | null }) {
   return <Tabs tabs={tabs} active={tab} onChange={(id) => { setTab(id as any); const p = new URLSearchParams(sp); p.set('tab', String(id)); setSp(p) }} />
 }
 
-function formatPct(v: any) {
-  const n = typeof v === 'number' ? v : Number(v)
-  if (!isFinite(n)) return '?'
-  return (n * 100).toFixed(1) + '%'
-}
+// use formatPct01 from lib/utils for consistent percent formatting
 
 export default ScenariosPage

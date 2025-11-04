@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { buildRankDefs, cellFill, hexToRgba, numberFmt } from '../../lib/benchmarks/utils'
 import type { Benchmark } from '../../types/ipc'
 
-type Props = {
+type ScenarioBenchmarkProgressProps = {
   bench?: Benchmark | null
   progress?: Record<string, any> | null
   difficultyIndex: number
@@ -22,7 +22,7 @@ export function ScenarioBenchmarkProgress({
   selectedBenchId = null,
   loading = false,
   error = null,
-}: Props) {
+}: ScenarioBenchmarkProgressProps) {
   const [showInfo, setShowInfo] = useState(false)
   const HEIGHT = 110
   const HEADER_HEIGHT = 44

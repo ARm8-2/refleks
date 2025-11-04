@@ -1,6 +1,6 @@
 import { InfoBox } from '..'
 
-export function EventsOverTimeDetails({ summary }: {
+type EventsOverTimeDetailsProps = {
   summary: {
     kills: number
     shots: number
@@ -15,7 +15,9 @@ export function EventsOverTimeDetails({ summary }: {
     p90TTK?: number
     meanKPM?: number
   }
-}) {
+}
+
+export function EventsOverTimeDetails({ summary }: EventsOverTimeDetailsProps) {
   const fmtPct = (v: number) => `${(v * 100).toFixed(1)}%`
   const fmt = (v: number) => (Number.isFinite(v) ? v.toFixed(2) : '-')
   const fmtS = (v: number) => (Number.isFinite(v) ? `${v.toFixed(2)}s` : '-')

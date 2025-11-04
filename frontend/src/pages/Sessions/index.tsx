@@ -3,50 +3,9 @@ import { ListDetail, Tabs } from '../../components'
 import { usePageState } from '../../hooks/usePageState'
 import { useStore } from '../../hooks/useStore'
 import { useUIState } from '../../hooks/useUIState'
+import { formatDuration, formatRelativeAgoShort } from '../../lib/utils'
 import type { Session } from '../../types/domain'
 import { AiTab, OverviewTab, ProgressAllTab } from './tabs'
-
-function formatDuration(ms: number): string {
-  const totalSec = Math.max(0, Math.floor(ms / 1000))
-  const h = Math.floor(totalSec / 3600)
-  const m = Math.floor((totalSec % 3600) / 60)
-  const s = totalSec % 60
-  const parts: string[] = []
-  if (h) parts.push(`${h}h`)
-  if (m) parts.push(`${m}m`)
-  if (!h && (s || parts.length === 0)) parts.push(`${s}s`)
-  return parts.join(' ')
-}
-
-function formatRelativeAgoShort(input: string | number | Date | undefined, maxMonths = 12): string {
-  if (input == null) return ''
-  let ts: number
-  if (typeof input === 'number') ts = input
-  else if (input instanceof Date) ts = input.getTime()
-  else {
-    ts = Number.isFinite(Number(input)) ? Number(input) : Date.parse(String(input))
-  }
-  if (!Number.isFinite(ts)) return String(input)
-
-  const now = Date.now()
-  const diff = now - ts
-  if (diff < 0) return 'just now'
-  const sec = Math.floor(diff / 1000)
-  if (sec < 60) return 'now'
-  const minutes = Math.floor(sec / 60)
-  if (minutes < 60) return minutes === 1 ? '1 min ago' : `${minutes} min ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return hours === 1 ? '1 hr ago' : `${hours} hr ago`
-  const days = Math.floor(hours / 24)
-  if (days < 7) return days === 1 ? '1 d ago' : `${days} d ago`
-  if (days < 30) {
-    const weeks = Math.max(1, Math.floor(days / 7))
-    return weeks === 1 ? '1 wk ago' : `${weeks} wk ago`
-  }
-  const months = Math.max(1, Math.floor(days / 30))
-  const m = Math.min(months, Math.max(1, Math.floor(maxMonths)))
-  return m === 1 ? '1 mo ago' : `${m} mo ago`
-}
 
 export function SessionsPage() {
   const sessions = useStore(s => s.sessions)

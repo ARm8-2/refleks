@@ -1,17 +1,19 @@
 import { Info } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
 
+type InfoBoxProps = {
+  title: React.ReactNode
+  info?: React.ReactNode
+  children: React.ReactNode
+  height?: number
+}
+
 export function InfoBox({
   title,
   info,
   children,
   height = 165,
-}: {
-  title: React.ReactNode
-  info?: React.ReactNode
-  children: React.ReactNode
-  height?: number
-}) {
+}: InfoBoxProps) {
   const [showInfo, setShowInfo] = useState(false)
   const bodyStyle: React.CSSProperties = useMemo(() => ({ height: height - 44 }), [height]) // 44px header
   const titleText = typeof title === 'string' ? title : undefined

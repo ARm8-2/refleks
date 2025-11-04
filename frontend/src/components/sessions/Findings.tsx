@@ -2,20 +2,12 @@ import { ChevronRight } from 'lucide-react'
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { usePageState } from '../../hooks/usePageState'
-import { getScenarioName } from '../../lib/utils'
+import { formatPct01, formatSeconds, getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 import { Dropdown } from '../shared/Dropdown'
 
-function fmtPct01(v: any) {
-  const n = typeof v === 'number' ? v : Number(v)
-  if (!isFinite(n)) return '—'
-  return (n * 100).toFixed(1) + '%'
-}
-function fmtSec(v: any) {
-  const n = typeof v === 'number' ? v : Number(v)
-  if (!isFinite(n)) return '—'
-  return `${n.toFixed(2)}s`
-}
+type FindingsProps = { items: ScenarioRecord[] }
+type FindingsRowProps = { rec: ScenarioRecord }
 
 function normalize(arr: number[]): (x: number) => number {
   const vals = arr.filter(n => Number.isFinite(n))
@@ -25,7 +17,7 @@ function normalize(arr: number[]): (x: number) => number {
   return (x: number) => (x - min) / (max - min)
 }
 
-export function Findings({ items }: { items: ScenarioRecord[] }) {
+export function Findings({ items }: FindingsProps) {
   const [openTab, setOpenTab] = usePageState<'analysis' | 'raw'>('findings:openIn', 'analysis')
   const navigate = useNavigate()
 
@@ -61,7 +53,7 @@ export function Findings({ items }: { items: ScenarioRecord[] }) {
     navigate(`/scenarios?file=${file}&tab=${tab}`)
   }
 
-  const Row = ({ rec }: { rec: ScenarioRecord }) => (
+  const Row = ({ rec }: FindingsRowProps) => (
     <div
       onClick={() => openItem(rec)}
       role="button"
@@ -74,8 +66,8 @@ export function Findings({ items }: { items: ScenarioRecord[] }) {
           <div className="text-sm text-[var(--text-primary)] font-medium">{getScenarioName(rec)}</div>
           <div className="text-xs text-[var(--text-secondary)]">
             Score: <b className="text-[var(--text-primary)]">{Math.round(Number(rec.stats['Score'] ?? 0))}</b>
-            {' '}• Acc: <b className="text-[var(--text-primary)]">{fmtPct01(rec.stats['Accuracy'])}</b>
-            {' '}• TTK: <b className="text-[var(--text-primary)]">{fmtSec(rec.stats['Real Avg TTK'])}</b>
+            {' '}• Acc: <b className="text-[var(--text-primary)]">{formatPct01(rec.stats['Accuracy'])}</b>
+            {' '}• TTK: <b className="text-[var(--text-primary)]">{formatSeconds(rec.stats['Real Avg TTK'])}</b>
           </div>
         </div>
         {/* Chevron on the right - non-interactive */}

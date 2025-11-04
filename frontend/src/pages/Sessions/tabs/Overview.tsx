@@ -8,7 +8,9 @@ import { buildChartSeries, groupByScenario } from '../../../lib/analysis/metrics
 import { getScenarioName } from '../../../lib/utils'
 import type { Session } from '../../../types/domain'
 
-export function OverviewTab({ session }: { session: Session | null }) {
+type OverviewTabProps = { session: Session | null }
+
+export function OverviewTab({ session }: OverviewTabProps) {
   const items = session?.items ?? []
   // Group per scenario name and collect metrics (newest -> oldest order)
   const byName = useMemo(() => groupByScenario(items), [items])

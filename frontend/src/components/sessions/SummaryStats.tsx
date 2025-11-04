@@ -19,6 +19,19 @@ function slope(arr: number[]): number {
   return (n * sumXY - sumX * sumY) / denom
 }
 
+type SummaryStatsProps = {
+  score: number[]
+  acc: number[]
+  ttk: number[]
+  firstPct: number
+  lastPct: number
+  title?: string
+  onFirstPct?: (n: number) => void
+  onLastPct?: (n: number) => void
+}
+
+type StatProps = { label: string; value: number; fmt: (n: number) => string; delta: number; slopeVal: number }
+
 export function SummaryStats({
   score,
   acc,
@@ -28,16 +41,7 @@ export function SummaryStats({
   title = 'Session summary',
   onFirstPct,
   onLastPct,
-}: {
-  score: number[]
-  acc: number[]
-  ttk: number[]
-  firstPct: number
-  lastPct: number
-  title?: string
-  onFirstPct?: (n: number) => void
-  onLastPct?: (n: number) => void
-}) {
+}: SummaryStatsProps) {
   const pctOptions = [20, 25, 30, 40, 50]
   const triangle = (dir: 'up' | 'down', colorVar: string) => (
     <span
@@ -69,7 +73,7 @@ export function SummaryStats({
     slope: { score: slope(score), acc: slope(acc), ttk: slope(ttk) },
   }), [score, acc, ttk, firstPct, lastPct])
 
-  const Stat = ({ label, value, fmt, delta, slopeVal }: { label: string; value: number; fmt: (n: number) => string; delta: number; slopeVal: number }) => {
+  const Stat = ({ label, value, fmt, delta, slopeVal }: StatProps) => {
     const dir = (delta !== 0 ? delta : slopeVal) >= 0 ? 'up' : 'down'
     const good = label === 'Real Avg TTK' ? dir === 'down' : (dir === 'up')
     const colorVar = good ? '--success' : '--error'

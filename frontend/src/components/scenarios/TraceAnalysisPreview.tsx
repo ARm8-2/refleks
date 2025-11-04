@@ -4,12 +4,31 @@ import type { ScenarioRecord } from '../../types/ipc'
 import { InfoBox } from '../shared/InfoBox'
 import { PreviewTag } from '../shared/PreviewTag'
 
-export function TraceAnalysisPreview({ item, onSelect }: { item: ScenarioRecord; onSelect?: (sel: { startMs: number; endMs: number; killMs: number; classification: 'optimal' | 'overshoot' | 'undershoot' }) => void }) {
-  const analysis: MouseTraceAnalysis | null = useMemo(() => computeMouseTraceAnalysis(item), [item])
+type TraceAnalysisPreviewProps = {
+  item: ScenarioRecord
+  analysis?: MouseTraceAnalysis | null
+  limit?: number
+  onLimitChange?: (n: number) => void
+  onSelect?: (sel: { startMs: number; endMs: number; killMs: number; classification: 'optimal' | 'overshoot' | 'undershoot' }) => void
+}
+
+export function TraceAnalysisPreview({
+  item,
+  analysis: propAnalysis,
+  limit: propLimit,
+  onLimitChange,
+  onSelect
+}: TraceAnalysisPreviewProps) {
+  const analysis: MouseTraceAnalysis | null = propAnalysis ?? useMemo(() => computeMouseTraceAnalysis(item), [item])
   if (!analysis) return null
   const total = analysis.kills.length
-  
-  const [limit, setLimit] = useState<number>(total)
+  const [internalLimit, setInternalLimit] = useState<number>(total)
+  const limit = typeof propLimit === 'number' ? propLimit : internalLimit
+
+  const setLimit = (n: number) => {
+    if (typeof onLimitChange === 'function') onLimitChange(n)
+    else setInternalLimit(n)
+  }
 
   const shown = analysis.kills.slice(Math.max(0, total - limit))
   const fmtPct = (n: number) => total ? ((n / total) * 100).toFixed(0) + '%' : '0%'

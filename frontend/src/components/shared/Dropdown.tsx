@@ -1,6 +1,17 @@
 
 export type DropdownOption = { label: string; value: string | number }
 
+type DropdownProps = {
+  value: string | number
+  onChange: (v: string) => void
+  options: DropdownOption[]
+  label?: string
+  className?: string
+  size?: 'sm' | 'md'
+  ariaLabel?: string
+  fullWidth?: boolean
+}
+
 export function Dropdown({
   value,
   onChange,
@@ -10,16 +21,7 @@ export function Dropdown({
   size = 'sm',
   ariaLabel,
   fullWidth = false,
-}: {
-  value: string | number
-  onChange: (v: string) => void
-  options: DropdownOption[]
-  label?: string
-  className?: string
-  size?: 'sm' | 'md'
-  ariaLabel?: string
-  fullWidth?: boolean
-}) {
+}: DropdownProps) {
   const pad = size === 'md' ? 'px-3 py-2 text-sm' : 'px-2 py-1 text-xs'
   return (
     <label className={`inline-flex items-center gap-2 text-[var(--text-secondary)] ${size === 'md' ? 'text-sm' : 'text-xs'} ${fullWidth ? 'w-full' : ''}`}>

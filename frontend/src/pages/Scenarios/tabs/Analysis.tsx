@@ -3,7 +3,9 @@ import { AccuracyVsSpeedChart, EventsOverTimeChart, TTKMovingAverageChart } from
 import { computeScenarioAnalysis } from '../../../lib/analysis/scenario'
 import type { ScenarioRecord } from '../../../types/ipc'
 
-export function AnalysisTab({ item }: { item: ScenarioRecord }) {
+type ScenariosAnalysisTabProps = { item: ScenarioRecord }
+
+export function AnalysisTab({ item }: ScenariosAnalysisTabProps) {
   const computed = useMemo(() => computeScenarioAnalysis(item), [item])
   const { labels, timeSec, accOverTime, realTTK, cumKills, perKillAcc, kpm, summary, movingAvg, scatter } = computed
 

@@ -10,6 +10,7 @@ type BenchmarkCardProps = {
   onOpen: (id: string) => void
   onToggleFavorite: (id: string) => void
 }
+
 export function BenchmarkCard({ id, title, abbreviation, color, isFavorite, onOpen, onToggleFavorite }: BenchmarkCardProps) {
   const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()

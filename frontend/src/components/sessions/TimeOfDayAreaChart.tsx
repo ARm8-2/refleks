@@ -3,7 +3,9 @@ import { Line } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import type { ScenarioRecord } from '../../types/ipc'
 
-export function TimeOfDayAreaChart({ items }: { items: ScenarioRecord[] }) {
+type TimeOfDayAreaChartProps = { items: ScenarioRecord[] }
+
+export function TimeOfDayAreaChart({ items }: TimeOfDayAreaChartProps) {
   const theme = useChartTheme()
 
   const counts = useMemo(() => {
