@@ -17,7 +17,7 @@ const (
 	// Default UI/analysis values
 	DefaultSessionGapMinutes  = 15
 	DefaultTheme              = "dark"
-	DefaultMouseBufferMinutes = 10
+	DefaultMouseBufferMinutes = 2
 	DefaultMaxExistingOnStart = 500
 
 	// Watcher defaults
