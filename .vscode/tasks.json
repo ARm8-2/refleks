@@ -77,18 +77,6 @@
 			"detail": "Build Windows app and NSIS installer (versioned filename)"
 		},
 		{
-			"label": "Release: Bump + Build Installer",
-			"dependsOn": [
-				"Version: Bump",
-				"Wails: Build for Windows (Installer)"
-			],
-			"dependsOrder": "sequence",
-			"group": {
-				"kind": "build"
-			},
-			"detail": "Prompt for a version, update files, then build Windows installer"
-		},
-		{
 			"type": "shell",
 			"label": "Serve Docs (static)",
 			"command": "python3",
