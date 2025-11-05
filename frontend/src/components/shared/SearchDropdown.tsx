@@ -26,20 +26,20 @@ export function filterAndSortOptions(options: SearchDropdownOption[], search: st
       }
     });
     if (!allWordsPresent) return -1;
-  // Highest score: exact complete match
-  if (meta.labelLower === searchLower) return 100;
-  // First word exactly matches
-  if (meta.labelWords[0] === searchLower && meta.labelLower !== searchLower) return 90;
-  // Any other word exact match
-  if (meta.labelWords.some(w => w === searchLower) && meta.labelLower !== searchLower) return 85;
-  // First word starts with search term (not exact) (e.g. "App" matches "Apple")
-  if (meta.labelWords[0].startsWith(searchLower) && meta.labelWords[0] !== searchLower && meta.labelLower !== searchLower) return 80;
-  // Any other word starts with search term (not exact)
-  if (meta.labelWords.some(w => w.startsWith(searchLower) && w !== searchLower) && meta.labelLower !== searchLower) return 75;
-  // Any word contains search term (not startswith, not exact) (e.g. "track" matches "microtrack")
-  if (meta.labelWords.some(w => w.includes(searchLower) && !w.startsWith(searchLower) && w !== searchLower) && meta.labelLower !== searchLower) return 65;
-  // All words present (any order, not exact, not startsWith, not contains)
-  return 60;
+    // Highest score: exact complete match
+    if (meta.labelLower === searchLower) return 100;
+    // First word exactly matches
+    if (meta.labelWords[0] === searchLower && meta.labelLower !== searchLower) return 90;
+    // Any other word exact match
+    if (meta.labelWords.some(w => w === searchLower) && meta.labelLower !== searchLower) return 85;
+    // First word starts with search term (not exact) (e.g. "App" matches "Apple")
+    if (meta.labelWords[0].startsWith(searchLower) && meta.labelWords[0] !== searchLower && meta.labelLower !== searchLower) return 80;
+    // Any other word starts with search term (not exact)
+    if (meta.labelWords.some(w => w.startsWith(searchLower) && w !== searchLower) && meta.labelLower !== searchLower) return 75;
+    // Any word contains search term (not startswith, not exact) (e.g. "track" matches "microtrack")
+    if (meta.labelWords.some(w => w.includes(searchLower) && !w.startsWith(searchLower) && w !== searchLower) && meta.labelLower !== searchLower) return 65;
+    // All words present (any order, not exact, not startsWith, not contains)
+    return 60;
   }
 
   // Score and filter
@@ -170,7 +170,7 @@ export function SearchDropdown({
                     } else if (e.key === 'ArrowDown') {
                       // Navigate down the list with ArrowDown
                       e.preventDefault();
-                      const next = document.getElementById(`dropdown-opt-${i+1}`);
+                      const next = document.getElementById(`dropdown-opt-${i + 1}`);
                       if (next) next.focus();
                       // Loop to top if at the end and down is pressed
                       else if (i + 1 === filteredOptions.length) {
@@ -184,7 +184,7 @@ export function SearchDropdown({
                         const searchInput = document.querySelector<HTMLInputElement>('input[placeholder="Search..."]');
                         if (searchInput) searchInput.focus();
                       } else {
-                        const prev = document.getElementById(`dropdown-opt-${i-1}`);
+                        const prev = document.getElementById(`dropdown-opt-${i - 1}`);
                         if (prev) prev.focus();
                       }
                     } else if (e.key === 'Escape') {

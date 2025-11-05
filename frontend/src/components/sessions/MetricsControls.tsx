@@ -1,7 +1,6 @@
-import { Dropdown } from '../shared/Dropdown';
+import { SearchDropdown } from '../shared/SearchDropdown';
 import { SegmentedControl } from '../shared/SegmentedControl';
 import { Toggle } from '../shared/Toggle';
-import { SearchDropdown } from '../shared/SearchDropdown';
 
 export function MetricsControls({
   names,
