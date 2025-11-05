@@ -17,27 +17,26 @@ export function filterAndSortOptions(options: SearchDropdownOption[], search: st
 
   // Scoring strategy
   function getScore(meta: { opt: SearchDropdownOption; labelLower: string; labelWords: string[] }): number {
-    // Only show options that contain ALL search words
+    // Only show options that contain ALL search words, filter out options that don't contain all words (if more than one word in search term)
     const allWordsPresent = searchWords.every((word, i) => {
       if (endsWithSpace && i === searchWords.length - 1) {
         return meta.labelWords.includes(word);
       } else {
-        // Accept prefix or substring match
-        return meta.labelWords.some(w => w.startsWith(word) || w.includes(word));
+        return meta.labelWords.some(w => w.includes(word));
       }
     });
     if (!allWordsPresent) return -1;
-  // Highest score: exact match
+  // Highest score: exact complete match
   if (meta.labelLower === searchLower) return 100;
-  // First word exact match (not whole label)
+  // First word exactly matches
   if (meta.labelWords[0] === searchLower && meta.labelLower !== searchLower) return 90;
-  // Any word (including first) exact match
+  // Any other word exact match
   if (meta.labelWords.some(w => w === searchLower) && meta.labelLower !== searchLower) return 85;
-  // First word starts with search term (not exact)
+  // First word starts with search term (not exact) (e.g. "App" matches "Apple")
   if (meta.labelWords[0].startsWith(searchLower) && meta.labelWords[0] !== searchLower && meta.labelLower !== searchLower) return 80;
-  // Any word (including first) starts with search term (not exact)
+  // Any other word starts with search term (not exact)
   if (meta.labelWords.some(w => w.startsWith(searchLower) && w !== searchLower) && meta.labelLower !== searchLower) return 75;
-  // Any word contains search term (not startswith, not exact)
+  // Any word contains search term (not startswith, not exact) (e.g. "track" matches "microtrack")
   if (meta.labelWords.some(w => w.includes(searchLower) && !w.startsWith(searchLower) && w !== searchLower) && meta.labelLower !== searchLower) return 65;
   // All words present (any order, not exact, not startsWith, not contains)
   return 60;
@@ -70,37 +69,36 @@ export function SearchDropdown({
   ariaLabel,
   fullWidth = false,
 }: {
-  value: string | number
-  onChange: (v: string) => void
-  options: SearchDropdownOption[]
-  label?: string
-  className?: string
-  size?: 'sm' | 'md'
-  ariaLabel?: string
-  fullWidth?: boolean
+  value: string | number;
+  onChange: (v: string) => void;
+  options: SearchDropdownOption[];
+  label?: string;
+  className?: string;
+  size?: 'sm' | 'md';
+  ariaLabel?: string;
+  fullWidth?: boolean;
 }) {
-  const pad = size === 'md' ? 'px-3 py-2 text-sm' : 'px-2 py-1 text-xs'
-  const [isOpen, setIsOpen] = React.useState(false)
-  const [search, setSearch] = React.useState('')
-  const dropdownRef = React.useRef<HTMLDivElement>(null)
-  // Use the shared filterAndSortOptions function for filtering and sorting
+  const pad = size === 'md' ? 'px-3 py-2 text-sm' : 'px-2 py-1 text-xs';
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [search, setSearch] = React.useState('');
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
   const filteredOptions = filterAndSortOptions(options, search);
   React.useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
     }
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('mousedown', handleClickOutside);
     } else {
-      setSearch('')
+      setSearch('');
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [isOpen])
-  const selectedLabel = options.find(opt => String(opt.value) === String(value))?.label || ''
+  const selectedLabel = options.find(opt => String(opt.value) === String(value))?.label || '';
   return (
     <label className={`inline-flex items-center gap-2 text-[var(--text-secondary)] ${size === 'md' ? 'text-sm' : 'text-xs'} ${fullWidth ? 'w-full' : ''}`}>
       {label && <span className="select-none">{label}</span>}
@@ -174,6 +172,11 @@ export function SearchDropdown({
                       e.preventDefault();
                       const next = document.getElementById(`dropdown-opt-${i+1}`);
                       if (next) next.focus();
+                      // Loop to top if at the end and down is pressed
+                      else if (i + 1 === filteredOptions.length) {
+                        const firstOption = document.getElementById('dropdown-opt-0');
+                        if (firstOption) firstOption.focus();
+                      }
                     } else if (e.key === 'ArrowUp') {
                       // Navigate up the list with ArrowUp
                       e.preventDefault();
