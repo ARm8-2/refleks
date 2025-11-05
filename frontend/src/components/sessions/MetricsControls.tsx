@@ -1,4 +1,4 @@
-import { Dropdown } from '../shared/Dropdown';
+import { SearchDropdown } from '../shared/SearchDropdown';
 import { SegmentedControl } from '../shared/SegmentedControl';
 import { Toggle } from '../shared/Toggle';
 
@@ -23,7 +23,7 @@ export function MetricsControls({
 }: MetricsControlsProps) {
   return (
     <div className="flex items-center gap-3 flex-wrap">
-      <Dropdown
+      <SearchDropdown
         label="Scenario"
         value={selectedName}
         onChange={(v: string) => onSelect(v)}
