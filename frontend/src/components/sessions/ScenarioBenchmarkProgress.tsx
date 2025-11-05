@@ -1,5 +1,6 @@
 import { Info } from 'lucide-react'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { buildRankDefs, cellFill, hexToRgba, numberFmt } from '../../lib/benchmarks/utils'
 import type { Benchmark } from '../../types/ipc'
 
@@ -26,7 +27,7 @@ export function ScenarioBenchmarkProgress({
   const [showInfo, setShowInfo] = useState(false)
   const HEIGHT = 110
   const HEADER_HEIGHT = 44
-  const bodyStyle: React.CSSProperties = { height: HEIGHT - HEADER_HEIGHT } // 44px header
+  const bodyStyle: CSSProperties = { height: HEIGHT - HEADER_HEIGHT } // 44px header
 
   // Locate scenario progress in the opened benchmark progress payload
   const scenario = useMemo(() => {

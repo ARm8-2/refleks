@@ -1,24 +1,25 @@
 import { ChevronLeft } from 'lucide-react'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { Key, ReactNode, PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AutoSizer, CellMeasurer, CellMeasurerCache, List, type ListRowProps } from 'react-virtualized'
 import { useUIState } from '../../hooks/useUIState'
 
 type VirtualizedProps<T> = {
   items: T[]
-  renderItem: (item: T, index: number) => React.ReactNode
-  getKey?: (item: T, index: number) => React.Key
+  renderItem: (item: T, index: number) => ReactNode
+  getKey?: (item: T, index: number) => Key
   rowHeight?: number
-  emptyPlaceholder?: React.ReactNode
+  emptyPlaceholder?: ReactNode
 }
 
 type BaseProps = {
-  detail: React.ReactNode
+  detail: ReactNode
   title?: string
   initialWidth?: number // px
   minWidth?: number // px
   maxWidth?: number // px
   // Optional header rendered above the detail content (right pane)
-  detailHeader?: React.ReactNode
+  detailHeader?: ReactNode
 }
 
 type Props<T = any> = BaseProps & VirtualizedProps<T>
@@ -88,7 +89,7 @@ export function ListDetail<T = any>({
   }, [clearHoverTimers, setCollapsed])
 
   // Start/stop dragging (imperative width updates for responsiveness)
-  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+  const onPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     e.preventDefault()
     if (collapsed) return
     setIsResizing(true)
@@ -262,8 +263,8 @@ export function ListDetail<T = any>({
 // Virtualized renderer for arbitrary item arrays using react-virtualized.
 type VirtualizedListProps<T> = {
   items: T[]
-  renderItem: (item: T, index: number) => React.ReactNode
-  getKey?: (item: T, index: number) => React.Key
+  renderItem: (item: T, index: number) => ReactNode
+  getKey?: (item: T, index: number) => Key
   rowHeight?: number
   isResizing?: boolean
 }

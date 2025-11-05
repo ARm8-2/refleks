@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import type { ScenarioRecord } from '../../../types/ipc'
 
@@ -46,7 +47,7 @@ function hexToRgb(hex: string) {
   return `#000000`
 }
 
-function formatValue(key: string, raw: unknown): React.ReactNode {
+function formatValue(key: string, raw: unknown): ReactNode {
   // Special-case common fields
   if (key === 'Accuracy' && isNumber(raw)) {
     const pct = raw <= 1 ? raw * 100 : raw
@@ -110,7 +111,7 @@ function StatList({
   )
 }
 
-type RawBoxProps = { title: string; children: React.ReactNode }
+type RawBoxProps = { title: string; children: ReactNode }
 
 function RawBox({ title, children }: RawBoxProps) {
   return (

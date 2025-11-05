@@ -1,5 +1,5 @@
 import { Play } from 'lucide-react'
-import React, { useEffect, useMemo, useRef } from 'react'
+import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../../hooks/useStore'
 import { groupByScenario } from '../../lib/analysis/metrics'
 import { computeRecommendationScores } from '../../lib/benchmarks/recommendation'
@@ -191,7 +191,7 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Benchmar
                                 const base = recScore.get(String(sName)) ?? 0
                                 const totalRec = Math.round(base + thPts)
                                 return (
-                                  <React.Fragment key={sName}>
+                                  <Fragment key={sName}>
                                     <div className="text-[13px] text-[var(--text-primary)] truncate flex items-center">{sName}</div>
                                     <div className="text-[12px] text-[var(--text-primary)] flex items-center justify-center gap-1" title="Recommendation score">
                                       {triangle(totalRec >= 0 ? 'up' : 'down', totalRec >= 0 ? '--success' : '--error')}
@@ -219,7 +219,7 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Benchmar
                                       )
                                     }
                                     )}
-                                  </React.Fragment>
+                                  </Fragment>
                                 )
                               })}
                             </div>

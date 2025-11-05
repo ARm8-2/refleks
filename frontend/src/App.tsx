@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, Route, Routes } from 'react-router-dom'
 import { BrowserOpenURL, EventsOn } from '../wailsjs/runtime'
@@ -10,7 +11,7 @@ import { SessionsPage } from './pages/Sessions'
 import { SettingsPage } from './pages/Settings'
 import type { UpdateInfo } from './types/ipc'
 
-function Link({ to, children, end = false }: { to: string, children: React.ReactNode, end?: boolean }) {
+function Link({ to, children, end = false }: { to: string, children: ReactNode, end?: boolean }) {
   return (
     <NavLink
       to={to}

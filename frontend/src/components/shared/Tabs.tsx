@@ -1,6 +1,6 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 
-export type Tab = { id: string; label: string; content: React.ReactNode }
+export type Tab = { id: string; label: string; content: ReactNode }
 
 type TabsProps = { tabs: Tab[]; active: string; onChange: (id: string) => void }
 

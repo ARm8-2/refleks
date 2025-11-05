@@ -1,4 +1,5 @@
-import React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
 export type SearchDropdownOption = { label: string; value: string | number }
 
 export function filterAndSortOptions(options: SearchDropdownOption[], search: string): SearchDropdownOption[] {
@@ -59,6 +60,16 @@ export function filterAndSortOptions(options: SearchDropdownOption[], search: st
   return scoredOptions.map(({ opt }) => opt);
 }
 
+type SearchDropdownProps = {
+  value: string | number
+  onChange: (v: string) => void
+  options: SearchDropdownOption[]
+  label?: string
+  className?: string
+  size?: 'sm' | 'md'
+  ariaLabel?: string
+  fullWidth?: boolean
+}
 export function SearchDropdown({
   value,
   onChange,
@@ -68,46 +79,69 @@ export function SearchDropdown({
   size = 'sm',
   ariaLabel,
   fullWidth = false,
-}: {
-  value: string | number;
-  onChange: (v: string) => void;
-  options: SearchDropdownOption[];
-  label?: string;
-  className?: string;
-  size?: 'sm' | 'md';
-  ariaLabel?: string;
-  fullWidth?: boolean;
-}) {
+}: SearchDropdownProps) {
+  // Styling helpers
   const pad = size === 'md' ? 'px-3 py-2 text-sm' : 'px-2 py-1 text-xs';
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [search, setSearch] = React.useState('');
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-  const filteredOptions = filterAndSortOptions(options, search);
-  React.useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
+
+  // Controlled selection; ephemeral UI state kept local
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const optionRefs = useRef<(HTMLLIElement | null)[]>([]);
+  const idRef = useRef<string>(`search-dropdown-${Math.random().toString(36).slice(2, 9)}`);
+
+  // Selected label memoized for performance
+  const selectedLabel = useMemo(() => options.find(opt => String(opt.value) === String(value))?.label ?? '', [options, value]);
+
+  // Use the existing helper for filtering/sorting so tests and behavior remain predictable
+  const filteredOptions = useMemo(() => filterAndSortOptions(options, search), [options, search]);
+
+  // When opening, focus the search input. When closing, clear ephemeral search state.
+  useEffect(() => {
+    if (!isOpen) { setSearch(''); return; }
+    const t = setTimeout(() => inputRef.current?.focus(), 0);
+    return () => clearTimeout(t);
+  }, [isOpen]);
+
+  // Click-outside closes the dropdown
+  useEffect(() => {
+    if (!isOpen) return;
+    function onDocClick(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     }
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      setSearch('');
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isOpen])
-  const selectedLabel = options.find(opt => String(opt.value) === String(value))?.label || '';
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [isOpen]);
+
+  const openAndFocus = () => {
+    setIsOpen(true);
+    // ensure input is focused after mount
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
   return (
     <label className={`inline-flex items-center gap-2 text-[var(--text-secondary)] ${size === 'md' ? 'text-sm' : 'text-xs'} ${fullWidth ? 'w-full' : ''}`}>
-      {label && <span className="select-none">{label}</span>}
+      {label && <span id={`${idRef.current}-label`} className="select-none">{label}</span>}
       <div ref={dropdownRef} className={`relative ${fullWidth ? 'flex-1' : ''}`}>
         <button
           type="button"
+          id={`${idRef.current}-toggle`}
           aria-label={ariaLabel || label}
+          aria-expanded={isOpen}
+          aria-controls={`${idRef.current}-list`}
           className={`flex items-center justify-between ${pad} rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/40 hover:bg-[var(--bg-secondary)] w-full ${className}`}
-          onClick={() => setIsOpen((open) => !open)}
+          onClick={() => setIsOpen(v => !v)}
+          onKeyDown={e => {
+            // Open and focus search input when using ArrowDown, Enter or Space
+            if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openAndFocus();
+            }
+          }}
         >
           <span className="truncate">{selectedLabel || 'Select...'}</span>
           <svg
@@ -125,70 +159,66 @@ export function SearchDropdown({
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </button>
+
         {isOpen && (
           <div className="absolute left-0 z-10 mt-1 min-w-[16rem] rounded bg-[var(--bg-card)] border border-[var(--border-primary)] shadow-lg">
             <input
+              id={`${idRef.current}-search`}
+              ref={inputRef}
               type="text"
               className="mb-1 w-full rounded border border-[var(--border-primary)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/40"
               placeholder="Search..."
+              aria-label={`Search ${label || ''}`}
               value={search}
               onChange={e => setSearch(e.target.value)}
-              autoFocus
               onKeyDown={e => {
-                // Jump to the list with ArrowDown or Tab from the search input
+                // When user presses ArrowDown or Tab, move focus to the first option if present
                 if ((e.key === 'ArrowDown' || e.key === 'Tab') && filteredOptions.length > 0) {
                   e.preventDefault();
-                  const firstOption = document.getElementById('dropdown-opt-0');
-                  if (firstOption) firstOption.focus();
+                  optionRefs.current[0]?.focus();
                 } else if (e.key === 'Escape') {
-                  // Close dropdown on Escape
                   setIsOpen(false);
                   e.preventDefault();
                 }
               }}
             />
-            <ul className="max-h-72 overflow-auto">
+
+            <ul id={`${idRef.current}-list`} role="listbox" aria-labelledby={label ? `${idRef.current}-label` : undefined} className="max-h-72 overflow-auto">
               {filteredOptions.length === 0 && (
                 <li className="px-2 py-1 text-xs text-[var(--text-secondary)] select-none">No options</li>
               )}
-              {filteredOptions.map((opt, i) => (
+
+              {filteredOptions.map((opt: SearchDropdownOption, i: number) => (
                 <li
                   key={String(opt.value)}
-                  id={`dropdown-opt-${i}`}
+                  id={`${idRef.current}-opt-${i}`}
                   tabIndex={0}
+                  role="option"
+                  aria-selected={String(opt.value) === String(value)}
                   className={`px-2 py-1 text-xs cursor-pointer hover:bg-[var(--accent-hover)] focus:bg-[var(--accent-hover)] focus:text-white ${String(opt.value) === String(value) ? 'bg-[var(--accent-primary)] text-white' : ''}`}
+                  ref={el => { optionRefs.current[i] = el }}
                   onClick={() => {
-                    onChange(String(opt.value))
-                    setIsOpen(false)
+                    onChange(String(opt.value));
+                    setIsOpen(false);
                   }}
                   onKeyDown={e => {
                     if (e.key === 'Enter' || e.key === ' ') {
-                      // Select option on Enter or Space
+                      e.preventDefault();
                       onChange(String(opt.value));
                       setIsOpen(false);
-                      e.preventDefault();
                     } else if (e.key === 'ArrowDown') {
-                      // Navigate down the list with ArrowDown
                       e.preventDefault();
-                      const next = document.getElementById(`dropdown-opt-${i + 1}`);
+                      const next = optionRefs.current[i + 1];
                       if (next) next.focus();
-                      // Loop to top if at the end and down is pressed
-                      else if (i + 1 === filteredOptions.length) {
-                        const firstOption = document.getElementById('dropdown-opt-0');
-                        if (firstOption) firstOption.focus();
-                      }
+                      else optionRefs.current[0]?.focus();
                     } else if (e.key === 'ArrowUp') {
-                      // Navigate up the list with ArrowUp
                       e.preventDefault();
                       if (i === 0) {
-                        const searchInput = document.querySelector<HTMLInputElement>('input[placeholder="Search..."]');
-                        if (searchInput) searchInput.focus();
+                        inputRef.current?.focus();
                       } else {
-                        const prev = document.getElementById(`dropdown-opt-${i - 1}`);
-                        if (prev) prev.focus();
+                        optionRefs.current[i - 1]?.focus();
                       }
                     } else if (e.key === 'Escape') {
-                      // Close dropdown on Escape
                       setIsOpen(false);
                       e.preventDefault();
                     }
@@ -202,5 +232,5 @@ export function SearchDropdown({
         )}
       </div>
     </label>
-  )
+  );
 }

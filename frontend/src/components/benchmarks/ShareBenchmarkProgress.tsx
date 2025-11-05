@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import { Fragment, useMemo } from 'react'
 import { buildMetaDefs, buildRankDefs, cellFill, gridColsShare, hexToRgba, normalizeProgress, numberFmt } from '../../lib/benchmarks/utils'
 import type { Benchmark } from '../../types/ipc'
 
@@ -88,7 +88,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                           const raw = Number(s?.score || 0)
                           const score = raw / 100
                           return (
-                            <React.Fragment key={sName}>
+                            <Fragment key={sName}>
                               <div className="text-[13px] text-[var(--text-primary)] truncate flex items-center">{sName}</div>
                               <div className="text-[12px] text-[var(--text-primary)] flex items-center">{numberFmt(score)}</div>
                               {rankDefs.map((r, i) => {
@@ -102,7 +102,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                                   </div>
                                 )
                               })}
-                            </React.Fragment>
+                            </Fragment>
                           )
                         })}
                       </div>

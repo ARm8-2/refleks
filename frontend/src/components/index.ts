@@ -24,6 +24,7 @@ export { Dropdown } from './shared/Dropdown';
 export { InfoBox } from './shared/InfoBox';
 export { ListDetail } from './shared/ListDetail';
 export { PreviewTag } from './shared/PreviewTag';
+export { SearchDropdown } from './shared/SearchDropdown';
 export { SegmentedControl } from './shared/SegmentedControl';
 export { Tabs } from './shared/Tabs';
 export { Toggle } from './shared/Toggle';

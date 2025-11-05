@@ -1,5 +1,5 @@
 import { ChevronRight, Star } from 'lucide-react';
-import React from 'react';
+import type { MouseEvent } from 'react';
 
 type BenchmarkCardProps = {
   id: string
@@ -12,7 +12,7 @@ type BenchmarkCardProps = {
 }
 
 export function BenchmarkCard({ id, title, abbreviation, color, isFavorite, onOpen, onToggleFavorite }: BenchmarkCardProps) {
-  const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleToggle = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
     onToggleFavorite(id)
   }

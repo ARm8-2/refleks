@@ -1,4 +1,5 @@
-import React, { createContext, useCallback, useContext, useMemo, useReducer } from 'react'
+import type { ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useReducer } from 'react'
 import type { Session } from '../types/domain'
 import type { ScenarioRecord } from '../types/ipc'
 
@@ -58,7 +59,7 @@ type Ctx = State & {
 
 const StoreCtx = createContext<Ctx | null>(null)
 
-export function StoreProvider({ children }: { children: React.ReactNode }) {
+export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initial)
 
   // Stable callbacks so consumers can safely depend on their identity
