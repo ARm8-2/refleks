@@ -2,23 +2,19 @@ import { Play } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { useStore } from '../../hooks/useStore'
 import { groupByScenario } from '../../lib/analysis/metrics'
-import { computeRecommendationScores } from '../../lib/benchmarks/recommendation'
-import { buildMetaDefs, buildRankDefs, cellFill, gridCols, hexToRgba, initialThresholdBaseline, normalizeProgress, numberFmt } from '../../lib/benchmarks/utils'
+import { computeRecommendationScores, cellFill, gridCols, hexToRgba, numberFmt } from '../../lib/benchmarks'
 import { launchScenario } from '../../lib/internal'
 import { getScenarioName } from '../../lib/utils'
-import type { Benchmark } from '../../types/ipc'
+import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
 
 type BenchmarkProgressProps = {
-  bench: Benchmark
-  difficultyIndex: number
-  progress: Record<string, any>
+  progress: ProgressModel
 }
 
-export function BenchmarkProgress({ bench, difficultyIndex, progress }: BenchmarkProgressProps) {
-  const difficulty = bench.difficulties[difficultyIndex]
-  const rankDefs = useMemo(() => buildRankDefs(difficulty, progress), [difficulty, progress])
+export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
+  const rankDefs = progress?.ranks || []
 
-  const categories = progress?.categories as Record<string, any>
+  const categories = progress?.categories || []
 
   // Global data: recent scenarios and sessions to inform recommendations
   const scenarios = useStore(s => s.scenarios)
@@ -68,25 +64,20 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Benchmar
     </span>
   )
 
-  const metaDefs = useMemo(() => buildMetaDefs(difficulty as any), [difficulty])
-
   const grid = gridCols
 
-  const overallRankName = rankDefs[(progress?.overall_rank ?? 0) - 1]?.name || '—'
-
-  // Map API progress to metadata strictly by order and counts; ignore API category names
-  const normalized = useMemo(() => normalizeProgress(categories ? { categories } as any : undefined, metaDefs), [categories, metaDefs])
+  const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || '—'
 
   // Build name sets and historical metrics used for recommendations
   const wantedNames = useMemo(() => {
     const set = new Set<string>()
-    for (const { groups } of normalized) {
+    for (const { groups } of categories) {
       for (const g of groups) {
-        for (const [name] of g.scenarios) set.add(String(name))
+        for (const s of g.scenarios) set.add(s.name)
       }
     }
     return Array.from(set)
-  }, [normalized])
+  }, [categories])
 
   const byName = useMemo(() => groupByScenario(scenarios), [scenarios])
   const lastSession = useMemo(() => sessions[0] ?? null, [sessions])
@@ -117,7 +108,7 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Benchmar
   return (
     <div className="space-y-4">
       <div className="text-sm text-[var(--text-primary)]">
-        Overall Rank: <span className="font-medium">{overallRankName}</span> · Benchmark Progress: <span className="font-medium">{numberFmt(progress?.benchmark_progress)}</span>
+        Overall Rank: <span className="font-medium">{overallRankName}</span> · Benchmark Progress: <span className="font-medium">{numberFmt(progress?.benchmarkProgress)}</span>
       </div>
 
       {categories && (
@@ -146,7 +137,7 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Benchmar
             </div>
 
             {/* Category cards content (no repeated headers) */}
-            {normalized.map(({ catName, catColor, groups }) => {
+            {categories.map(({ name: catName, color: catColor, groups }) => {
               const ranks = rankDefs
               const cols = grid(ranks.length)
               return (
@@ -169,26 +160,27 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Benchmar
                           </div>
                           <div className="flex-1 min-w-max">
                             <div className="grid gap-1" style={{ gridTemplateColumns: cols }}>
-                              {g.scenarios.map(([sName, s]) => {
-                                const achieved = Number(s?.scenario_rank || 0)
-                                const maxes: number[] = Array.isArray(s?.rank_maxes) ? s.rank_maxes : []
-                                const raw = Number(s?.score || 0)
-                                const score = raw / 100 // API returns score * 100; thresholds are in natural units
+                              {g.scenarios.map((s) => {
+                                const sName = s.name
+                                const achieved = s.scenarioRank
+                                const maxes: number[] = s.thresholds
+                                const score = s.score
                                 // Threshold proximity contribution: push when close to next rank
                                 let thPts = 0
-                                if (Array.isArray(maxes) && maxes.length > 0) {
-                                  const idx = Math.max(0, Math.min(maxes.length, achieved))
-                                  const prev = idx > 0 ? (maxes[idx - 1] ?? 0) : initialThresholdBaseline(maxes)
-                                  const next = maxes[idx] ?? null
+                                if (maxes.length > 1) {
+                                  const rankN = ranks.length
+                                  const idx = Math.max(0, Math.min(rankN, achieved))
+                                  const prev = maxes[idx] ?? 0
+                                  const next = maxes[idx + 1] ?? null
                                   if (next != null && next > prev) {
                                     const frac = Math.max(0, Math.min(1, (score - prev) / (next - prev)))
                                     thPts = 40 * frac
                                   }
                                   // Rank deficiency: prioritize weaker scenarios
-                                  const achievedNorm = Math.max(0, Math.min(1, achieved / Math.max(1, maxes.length)))
+                                  const achievedNorm = Math.max(0, Math.min(1, achieved / Math.max(1, rankN)))
                                   thPts += 20 * (1 - achievedNorm)
                                 }
-                                const base = recScore.get(String(sName)) ?? 0
+                                const base = recScore.get(sName) ?? 0
                                 const totalRec = Math.round(base + thPts)
                                 return (
                                   <Fragment key={sName}>
@@ -210,7 +202,7 @@ export function BenchmarkProgress({ bench, difficultyIndex, progress }: Benchmar
                                     {ranks.map((r, i) => {
                                       const fill = cellFill(i, score, maxes)
                                       const border = r.color
-                                      const value = maxes?.[i]
+                                      const value = maxes?.[i + 1]
                                       return (
                                         <div key={r.name + i} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center" style={{ border: `1px solid ${border}` }}>
                                           <div className="absolute inset-y-0 left-0" style={{ width: `${Math.round(fill * 100)}%`, background: hexToRgba(r.color, 0.35) }} />

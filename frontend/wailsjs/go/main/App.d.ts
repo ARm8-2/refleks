@@ -6,7 +6,7 @@ export function CheckForUpdates():Promise<models.UpdateInfo>;
 
 export function DownloadAndInstallUpdate(arg1:string):Promise<boolean|string>;
 
-export function GetBenchmarkProgress(arg1:number):Promise<string>;
+export function GetBenchmarkProgress(arg1:number):Promise<models.BenchmarkProgress>;
 
 export function GetBenchmarks():Promise<Array<models.Benchmark>>;
 

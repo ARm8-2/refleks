@@ -2,14 +2,18 @@ import { useMemo } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
-import { buildMetaDefs, buildRankDefs, computeRankCounts, computeScopeScenarios, normalizeProgress } from '../../lib/benchmarks/utils'
-import type { Benchmark } from '../../types/ipc'
+import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
 
-export function RankDistributionDonut({ bench, progress, difficultyIndex, height = 360 }:
-  { bench: Benchmark; progress: Record<string, any>; difficultyIndex: number; height?: number }) {
-  const difficulty = bench.difficulties[Math.min(Math.max(0, difficultyIndex), bench.difficulties.length - 1)]
-  const rankDefs = useMemo(() => buildRankDefs(difficulty, progress), [difficulty, progress])
+type RankDistributionDonutProps = {
+  bench: Benchmark
+  progress: BenchmarkProgress
+  difficultyIndex: number
+  height?: number
+}
+
+export function RankDistributionDonut({ bench, progress, difficultyIndex, height = 360 }: RankDistributionDonutProps) {
+  const rankDefs = progress?.ranks || []
   const theme = useChartTheme()
 
   type ScopeLevel = 'all' | 'category' | 'subcategory'
@@ -18,12 +22,30 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
   const [catIdx, setCatIdx] = usePageState<number>(`bench:${benchKey}:diff:${difficultyIndex}:ranks:catIdx`, 0)
   const [subIdx, setSubIdx] = usePageState<number>(`bench:${benchKey}:diff:${difficultyIndex}:ranks:subIdx`, 0)
 
-  const metaDefs = useMemo(() => buildMetaDefs(difficulty), [difficulty])
-  const normalized = useMemo(() => normalizeProgress(progress, metaDefs), [progress, metaDefs])
+  const categories = progress?.categories || []
 
-  const scopeScenarios = useMemo(() => computeScopeScenarios(normalized, level, catIdx, subIdx), [normalized, level, catIdx, subIdx])
+  const scopeScenarios = useMemo(() => {
+    const normCatIdx = Math.min(Math.max(0, catIdx), Math.max(0, categories.length - 1))
+    const cat = categories[normCatIdx]
+    if (level === 'all') return categories.flatMap(c => c.groups.flatMap(g => g.scenarios))
+    if (!cat) return []
+    if (level === 'category') return cat.groups.flatMap(g => g.scenarios)
+    const normSubIdx = Math.min(Math.max(0, subIdx), Math.max(0, (cat.groups?.length || 1) - 1))
+    const g = cat.groups?.[normSubIdx]
+    return g?.scenarios || []
+  }, [categories, level, catIdx, subIdx])
 
-  const counts = useMemo(() => computeRankCounts(scopeScenarios, rankDefs), [scopeScenarios, rankDefs])
+  const counts = useMemo(() => {
+    const n = rankDefs.length
+    const arr = Array.from({ length: n }, () => 0)
+    let below = 0
+    for (const s of scopeScenarios) {
+      const r = Number(s?.scenarioRank || 0)
+      if (r <= 0) below++
+      else arr[Math.min(n, r) - 1]++
+    }
+    return { byRank: arr, below }
+  }, [scopeScenarios, rankDefs])
 
   const labels = useMemo(() => {
     const names = rankDefs.map(r => r.name)
@@ -65,9 +87,9 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
   }), [theme])
 
   // Build controls for scope selection
-  const catOptions = normalized.map((c, i) => ({ label: c.catName || `Category ${i + 1}`, value: String(i) }))
+  const catOptions = categories.map((c, i) => ({ label: c.name || `Category ${i + 1}`, value: String(i) }))
   const subOptions = (() => {
-    const c = normalized[Math.min(Math.max(0, catIdx), Math.max(0, normalized.length - 1))]
+    const c = categories[Math.min(Math.max(0, catIdx), Math.max(0, categories.length - 1))]
     return (c?.groups || []).map((g, i) => ({ label: g.name || `Group ${i + 1}`, value: String(i) }))
   })()
 

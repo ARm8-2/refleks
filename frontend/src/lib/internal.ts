@@ -17,7 +17,7 @@ import {
   UpdateSettings as _UpdateSettings
 } from '../../wailsjs/go/main/App'
 import type { models } from '../../wailsjs/go/models'
-import type { Benchmark, ScenarioRecord, Settings, UpdateInfo } from '../types/ipc'
+import type { Benchmark, BenchmarkProgress, ScenarioRecord, Settings, UpdateInfo } from '../types/ipc'
 
 export type { models }
 
@@ -99,12 +99,9 @@ export async function setFavoriteBenchmarks(ids: string[]): Promise<void> {
   if (res !== true) throw new Error(typeof res === 'string' ? res : 'SetFavoriteBenchmarks failed')
 }
 
-export async function getBenchmarkProgress(benchmarkId: number): Promise<Record<string, any>> {
-  const raw = await _GetBenchmarkProgress(benchmarkId)
-  // Backend returns raw JSON string to preserve insertion order
-  const data = JSON.parse(String(raw))
-  if (!data || typeof data !== 'object') throw new Error('GetBenchmarkProgress failed')
-  return data as Record<string, any>
+export async function getBenchmarkProgress(benchmarkId: number): Promise<BenchmarkProgress> {
+  const data = await _GetBenchmarkProgress(benchmarkId)
+  return data as unknown as BenchmarkProgress
 }
 
 // Launch a Kovaak's scenario via Steam deeplink

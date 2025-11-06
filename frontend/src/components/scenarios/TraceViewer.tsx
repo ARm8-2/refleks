@@ -1,14 +1,22 @@
 import { Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePageState } from '../../hooks/usePageState';
-import type { Point } from '../../types/domain';
+import type { Point } from '../../types/ipc';
 import { SegmentedControl } from '../shared/SegmentedControl';
 import { Toggle } from '../shared/Toggle';
 
 type Highlight = { startTs?: any; endTs?: any; color?: string }
 type Marker = { ts: any; color?: string; radius?: number; type?: 'circle' | 'cross' }
 
-type TraceViewerProps = { points: Point[]; stats: Record<string, any>; highlight?: Highlight; markers?: Marker[]; seekToTs?: any; centerOnTs?: any; onReset?: () => void }
+type TraceViewerProps = {
+  points: Point[]
+  stats: Record<string, any>
+  highlight?: Highlight
+  markers?: Marker[]
+  seekToTs?: any
+  centerOnTs?: any
+  onReset?: () => void
+}
 
 export function TraceViewer({ points, stats, highlight, markers, seekToTs, centerOnTs, onReset }: TraceViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)

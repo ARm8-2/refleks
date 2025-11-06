@@ -47,11 +47,24 @@ type Benchmark struct {
 }
 
 type BenchmarkDifficulty struct {
-	DifficultyName     string            `json:"difficultyName"`
-	KovaaksBenchmarkID int               `json:"kovaaksBenchmarkId"`
-	Sharecode          string            `json:"sharecode"`
-	RankColors         map[string]string `json:"rankColors"`
-	Categories         []map[string]any  `json:"categories"`
+	DifficultyName     string              `json:"difficultyName"`
+	KovaaksBenchmarkID int                 `json:"kovaaksBenchmarkId"`
+	Sharecode          string              `json:"sharecode"`
+	RankColors         map[string]string   `json:"rankColors"`
+	Categories         []BenchmarkCategory `json:"categories"`
+}
+
+// Typed benchmark structure (replaces loosely-typed maps)
+type BenchmarkCategory struct {
+	CategoryName  string                 `json:"categoryName"`
+	Color         string                 `json:"color,omitempty"`
+	Subcategories []BenchmarkSubcategory `json:"subcategories"`
+}
+
+type BenchmarkSubcategory struct {
+	SubcategoryName string `json:"subcategoryName"`
+	ScenarioCount   int    `json:"scenarioCount"`
+	Color           string `json:"color,omitempty"`
 }
 
 // MousePoint is a single mouse position sample with a timestamp.
@@ -73,4 +86,37 @@ type UpdateInfo struct {
 	DownloadURL string `json:"downloadUrl,omitempty"`
 	// Optional plain-text notes (best-effort, may be empty)
 	ReleaseNotes string `json:"releaseNotes,omitempty"`
+}
+
+// --- Structured Benchmark Progress (server-computed) ---
+
+type RankDef struct {
+	Name  string `json:"name"`
+	Color string `json:"color"`
+}
+
+type ScenarioProgress struct {
+	Name         string    `json:"name"`
+	Score        float64   `json:"score"`
+	ScenarioRank int       `json:"scenarioRank"`
+	Thresholds   []float64 `json:"thresholds"`
+}
+
+type ProgressGroup struct {
+	Name      string             `json:"name,omitempty"`
+	Color     string             `json:"color,omitempty"`
+	Scenarios []ScenarioProgress `json:"scenarios"`
+}
+
+type ProgressCategory struct {
+	Name   string          `json:"name"`
+	Color  string          `json:"color,omitempty"`
+	Groups []ProgressGroup `json:"groups"`
+}
+
+type BenchmarkProgress struct {
+	OverallRank       int                `json:"overallRank"`
+	BenchmarkProgress float64            `json:"benchmarkProgress"`
+	Ranks             []RankDef          `json:"ranks"`
+	Categories        []ProgressCategory `json:"categories"`
 }

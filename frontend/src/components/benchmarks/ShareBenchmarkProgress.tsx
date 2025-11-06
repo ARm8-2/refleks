@@ -1,27 +1,23 @@
-import { Fragment, useMemo } from 'react'
-import { buildMetaDefs, buildRankDefs, cellFill, gridColsShare, hexToRgba, normalizeProgress, numberFmt } from '../../lib/benchmarks/utils'
-import type { Benchmark } from '../../types/ipc'
+import { Fragment } from 'react'
+import { cellFill, gridColsShare, hexToRgba, numberFmt } from '../../lib/benchmarks'
+import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 
 const LOGO_URL = new URL('../../assets/logo.svg', import.meta.url).href
 
 export type ShareBenchmarkProgressProps = {
   bench: Benchmark
   difficultyIndex: number
-  progress: Record<string, any>
+  progress: BenchmarkProgress
 }
 
 // A print/share-friendly card that summarizes BenchmarkProgress without the
 // recommendation (Recom) or Play columns. Intended to be rendered offscreen
 // and converted to an image for sharing.
 export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: ShareBenchmarkProgressProps) {
-  const difficulty = bench.difficulties[difficultyIndex]
-  const rankDefs = useMemo(() => buildRankDefs(difficulty, progress), [difficulty, progress])
-  const categories = progress?.categories as Record<string, any>
+  const rankDefs = progress?.ranks || []
+  const categories = progress?.categories || []
 
-  const overallRankName = rankDefs[(progress?.overall_rank ?? 0) - 1]?.name || '—'
-
-  const metaDefs = useMemo(() => buildMetaDefs(difficulty), [difficulty])
-  const normalized = useMemo(() => normalizeProgress(categories ? { categories } as any : undefined, metaDefs), [categories, metaDefs])
+  const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || '—'
 
   const cols = gridColsShare(rankDefs.length)
 
@@ -37,10 +33,10 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
           <div className="text-xs text-[var(--text-secondary)]">refleks-app.com</div>
         </div>
         <div className="mt-1 text-sm text-[var(--text-secondary)]">
-          Benchmark: <span className="font-medium text-[var(--text-primary)]">{bench.abbreviation} {bench.benchmarkName}</span> · Difficulty: <span className="font-medium text-[var(--text-primary)]">{difficulty?.difficultyName}</span>
+          Benchmark: <span className="font-medium text-[var(--text-primary)]">{bench.abbreviation} {bench.benchmarkName}</span> · Difficulty: <span className="font-medium text-[var(--text-primary)]">{bench.difficulties?.[difficultyIndex]?.difficultyName}</span>
         </div>
         <div className="mt-1 text-sm text-[var(--text-primary)]">
-          Overall Rank: <span className="font-medium">{overallRankName}</span> · Benchmark Progress: <span className="font-medium">{numberFmt(progress?.benchmark_progress)}</span>
+          Overall Rank: <span className="font-medium">{overallRankName}</span> · Benchmark Progress: <span className="font-medium">{numberFmt(progress?.benchmarkProgress)}</span>
         </div>
       </div>
 
@@ -65,7 +61,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
         </div>
 
         {/* Category groups */}
-        {normalized.map(({ catName, catColor, groups }) => (
+        {categories.map(({ name: catName, color: catColor, groups }) => (
           <div key={catName} className="border border-[var(--border-primary)] rounded bg-[var(--bg-tertiary)] overflow-hidden mt-3">
             <div className="flex">
               <div className="w-8 px-1 py-2 flex items-center justify-center">
@@ -83,10 +79,10 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                     </div>
                     <div className="flex-1 min-w-max">
                       <div className="grid gap-1" style={{ gridTemplateColumns: cols }}>
-                        {g.scenarios.map(([sName, s]) => {
-                          const maxes: number[] = Array.isArray(s?.rank_maxes) ? s.rank_maxes : []
-                          const raw = Number(s?.score || 0)
-                          const score = raw / 100
+                        {g.scenarios.map((s) => {
+                          const sName = s.name
+                          const maxes = s.thresholds
+                          const score = s.score
                           return (
                             <Fragment key={sName}>
                               <div className="text-[13px] text-[var(--text-primary)] truncate flex items-center">{sName}</div>
@@ -94,7 +90,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                               {rankDefs.map((r, i) => {
                                 const fill = cellFill(i, score, maxes)
                                 const border = r.color
-                                const value = maxes?.[i]
+                                const value = maxes?.[i + 1]
                                 return (
                                   <div key={r.name + i} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center" style={{ border: `1px solid ${border}` }}>
                                     <div className="absolute inset-y-0 left-0" style={{ width: `${Math.round(fill * 100)}%`, background: hexToRgba(r.color, 0.35) }} />

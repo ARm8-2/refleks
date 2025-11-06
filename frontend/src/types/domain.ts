@@ -6,5 +6,3 @@ export interface Session {
   end: string   // ISO timestamp of last scenario
   items: ScenarioRecord[]
 }
-
-export type Point = { ts: any; x: number; y: number; buttons?: number }

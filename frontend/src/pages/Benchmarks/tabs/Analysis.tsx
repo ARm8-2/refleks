@@ -1,8 +1,8 @@
 import { BenchmarkStrengths } from '../../../components/benchmarks/BenchmarkStrengths';
 import { RankDistributionDonut } from '../../../components/benchmarks/RankDistributionDonut';
-import type { Benchmark } from '../../../types/ipc';
+import type { Benchmark, BenchmarkProgress } from '../../../types/ipc';
 
-type BenchmarksAnalysisTabProps = { bench?: Benchmark; difficultyIndex: number; loading: boolean; error: string | null; progress: Record<string, any> | null }
+type BenchmarksAnalysisTabProps = { bench?: Benchmark; difficultyIndex: number; loading: boolean; error: string | null; progress: BenchmarkProgress | null }
 
 export function AnalysisTab({ bench, difficultyIndex, loading, error, progress }: BenchmarksAnalysisTabProps) {
   if (loading) return <div className="text-sm text-[var(--text-secondary)]">Loading progress…</div>

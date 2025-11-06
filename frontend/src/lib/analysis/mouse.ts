@@ -1,5 +1,4 @@
-import type { Point } from '../../types/domain'
-import type { ScenarioRecord } from '../../types/ipc'
+import type { ScenarioRecord, Point } from '../../types/ipc'
 
 export type MouseKillEvent = {
   idx: number
@@ -34,7 +33,7 @@ export type MouseTraceAnalysis = {
 
 // Entry point used by UI
 export function computeMouseTraceAnalysis(item: ScenarioRecord): MouseTraceAnalysis | null {
-  const points = Array.isArray(item.mouseTrace) ? (item.mouseTrace as Point[]) : []
+  const points = Array.isArray(item.mouseTrace) ? item.mouseTrace : []
   const events = Array.isArray(item.events) ? item.events : []
   if (points.length < 4 || events.length === 0) return null
   const baseIso = String((item.stats as any)?.['Date Played'] || '')

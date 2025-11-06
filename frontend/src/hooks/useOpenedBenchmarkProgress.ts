@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { EventsOn } from '../../wailsjs/runtime'
 import { getBenchmarkProgress, getBenchmarks } from '../lib/internal'
-import type { Benchmark } from '../types/ipc'
+import type { Benchmark, BenchmarkProgress } from '../types/ipc'
 import { useUIState } from './useUIState'
 
 export function useOpenedBenchmarkProgress(input?: { id?: string | null; bench?: Benchmark | null }) {
@@ -9,7 +9,7 @@ export function useOpenedBenchmarkProgress(input?: { id?: string | null; bench?:
   const [benchDifficultyIdx, setBenchDifficultyIdx] = useUIState<number>(`Benchmark:${resolvedId ?? ''}:difficultyIdx`, 0)
 
   const [bench, setBench] = useState<Benchmark | null>(input?.bench ?? null)
-  const [progress, setProgress] = useState<Record<string, any> | null>(null)
+  const [progress, setProgress] = useState<BenchmarkProgress | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

@@ -123,7 +123,6 @@ export function OverviewTab({ session }: OverviewTabProps) {
       <ScenarioBenchmarkProgress
         bench={bench || null}
         progress={benchProgress}
-        difficultyIndex={benchDifficultyIdx}
         scenarioName={selectedName}
         selectedBenchId={selectedBenchId}
         loading={benchLoading}

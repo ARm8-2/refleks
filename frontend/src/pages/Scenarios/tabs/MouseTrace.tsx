@@ -2,13 +2,12 @@ import { useMemo, useState } from 'react';
 import { TraceAnalysisPreview } from '../../../components/scenarios/TraceAnalysisPreview';
 import { TraceViewer } from '../../../components/scenarios/TraceViewer';
 import { computeMouseTraceAnalysis, type MouseTraceAnalysis } from '../../../lib/analysis/mouse';
-import type { Point } from '../../../types/domain';
-import type { ScenarioRecord } from '../../../types/ipc';
+import type { ScenarioRecord, Point } from '../../../types/ipc';
 
 type MouseTraceTabProps = { item: ScenarioRecord }
 
 export function MouseTraceTab({ item }: MouseTraceTabProps) {
-  const points = Array.isArray(item.mouseTrace) ? (item.mouseTrace as Point[]) : []
+  const points = Array.isArray(item.mouseTrace) ? item.mouseTrace : []
   const [sel, setSel] = useState<{ startMs: number; endMs: number; killMs: number; classification: 'optimal' | 'overshoot' | 'undershoot' } | null>(null)
   const analysis: MouseTraceAnalysis | null = useMemo(() => computeMouseTraceAnalysis(item), [item])
   const totalKills = analysis ? analysis.kills.length : 0

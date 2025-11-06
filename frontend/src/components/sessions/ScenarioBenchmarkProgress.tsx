@@ -1,13 +1,12 @@
 import { Info } from 'lucide-react'
 import type { CSSProperties } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { buildRankDefs, cellFill, hexToRgba, numberFmt } from '../../lib/benchmarks/utils'
-import type { Benchmark } from '../../types/ipc'
+import { cellFill, hexToRgba, numberFmt } from '../../lib/benchmarks'
+import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 
 type ScenarioBenchmarkProgressProps = {
   bench?: Benchmark | null
-  progress?: Record<string, any> | null
-  difficultyIndex: number
+  progress?: BenchmarkProgress | null
   scenarioName: string
   // These let us render user feedback like in Sessions Overview
   selectedBenchId?: string | null
@@ -18,7 +17,6 @@ type ScenarioBenchmarkProgressProps = {
 export function ScenarioBenchmarkProgress({
   bench,
   progress,
-  difficultyIndex,
   scenarioName,
   selectedBenchId = null,
   loading = false,
@@ -32,20 +30,19 @@ export function ScenarioBenchmarkProgress({
   // Locate scenario progress in the opened benchmark progress payload
   const scenario = useMemo(() => {
     if (!progress || !scenarioName) return null
-    const categories = progress.categories as Record<string, any> | undefined
-    if (!categories || typeof categories !== 'object') return null
-    for (const cat of Object.values(categories)) {
-      const scenMap = (cat as any)?.scenarios as Record<string, any> | undefined
-      if (scenMap && scenarioName in scenMap) {
-        return scenMap[scenarioName] as any
+    const categories = progress.categories || []
+    for (const cat of categories) {
+      for (const g of (cat.groups || [])) {
+        for (const s of (g.scenarios || [])) {
+          if (s.name === scenarioName) return s
+        }
       }
     }
     return null
   }, [progress, scenarioName])
 
   // Rank definitions from difficulty/progress (same as BenchmarkProgress)
-  const difficulty = bench?.difficulties?.[Math.min(Math.max(0, difficultyIndex), Math.max(0, (bench?.difficulties?.length || 1) - 1))]
-  const ranks = useMemo(() => buildRankDefs(difficulty as any, progress || undefined), [difficulty, progress])
+  const ranks = useMemo(() => (progress?.ranks || []), [progress])
 
   // Horizontal scrolling behaviour: map vertical wheel to horizontal when overflowing (same as BenchmarkProgress)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -123,9 +120,8 @@ export function ScenarioBenchmarkProgress({
                       <div key={r.name} className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center">{r.name}</div>
                     ))}
                     {(() => {
-                      const maxes: number[] = Array.isArray((scenario as any)?.rank_maxes) ? (scenario as any).rank_maxes : []
-                      const raw = Number((scenario as any)?.score || 0)
-                      const score = raw / 100
+                      const maxes = scenario.thresholds
+                      const score = scenario.score
                       return (
                         <>
                           <div className="text-[13px] text-[var(--text-primary)] truncate flex items-center">{scenarioName}</div>
@@ -133,7 +129,7 @@ export function ScenarioBenchmarkProgress({
                           {ranks.map((r: { name: string; color: string }, i: number) => {
                             const fill = cellFill(i, score, maxes)
                             const border = r.color
-                            const value = maxes?.[i]
+                            const value = maxes?.[i + 1]
                             return (
                               <div key={r.name + i} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center" style={{ border: `1px solid ${border}` }}>
                                 <div className="absolute inset-y-0 left-0" style={{ width: `${Math.round(fill * 100)}%`, background: hexToRgba(r.color, 0.35) }} />
@@ -148,7 +144,7 @@ export function ScenarioBenchmarkProgress({
                 </div>
               ) : (
                 <div className="h-full flex items-center justify-center text-sm text-[var(--text-secondary)]">
-                  {bench && progress ? 'This scenario isn’t part of the opened benchmark.' : 'Open a benchmark in “Benchmarks” to see progress for this scenario here.'}
+                  {bench && progress ? 'This scenario isn\'t part of the opened benchmark.' : 'Open a benchmark in “Benchmarks” to see progress for this scenario here.'}
                 </div>
               )
             )}

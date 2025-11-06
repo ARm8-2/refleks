@@ -1,16 +1,22 @@
 import { BenchmarkProgress } from "../../../components";
-import type { Benchmark } from '../../../types/ipc';
+import type { Benchmark, BenchmarkProgress as BenchProgress } from '../../../types/ipc';
 
-type BenchmarksOverviewTabProps = { bench?: Benchmark; difficultyIndex: number; loading: boolean; error: string | null; progress: Record<string, any> | null }
+type BenchmarksOverviewTabProps = {
+  bench?: Benchmark
+  difficultyIndex: number
+  loading: boolean
+  error: string | null
+  progress: BenchProgress | null
+}
 
-export function OverviewTab({ bench, difficultyIndex, loading, error, progress }: BenchmarksOverviewTabProps) {
+export function OverviewTab({ bench, loading, error, progress }: BenchmarksOverviewTabProps) {
   return (
     <div className="space-y-3">
       {loading && <div className="text-sm text-[var(--text-secondary)]">Loading progress…</div>}
       {error && <div className="text-sm text-red-400">{error}</div>}
       {progress && bench && !loading && !error && (
         <>
-          <BenchmarkProgress bench={bench} difficultyIndex={difficultyIndex} progress={progress} />
+          <BenchmarkProgress progress={progress} />
           {/* Context/help under BenchmarkProgress, focused on the Recom column */}
           <div className="text-xs text-[var(--text-secondary)]">
             <div className="mb-2">Recom indicates how strongly we suggest playing a scenario now versus rotating. Higher is better; negative means “switch/rotate”.</div>

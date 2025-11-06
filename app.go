@@ -146,12 +146,13 @@ func (a *App) GetBenchmarks() ([]models.Benchmark, error) {
 	return benchmarks.GetBenchmarks()
 }
 
-// GetBenchmarkProgress fetches live player progress for a given difficulty benchmarkId.
-// Returns raw JSON string to preserve original key order from upstream.
-func (a *App) GetBenchmarkProgress(benchmarkId int) (string, error) {
-	data, err := benchmarks.GetPlayerProgressRaw(benchmarkId)
+// GetBenchmarkProgress returns a structured benchmark progress model for the given benchmarkId.
+// The server merges upstream player progress with local benchmark metadata (categories/ranks),
+// producing a stable, UI-friendly shape.
+func (a *App) GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, error) {
+	data, err := benchmarks.GetBenchmarkProgress(benchmarkId)
 	if err != nil {
-		return "", err
+		return models.BenchmarkProgress{}, err
 	}
 	return data, nil
 }

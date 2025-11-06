@@ -1,17 +1,21 @@
+export type Point = {
+  ts: any
+  x: number
+  y: number
+  buttons?: number
+}
+
 export interface ScenarioRecord {
   filePath: string
   fileName: string
   stats: Record<string, any>
   events: string[][]
-  mouseTrace?: Array<{ ts: string; x: number; y: number; buttons?: number }>
+  mouseTrace?: Array<Point>
 }
 
 export interface BenchmarkDifficulty {
   difficultyName: string
   kovaaksBenchmarkId: number
-  sharecode?: string
-  rankColors?: Record<string, string>
-  categories?: Array<Record<string, any>>
 }
 
 export interface Benchmark {
@@ -21,6 +25,37 @@ export interface Benchmark {
   color: string
   spreadsheetURL: string
   difficulties: BenchmarkDifficulty[]
+}
+
+export interface RankDef {
+  name: string
+  color: string
+}
+
+export interface ProgressScenario {
+  name: string
+  score: number
+  scenarioRank: number
+  thresholds: number[]
+}
+
+export interface ProgressGroup {
+  name?: string
+  color?: string
+  scenarios: ProgressScenario[]
+}
+
+export interface ProgressCategory {
+  name: string
+  color?: string
+  groups: ProgressGroup[]
+}
+
+export interface BenchmarkProgress {
+  overallRank: number
+  benchmarkProgress: number
+  ranks: RankDef[]
+  categories: ProgressCategory[]
 }
 
 import type { Theme } from '../lib/theme'
