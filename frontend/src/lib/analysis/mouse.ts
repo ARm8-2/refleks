@@ -1,4 +1,4 @@
-import type { ScenarioRecord, Point } from '../../types/ipc'
+import type { Point, ScenarioRecord } from '../../types/ipc'
 
 export type MouseKillEvent = {
   idx: number
@@ -30,6 +30,15 @@ export type MouseTraceAnalysis = {
   avgEfficiency: number
   windowCapSec: number
 }
+
+export type SensSuggestion = {
+  current: number
+  recommended: number
+  changePct: number
+  direction: 'slower' | 'faster'
+  reason: string
+} | null
+
 
 // Entry point used by UI
 export function computeMouseTraceAnalysis(item: ScenarioRecord): MouseTraceAnalysis | null {
@@ -211,3 +220,35 @@ function lowerBound(points: Point[], targetMs: number, lo = 0, hi = points.lengt
 }
 function clamp(n: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, n)) }
 function median(arr: number[]): number { const a = arr.filter(Number.isFinite).slice().sort((x, y) => x - y); const n = a.length; if (!n) return 0; const m = Math.floor(n / 2); return n % 2 ? a[m] : (a[m - 1] + a[m]) / 2 }
+
+// Suggest a sensitivity adjustment (cm/360) given an analysis and the run stats.
+// Returns null when no useful suggestion can be made.
+export function computeSuggestedSens(analysis: MouseTraceAnalysis, stats: Record<string, any>): SensSuggestion {
+  const curr = Number(stats?.['cm/360'] ?? 0)
+  if (!Number.isFinite(curr) || curr <= 0) return null
+
+  const total = Math.max(1, analysis.kills.length)
+  const over = analysis.counts.overshoot
+  const under = analysis.counts.undershoot
+  const overPct = over / total
+  const underPct = under / total
+  const net = overPct - underPct // positive => overshoot dominant
+
+  // Ignore very small biases or tiny sample sizes
+  const minNetToSuggest = 0.12 // 12%
+  if (Math.abs(net) < minNetToSuggest || total < 6) return null
+
+  // Scale the adjustment proportionally, but clamp to reasonable bounds.
+  const scale = 0.8
+  const adj = Math.max(-0.6, Math.min(0.6, net * scale)) // +/-60% max
+
+  const recommended = Math.max(0.0001, curr * (1 + adj))
+  const changePct = ((recommended / curr) - 1) * 100
+
+  const direction = net > 0 ? 'slower' : 'faster'
+  const reason = net > 0
+    ? `Overshoot dominant (${(overPct * 100).toFixed(0)}% overshoot vs ${(underPct * 100).toFixed(0)}% undershoot). Suggest training at the higher sensitivity (${recommended.toFixed(2)} cm/360) for a few runs; when you return to your original sensitivity (${curr.toFixed(2)} cm/360) you'll likely retain smaller physical motions which should reduce overshoot.`
+    : `Undershoot dominant (${(underPct * 100).toFixed(0)}% undershoot vs ${(overPct * 100).toFixed(0)}% overshoot). Suggest training at the lower sensitivity (${recommended.toFixed(2)} cm/360) for a few runs; when you return to your original sensitivity (${curr.toFixed(2)} cm/360) you'll likely retain slightly larger motions which should reduce undershoot.`
+
+  return { current: curr, recommended, changePct, direction, reason }
+}

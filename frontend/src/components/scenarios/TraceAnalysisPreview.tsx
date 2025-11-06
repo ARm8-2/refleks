@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { KillAnalysis, MouseTraceAnalysis } from '../../lib/analysis/mouse'
+import { computeSuggestedSens } from '../../lib/analysis/mouse'
 import type { ScenarioRecord } from '../../types/ipc'
 import { InfoBox } from '../shared/InfoBox'
 import { PreviewTag } from '../shared/PreviewTag'
@@ -44,6 +45,10 @@ export function TraceAnalysisPreview({
     : cls === 'undershoot' ? 'rgba(245,158,11,0.9)'
       : 'rgba(16,185,129,0.9)'
 
+  // Suggestion is computed in the analysis module
+
+  const suggestion = computeSuggestedSens(analysis, item.stats)
+
   return (
     <InfoBox
       title={<span className="inline-flex items-center gap-1">Mouse path analysis <PreviewTag /></span>}
@@ -56,7 +61,7 @@ export function TraceAnalysisPreview({
           <li>Optimality uses path efficiency (straight distance vs travelled path).</li>
         </ul>
       </div>}
-      height={220}
+      height={420}
     >
       <div className="flex flex-col md:flex-row gap-3 justify-between">
         <div className="flex items-center gap-3">
@@ -80,6 +85,18 @@ export function TraceAnalysisPreview({
           <span>kills</span>
         </div>
       </div>
+      {suggestion ? (
+        <div className="mt-3">
+          <div className="p-2 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded text-sm">
+            <div className="flex items-baseline justify-between">
+              <div className="font-semibold text-[var(--text-primary)]">Suggested sens: {suggestion.recommended.toFixed(2)} cm/360 <span className="text-[var(--text-secondary)]">({suggestion.changePct >= 0 ? '+' : ''}{suggestion.changePct.toFixed(0)}%)</span></div>
+              <div className="text-xs text-[var(--text-secondary)]">Current: {suggestion.current.toFixed(2)} cm/360</div>
+            </div>
+            <div className="mt-1 text-[var(--text-secondary)] text-xs">{suggestion.reason}</div>
+            <div className="mt-2 text-[var(--text-secondary)] text-xs">Try 3–10 runs at the suggested sensitivity to adapt, then revert to your original sensitivity and check whether overshoot/undershoot is reduced.</div>
+          </div>
+        </div>
+      ) : null}
       <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
         {shown.map((k, i) => (
           <button key={`${k.killIdx}-${i}`} onClick={() => onSelect?.({ startMs: k.startMs, endMs: k.endMs, killMs: k.endMs, classification: k.classification })} className="text-left bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80 border border-[var(--border-primary)] rounded p-2">
