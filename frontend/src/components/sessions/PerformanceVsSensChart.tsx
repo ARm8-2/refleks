@@ -6,7 +6,10 @@ import { usePageState } from '../../hooks/usePageState'
 import { getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 
-type PerformanceVsSensChartProps = { items: ScenarioRecord[]; scenarioName: string }
+type PerformanceVsSensChartProps = {
+  items: ScenarioRecord[]
+  scenarioName: string
+}
 
 export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSensChartProps) {
   const colors = useChartTheme()
