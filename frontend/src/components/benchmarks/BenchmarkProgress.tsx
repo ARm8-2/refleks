@@ -1,11 +1,14 @@
 import { Play } from 'lucide-react'
-import { Fragment, useEffect, useMemo, useRef } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../hooks/useStore'
 import { groupByScenario } from '../../lib/analysis/metrics'
-import { computeRecommendationScores, cellFill, gridCols, hexToRgba, numberFmt } from '../../lib/benchmarks'
+import { autoHiddenRanks, cellFill, computeRecommendationScores, gridCols, hexToRgba, numberFmt } from '../../lib/benchmarks'
 import { launchScenario } from '../../lib/internal'
 import { getScenarioName } from '../../lib/utils'
 import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
+import { Button } from '../shared/Button'
+import { Dropdown } from '../shared/Dropdown'
+import { Toggle } from '../shared/Toggle'
 
 type BenchmarkProgressProps = {
   progress: ProgressModel
@@ -105,6 +108,61 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
   // Recommendation score per scenario name (base score without threshold proximity)
   const recScore = useMemo(() => computeRecommendationScores({ wantedNames, byName, lastPlayedMs, lastSessionCount, sessions }), [wantedNames, byName, lastPlayedMs, lastSessionCount, sessions])
 
+  // Ranks visibility controls
+  const [autoHideCleared, setAutoHideCleared] = useState<boolean>(true)
+  const [manuallyHidden, setManuallyHidden] = useState<Set<number>>(() => new Set())
+  // Desired number of rank columns to keep visible (when auto-hide is enabled)
+  const [visibleRankCount, setVisibleRankCount] = useState<number>(4)
+
+  // Flatten all scenarios visible in this benchmark view
+  const allScenarios = useMemo(() => {
+    const list: Array<{ scenarioRank: number }> = []
+    for (const { groups } of categories) {
+      for (const g of groups) {
+        for (const s of g.scenarios) list.push({ scenarioRank: Number(s.scenarioRank || 0) })
+      }
+    }
+    return list
+  }, [categories])
+
+  // Auto-hide any rank where ALL scenarios have surpassed that rank
+  const autoHidden = useMemo(() => {
+    const n = rankDefs.length
+    // Precompute flat scenario rank array
+    const ranksArr = allScenarios.map(s => Number(s.scenarioRank || 0))
+    return autoHiddenRanks(n, ranksArr, autoHideCleared, visibleRankCount)
+  }, [rankDefs.length, allScenarios, autoHideCleared, visibleRankCount])
+
+  // Combine manual + auto hidden sets
+  const effectiveHidden = useMemo(() => {
+    const out = new Set<number>()
+    manuallyHidden.forEach(i => out.add(i))
+    autoHidden.forEach(i => out.add(i))
+    return out
+  }, [manuallyHidden, autoHidden])
+
+  // Compute the visible rank indices and rank defs. Ensure at least one is visible.
+  const visibleRankIndices = useMemo(() => {
+    const n = rankDefs.length
+    const all = Array.from({ length: n }, (_, i) => i)
+    let vis = all.filter(i => !effectiveHidden.has(i))
+    if (vis.length === 0 && n > 0) vis = [n - 1] // always show the top rank if everything would be hidden
+    return vis
+  }, [rankDefs.length, effectiveHidden])
+
+  const visibleRanks = useMemo(() => visibleRankIndices.map(i => rankDefs[i]), [visibleRankIndices, rankDefs])
+
+  // Handlers for manual toggles
+  const toggleManualRank = (idx: number) => {
+    setManuallyHidden(prev => {
+      const next = new Set(prev)
+      if (next.has(idx)) next.delete(idx)
+      else next.add(idx)
+      return next
+    })
+  }
+  const resetManual = () => setManuallyHidden(new Set())
+
   return (
     <div className="space-y-4">
       <div className="text-sm text-[var(--text-primary)]">
@@ -122,12 +180,12 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                   <div className="w-8 flex-shrink-0" />
                   <div className="w-8 flex-shrink-0" />
                   <div className="flex-1">
-                    <div className="grid gap-1" style={{ gridTemplateColumns: grid(rankDefs.length) }}>
+                    <div className="grid gap-1" style={{ gridTemplateColumns: grid(visibleRanks.length) }}>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">Scenario</div>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center" title="Recommendation score (negative means: switch)">Recom</div>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center">Play</div>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">Score</div>
-                      {rankDefs.map(r => (
+                      {visibleRanks.map(r => (
                         <div key={r.name} className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center">{r.name}</div>
                       ))}
                     </div>
@@ -139,7 +197,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
             {/* Category cards content (no repeated headers) */}
             {categories.map(({ name: catName, color: catColor, groups }) => {
               const ranks = rankDefs
-              const cols = grid(ranks.length)
+              const cols = grid(visibleRanks.length)
               return (
                 <div key={catName} className="border border-[var(--border-primary)] rounded bg-[var(--bg-tertiary)] overflow-hidden mt-3">
                   <div className="flex">
@@ -199,18 +257,18 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                       </button>
                                     </div>
                                     <div className="text-[12px] text-[var(--text-primary)] flex items-center">{numberFmt(score)}</div>
-                                    {ranks.map((r, i) => {
-                                      const fill = cellFill(i, score, maxes)
+                                    {visibleRankIndices.map((ri) => {
+                                      const r = ranks[ri]
+                                      const fill = cellFill(ri, score, maxes)
                                       const border = r.color
-                                      const value = maxes?.[i + 1]
+                                      const value = maxes?.[ri + 1]
                                       return (
-                                        <div key={r.name + i} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center" style={{ border: `1px solid ${border}` }}>
+                                        <div key={r.name + ri} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center" style={{ border: `1px solid ${border}` }}>
                                           <div className="absolute inset-y-0 left-0" style={{ width: `${Math.round(fill * 100)}%`, background: hexToRgba(r.color, 0.35) }} />
                                           <span className="relative z-10">{value != null ? numberFmt(value) : '—'}</span>
                                         </div>
                                       )
-                                    }
-                                    )}
+                                    })}
                                   </Fragment>
                                 )
                               })}
@@ -226,6 +284,52 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
           </div>
         </div>
       )}
+      {/* Controls panel: placed under the progress content */}
+      <div className="bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)]">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-primary)]">
+          <div className="text-sm font-medium text-[var(--text-primary)]">Rank columns</div>
+          <div className="flex items-center gap-3">
+            <Toggle
+              size="sm"
+              label="Auto-hide earlier ranks"
+              checked={autoHideCleared}
+              onChange={setAutoHideCleared}
+            />
+            <Dropdown
+              size="sm"
+              label="Keep columns visible"
+              ariaLabel="Target number of visible rank columns"
+              value={String(visibleRankCount)}
+              onChange={(v) => setVisibleRankCount(Math.max(1, parseInt(v || '1', 10) || 1))}
+              options={Array.from({ length: Math.max(9, rankDefs.length) }, (_, i) => i + 1).map(n => ({ label: String(n), value: String(n) }))}
+            />
+            <Button size="sm" variant="ghost" onClick={resetManual} title="Reset manual visibility">Reset</Button>
+          </div>
+        </div>
+        <div className="p-3">
+          <div className="text-xs text-[var(--text-secondary)] mb-2">Toggle columns to show/hide. Auto-hidden columns are disabled.</div>
+          <div className="flex flex-wrap gap-1">
+            {rankDefs.map((r, i) => {
+              const auto = autoHidden.has(i)
+              const manualHidden = manuallyHidden.has(i)
+              const visible = !(auto || manualHidden)
+              return (
+                <Button
+                  key={r.name + i}
+                  size="sm"
+                  variant={visible ? 'secondary' : 'ghost'}
+                  onClick={() => toggleManualRank(i)}
+                  disabled={auto}
+                  className={auto ? 'opacity-60 cursor-not-allowed' : ''}
+                  title={auto ? 'Hidden automatically (all scenarios are past this rank)' : (visible ? 'Click to hide this column' : 'Click to show this column')}
+                >
+                  {r.name}
+                </Button>
+              )
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
