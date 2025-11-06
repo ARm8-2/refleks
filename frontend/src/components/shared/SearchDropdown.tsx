@@ -89,8 +89,6 @@ export function SearchDropdown({
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const optionRefs = useRef<(HTMLLIElement | null)[]>([]);
-  const idRef = useRef<string>(`search-dropdown-${Math.random().toString(36).slice(2, 9)}`);
 
   // Selected label memoized for performance
   const selectedLabel = useMemo(() => options.find(opt => String(opt.value) === String(value))?.label ?? '', [options, value]);
@@ -125,14 +123,12 @@ export function SearchDropdown({
 
   return (
     <label className={`inline-flex items-center gap-2 text-[var(--text-secondary)] ${size === 'md' ? 'text-sm' : 'text-xs'} ${fullWidth ? 'w-full' : ''}`}>
-      {label && <span id={`${idRef.current}-label`} className="select-none">{label}</span>}
+      {label && <span className="select-none">{label}</span>}
       <div ref={dropdownRef} className={`relative ${fullWidth ? 'flex-1' : ''}`}>
         <button
           type="button"
-          id={`${idRef.current}-toggle`}
           aria-label={ariaLabel || label}
           aria-expanded={isOpen}
-          aria-controls={`${idRef.current}-list`}
           className={`flex items-center justify-between ${pad} rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/40 hover:bg-[var(--bg-secondary)] w-full ${className}`}
           onClick={() => setIsOpen(v => !v)}
           onKeyDown={e => {
@@ -161,12 +157,11 @@ export function SearchDropdown({
         </button>
 
         {isOpen && (
-          <div className="absolute left-0 z-10 mt-1 min-w-[16rem] rounded bg-[var(--bg-card)] border border-[var(--border-primary)] shadow-lg">
+          <div className={`absolute left-0 z-10 mt-1 ${fullWidth ? 'w-full' : 'min-w-[16rem]'} rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)] shadow-lg`}>
             <input
-              id={`${idRef.current}-search`}
               ref={inputRef}
               type="text"
-              className="mb-1 w-full rounded border border-[var(--border-primary)] bg-[var(--bg-card)] px-2 py-1 text-xs text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/40"
+              className={`mb-1 w-full rounded border border-[var(--border-primary)] bg-[var(--bg-tertiary)] ${pad} text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/40`}
               placeholder="Search..."
               aria-label={`Search ${label || ''}`}
               value={search}
@@ -175,7 +170,8 @@ export function SearchDropdown({
                 // When user presses ArrowDown or Tab, move focus to the first option if present
                 if ((e.key === 'ArrowDown' || e.key === 'Tab') && filteredOptions.length > 0) {
                   e.preventDefault();
-                  optionRefs.current[0]?.focus();
+                  const first = dropdownRef.current?.querySelector('li[role="option"]') as HTMLElement | null;
+                  if (first) first.focus();
                 } else if (e.key === 'Escape') {
                   setIsOpen(false);
                   e.preventDefault();
@@ -183,7 +179,7 @@ export function SearchDropdown({
               }}
             />
 
-            <ul id={`${idRef.current}-list`} role="listbox" aria-labelledby={label ? `${idRef.current}-label` : undefined} className="max-h-72 overflow-auto">
+            <ul role="listbox" aria-label={label ?? 'options'} className="max-h-72 overflow-auto">
               {filteredOptions.length === 0 && (
                 <li className="px-2 py-1 text-xs text-[var(--text-secondary)] select-none">No options</li>
               )}
@@ -191,12 +187,10 @@ export function SearchDropdown({
               {filteredOptions.map((opt: SearchDropdownOption, i: number) => (
                 <li
                   key={String(opt.value)}
-                  id={`${idRef.current}-opt-${i}`}
                   tabIndex={0}
                   role="option"
                   aria-selected={String(opt.value) === String(value)}
                   className={`px-2 py-1 text-xs cursor-pointer hover:bg-[var(--accent-hover)] focus:bg-[var(--accent-hover)] focus:text-white ${String(opt.value) === String(value) ? 'bg-[var(--accent-primary)] text-white' : ''}`}
-                  ref={el => { optionRefs.current[i] = el }}
                   onClick={() => {
                     onChange(String(opt.value));
                     setIsOpen(false);
@@ -208,16 +202,17 @@ export function SearchDropdown({
                       setIsOpen(false);
                     } else if (e.key === 'ArrowDown') {
                       e.preventDefault();
-                      const next = optionRefs.current[i + 1];
+                      const next = (e.currentTarget as HTMLElement).nextElementSibling as HTMLElement | null;
                       if (next) next.focus();
-                      else optionRefs.current[0]?.focus();
+                      else {
+                        const first = dropdownRef.current?.querySelector('li[role="option"]') as HTMLElement | null;
+                        if (first) first.focus();
+                      }
                     } else if (e.key === 'ArrowUp') {
                       e.preventDefault();
-                      if (i === 0) {
-                        inputRef.current?.focus();
-                      } else {
-                        optionRefs.current[i - 1]?.focus();
-                      }
+                      const prev = (e.currentTarget as HTMLElement).previousElementSibling as HTMLElement | null;
+                      if (prev) prev.focus();
+                      else inputRef.current?.focus();
                     } else if (e.key === 'Escape') {
                       setIsOpen(false);
                       e.preventDefault();
