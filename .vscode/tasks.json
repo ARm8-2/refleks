@@ -78,26 +78,6 @@
 		},
 		{
 			"type": "shell",
-			"label": "Serve Docs (static)",
-			"command": "python3",
-			"args": [
-				"-m",
-				"http.server",
-				"8080",
-				"--directory",
-				"docs"
-			],
-			"options": {
-				"cwd": "${workspaceFolder}"
-			},
-			"problemMatcher": [],
-			"group": {
-				"kind": "none"
-			},
-			"detail": "Serve the static docs/ folder at http://localhost:8080/"
-		},
-		{
-			"type": "shell",
 			"label": "Windows: Build Portable ZIP",
 			"command": "bash",
 			"args": [
@@ -124,6 +104,46 @@
 				"kind": "build"
 			},
 			"detail": "Prompt for a version, build the Windows installer, package portable zip, and write checksums"
+		},
+		{
+			"type": "shell",
+			"label": "Run Frontend Tests",
+			"command": "npm",
+			"args": [
+				"test",
+				"--prefix",
+				"frontend"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"detail": "Run tests for the frontend"
+		},
+		{
+			"type": "shell",
+			"label": "Serve Docs (static)",
+			"command": "python3",
+			"args": [
+				"-m",
+				"http.server",
+				"8080",
+				"--directory",
+				"docs"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "none",
+				"isDefault": true
+			},
+			"detail": "Serve the static docs/ folder at http://localhost:8080/"
 		}
 	],
 	"inputs": [
