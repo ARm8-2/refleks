@@ -1,4 +1,4 @@
-import { Camera, ChevronLeft, Search, Star } from 'lucide-react'
+import { Camera, ChevronLeft, Play, Search, Star } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { BenchmarkCard, Dropdown, Tabs } from '../../components'
@@ -7,7 +7,7 @@ import { useOpenedBenchmarkProgress } from '../../hooks/useOpenedBenchmarkProgre
 import { usePageState } from '../../hooks/usePageState'
 import { useUIState } from '../../hooks/useUIState'
 import { copyNodeToClipboard } from '../../lib/copyNodeToClipboard'
-import { getBenchmarks, getFavoriteBenchmarks, setFavoriteBenchmarks } from '../../lib/internal'
+import { getBenchmarks, getFavoriteBenchmarks, launchPlaylist, setFavoriteBenchmarks } from '../../lib/internal'
 import type { Benchmark } from '../../types/ipc'
 import { AiTab, AnalysisTab, OverviewTab } from './tabs'
 
@@ -222,7 +222,16 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: Benchma
         </button>
         <div className="text-lg font-medium flex items-center gap-2">
           <span>Benchmark: {bench ? `${bench.abbreviation} ${bench.benchmarkName}` : id}</span>
-          {/* Removed playlist sharecode button to keep types minimal */}
+          {/* Play playlist for selected difficulty */}
+          <button
+            onClick={() => { if (bench) launchPlaylist(bench.difficulties[difficultyIndex].sharecode) }}
+            disabled={!bench}
+            className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] mb-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Play benchmark playlist"
+            title="Play benchmark playlist in Kovaak's"
+          >
+            <Play size={18} />
+          </button>
           {/* Share (screenshot) button */}
           <button
             onClick={() => { if (bench && progress) setRenderShare(true) }}

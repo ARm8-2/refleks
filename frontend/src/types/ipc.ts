@@ -16,6 +16,7 @@ export interface ScenarioRecord {
 export interface BenchmarkDifficulty {
   difficultyName: string
   kovaaksBenchmarkId: number
+  sharecode: string
 }
 
 export interface Benchmark {
