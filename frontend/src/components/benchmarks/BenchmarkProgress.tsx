@@ -173,7 +173,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
         <div className="overflow-x-auto" ref={containerRef}>
           <div className="min-w-max">
             {/* Single sticky header aligned with all categories */}
-            <div className="sticky top-0 z-10">
+            <div className="sticky top-0">
               <div className="border border-[var(--border-primary)] rounded bg-[var(--bg-tertiary)] overflow-hidden">
                 <div className="flex gap-2 px-2 py-2">
                   {/* Placeholders for category and subcategory label columns */}
@@ -300,7 +300,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
               label="Keep columns visible"
               ariaLabel="Target number of visible rank columns"
               value={String(visibleRankCount)}
-              onChange={(v) => setVisibleRankCount(Math.max(1, parseInt(v || '1', 10) || 1))}
+              onChange={v => setVisibleRankCount(Math.max(1, parseInt(v || '1', 10) || 1))}
               options={Array.from({ length: Math.max(9, rankDefs.length) }, (_, i) => i + 1).map(n => ({ label: String(n), value: String(n) }))}
             />
             <Button size="sm" variant="ghost" onClick={resetManual} title="Reset manual visibility">Reset</Button>

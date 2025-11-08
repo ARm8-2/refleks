@@ -1,63 +1,46 @@
+import { ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export type SearchDropdownOption = { label: string; value: string | number }
 
 export function filterAndSortOptions(options: SearchDropdownOption[], search: string): SearchDropdownOption[] {
   if (search.trim() === '') {
-    return [...options].sort((a, b) => a.label.localeCompare(b.label));
+    return [...options].sort((a, b) => a.label.localeCompare(b.label))
   }
-  const searchLower = search.toLowerCase();
-  const searchWords = searchLower.split(/\s+/).filter(Boolean);
-  const endsWithSpace = search.endsWith(' ');
-  // Precompute lowercased label and split words for each option
+
+  const searchLower = search.toLowerCase()
+  const searchWords = searchLower.split(/\s+/).filter(Boolean)
+  const endsWithSpace = search.endsWith(' ')
+
   const optionMeta = options.map(opt => ({
     opt,
     labelLower: opt.label.toLowerCase(),
-    labelWords: opt.label.toLowerCase().split(/\s+/)
-  }));
+    labelWords: opt.label.toLowerCase().split(/\s+/),
+  }))
 
-  // Scoring strategy
   function getScore(meta: { opt: SearchDropdownOption; labelLower: string; labelWords: string[] }): number {
-    // Only show options that contain ALL search words, filter out options that don't contain all words (if more than one word in search term)
     const allWordsPresent = searchWords.every((word, i) => {
       if (endsWithSpace && i === searchWords.length - 1) {
-        return meta.labelWords.includes(word);
-      } else {
-        return meta.labelWords.some(w => w.includes(word));
+        return meta.labelWords.includes(word)
       }
-    });
-    if (!allWordsPresent) return -1;
-    // Highest score: exact complete match
-    if (meta.labelLower === searchLower) return 100;
-    // First word exactly matches
-    if (meta.labelWords[0] === searchLower && meta.labelLower !== searchLower) return 90;
-    // Any other word exact match
-    if (meta.labelWords.some(w => w === searchLower) && meta.labelLower !== searchLower) return 85;
-    // First word starts with search term (not exact) (e.g. "App" matches "Apple")
-    if (meta.labelWords[0].startsWith(searchLower) && meta.labelWords[0] !== searchLower && meta.labelLower !== searchLower) return 80;
-    // Any other word starts with search term (not exact)
-    if (meta.labelWords.some(w => w.startsWith(searchLower) && w !== searchLower) && meta.labelLower !== searchLower) return 75;
-    // Any word contains search term (not startswith, not exact) (e.g. "track" matches "microtrack")
-    if (meta.labelWords.some(w => w.includes(searchLower) && !w.startsWith(searchLower) && w !== searchLower) && meta.labelLower !== searchLower) return 65;
-    // All words present (any order, not exact, not startsWith, not contains)
-    return 60;
+      return meta.labelWords.some(w => w.includes(word))
+    })
+    if (!allWordsPresent) return -1
+
+    if (meta.labelLower === searchLower) return 100
+    if (meta.labelWords[0] === searchLower) return 90
+    if (meta.labelWords.some(w => w === searchLower)) return 85
+    if (meta.labelWords[0].startsWith(searchLower)) return 80
+    if (meta.labelWords.some(w => w.startsWith(searchLower))) return 75
+    if (meta.labelWords.some(w => w.includes(searchLower))) return 65
+    return 60
   }
 
-  // Score and filter
-  const scoredOptions = optionMeta
-    .map(meta => ({
-      opt: meta.opt,
-      score: getScore(meta)
-    }))
-    .filter(({ score }) => score > 0);
-
-  // Sort by score descending, then label
-  scoredOptions.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return a.opt.label.localeCompare(b.opt.label);
-  });
-
-  return scoredOptions.map(({ opt }) => opt);
+  return optionMeta
+    .map(meta => ({ opt: meta.opt, score: getScore(meta) }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => (b.score !== a.score ? b.score - a.score : a.opt.label.localeCompare(b.opt.label)))
+    .map(({ opt }) => opt)
 }
 
 type SearchDropdownProps = {
@@ -70,6 +53,7 @@ type SearchDropdownProps = {
   ariaLabel?: string
   fullWidth?: boolean
 }
+
 export function SearchDropdown({
   value,
   onChange,
@@ -80,152 +64,148 @@ export function SearchDropdown({
   ariaLabel,
   fullWidth = false,
 }: SearchDropdownProps) {
-  // Styling helpers
-  const pad = size === 'md' ? 'px-3 py-2 text-sm' : 'px-2 py-1 text-xs';
+  const pad = size === 'md' ? 'px-3 py-2 text-sm' : 'px-2 py-1 text-xs'
 
-  // Controlled selection; ephemeral UI state kept local
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [isOpen, setIsOpen] = useState(false)
+  const [search, setSearch] = useState('')
 
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
 
-  // Selected label memoized for performance
-  const selectedLabel = useMemo(() => options.find(opt => String(opt.value) === String(value))?.label ?? '', [options, value]);
+  const selectedLabel = useMemo(
+    () => options.find(opt => String(opt.value) === String(value))?.label ?? '',
+    [options, value]
+  )
 
-  // Use the existing helper for filtering/sorting so tests and behavior remain predictable
-  const filteredOptions = useMemo(() => filterAndSortOptions(options, search), [options, search]);
+  const filteredOptions = useMemo(
+    () => filterAndSortOptions(options, search),
+    [options, search]
+  )
 
-  // When opening, focus the search input. When closing, clear ephemeral search state.
+  // Focus search when opened, reset search when closed
   useEffect(() => {
-    if (!isOpen) { setSearch(''); return; }
-    const t = setTimeout(() => inputRef.current?.focus(), 0);
-    return () => clearTimeout(t);
-  }, [isOpen]);
+    if (!isOpen) {
+      setSearch('')
+      return
+    }
+    const t = setTimeout(() => inputRef.current?.focus(), 0)
+    return () => clearTimeout(t)
+  }, [isOpen])
 
-  // Click-outside closes the dropdown
+  // Close on outside click
   useEffect(() => {
-    if (!isOpen) return;
-    function onDocClick(e: MouseEvent) {
+    if (!isOpen) return
+    const onDocClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
+        setIsOpen(false)
       }
     }
-    document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
-  }, [isOpen]);
+    document.addEventListener('mousedown', onDocClick)
+    return () => document.removeEventListener('mousedown', onDocClick)
+  }, [isOpen])
 
-  const openAndFocus = () => {
-    setIsOpen(true);
-    // ensure input is focused after mount
-    setTimeout(() => inputRef.current?.focus(), 0);
-  };
+  const openAndFocusSearch = () => {
+    setIsOpen(true)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  const handleSelect = (val: string | number) => {
+    onChange(String(val))
+    setIsOpen(false)
+  }
 
   return (
-    <label className={`inline-flex items-center gap-2 text-[var(--text-secondary)] ${size === 'md' ? 'text-sm' : 'text-xs'} ${fullWidth ? 'w-full' : ''}`}>
+    <div
+      className={`inline-flex items-center gap-2 text-[var(--text-secondary)] ${size === 'md' ? 'text-sm' : 'text-xs'} ${fullWidth ? 'w-full' : ''
+        }`}
+    >
       {label && <span className="select-none">{label}</span>}
       <div ref={dropdownRef} className={`relative ${fullWidth ? 'flex-1' : ''}`}>
         <button
           type="button"
           aria-label={ariaLabel || label}
           aria-expanded={isOpen}
-          className={`flex items-center justify-between ${pad} rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/40 hover:bg-[var(--bg-secondary)] w-full ${className}`}
+          className={`flex items-center justify-between ${pad} rounded-md bg-[var(--bg-secondary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/60 hover:bg-[var(--bg-tertiary)] w-full ${className}`}
           onClick={() => setIsOpen(v => !v)}
           onKeyDown={e => {
-            // Open and focus search input when using ArrowDown, Enter or Space
             if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              openAndFocus();
+              e.preventDefault()
+              openAndFocusSearch()
             }
           }}
         >
           <span className="truncate">{selectedLabel || 'Select...'}</span>
-          <svg
-            className="ml-2 text-[var(--text-secondary)]"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+          <ChevronDown className="ml-2 h-4 w-4 text-[var(--text-secondary)]" aria-hidden />
         </button>
 
         {isOpen && (
-          <div className={`absolute left-0 z-10 mt-1 ${fullWidth ? 'w-full' : 'min-w-[16rem]'} rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)] shadow-lg`}>
+          <div
+            className={`absolute left-0 z-10 mt-1 ${fullWidth ? 'w-full' : 'min-w-[16rem]'} rounded-md bg-[var(--bg-secondary)] border border-[var(--border-primary)] shadow-lg`}
+          >
             <input
               ref={inputRef}
               type="text"
-              className={`mb-1 w-full rounded border border-[var(--border-primary)] bg-[var(--bg-tertiary)] ${pad} text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/40`}
+              className={`mb-1 w-full rounded-md border border-[var(--border-primary)] bg-[var(--bg-secondary)] ${pad} text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/50`}
               placeholder="Search..."
               aria-label={`Search ${label || ''}`}
               value={search}
               onChange={e => setSearch(e.target.value)}
               onKeyDown={e => {
-                // When user presses ArrowDown or Tab, move focus to the first option if present
                 if ((e.key === 'ArrowDown' || e.key === 'Tab') && filteredOptions.length > 0) {
-                  e.preventDefault();
-                  const first = dropdownRef.current?.querySelector('li[role="option"]') as HTMLElement | null;
-                  if (first) first.focus();
+                  e.preventDefault()
+                  const first = dropdownRef.current?.querySelector<HTMLLIElement>('li[role="option"]')
+                  first?.focus()
                 } else if (e.key === 'Escape') {
-                  setIsOpen(false);
-                  e.preventDefault();
+                  e.preventDefault()
+                  setIsOpen(false)
                 }
               }}
             />
 
-            <ul role="listbox" aria-label={label ?? 'options'} className="max-h-72 overflow-auto">
+            <ul role="listbox" aria-label={label ?? 'options'} className="max-h-72 overflow-auto text-xs">
               {filteredOptions.length === 0 && (
-                <li className="px-2 py-1 text-xs text-[var(--text-secondary)] select-none">No options</li>
+                <li className="px-2 py-1 text-[var(--text-secondary)] select-none">No options</li>
               )}
 
-              {filteredOptions.map((opt: SearchDropdownOption, i: number) => (
-                <li
-                  key={String(opt.value)}
-                  tabIndex={0}
-                  role="option"
-                  aria-selected={String(opt.value) === String(value)}
-                  className={`px-2 py-1 text-xs cursor-pointer hover:bg-[var(--accent-hover)] focus:bg-[var(--accent-hover)] focus:text-white ${String(opt.value) === String(value) ? 'bg-[var(--accent-primary)] text-white' : ''}`}
-                  onClick={() => {
-                    onChange(String(opt.value));
-                    setIsOpen(false);
-                  }}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onChange(String(opt.value));
-                      setIsOpen(false);
-                    } else if (e.key === 'ArrowDown') {
-                      e.preventDefault();
-                      const next = (e.currentTarget as HTMLElement).nextElementSibling as HTMLElement | null;
-                      if (next) next.focus();
-                      else {
-                        const first = dropdownRef.current?.querySelector('li[role="option"]') as HTMLElement | null;
-                        if (first) first.focus();
+              {filteredOptions.map(opt => {
+                const isSelected = String(opt.value) === String(value)
+                return (
+                  <li
+                    key={String(opt.value)}
+                    tabIndex={0}
+                    role="option"
+                    aria-selected={isSelected}
+                    className={`px-2 py-1 cursor-pointer outline-none ${isSelected
+                      ? 'bg-[var(--accent-primary)] text-white'
+                      : 'text-[var(--text-primary)] hover:bg-[var(--bg-hover)] focus:bg-[var(--bg-hover)]'
+                      }`}
+                    onClick={() => handleSelect(opt.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handleSelect(opt.value)
+                      } else if (e.key === 'ArrowDown') {
+                        e.preventDefault()
+                          ; (e.currentTarget.nextElementSibling as HTMLElement | null)?.focus()
+                      } else if (e.key === 'ArrowUp') {
+                        e.preventDefault()
+                        const prev = e.currentTarget.previousElementSibling as HTMLElement | null
+                        if (prev) prev.focus()
+                        else inputRef.current?.focus()
+                      } else if (e.key === 'Escape') {
+                        e.preventDefault()
+                        setIsOpen(false)
                       }
-                    } else if (e.key === 'ArrowUp') {
-                      e.preventDefault();
-                      const prev = (e.currentTarget as HTMLElement).previousElementSibling as HTMLElement | null;
-                      if (prev) prev.focus();
-                      else inputRef.current?.focus();
-                    } else if (e.key === 'Escape') {
-                      setIsOpen(false);
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  {opt.label}
-                </li>
-              ))}
+                    }}
+                  >
+                    {opt.label}
+                  </li>
+                )
+              })}
             </ul>
           </div>
         )}
       </div>
-    </label>
-  );
+    </div>
+  )
 }
