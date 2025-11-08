@@ -20,8 +20,6 @@ export function GetSettings():Promise<models.Settings>;
 
 export function GetVersion():Promise<string>;
 
-export function Greet(arg1:string):Promise<string>;
-
 export function LaunchKovaaksPlaylist(arg1:string):Promise<boolean|string>;
 
 export function LaunchKovaaksScenario(arg1:string,arg2:string):Promise<boolean|string>;

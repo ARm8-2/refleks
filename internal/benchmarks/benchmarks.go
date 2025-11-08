@@ -66,11 +66,6 @@ func GetPlayerProgressRaw(benchmarkId int) (string, error) {
 	return string(b), nil
 }
 
-// --- Structured benchmark progress ---
-
-// GetBenchmarkProgress returns a typed, structured benchmark progress model for the given benchmarkId.
-// It merges upstream player progress with local benchmark metadata (categories/subcategories and rank colors),
-// building categories -> groups -> scenarios with thresholds that include a computed baseline as the first value.
 func GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, error) {
 	raw, err := GetPlayerProgressRaw(benchmarkId)
 	if err != nil {

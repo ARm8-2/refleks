@@ -147,3 +147,18 @@ func Save(s models.Settings) error {
 	}
 	return os.WriteFile(path, b, 0o644)
 }
+
+// GetFavoriteBenchmarks returns a defensive copy of the favorites list from the provided settings.
+func GetFavoriteBenchmarks(s models.Settings) []string {
+	return append([]string(nil), s.FavoriteBenchmarks...)
+}
+
+// SetFavoriteBenchmarks updates the provided settings in-memory and persists them to disk.
+// The provided settings pointer will be mutated. Returns an error if persistence fails.
+func SetFavoriteBenchmarks(s *models.Settings, ids []string) error {
+	if s == nil {
+		return errors.New("nil settings")
+	}
+	s.FavoriteBenchmarks = append([]string(nil), ids...)
+	return Save(*s)
+}
