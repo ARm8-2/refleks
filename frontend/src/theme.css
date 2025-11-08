@@ -39,8 +39,8 @@
 .theme-dark {
   /* New token set */
   --bg-primary: #111316;
-  --bg-secondary: rgba(24, 25, 28, 0.9);
-  --bg-tertiary: rgba(32, 34, 37, 0.85);
+  --bg-secondary: #18191c;
+  --bg-tertiary: #202225;
   --bg-card: #1f1f1f;
   --bg-hover: #333333;
   --text-primary: #e6e6e6;
