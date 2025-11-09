@@ -162,7 +162,7 @@ func (a *App) LaunchKovaaksScenario(name string, mode string) (bool, string) {
 		mode = "challenge"
 	}
 	m := url.PathEscape(mode)
-	deeplink := fmt.Sprintf("steam://run/%d/?action=jump-to-scenario%%3Bname=%s%%3Bmode=%s", constants.KovaaksSteamAppID, n, m)
+	deeplink := fmt.Sprintf("steam://run/%d/?action=jump-to-scenario;name=%s;mode=%s", constants.KovaaksSteamAppID, n, m)
 	runtime.BrowserOpenURL(a.ctx, deeplink)
 	return true, "ok"
 }
@@ -174,7 +174,7 @@ func (a *App) LaunchKovaaksPlaylist(sharecode string) (bool, string) {
 	if sc == "" {
 		return false, "missing sharecode"
 	}
-	deeplink := fmt.Sprintf("steam://run/%d/?action=jump-to-playlist%%3Bsharecode=%s", constants.KovaaksSteamAppID, sc)
+	deeplink := fmt.Sprintf("steam://run/%d/?action=jump-to-playlist;sharecode=%s", constants.KovaaksSteamAppID, sc)
 	runtime.BrowserOpenURL(a.ctx, deeplink)
 	return true, "ok"
 }
