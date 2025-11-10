@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
-import { TraceAnalysisPreview } from '../../../components/scenarios/TraceAnalysisPreview';
-import { TraceViewer } from '../../../components/scenarios/TraceViewer';
+import { TraceAnalysis, TraceViewer } from '../../../components';
 import { computeMouseTraceAnalysis, type MouseTraceAnalysis } from '../../../lib/analysis/mouse';
-import type { ScenarioRecord, Point } from '../../../types/ipc';
+import type { ScenarioRecord } from '../../../types/ipc';
 
 type MouseTraceTabProps = { item: ScenarioRecord }
 
@@ -10,8 +9,6 @@ export function MouseTraceTab({ item }: MouseTraceTabProps) {
   const points = Array.isArray(item.mouseTrace) ? item.mouseTrace : []
   const [sel, setSel] = useState<{ startMs: number; endMs: number; killMs: number; classification: 'optimal' | 'overshoot' | 'undershoot' } | null>(null)
   const analysis: MouseTraceAnalysis | null = useMemo(() => computeMouseTraceAnalysis(item), [item])
-  const totalKills = analysis ? analysis.kills.length : 0
-  const [limit, setLimit] = useState<number>(totalKills || 10)
   if (points.length === 0) {
     return (
       <div className="text-sm text-[var(--text-secondary)]">
@@ -33,7 +30,7 @@ export function MouseTraceTab({ item }: MouseTraceTabProps) {
         centerOnTs={sel?.endMs}
         onReset={() => setSel(null)}
       />
-      <TraceAnalysisPreview item={item} analysis={analysis} limit={limit} onLimitChange={setLimit} onSelect={setSel} />
+      <TraceAnalysis item={item} analysis={analysis} onSelect={setSel} />
     </div>
   )
 }

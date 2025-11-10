@@ -5,6 +5,7 @@ export { AccuracyVsSpeedChart } from './scenarios/AccuracyVsSpeedChart';
 export { AccuracyVsSpeedDetails } from './scenarios/AccuracyVsSpeedDetails';
 export { EventsOverTimeChart } from './scenarios/EventsOverTimeChart';
 export { EventsOverTimeDetails } from './scenarios/EventsOverTimeDetails';
+export { TraceAnalysis } from './scenarios/TraceAnalysis';
 export { TraceViewer } from './scenarios/TraceViewer';
 export { TTKMovingAverageChart } from './scenarios/TTKMovingAverageChart';
 export { TTKMovingAverageDetails } from './scenarios/TTKMovingAverageDetails';

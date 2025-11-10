@@ -1,37 +1,26 @@
-import { useState } from 'react'
 import type { KillAnalysis, MouseTraceAnalysis } from '../../lib/analysis/mouse'
 import { computeSuggestedSens } from '../../lib/analysis/mouse'
 import type { ScenarioRecord } from '../../types/ipc'
 import { InfoBox } from '../shared/InfoBox'
 import { PreviewTag } from '../shared/PreviewTag'
 
-type TraceAnalysisPreviewProps = {
+type TraceAnalysisProps = {
   item: ScenarioRecord
   analysis?: MouseTraceAnalysis | null
-  limit?: number
-  onLimitChange?: (n: number) => void
   onSelect?: (sel: { startMs: number; endMs: number; killMs: number; classification: 'optimal' | 'overshoot' | 'undershoot' }) => void
 }
 
-export function TraceAnalysisPreview({
+export function TraceAnalysis({
   item,
   analysis: propAnalysis,
-  limit: propLimit,
-  onLimitChange,
   onSelect
-}: TraceAnalysisPreviewProps) {
+}: TraceAnalysisProps) {
   const analysis: MouseTraceAnalysis | null = propAnalysis ?? null
   if (!analysis) return null
-  const total = analysis.kills.length
-  const [internalLimit, setInternalLimit] = useState<number>(total)
-  const limit = typeof propLimit === 'number' ? propLimit : internalLimit
 
-  const setLimit = (n: number) => {
-    if (typeof onLimitChange === 'function') onLimitChange(n)
-    else setInternalLimit(n)
-  }
+  const shown = analysis.kills
+  const total = shown.length
 
-  const shown = analysis.kills.slice(Math.max(0, total - limit))
   const fmtPct = (n: number) => total ? ((n / total) * 100).toFixed(0) + '%' : '0%'
 
   const pill = (cls: KillAnalysis['classification']) => {
@@ -73,17 +62,6 @@ export function TraceAnalysisPreview({
           </div>
           <div className="text-xs text-[var(--text-secondary)]">Avg efficiency <span className="text-[var(--text-primary)] font-semibold">{(analysis.avgEfficiency * 100).toFixed(1)}%</span></div>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <span>Show last</span>
-          <select value={String(limit)} onChange={e => setLimit(parseInt(e.target.value))} className="bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded px-2 py-1">
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="30">30</option>
-            <option value="50">50</option>
-            <option value={String(total)}>All</option>
-          </select>
-          <span>kills</span>
-        </div>
       </div>
       {suggestion ? (
         <div className="mt-3">
@@ -93,7 +71,7 @@ export function TraceAnalysisPreview({
               <div className="text-xs text-[var(--text-secondary)]">Current: {suggestion.current.toFixed(2)} cm/360</div>
             </div>
             <div className="mt-1 text-[var(--text-secondary)] text-xs">{suggestion.reason}</div>
-            <div className="mt-2 text-[var(--text-secondary)] text-xs">Try 3–10 runs at the suggested sensitivity to adapt, then revert to your original sensitivity and check whether overshoot/undershoot is reduced.</div>
+            <div className="mt-2 text-[var(--text-secondary)] text-xs">Try 3-10 runs at the suggested sensitivity to adapt, then revert to your original sensitivity and check whether overshoot/undershoot is reduced.</div>
           </div>
         </div>
       ) : null}
