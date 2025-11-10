@@ -1,8 +1,7 @@
 import { Fragment } from 'react'
+import { REFLEKS_LOGO } from '../../assets'
 import { cellFill, gridColsShare, hexToRgba, numberFmt } from '../../lib/benchmarks'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
-
-const LOGO_URL = new URL('../../assets/icons/logo.svg', import.meta.url).href
 
 export type ShareBenchmarkProgressProps = {
   bench: Benchmark
@@ -27,7 +26,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
       <div className="px-6 pt-5 pb-3 border-b border-[var(--border-primary)]">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-h-[32px]">
-            <img src={LOGO_URL} alt="RefleK's" className="h-8 w-auto object-contain" />
+            <img src={REFLEKS_LOGO} alt="RefleK's" className="h-8 w-auto object-contain" />
             <div className="text-lg font-semibold">RefleK's</div>
           </div>
           <div className="text-xs text-[var(--text-secondary)]">refleks-app.com</div>
