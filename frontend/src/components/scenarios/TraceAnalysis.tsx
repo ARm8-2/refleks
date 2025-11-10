@@ -1,8 +1,34 @@
-import type { KillAnalysis, MouseTraceAnalysis } from '../../lib/analysis/mouse'
+import { Copy } from 'lucide-react'
+import { Button } from '..'
+import type { KillAnalysis, MouseTraceAnalysis, SensSuggestion } from '../../lib/analysis/mouse'
 import { computeSuggestedSens } from '../../lib/analysis/mouse'
 import type { ScenarioRecord } from '../../types/ipc'
 import { InfoBox } from '../shared/InfoBox'
 import { PreviewTag } from '../shared/PreviewTag'
+
+function SuggestedHeader({ suggestion }: { suggestion: NonNullable<SensSuggestion> }) {
+  const text = suggestion.recommended.toFixed(2)
+  const doCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch (e) {
+      try {
+        window.prompt('Copy suggested sensitivity (cm/360)', text)
+      } catch (_) { }
+    }
+  }
+  return (
+    <div className="flex items-baseline justify-between">
+      <div className="font-semibold text-[var(--text-primary)] flex items-center gap-2">
+        <span>Suggested: {suggestion.recommended.toFixed(2)} cm/360 <span className="text-[var(--text-secondary)]">({suggestion.changePct >= 0 ? '+' : ''}{suggestion.changePct.toFixed(0)}%)</span></span>
+        <Button variant="ghost" size="sm" onClick={doCopy} title={`Copy ${text} cm/360`} aria-label={`Copy suggested sensitivity ${text} cm/360`}>
+          <Copy className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="text-xs text-[var(--text-secondary)]">Current: {suggestion.current.toFixed(2)} cm/360</div>
+    </div>
+  )
+}
 
 type TraceAnalysisProps = {
   item: ScenarioRecord
@@ -66,10 +92,7 @@ export function TraceAnalysis({
       {suggestion ? (
         <div className="mt-3">
           <div className="p-2 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded text-sm">
-            <div className="flex items-baseline justify-between">
-              <div className="font-semibold text-[var(--text-primary)]">Suggested sens: {suggestion.recommended.toFixed(2)} cm/360 <span className="text-[var(--text-secondary)]">({suggestion.changePct >= 0 ? '+' : ''}{suggestion.changePct.toFixed(0)}%)</span></div>
-              <div className="text-xs text-[var(--text-secondary)]">Current: {suggestion.current.toFixed(2)} cm/360</div>
-            </div>
+            <SuggestedHeader suggestion={suggestion} />
             <div className="mt-1 text-[var(--text-secondary)] text-xs">{suggestion.reason}</div>
             <div className="mt-2 text-[var(--text-secondary)] text-xs">Try 3-10 runs at the suggested sensitivity to adapt, then revert to your original sensitivity and check whether overshoot/undershoot is reduced.</div>
           </div>
