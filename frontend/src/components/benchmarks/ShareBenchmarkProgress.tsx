@@ -2,7 +2,7 @@ import { Fragment } from 'react'
 import { cellFill, gridColsShare, hexToRgba, numberFmt } from '../../lib/benchmarks'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 
-const LOGO_URL = new URL('../../assets/logo.svg', import.meta.url).href
+const LOGO_URL = new URL('../../assets/icons/logo.svg', import.meta.url).href
 
 export type ShareBenchmarkProgressProps = {
   bench: Benchmark
