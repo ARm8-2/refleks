@@ -1,7 +1,9 @@
+import { HelpCircle, Settings as SettingsIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, Route, Routes } from 'react-router-dom'
 import { BrowserOpenURL, EventsOn } from '../wailsjs/runtime'
+import { KO_FI_SYMBOL } from './assets'
 import { StoreProvider, useStore } from './hooks/useStore'
 import { checkForUpdates, downloadAndInstallUpdate, getRecentScenarios, getSettings, getVersion, startWatcher } from './lib/internal'
 import { applyTheme, getSavedTheme } from './lib/theme'
@@ -36,7 +38,7 @@ function TopNav() {
     })
     return () => { try { off() } catch { /* noop */ } }
   }, [])
-  const link = (to: string, label: string, end = false) => (
+  const link = (to: string, label: ReactNode, end = false) => (
     <Link to={to} end={end}>{label}</Link>
   )
   return (
@@ -68,7 +70,7 @@ function TopNav() {
               onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/updates/') }}
               className="text-[10px] underline underline-offset-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             >
-              What’s new
+              What's new
             </a>
           </div>
         )}
@@ -86,11 +88,29 @@ function TopNav() {
         <a
           href="https://refleks-app.com/home/#support"
           onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/home/#support') }}
-          className="text-xs underline underline-offset-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          title="Help"
+          aria-label="Open help (docs)"
+          className="px-3 py-1 rounded hover:bg-[var(--bg-tertiary)] flex items-center"
         >
-          Support & Feedback
+          <HelpCircle className="h-5 w-5" aria-hidden="true" />
+          <span className="sr-only">Help</span>
         </a>
-        {link('/settings', 'Settings')}
+
+        <a
+          href="https://ko-fi.com/arm8_"
+          onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://ko-fi.com/arm8_') }}
+          title="Support on Ko-fi"
+          className="px-3 py-1 rounded hover:bg-[var(--bg-tertiary)] flex items-center"
+        >
+          <img src={KO_FI_SYMBOL} alt="Ko-fi" className="h-5 w-5" />
+        </a>
+
+        {link('/settings', (
+          <>
+            <SettingsIcon className="h-5 w-5" aria-hidden="true" />
+            <span className="sr-only">Settings</span>
+          </>
+        ))}
       </div>
     </div>
   )

@@ -116,7 +116,7 @@ function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, que
   return (
     <div className="space-y-4 h-full p-4 overflow-auto">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-lg font-medium">Benchmark — Explore</div>
+        <div className="text-lg font-medium">Benchmark - Explore</div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search size={16} className="text-[var(--text-secondary)] absolute left-2 top-1/2 -translate-y-1/2" strokeWidth={1.5} />
