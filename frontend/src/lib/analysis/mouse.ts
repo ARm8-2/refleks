@@ -242,10 +242,10 @@ export function computeSuggestedSens(analysis: MouseTraceAnalysis, stats: Record
   const scale = 0.8
   const adj = Math.max(-0.6, Math.min(0.6, net * scale)) // +/-60% max
 
-  const recommended = Math.max(0.0001, curr * (1 + adj))
+  const recommended = Math.max(0.0001, curr * (1 - adj))
   const changePct = ((recommended / curr) - 1) * 100
 
-  const direction = net > 0 ? 'slower' : 'faster'
+  const direction = net > 0 ? 'faster' : 'slower'
   const reason = net > 0
     ? `Overshoot dominant (${(overPct * 100).toFixed(0)}% overshoot vs ${(underPct * 100).toFixed(0)}% undershoot). Suggest training at the higher sensitivity (${recommended.toFixed(2)} cm/360) for a few runs; when you return to your original sensitivity (${curr.toFixed(2)} cm/360) you'll likely retain smaller physical motions which should reduce overshoot.`
     : `Undershoot dominant (${(underPct * 100).toFixed(0)}% undershoot vs ${(overPct * 100).toFixed(0)}% overshoot). Suggest training at the lower sensitivity (${recommended.toFixed(2)} cm/360) for a few runs; when you return to your original sensitivity (${curr.toFixed(2)} cm/360) you'll likely retain slightly larger motions which should reduce undershoot.`

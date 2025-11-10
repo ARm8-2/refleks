@@ -12,7 +12,7 @@ export function AnalysisTab({ item }: ScenariosAnalysisTabProps) {
   return (
     <div className="space-y-3">
       <EventsOverTimeChart timeSec={timeSec} accOverTime={accOverTime} realTTK={realTTK} cumKills={cumKills} summary={summary} />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <TTKMovingAverageChart labels={labels} realTTK={realTTK} ma5={movingAvg.ma5} movingAvg={movingAvg} />
 
         <AccuracyVsSpeedChart points={kpm.map((x, i) => ({ x, y: perKillAcc[i], i }))} scatter={scatter} />
