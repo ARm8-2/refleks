@@ -2,6 +2,7 @@ import { Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePageState } from '../../hooks/usePageState';
 import type { Point } from '../../types/ipc';
+import { Dropdown } from '../shared/Dropdown';
 import { SegmentedControl } from '../shared/SegmentedControl';
 import { Toggle } from '../shared/Toggle';
 
@@ -40,6 +41,8 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
   useEffect(() => {
     autoFollowRef.current = autoFollow
   }, [autoFollow])
+
+  const [clickMarkersMode, setClickMarkersMode] = usePageState<'all' | 'down' | 'none'>('trace:clickMarkers', 'down')
 
   // Base data bounds/resolution
   const base = useMemo(() => {
@@ -304,18 +307,21 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
     }
 
     // Draw left-click press/release markers (white, smaller).
-    if (drawn.length >= 1) {
-      const markers: { x: number; y: number; pressed: boolean }[] = []
+    // Controlled by clickMarkersMode ('all' | 'down' | 'none')
+    if (drawn.length >= 1 && clickMarkersMode !== 'none') {
+      const clickMarkersArr: { x: number; y: number; pressed: boolean }[] = []
       let prevLeft = ((drawn[0].buttons ?? 0) & 1) !== 0
-      if (prevLeft) markers.push({ x: drawn[0].x, y: drawn[0].y, pressed: true })
+      if (prevLeft) clickMarkersArr.push({ x: drawn[0].x, y: drawn[0].y, pressed: true })
       for (let i = 1; i < drawn.length; i++) {
         const p = drawn[i]
         const curLeft = ((p.buttons ?? 0) & 1) !== 0
-        if (curLeft !== prevLeft) markers.push({ x: p.x, y: p.y, pressed: curLeft })
+        if (curLeft !== prevLeft) clickMarkersArr.push({ x: p.x, y: p.y, pressed: curLeft })
         prevLeft = curLeft
       }
 
-      for (const m of markers) {
+      const filteredClickMarkers = clickMarkersArr.filter(m => clickMarkersMode === 'all' || (clickMarkersMode === 'down' && m.pressed))
+
+      for (const m of filteredClickMarkers) {
         const sx = toX(m.x)
         const sy = toY(m.y)
         const col = 'rgba(255,255,255,0.95)'
@@ -392,7 +398,7 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
         }
       }
     }
-  }, [drawn, base, zoom, playIndex, trailMode, transformTick])
+  }, [drawn, base, zoom, playIndex, trailMode, transformTick, clickMarkersMode])
 
   // Events: resize
   useEffect(() => {
@@ -609,6 +615,16 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
               label="Follow"
               checked={autoFollow}
               onChange={(v: boolean) => setAutoFollow(v)}
+            />
+            <Dropdown
+              label="Clicks"
+              value={clickMarkersMode}
+              onChange={(v: string) => setClickMarkersMode(v as 'all' | 'down' | 'none')}
+              options={[
+                { label: 'All', value: 'all' },
+                { label: 'Down only', value: 'down' },
+                { label: 'None', value: 'none' },
+              ]}
             />
             <span className="hidden sm:inline">Zoom: {Math.round(zoom * 100)}%</span>
             <span>Samples: <b className="text-[var(--text-primary)]">{points.length.toLocaleString()}</b></span>
