@@ -22,6 +22,11 @@ export type KillAnalysis = {
   efficiency: number // straight / pathLength in [0,1]
   classification: 'optimal' | 'overshoot' | 'undershoot'
   stats: { shots: number; hits: number; ttkSec: number }
+  // Additional metrics for better sensitivity suggestions
+  maxDistanceFromTarget: number
+  avgDistanceFromTarget: number
+  directionFlips: number
+  overshootSeverity: number
 }
 
 export type MouseTraceAnalysis = {
@@ -185,6 +190,12 @@ export function analyzeWindow(points: Point[], win: { startMs: number; endMs: nu
 
   const classification: 'optimal' | 'overshoot' | 'undershoot' = isOvershoot ? 'overshoot' : (isUndershoot ? 'undershoot' : 'optimal')
 
+  // Calculate additional metrics for better sensitivity suggestions
+  const maxDistanceFromTarget = Math.sqrt(Math.max(...dists))
+  const avgDistanceFromTarget = Math.sqrt(dists.reduce((a, b) => a + b, 0) / dists.length)
+  const directionFlips = flips // from undershoot analysis
+  const overshootSeverity = isOvershoot ? Math.max(0, Math.sqrt(Math.max(...dists)) - r) : 0
+
   return {
     killIdx: ev.idx,
     tsIso: ev.tsIso,
@@ -198,6 +209,10 @@ export function analyzeWindow(points: Point[], win: { startMs: number; endMs: nu
     efficiency,
     classification,
     stats: { shots: ev.shots, hits: ev.hits, ttkSec: ev.ttkSec },
+    maxDistanceFromTarget,
+    avgDistanceFromTarget,
+    directionFlips,
+    overshootSeverity,
   }
 }
 
@@ -232,23 +247,65 @@ export function computeSuggestedSens(analysis: MouseTraceAnalysis, stats: Record
   const under = analysis.counts.undershoot
   const overPct = over / total
   const underPct = under / total
-  const net = overPct - underPct // positive => overshoot dominant
 
-  // Ignore very small biases or tiny sample sizes
-  const minNetToSuggest = 0.12 // 12%
-  if (Math.abs(net) < minNetToSuggest || total < 6) return null
+  // Calculate trace-based severity metrics
+  const { avgOvershootDistance, avgUndershootFlips } = calculateTraceSeverity(analysis)
+
+  // Improved decision logic with lower threshold and trace data
+  let net = overPct - underPct // positive => overshoot dominant
+
+  // If percentages are very close, prioritize fixing overshoot (it's worse than undershoot)
+  const pctDiff = Math.abs(overPct - underPct)
+  if (pctDiff < 0.05 && overPct > 0.1) { // Within 5% and at least 10% overshoot
+    net = 0.05 // Small positive bias toward fixing overshoot
+  }
+
+  // Lower threshold for providing suggestions, but consider trace severity
+  const baseMinNet = 0.08 // 8% instead of 12%
+  const severityBoost = Math.max(0, Math.min(0.04, avgOvershootDistance / 100)) // Boost based on overshoot distance
+  const minNetToSuggest = baseMinNet - severityBoost
+
+  if (Math.abs(net) < minNetToSuggest || total < 4) return null
+
+  // Calculate adjustment based on both percentage bias and trace severity
+  const pctAdjustment = net * 0.6 // Base adjustment from percentages
+  const severityAdjustment = avgOvershootDistance > 10 ? Math.min(0.3, avgOvershootDistance / 50) : 0
+  const totalAdjustment = Math.abs(pctAdjustment) + severityAdjustment
 
   // Scale the adjustment proportionally, but clamp to reasonable bounds.
-  const scale = 0.8
-  const adj = Math.max(-0.6, Math.min(0.6, net * scale)) // +/-60% max
+  const maxAdjustment = 0.5 // 50% max instead of 60%
+  const adj = Math.max(-maxAdjustment, Math.min(maxAdjustment, net > 0 ? totalAdjustment : -totalAdjustment))
 
   const recommended = Math.max(0.0001, curr * (1 - adj))
   const changePct = ((recommended / curr) - 1) * 100
 
   const direction = net > 0 ? 'faster' : 'slower'
   const reason = net > 0
-    ? `Overshoot dominant (${(overPct * 100).toFixed(0)}% overshoot vs ${(underPct * 100).toFixed(0)}% undershoot). Suggest training at the higher sensitivity (${recommended.toFixed(2)} cm/360) for a few runs; when you return to your original sensitivity (${curr.toFixed(2)} cm/360) you'll likely retain smaller physical motions which should reduce overshoot.`
-    : `Undershoot dominant (${(underPct * 100).toFixed(0)}% undershoot vs ${(overPct * 100).toFixed(0)}% overshoot). Suggest training at the lower sensitivity (${recommended.toFixed(2)} cm/360) for a few runs; when you return to your original sensitivity (${curr.toFixed(2)} cm/360) you'll likely retain slightly larger motions which should reduce undershoot.`
+    ? `Overshoot detected in ${overPct > 0 ? (overPct * 100).toFixed(0) + '%' : 'some'} of kills${avgOvershootDistance > 10 ? ` with average overshoot distance of ${(avgOvershootDistance / 10).toFixed(1)} pixels` : ''}. Suggest training at the higher sensitivity (${recommended.toFixed(2)} cm/360) for a few runs; when you return to your original sensitivity (${curr.toFixed(2)} cm/360) you'll likely retain smaller physical motions which should reduce overshoot.`
+    : `Undershoot detected in ${underPct > 0 ? (underPct * 100).toFixed(0) + '%' : 'some'} of kills${avgUndershootFlips > 2 ? ` with frequent micro-corrections` : ''}. Suggest training at the lower sensitivity (${recommended.toFixed(2)} cm/360) for a few runs; when you return to your original sensitivity (${curr.toFixed(2)} cm/360) you'll likely retain slightly larger motions which should reduce undershoot.`
 
   return { current: curr, recommended, changePct, direction, reason }
+}
+
+// Calculate trace-based severity metrics for overshoot and undershoot
+function calculateTraceSeverity(analysis: MouseTraceAnalysis) {
+  let totalOvershootDistance = 0
+  let overshootCount = 0
+  let totalUndershootFlips = 0
+  let undershootCount = 0
+
+  for (const kill of analysis.kills) {
+    if (kill.classification === 'overshoot') {
+      totalOvershootDistance += kill.overshootSeverity
+      overshootCount++
+    } else if (kill.classification === 'undershoot') {
+      totalUndershootFlips += kill.directionFlips
+      undershootCount++
+    }
+  }
+
+  return {
+    avgOvershootDistance: overshootCount > 0 ? totalOvershootDistance / overshootCount : 0,
+    avgUndershootFlips: undershootCount > 0 ? totalUndershootFlips / undershootCount : 0
+  }
 }
