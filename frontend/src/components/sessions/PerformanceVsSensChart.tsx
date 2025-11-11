@@ -162,7 +162,7 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
         showLine: false,
         // Fallback colors (overridden per-point below)
         borderColor: 'rgb(234, 179, 8)',
-        backgroundColor: 'rgba(234, 179, 8, 0.45)',
+        backgroundColor: 'rgba(234, 179, 8, 0.65)',
         pointBackgroundColor: (ctx: any) => {
           const p = ctx.raw as { i: number }
           const t = maxIndex > 0 ? p.i / maxIndex : 1

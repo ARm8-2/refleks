@@ -12,7 +12,7 @@ export function MouseTraceTab({ item }: MouseTraceTabProps) {
   if (points.length === 0) {
     return (
       <div className="text-sm text-[var(--text-secondary)]">
-        No mouse data captured for this scenario. Enable it in Settings (Windows only), then run a scenario.
+        No mouse trace data is available for this scenario. To see aim path analysis here, enable Mouse Trace Capture in RefleK's settings and record a new session.
       </div>
     )
   }

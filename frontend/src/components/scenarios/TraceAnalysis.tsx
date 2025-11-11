@@ -60,8 +60,6 @@ export function TraceAnalysis({
     : cls === 'undershoot' ? 'rgba(245,158,11,0.9)'
       : 'rgba(16,185,129,0.9)'
 
-  // Suggestion is computed in the analysis module
-
   const suggestion = computeSuggestedSens(analysis, item.stats)
 
   return (
@@ -74,6 +72,7 @@ export function TraceAnalysis({
           <li>Overshoot: crossed the aim point, moved away, then returned at kill.</li>
           <li>Undershoot: multiple micro-corrections near the target without crossing.</li>
           <li>Optimality uses path efficiency (straight distance vs travelled path).</li>
+          <li>The suggested sensitivity may not appear when there is not enough reliable data to make a meaningful recommendation.</li>
         </ul>
       </div>}
       height={420}
