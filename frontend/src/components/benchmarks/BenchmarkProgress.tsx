@@ -2,7 +2,7 @@ import { Play } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../hooks/useStore'
 import { groupByScenario } from '../../lib/analysis/metrics'
-import { autoHiddenRanks, cellFill, computeRecommendationScores, gridCols, hexToRgba, numberFmt } from '../../lib/benchmarks'
+import { autoHiddenRanks, cellFill, computeFillColor, computeRecommendationScores, gridCols, numberFmt } from '../../lib/benchmarks'
 import { launchScenario } from '../../lib/internal'
 import { getScenarioName, MISSING_STR } from '../../lib/utils'
 import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
@@ -186,7 +186,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center">Play</div>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">Score</div>
                       {visibleRanks.map(r => (
-                        <div key={r.name} className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center">{r.name}</div>
+                        <div key={r.name} className="text-[11px] uppercase tracking-wide text-center" style={{ color: r.color || 'var(--text-secondary)' }}>{r.name}</div>
                       ))}
                     </div>
                   </div>
@@ -260,11 +260,12 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                     {visibleRankIndices.map((ri) => {
                                       const r = ranks[ri]
                                       const fill = cellFill(ri, score, maxes)
-                                      const border = r.color
+                                      // Use the last achieved rank's color for the fill. When no rank achieved, fallback to gray.
+                                      const fillColor = computeFillColor(achieved, ranks)
                                       const value = maxes?.[ri + 1]
                                       return (
-                                        <div key={r.name + ri} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center" style={{ border: `1px solid ${border}` }}>
-                                          <div className="absolute inset-y-0 left-0" style={{ width: `${Math.round(fill * 100)}%`, background: hexToRgba(r.color, 0.35) }} />
+                                        <div key={r.name + ri} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center bg-[var(--bg-secondary)] border-0">
+                                          <div className="absolute inset-y-0 left-0 rounded-l transition-all duration-150" style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }} />
                                           <span className="relative z-10">{value != null ? numberFmt(value) : MISSING_STR}</span>
                                         </div>
                                       )
@@ -322,6 +323,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                   disabled={auto}
                   className={auto ? 'opacity-60 cursor-not-allowed' : ''}
                   title={auto ? 'Hidden automatically (all scenarios are past this rank)' : (visible ? 'Click to hide this column' : 'Click to show this column')}
+                  style={{ color: r.color || 'var(--text-secondary)' }}
                 >
                   {r.name}
                 </Button>

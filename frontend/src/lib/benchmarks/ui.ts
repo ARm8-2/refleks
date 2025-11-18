@@ -7,6 +7,16 @@ export function hexToRgba(hex: string, alpha = 0.18): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
+// Determine the fill color used for a scenario subbar based on the last achieved
+// rank and a fallback (simple gray). Returns a CSS rgba string at the requested alpha.
+export function computeFillColor(achievedRank: number | undefined | null, rankDefs: Array<{ color?: string }>, alpha = 0.35, fallback = '#9a9a9a'): string {
+  const ach = Number(achievedRank || 0)
+  if (!ach || ach <= 0) return hexToRgba(fallback, alpha)
+  const lastIdx = Math.max(0, Math.min((rankDefs?.length ?? 0) - 1, ach - 1))
+  const lastColor = rankDefs?.[lastIdx]?.color
+  return lastColor ? hexToRgba(lastColor, alpha) : hexToRgba(fallback, alpha)
+}
+
 import { MISSING_STR } from '../utils'
 
 export function numberFmt(n: number | null | undefined): string {
