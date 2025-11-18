@@ -4,7 +4,7 @@ import { useStore } from '../../hooks/useStore'
 import { groupByScenario } from '../../lib/analysis/metrics'
 import { autoHiddenRanks, cellFill, computeRecommendationScores, gridCols, hexToRgba, numberFmt } from '../../lib/benchmarks'
 import { launchScenario } from '../../lib/internal'
-import { getScenarioName } from '../../lib/utils'
+import { getScenarioName, MISSING_STR } from '../../lib/utils'
 import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
 import { Button } from '../shared/Button'
 import { Dropdown } from '../shared/Dropdown'
@@ -69,7 +69,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
 
   const grid = gridCols
 
-  const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || '—'
+  const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || MISSING_STR
 
   // Build name sets and historical metrics used for recommendations
   const wantedNames = useMemo(() => {
@@ -213,7 +213,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                             {g.name ? (
                               <span className="text-[10px] font-semibold" style={{ color: g.color || 'var(--text-secondary)', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{g.name}</span>
                             ) : (
-                              <span className="text-[10px] text-[var(--text-secondary)]" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>—</span>
+                              <span className="text-[10px] text-[var(--text-secondary)]" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{MISSING_STR}</span>
                             )}
                           </div>
                           <div className="flex-1 min-w-max">
@@ -265,7 +265,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                       return (
                                         <div key={r.name + ri} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center" style={{ border: `1px solid ${border}` }}>
                                           <div className="absolute inset-y-0 left-0" style={{ width: `${Math.round(fill * 100)}%`, background: hexToRgba(r.color, 0.35) }} />
-                                          <span className="relative z-10">{value != null ? numberFmt(value) : '—'}</span>
+                                          <span className="relative z-10">{value != null ? numberFmt(value) : MISSING_STR}</span>
                                         </div>
                                       )
                                     })}

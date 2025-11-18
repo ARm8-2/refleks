@@ -2,12 +2,13 @@ import { Copy } from 'lucide-react'
 import { Button } from '..'
 import type { KillAnalysis, MouseTraceAnalysis, SensSuggestion } from '../../lib/analysis/mouse'
 import { computeSuggestedSens } from '../../lib/analysis/mouse'
+import { CHART_DECIMALS, formatNumber, formatPct, formatSeconds } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 import { InfoBox } from '../shared/InfoBox'
 import { PreviewTag } from '../shared/PreviewTag'
 
 function SuggestedHeader({ suggestion }: { suggestion: NonNullable<SensSuggestion> }) {
-  const text = formatNumber(suggestion.recommended, 2)
+  const text = formatNumber(suggestion.recommended, CHART_DECIMALS.sensTooltip)
   const doCopy = async () => {
     try {
       await navigator.clipboard.writeText(text)
@@ -20,12 +21,12 @@ function SuggestedHeader({ suggestion }: { suggestion: NonNullable<SensSuggestio
   return (
     <div className="flex items-baseline justify-between">
       <div className="font-semibold text-[var(--text-primary)] flex items-center gap-2">
-        <span>Suggested: {formatNumber(suggestion.recommended, 2)} cm/360 <span className="text-[var(--text-secondary)]">({suggestion.changePct >= 0 ? '+' : ''}{formatPct(suggestion.changePct, 0)})</span></span>
+        <span>Suggested: {formatNumber(suggestion.recommended, CHART_DECIMALS.sensTooltip)} cm/360 <span className="text-[var(--text-secondary)]">({suggestion.changePct >= 0 ? '+' : ''}{formatPct(suggestion.changePct, CHART_DECIMALS.pctTooltip)})</span></span>
         <Button variant="ghost" size="sm" onClick={doCopy} title={`Copy ${text} cm/360`} aria-label={`Copy suggested sensitivity ${text} cm/360`}>
           <Copy className="h-4 w-4" />
         </Button>
       </div>
-      <div className="text-xs text-[var(--text-secondary)]">Current: {formatNumber(suggestion.current, 2)} cm/360</div>
+      <div className="text-xs text-[var(--text-secondary)]">Current: {formatNumber(suggestion.current, CHART_DECIMALS.sensTooltip)} cm/360</div>
     </div>
   )
 }
@@ -47,7 +48,7 @@ export function TraceAnalysis({
   const shown = analysis.kills
   const total = shown.length
 
-  const fmtPct = (n: number) => total ? formatPct(n / total, 0) : '0%'
+  const fmtPct = (n: number) => total ? formatPct(n / total, CHART_DECIMALS.pctTooltip) : formatPct(0, CHART_DECIMALS.pctTooltip)
 
   const pill = (cls: KillAnalysis['classification']) => {
     const base = 'px-2 py-0.5 rounded text-xs border'
@@ -105,9 +106,9 @@ export function TraceAnalysis({
               {pill(k.classification)}
             </div>
             <div className="mt-1 text-[var(--text-secondary)] text-xs flex items-center justify-between">
-              <div>TTK {formatSeconds(k.stats.ttkSec || 0, 3)}</div>
-              <div>Shots {Math.round(k.stats.shots)}, Hits {Math.round(k.stats.hits)}</div>
-              <div className="text-[var(--text-primary)]" style={{ color: colorFor(k.classification) }}>{formatPct(k.efficiency, 0)}</div>
+              <div>TTK {formatSeconds(k.stats.ttkSec || 0, CHART_DECIMALS.ttkTooltip)}</div>
+              <div>Shots {formatNumber(k.stats.shots, 0)}, Hits {formatNumber(k.stats.hits, 0)}</div>
+              <div className="text-[var(--text-primary)]" style={{ color: colorFor(k.classification) }}>{formatPct(k.efficiency, CHART_DECIMALS.pctTooltip)}</div>
             </div>
           </button>
         ))}

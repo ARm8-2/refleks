@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
+import { CHART_DECIMALS, formatNumber } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 
 type TimeOfDayAreaChartProps = { items: ScenarioRecord[] }
@@ -59,7 +60,7 @@ export function TimeOfDayAreaChart({ items }: TimeOfDayAreaChartProps) {
           title: (items: any[]) => (items?.[0]?.label ? `${items[0].label}:00` : ''),
           label: (ctx: any) => {
             const v = ctx.parsed?.y
-            return `${v ?? 0} run${v === 1 ? '' : 's'}`
+            return `${formatNumber(v ?? 0, CHART_DECIMALS.numTick)} run${v === 1 ? '' : 's'}`
           },
         },
       },
@@ -68,7 +69,6 @@ export function TimeOfDayAreaChart({ items }: TimeOfDayAreaChartProps) {
       x: {
         grid: { color: theme.grid },
         ticks: { color: theme.textSecondary },
-        title: { display: true, text: 'Hour of day (local)', color: theme.textSecondary },
       },
       y: {
         grid: { color: theme.grid },

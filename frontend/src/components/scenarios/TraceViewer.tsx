@@ -1,6 +1,7 @@
 import { Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePageState } from '../../hooks/usePageState';
+import { formatMmSs } from '../../lib/utils';
 import type { Point } from '../../types/ipc';
 import { Dropdown } from '../shared/Dropdown';
 import { SegmentedControl } from '../shared/SegmentedControl';
@@ -645,9 +646,7 @@ function tsMs(v: any): number {
 function fmtTime(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) return '0:00.00'
   const s = ms / 1000
-  const m = Math.floor(s / 60)
-  const sec = s % 60
-  return `${m}:${sec.toFixed(2).padStart(5, '0')}`
+  return formatMmSs(s, 2)
 }
 function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n))

@@ -3,7 +3,7 @@ import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { Metric, collectRunsBySession, expectedAvgVsLength, expectedBestVsLength, expectedByIndex, recommendLengths } from '../../lib/analysis/sessionLength'
-import { extractChartValue, formatUiValueForLabel } from '../../lib/utils'
+import { CHART_DECIMALS, extractChartValue, formatNumber, formatPct, formatUiValueForLabel } from '../../lib/utils'
 import type { Session } from '../../types/domain'
 
 type SessionLengthInsightsProps = { sessions: Session[]; scenarioName: string }
@@ -57,15 +57,16 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
           label: (ctx: any) => {
             const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
             const n = extractChartValue(ctx)
-            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, 1)}`
+            const decimals = metric === 'score' ? CHART_DECIMALS.numTooltip : CHART_DECIMALS.pctTooltip
+            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, decimals)}`
           }
         },
       },
     },
     scales: {
       x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y2: { position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: theme.textSecondary } },
+      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: (v: any) => metric === 'acc' ? formatPct(v, CHART_DECIMALS.pctTick) : formatNumber(v, CHART_DECIMALS.numTick) } },
+      y2: { position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: theme.textSecondary, callback: (v: any) => formatNumber(v, CHART_DECIMALS.numTick) } },
     },
   }), [theme])
 
@@ -107,14 +108,15 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
           label: (ctx: any) => {
             const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
             const n = extractChartValue(ctx)
-            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, 1)}`
+            const decimals = metric === 'score' ? CHART_DECIMALS.numTooltip : CHART_DECIMALS.pctTooltip
+            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, decimals)}`
           }
         },
       },
     },
     scales: {
       x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
+      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: (v: any) => metric === 'acc' ? formatPct(v, CHART_DECIMALS.pctTick) : formatNumber(v, CHART_DECIMALS.numTick) } },
     },
   }), [theme])
 
@@ -163,14 +165,15 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
           label: (ctx: any) => {
             const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
             const n = extractChartValue(ctx)
-            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, 1)}`
+            const decimals = metric === 'score' ? CHART_DECIMALS.numTooltip : CHART_DECIMALS.pctTooltip
+            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, decimals)}`
           }
         },
       },
     },
     scales: {
       x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
+      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: (v: any) => metric === 'acc' ? formatPct(v, CHART_DECIMALS.pctTick) : formatNumber(v, CHART_DECIMALS.numTick) } },
     },
   }), [theme])
 

@@ -3,7 +3,7 @@ import { Bar, Radar } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
 import { hexToRgba, normalizedRankProgress } from '../../lib/benchmarks'
-import { formatPct } from '../../lib/utils'
+import { CHART_DECIMALS, formatNumber, formatPct } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
 
@@ -114,13 +114,13 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
         borderColor: theme.tooltipBorder,
         borderWidth: 1,
         callbacks: {
-          label: (ctx: any) => `${formatPct(ctx.raw, 0)}`,
+          label: (ctx: any) => `${formatPct(ctx.raw, CHART_DECIMALS.pctTooltip)}`,
         },
       },
     },
     scales: {
       x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary }, suggestedMin: 0, suggestedMax: 100 }
+      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: (v: any) => formatNumber(v, CHART_DECIMALS.numTick) }, suggestedMin: 0, suggestedMax: 100 }
     }
   }), [theme])
 
@@ -150,7 +150,7 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
         borderColor: theme.tooltipBorder,
         borderWidth: 1,
         callbacks: {
-          label: (ctx: any) => `${formatPct(ctx.raw, 0)}`,
+          label: (ctx: any) => `${formatPct(ctx.raw, CHART_DECIMALS.pctTooltip)}`,
         }
       }
     },

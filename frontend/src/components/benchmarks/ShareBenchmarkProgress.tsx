@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { REFLEKS_LOGO } from '../../assets'
 import { cellFill, gridColsShare, hexToRgba, numberFmt } from '../../lib/benchmarks'
+import { MISSING_STR } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 
 export type ShareBenchmarkProgressProps = {
@@ -16,7 +17,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
   const rankDefs = progress?.ranks || []
   const categories = progress?.categories || []
 
-  const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || '—'
+  const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || MISSING_STR
 
   const cols = gridColsShare(rankDefs.length)
 
@@ -73,7 +74,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                       {g.name ? (
                         <span className="text-[10px] font-semibold" style={{ color: g.color || 'var(--text-secondary)', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{g.name}</span>
                       ) : (
-                        <span className="text-[10px] text-[var(--text-secondary)]" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>—</span>
+                        <span className="text-[10px] text-[var(--text-secondary)]" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>-</span>
                       )}
                     </div>
                     <div className="flex-1 min-w-max">
@@ -93,7 +94,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                                 return (
                                   <div key={r.name + i} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center" style={{ border: `1px solid ${border}` }}>
                                     <div className="absolute inset-y-0 left-0" style={{ width: `${Math.round(fill * 100)}%`, background: hexToRgba(r.color, 0.35) }} />
-                                    <span className="relative z-10">{value != null ? numberFmt(value) : '—'}</span>
+                                    <span className="relative z-10">{value != null ? numberFmt(value) : MISSING_STR}</span>
                                   </div>
                                 )
                               })}
@@ -111,7 +112,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
 
         {/* Footer note */}
         <div className="mt-4 text-[11px] text-[var(--text-secondary)]">
-          Generated with RefleK's — share your progress
+          Generated with RefleK's - share your progress
         </div>
       </div>
     </div>

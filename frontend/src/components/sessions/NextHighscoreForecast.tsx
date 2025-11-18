@@ -1,5 +1,5 @@
 import type { HighscorePrediction } from '../../lib/analysis/prediction';
-import { formatNumber } from '../../lib/utils';
+import { CHART_DECIMALS, formatNumber } from '../../lib/utils';
 import { InfoBox } from '../shared/InfoBox';
 import { PreviewTag } from '../shared/PreviewTag';
 
@@ -39,7 +39,7 @@ export function NextHighscoreForecast({ pred }: NextHighscoreForecastProps) {
               <>
                 <span className="truncate">~{pred.runsLo ?? pred.runsExpected}–{pred.runsHi ?? pred.runsExpected} runs</span>
                 {pred.optPauseHours != null && (
-                  <span className="text-xs text-[var(--text-secondary)]">avg pause ~{Math.max(1, Math.round(pred.optPauseHours * 60))}m</span>
+                  <span className="text-xs text-[var(--text-secondary)]">avg pause ~{formatNumber(Math.max(1, pred.optPauseHours * 60), 0)}m</span>
                 )}
                 <span className="hidden md:inline text-xs text-[var(--text-secondary)]">(≈ {pred.etaHuman})</span>
               </>
@@ -55,19 +55,19 @@ export function NextHighscoreForecast({ pred }: NextHighscoreForecastProps) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1 text-xs shrink-0">
           <div className="min-w-0">
             <div className="text-[var(--text-secondary)]">Best</div>
-            <div className="font-medium truncate text-[var(--text-primary)]">{Math.round(pred.best)}</div>
+            <div className="font-medium truncate text-[var(--text-primary)]">{formatNumber(pred.best, 0)}</div>
           </div>
           <div className="min-w-0">
             <div className="text-[var(--text-secondary)]">Last</div>
-            <div className="font-medium truncate text-[var(--text-primary)]">{Math.round(pred.lastScore)} <span className="text-[var(--text-secondary)]">({formatNumber(pred.lastPlayedDays, 1)}d)</span></div>
+            <div className="font-medium truncate text-[var(--text-primary)]">{formatNumber(pred.lastScore, 0)} <span className="text-[var(--text-secondary)]">({formatNumber(pred.lastPlayedDays, 1)}d)</span></div>
           </div>
           <div className="min-w-0">
             <div className="text-[var(--text-secondary)]">Trend</div>
-            <div className="font-medium truncate text-[var(--text-primary)]">{formatNumber(pred.slopePerRun, 2)}/run</div>
+            <div className="font-medium truncate text-[var(--text-primary)]">{formatNumber(pred.slopePerRun, CHART_DECIMALS.detailNum)}/run</div>
           </div>
           <div className="min-w-0">
             <div className="text-[var(--text-secondary)]">Sample</div>
-            <div className="font-medium truncate text-[var(--text-primary)]">{pred.sample}</div>
+            <div className="font-medium truncate text-[var(--text-primary)]">{formatNumber(pred.sample, 0)}</div>
           </div>
         </div>
       </div>

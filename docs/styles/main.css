@@ -723,7 +723,7 @@ details .details-body {
   margin-top: 0.75rem;
 }
 
-/* Scrollbar (WebKit + Firefox) — only thumb visible, no track */
+/* Scrollbar (WebKit + Firefox) - only thumb visible, no track */
 /* Firefox */
 html,
 body {

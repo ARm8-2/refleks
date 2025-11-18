@@ -7,8 +7,10 @@ export function hexToRgba(hex: string, alpha = 0.18): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
+import { MISSING_STR } from '../utils'
+
 export function numberFmt(n: number | null | undefined): string {
-  if (n == null || isNaN(+n)) return '—'
+  if (n == null || isNaN(+n)) return MISSING_STR
   try {
     return new Intl.NumberFormat().format(+n)
   } catch {

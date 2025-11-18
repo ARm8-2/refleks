@@ -1,7 +1,7 @@
 import { ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { usePageState } from '../../hooks/usePageState'
-import { formatPct01, formatSeconds, getScenarioName } from '../../lib/utils'
+import { formatNumber, formatPct01, formatSeconds, getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 import { Dropdown } from '../shared/Dropdown'
 
@@ -30,7 +30,7 @@ export function Findings({ strongest, weakest }: FindingsProps) {
         <div className="flex flex-col">
           <div className="text-sm text-[var(--text-primary)] font-medium">{getScenarioName(rec)}</div>
           <div className="text-xs text-[var(--text-secondary)]">
-            Score: <b className="text-[var(--text-primary)]">{Math.round(Number(rec.stats['Score'] ?? 0))}</b>
+            Score: <b className="text-[var(--text-primary)]">{formatNumber(Number(rec.stats['Score'] ?? 0), 0)}</b>
             {' '}• Acc: <b className="text-[var(--text-primary)]">{formatPct01(rec.stats['Accuracy'])}</b>
             {' '}• TTK: <b className="text-[var(--text-primary)]">{formatSeconds(rec.stats['Real Avg TTK'])}</b>
           </div>

@@ -2,6 +2,7 @@ import { Info } from 'lucide-react'
 import type { CSSProperties } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { cellFill, hexToRgba, numberFmt } from '../../lib/benchmarks'
+import { MISSING_STR } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 
 type ScenarioBenchmarkProgressProps = {
@@ -133,7 +134,7 @@ export function ScenarioBenchmarkProgress({
                             return (
                               <div key={r.name + i} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center" style={{ border: `1px solid ${border}` }}>
                                 <div className="absolute inset-y-0 left-0" style={{ width: `${Math.round(fill * 100)}%`, background: hexToRgba(r.color, 0.35) }} />
-                                <span className="relative z-10">{value != null ? numberFmt(value) : '—'}</span>
+                                <span className="relative z-10">{value != null ? numberFmt(value) : MISSING_STR}</span>
                               </div>
                             )
                           })}

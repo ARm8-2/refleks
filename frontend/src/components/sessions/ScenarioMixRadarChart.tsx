@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Radar } from 'react-chartjs-2';
 import { useChartTheme } from '../../hooks/useChartTheme';
+import { CHART_DECIMALS, formatNumber } from '../../lib/utils';
 
 type ScenarioMixRadarChartProps = { labels: string[]; counts: number[] }
 
@@ -28,7 +29,7 @@ export function ScenarioMixRadarChart({ labels, counts }: ScenarioMixRadarChartP
   const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx: any) => `${ctx.label}: ${formatNumber(ctx.parsed ?? ctx.raw ?? ctx.raw?.y ?? 0, CHART_DECIMALS.numTooltip)}` } } },
     scales: {
       r: {
         beginAtZero: true,

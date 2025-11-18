@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
+import { CHART_DECIMALS, formatNumber } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
 
@@ -82,6 +83,12 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
         bodyColor: theme.textSecondary,
         borderColor: theme.tooltipBorder,
         borderWidth: 1,
+        callbacks: {
+          label: (ctx: any) => {
+            const v = ctx.parsed ?? ctx.raw ?? ctx.raw?.y ?? 0
+            return `${ctx.label}: ${formatNumber(Number(v ?? 0), CHART_DECIMALS.numTooltip)}`
+          }
+        }
       },
     },
   }), [theme])

@@ -1,5 +1,7 @@
 import type { ScenarioRecord } from '../types/ipc';
 
+export const MISSING_STR = 'N/A'
+
 export function getScenarioName(it: ScenarioRecord | { fileName?: string; stats?: Record<string, any> }): string {
   const stats = (it as any).stats as Record<string, any> | undefined
   const direct = stats?.['Scenario']
@@ -67,7 +69,7 @@ export function formatPct01(v: any): string {
 // readability (e.g., 1.00 -> 1, 1.50 -> 1.5).
 export function formatNumber(v: any, decimals = 2, trimTrailingZeros = true): string {
   const n = typeof v === 'number' ? v : Number(v)
-  if (!isFinite(n)) return '—'
+  if (!isFinite(n)) return MISSING_STR
   let s = n.toFixed(decimals)
   if (trimTrailingZeros && decimals > 0) s = s.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')
   return s
@@ -78,15 +80,16 @@ export function formatNumber(v: any, decimals = 2, trimTrailingZeros = true): st
 // avoiding floating-point artifacts like 83.40000000000001%.
 export function formatPct(v: any, decimals = 1): string {
   const n = typeof v === 'number' ? v : Number(v)
-  if (!isFinite(n)) return '—'
+  if (!isFinite(n)) return MISSING_STR
   // Detect fraction vs percentage: treat numbers in range [-1, 1] as fractions
   const value = Math.abs(n) <= 1 ? n * 100 : n
-  return `${formatNumber(value, decimals)}%`
+  // For percentages keep the specified decimal places even when they are zeros
+  return `${formatNumber(value, decimals, false)}%`
 }
 
 export function formatSeconds(v: any, decimals = 2): string {
   const n = typeof v === 'number' ? v : Number(v)
-  if (!isFinite(n)) return '—'
+  if (!isFinite(n)) return MISSING_STR
   return `${formatNumber(n, decimals)}s`
 }
 
@@ -94,7 +97,7 @@ export function formatSeconds(v: any, decimals = 2): string {
 // the logic and keeps chart code simpler.
 export function formatUiValueForLabel(value: any, label?: string, decimals?: number): string {
   const n = typeof value === 'number' ? value : Number(value)
-  if (!isFinite(n)) return '—'
+  if (!isFinite(n)) return MISSING_STR
   const l = String(label ?? '')
   if (l.includes('Accuracy') || l.includes('Acc')) return formatPct(n, decimals ?? 1)
   if (l.includes('TTK')) return formatSeconds(n, decimals ?? 2)
@@ -118,4 +121,35 @@ export function extractChartValue(ctx: any): number | undefined {
   if (val == null) return undefined
   const n = typeof val === 'number' ? val : Number(val)
   return Number.isFinite(n) ? n : undefined
+}
+
+// Common chart formatting decimal defaults
+export const CHART_DECIMALS = {
+  pctTick: 0 as const,
+  pctTooltip: 1 as const,
+  numTick: 0 as const,
+  numTooltip: 0 as const,
+  ttkTick: 1 as const,
+  ttkTooltip: 3 as const,
+  sensTick: 2 as const,
+  sensTooltip: 2 as const,
+  kpmTick: 0 as const,
+  kpmTooltip: 1 as const,
+  detailNum: 3 as const,
+  timeTick: 0 as const,
+  timeTooltip: 2 as const,
+}
+
+// Format seconds for mm:ss with optional fractional seconds (e.g., 3.45 -> "0:03.45")
+export function formatMmSs(totalSeconds: any, decimals = 0): string {
+  const n = typeof totalSeconds === 'number' ? totalSeconds : Number(totalSeconds)
+  if (!isFinite(n)) return MISSING_STR
+  const total = Math.max(0, n)
+  const m = Math.floor(total / 60)
+  const s = total - m * 60
+  const sStr = s.toFixed(decimals)
+  // pad integer part of seconds to 2 chars
+  const [intPart, frac] = sStr.split('.')
+  const intPadded = intPart.padStart(2, '0')
+  return frac ? `${m}:${intPadded}.${frac}` : `${m}:${intPadded}`
 }
