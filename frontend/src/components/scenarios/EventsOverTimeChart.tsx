@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
+import { extractChartValue, formatNumber, formatPct, formatUiValueForLabel } from '../../lib/utils'
 import { EventsOverTimeDetails } from './EventsOverTimeDetails'
 
 type EventsOverTimeChartProps = {
@@ -56,6 +57,7 @@ export function EventsOverTimeChart({
           backgroundColor: 'rgba(239, 68, 68, 0.25)',
           tension: 0.25,
           pointRadius: 0,
+          hidden: true
         },
         {
           label: 'Cumulative Kills',
@@ -94,6 +96,19 @@ export function EventsOverTimeChart({
             const s = (x - m * 60).toFixed(2).padStart(5, '0')
             return `${m}:${s}`
           },
+          label: (ctx: any) => {
+            const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
+            const n = extractChartValue(ctx)
+            if (typeof dsLabel === 'string' && (dsLabel.includes('Accuracy') || dsLabel.includes('Acc'))) {
+              return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel)}`
+            }
+            if (typeof dsLabel === 'string' && dsLabel.includes('TTK')) {
+              return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel)}`
+            }
+            // Default: integer for kills else 1 decimal for other numbers
+            if (ctx.dataset && ctx.dataset.yAxisID === 'y3') return `${dsLabel}: ${formatNumber(n, 0)}`
+            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, 1)}`
+          },
         },
       },
     },
@@ -117,7 +132,7 @@ export function EventsOverTimeChart({
         suggestedMax: 1,
         ticks: {
           color: colors.textSecondary,
-          callback: (v: any) => `${(Number(v) * 100).toFixed(0)}%`,
+          callback: (v: any) => formatPct(v, 0),
         },
         grid: { color: colors.grid },
       },
@@ -135,7 +150,7 @@ export function EventsOverTimeChart({
         suggestedMin: 0,
         ticks: {
           color: colors.textSecondary,
-          callback: (v: any) => `${Number(v).toFixed(0)}`,
+          callback: (v: any) => `${formatNumber(v, 0)}`,
           precision: 0,
         },
         grid: { drawOnChartArea: false },

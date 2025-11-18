@@ -7,7 +7,7 @@ import { InfoBox } from '../shared/InfoBox'
 import { PreviewTag } from '../shared/PreviewTag'
 
 function SuggestedHeader({ suggestion }: { suggestion: NonNullable<SensSuggestion> }) {
-  const text = suggestion.recommended.toFixed(2)
+  const text = formatNumber(suggestion.recommended, 2)
   const doCopy = async () => {
     try {
       await navigator.clipboard.writeText(text)
@@ -20,12 +20,12 @@ function SuggestedHeader({ suggestion }: { suggestion: NonNullable<SensSuggestio
   return (
     <div className="flex items-baseline justify-between">
       <div className="font-semibold text-[var(--text-primary)] flex items-center gap-2">
-        <span>Suggested: {suggestion.recommended.toFixed(2)} cm/360 <span className="text-[var(--text-secondary)]">({suggestion.changePct >= 0 ? '+' : ''}{suggestion.changePct.toFixed(0)}%)</span></span>
+        <span>Suggested: {formatNumber(suggestion.recommended, 2)} cm/360 <span className="text-[var(--text-secondary)]">({suggestion.changePct >= 0 ? '+' : ''}{formatPct(suggestion.changePct, 0)})</span></span>
         <Button variant="ghost" size="sm" onClick={doCopy} title={`Copy ${text} cm/360`} aria-label={`Copy suggested sensitivity ${text} cm/360`}>
           <Copy className="h-4 w-4" />
         </Button>
       </div>
-      <div className="text-xs text-[var(--text-secondary)]">Current: {suggestion.current.toFixed(2)} cm/360</div>
+      <div className="text-xs text-[var(--text-secondary)]">Current: {formatNumber(suggestion.current, 2)} cm/360</div>
     </div>
   )
 }
@@ -47,7 +47,7 @@ export function TraceAnalysis({
   const shown = analysis.kills
   const total = shown.length
 
-  const fmtPct = (n: number) => total ? ((n / total) * 100).toFixed(0) + '%' : '0%'
+  const fmtPct = (n: number) => total ? formatPct(n / total, 0) : '0%'
 
   const pill = (cls: KillAnalysis['classification']) => {
     const base = 'px-2 py-0.5 rounded text-xs border'
@@ -85,7 +85,7 @@ export function TraceAnalysis({
             <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">Undershoot {analysis.counts.undershoot} ({fmtPct(analysis.counts.undershoot)})</span>
             <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Optimal {analysis.counts.optimal} ({fmtPct(analysis.counts.optimal)})</span>
           </div>
-          <div className="text-xs text-[var(--text-secondary)]">Avg efficiency <span className="text-[var(--text-primary)] font-semibold">{(analysis.avgEfficiency * 100).toFixed(1)}%</span></div>
+          <div className="text-xs text-[var(--text-secondary)]">Avg efficiency <span className="text-[var(--text-primary)] font-semibold">{formatPct(analysis.avgEfficiency)}</span></div>
         </div>
       </div>
       {suggestion ? (
@@ -105,9 +105,9 @@ export function TraceAnalysis({
               {pill(k.classification)}
             </div>
             <div className="mt-1 text-[var(--text-secondary)] text-xs flex items-center justify-between">
-              <div>TTK {(k.stats.ttkSec || 0).toFixed(3)}s</div>
+              <div>TTK {formatSeconds(k.stats.ttkSec || 0, 3)}</div>
               <div>Shots {Math.round(k.stats.shots)}, Hits {Math.round(k.stats.hits)}</div>
-              <div className="text-[var(--text-primary)]" style={{ color: colorFor(k.classification) }}>{(k.efficiency * 100).toFixed(0)}%</div>
+              <div className="text-[var(--text-primary)]" style={{ color: colorFor(k.classification) }}>{formatPct(k.efficiency, 0)}</div>
             </div>
           </button>
         ))}

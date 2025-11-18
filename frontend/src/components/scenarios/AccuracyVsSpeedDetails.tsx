@@ -1,4 +1,5 @@
 import { InfoBox } from '..'
+import { formatNumber, formatPct } from '../../lib/utils'
 
 type AccuracyVsSpeedDetailsProps = {
   scatter: {
@@ -15,8 +16,8 @@ type AccuracyVsSpeedDetailsProps = {
 export function AccuracyVsSpeedDetails({
   scatter,
 }: AccuracyVsSpeedDetailsProps) {
-  const fmt = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? '-' : v.toFixed(3))
-  const fmtPct = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? '-' : `${(v * 100).toFixed(1)}%`)
+  const fmt = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? '-' : formatNumber(v, 3))
+  const fmtPct = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? '-' : formatPct(v))
   const info = (
     <div>
       <div className="mb-2">How to read these metrics:</div>

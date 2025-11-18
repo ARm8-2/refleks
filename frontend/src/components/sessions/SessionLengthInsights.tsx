@@ -3,6 +3,7 @@ import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { Metric, collectRunsBySession, expectedAvgVsLength, expectedBestVsLength, expectedByIndex, recommendLengths } from '../../lib/analysis/sessionLength'
+import { extractChartValue, formatUiValueForLabel } from '../../lib/utils'
 import type { Session } from '../../types/domain'
 
 type SessionLengthInsightsProps = { sessions: Session[]; scenarioName: string }
@@ -52,6 +53,13 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
         bodyColor: theme.textSecondary,
         borderColor: theme.tooltipBorder,
         borderWidth: 1,
+        callbacks: {
+          label: (ctx: any) => {
+            const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
+            const n = extractChartValue(ctx)
+            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, 1)}`
+          }
+        },
       },
     },
     scales: {
@@ -95,6 +103,13 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
         bodyColor: theme.textSecondary,
         borderColor: theme.tooltipBorder,
         borderWidth: 1,
+        callbacks: {
+          label: (ctx: any) => {
+            const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
+            const n = extractChartValue(ctx)
+            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, 1)}`
+          }
+        },
       },
     },
     scales: {
@@ -144,6 +159,13 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
         bodyColor: theme.textSecondary,
         borderColor: theme.tooltipBorder,
         borderWidth: 1,
+        callbacks: {
+          label: (ctx: any) => {
+            const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
+            const n = extractChartValue(ctx)
+            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, 1)}`
+          }
+        },
       },
     },
     scales: {

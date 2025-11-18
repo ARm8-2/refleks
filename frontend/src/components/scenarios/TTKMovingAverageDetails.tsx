@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react'
 import { InfoBox } from '..'
+import { formatNumber, formatSeconds } from '../../lib/utils'
 
 type TTKMovingAverageDetailsProps = {
   movingAvg: {
@@ -16,7 +17,7 @@ type TTKMovingAverageDetailsProps = {
 export function TTKMovingAverageDetails({
   movingAvg,
 }: TTKMovingAverageDetailsProps) {
-  const fmt = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? '-' : v.toFixed(3))
+  const fmt = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? '-' : formatNumber(v, 3))
   const fmtIdx = (i: number) => `#${i + 1}`
   const info = (
     <div>
@@ -32,9 +33,9 @@ export function TTKMovingAverageDetails({
     <div className="mt-2">
       <InfoBox title="TTK moving average — metrics" info={info}>
         <ul className="space-y-1">
-          <li>Trend slope: <b className="text-[var(--text-primary)]">{fmt(movingAvg.slope)}</b> s/kill • Linear fit R²: <b className="text-[var(--text-primary)]">{fmt(movingAvg.r2)}</b></li>
-          <li>MA(5) mean/std: <b className="text-[var(--text-primary)]">{fmt(movingAvg.meanMA5)}</b>s / <b className="text-[var(--text-primary)]">{fmt(movingAvg.stdMA5)}</b>s • Net change: <b className="text-[var(--text-primary)]">{fmt(movingAvg.ma5NetChange)}</b>s</li>
-          <li>Rolling std (window 5) mean: <b className="text-[var(--text-primary)]">{fmt(movingAvg.meanRollStd5)}</b></li>
+          <li>Trend slope: <b className="text-[var(--text-primary)]">{formatSeconds(movingAvg.slope, 3)}</b> s/kill • Linear fit R²: <b className="text-[var(--text-primary)]">{fmt(movingAvg.r2)}</b></li>
+          <li>MA(5) mean/std: <b className="text-[var(--text-primary)]">{formatSeconds(movingAvg.meanMA5, 3)}</b> / <b className="text-[var(--text-primary)]">{formatSeconds(movingAvg.stdMA5, 3)}</b> • Net change: <b className="text-[var(--text-primary)]">{formatSeconds(movingAvg.ma5NetChange, 3)}</b></li>
+          <li>Rolling std (window 5) mean: <b className="text-[var(--text-primary)]">{formatNumber(movingAvg.meanRollStd5, 3)}</b></li>
           {movingAvg.stableSegments.length > 0 && (
             <li>Stable segments (low variance): {movingAvg.stableSegments.map((seg, i) => (
               <span key={i} className="mr-2 inline-flex items-center gap-1">[

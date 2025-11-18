@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import { useChartTheme } from '../../hooks/useChartTheme';
+import { extractChartValue, formatPct, formatSeconds, formatUiValueForLabel } from '../../lib/utils';
 
 type MetricsLineChartProps = { labels: string[]; score: number[]; acc: number[]; ttk: number[] }
 
@@ -36,6 +37,7 @@ export function MetricsLineChart({ labels, score, acc, ttk }: MetricsLineChartPr
         backgroundColor: 'rgba(239, 68, 68, 0.25)',
         tension: 0.25,
         pointRadius: 2,
+        hidden: true
       },
     ]
   }), [labels, score, acc, ttk])
@@ -54,13 +56,20 @@ export function MetricsLineChart({ labels, score, acc, ttk }: MetricsLineChartPr
         bodyColor: colors.textSecondary,
         borderColor: colors.tooltipBorder,
         borderWidth: 1,
+        callbacks: {
+          label: (ctx: any) => {
+            const dsLabel = ctx.dataset && ctx.dataset.label ? String(ctx.dataset.label) : ''
+            const n = extractChartValue(ctx)
+            return `${dsLabel || ''}: ${formatUiValueForLabel(n, dsLabel, dsLabel.includes('Score') ? 0 : undefined)}`
+          }
+        },
       },
     },
     scales: {
       x: { grid: { color: colors.grid }, ticks: { color: colors.textSecondary } },
       yScore: { type: 'linear' as const, position: 'left' as const, grid: { color: colors.grid }, ticks: { color: colors.textSecondary } },
-      yAcc: { type: 'linear' as const, position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: colors.textSecondary, callback: (v: any) => `${v}%` } },
-      yTTK: { type: 'linear' as const, position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: colors.textSecondary } },
+      yAcc: { type: 'linear' as const, position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: colors.textSecondary, callback: (v: any) => formatPct(v) } },
+      yTTK: { type: 'linear' as const, position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: colors.textSecondary, callback: (v: any) => formatSeconds(v) } },
     },
   }), [colors])
 

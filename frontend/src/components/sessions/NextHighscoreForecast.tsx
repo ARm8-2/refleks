@@ -1,4 +1,5 @@
 import type { HighscorePrediction } from '../../lib/analysis/prediction';
+import { formatNumber } from '../../lib/utils';
 import { InfoBox } from '../shared/InfoBox';
 import { PreviewTag } from '../shared/PreviewTag';
 
@@ -58,11 +59,11 @@ export function NextHighscoreForecast({ pred }: NextHighscoreForecastProps) {
           </div>
           <div className="min-w-0">
             <div className="text-[var(--text-secondary)]">Last</div>
-            <div className="font-medium truncate text-[var(--text-primary)]">{Math.round(pred.lastScore)} <span className="text-[var(--text-secondary)]">({pred.lastPlayedDays.toFixed(1)}d)</span></div>
+            <div className="font-medium truncate text-[var(--text-primary)]">{Math.round(pred.lastScore)} <span className="text-[var(--text-secondary)]">({formatNumber(pred.lastPlayedDays, 1)}d)</span></div>
           </div>
           <div className="min-w-0">
             <div className="text-[var(--text-secondary)]">Trend</div>
-            <div className="font-medium truncate text-[var(--text-primary)]">{pred.slopePerRun.toFixed(2)}/run</div>
+            <div className="font-medium truncate text-[var(--text-primary)]">{formatNumber(pred.slopePerRun, 2)}/run</div>
           </div>
           <div className="min-w-0">
             <div className="text-[var(--text-secondary)]">Sample</div>

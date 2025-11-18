@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { formatPct, formatSeconds } from '../../lib/utils'
 import { Dropdown } from '../shared/Dropdown'
 
 function slope(arr: number[]): number {
@@ -79,9 +80,9 @@ export function SummaryStats({
     const colorVar = good ? '--success' : '--error'
     const formattedDelta = (
       label === 'Accuracy'
-        ? `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`
+        ? `${delta >= 0 ? '+' : ''}${formatPct(delta)}`
         : label === 'Real Avg TTK'
-          ? `${delta >= 0 ? '+' : ''}${delta.toFixed(2)}s`
+          ? `${delta >= 0 ? '+' : ''}${formatSeconds(delta)}`
           : `${delta >= 0 ? '+' : ''}${Math.round(delta)}`
     )
     return (
@@ -123,8 +124,8 @@ export function SummaryStats({
       </div>
       <div className="p-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Stat label="Score" value={data.latest.score} fmt={(n) => Math.round(n).toString()} delta={data.delta.score} slopeVal={data.slope.score} />
-        <Stat label="Accuracy" value={data.latest.acc} fmt={(n) => `${n.toFixed(1)}%`} delta={data.delta.acc} slopeVal={data.slope.acc} />
-        <Stat label="Real Avg TTK" value={data.latest.ttk} fmt={(n) => `${n.toFixed(2)}s`} delta={data.delta.ttk} slopeVal={data.slope.ttk} />
+        <Stat label="Accuracy" value={data.latest.acc} fmt={(n) => formatPct(n)} delta={data.delta.acc} slopeVal={data.slope.acc} />
+        <Stat label="Real Avg TTK" value={data.latest.ttk} fmt={(n) => formatSeconds(n)} delta={data.delta.ttk} slopeVal={data.slope.ttk} />
       </div>
     </div>
   )

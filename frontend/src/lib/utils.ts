@@ -60,13 +60,62 @@ export function formatRelativeAgoShort(input: string | number | Date | undefined
 }
 
 export function formatPct01(v: any): string {
-  const n = typeof v === 'number' ? v : Number(v)
-  if (!isFinite(n)) return '—'
-  return (n * 100).toFixed(1) + '%'
+  return formatPct(v, 1)
 }
 
-export function formatSeconds(v: any): string {
+// Generic numeric formatter used across the UI. Trims trailing zeros for
+// readability (e.g., 1.00 -> 1, 1.50 -> 1.5).
+export function formatNumber(v: any, decimals = 2, trimTrailingZeros = true): string {
   const n = typeof v === 'number' ? v : Number(v)
   if (!isFinite(n)) return '—'
-  return `${n.toFixed(2)}s`
+  let s = n.toFixed(decimals)
+  if (trimTrailingZeros && decimals > 0) s = s.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')
+  return s
+}
+
+// Format a value that may be either a fraction (0..1) or an already-multiplied
+// percentage (0..100). Produces a single-decimal percentage string like "83.4%",
+// avoiding floating-point artifacts like 83.40000000000001%.
+export function formatPct(v: any, decimals = 1): string {
+  const n = typeof v === 'number' ? v : Number(v)
+  if (!isFinite(n)) return '—'
+  // Detect fraction vs percentage: treat numbers in range [-1, 1] as fractions
+  const value = Math.abs(n) <= 1 ? n * 100 : n
+  return `${formatNumber(value, decimals)}%`
+}
+
+export function formatSeconds(v: any, decimals = 2): string {
+  const n = typeof v === 'number' ? v : Number(v)
+  if (!isFinite(n)) return '—'
+  return `${formatNumber(n, decimals)}s`
+}
+
+// Helper for formatting tooltip values based on a label hint. This centralizes
+// the logic and keeps chart code simpler.
+export function formatUiValueForLabel(value: any, label?: string, decimals?: number): string {
+  const n = typeof value === 'number' ? value : Number(value)
+  if (!isFinite(n)) return '—'
+  const l = String(label ?? '')
+  if (l.includes('Accuracy') || l.includes('Acc')) return formatPct(n, decimals ?? 1)
+  if (l.includes('TTK')) return formatSeconds(n, decimals ?? 2)
+  if (l.includes('Score')) return formatNumber(n, decimals ?? 0)
+  return formatNumber(n, decimals ?? 2)
+}
+
+// Extract a numeric value from Chart.js tooltip/context objects in a safe way.
+// The `ctx` param is the item provided to tooltip callbacks; this helper
+// understands the typical `parsed` and `raw` forms produced by Chart.js,
+// and returns undefined when the value is not a finite number.
+export function extractChartValue(ctx: any): number | undefined {
+  if (!ctx) return undefined
+  let val: any = undefined
+  if (ctx.parsed != null) {
+    val = (typeof ctx.parsed === 'object' && ctx.parsed !== null) ? (ctx.parsed.y ?? ctx.parsed) : ctx.parsed
+  }
+  if ((val == null || val === '') && ctx.raw != null) {
+    val = (typeof ctx.raw === 'object' && ctx.raw !== null) ? (ctx.raw.y ?? ctx.raw) : ctx.raw
+  }
+  if (val == null) return undefined
+  const n = typeof val === 'number' ? val : Number(val)
+  return Number.isFinite(n) ? n : undefined
 }

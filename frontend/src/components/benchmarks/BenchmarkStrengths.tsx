@@ -3,6 +3,7 @@ import { Bar, Radar } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
 import { hexToRgba, normalizedRankProgress } from '../../lib/benchmarks'
+import { formatPct } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
 
@@ -113,7 +114,7 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
         borderColor: theme.tooltipBorder,
         borderWidth: 1,
         callbacks: {
-          label: (ctx: any) => `${ctx.raw}%`,
+          label: (ctx: any) => `${formatPct(ctx.raw, 0)}`,
         },
       },
     },
@@ -149,7 +150,7 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
         borderColor: theme.tooltipBorder,
         borderWidth: 1,
         callbacks: {
-          label: (ctx: any) => `${ctx.raw}%`,
+          label: (ctx: any) => `${formatPct(ctx.raw, 0)}`,
         }
       }
     },

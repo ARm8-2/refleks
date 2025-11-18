@@ -1,4 +1,5 @@
 import { InfoBox } from '..'
+import { formatNumber, formatPct, formatSeconds } from '../../lib/utils'
 
 type EventsOverTimeDetailsProps = {
   summary: {
@@ -18,9 +19,9 @@ type EventsOverTimeDetailsProps = {
 }
 
 export function EventsOverTimeDetails({ summary }: EventsOverTimeDetailsProps) {
-  const fmtPct = (v: number) => `${(v * 100).toFixed(1)}%`
-  const fmt = (v: number) => (Number.isFinite(v) ? v.toFixed(2) : '-')
-  const fmtS = (v: number) => (Number.isFinite(v) ? `${v.toFixed(2)}s` : '-')
+  const fmtPct = (v: number) => formatPct(v)
+  const fmt = (v: number) => (Number.isFinite(v) ? formatNumber(v, 2) : '-')
+  const fmtS = (v: number) => (Number.isFinite(v) ? formatSeconds(v, 2) : '-')
 
   const info = (
     <div>

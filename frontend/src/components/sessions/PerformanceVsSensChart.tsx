@@ -3,7 +3,7 @@ import { Scatter } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
-import { getScenarioName } from '../../lib/utils'
+import { formatNumber, formatPct, formatUiValueForLabel, getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 
 type PerformanceVsSensChartProps = {
@@ -209,7 +209,7 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
             const dsType = ctx.dataset && (ctx.dataset.type || ctx.dataset._metaType)
             if (ctx.dataset && (ctx.dataset.type === 'bar' || ctx.dataset.label === 'Sensitivity histogram')) {
               const b = bins[ctx.dataIndex]
-              if (b) return [`Range: ${b.start.toFixed(2)}–${b.end.toFixed(2)} cm/360`, `Runs: ${b.count}`]
+              if (b) return [`Range: ${formatNumber(b.start, 2)}–${formatNumber(b.end, 2)} cm/360`, `Runs: ${b.count}`]
               return [`Runs: ${ctx.parsed.y}`]
             }
 
@@ -217,10 +217,8 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
             const p = ctx.raw as { x: number; y: number; i: number; origX?: number }
             const rawX = typeof p.origX === 'number' ? p.origX : p.x
             const lines: string[] = []
-            lines.push(`cm/360: ${rawX.toFixed(2)}`)
-            if (metric === 'score') lines.push(`Score: ${p.y.toFixed(1)}`)
-            else if (metric === 'acc') lines.push(`Accuracy: ${p.y.toFixed(1)}%`)
-            else if (metric === 'ttk') lines.push(`TTK: ${p.y.toFixed(2)}s`)
+            lines.push(`cm/360: ${formatNumber(rawX, 2)}`)
+            lines.push(`${metricLabel}: ${formatUiValueForLabel(p.y, metricLabel, metric === 'score' ? 1 : undefined)}`)
             return lines
           },
         },
@@ -237,7 +235,7 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
       },
       y: {
         title: { display: true, text: metricLabel, color: colors.textSecondary },
-        ticks: { color: colors.textSecondary, callback: metric === 'acc' ? (v: any) => `${v}%` : undefined },
+        ticks: { color: colors.textSecondary, callback: metric === 'acc' ? (v: any) => formatPct(v) : undefined },
         grid: { color: colors.grid },
       },
       // Secondary axis for histogram counts

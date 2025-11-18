@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
+import { extractChartValue, formatNumber, formatSeconds } from '../../lib/utils'
 import { TTKMovingAverageDetails } from './TTKMovingAverageDetails'
 
 type TTKMovingAverageChartProps = {
@@ -68,6 +69,16 @@ export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: TTKMo
         bodyColor: colors.textSecondary,
         borderColor: colors.tooltipBorder,
         borderWidth: 1,
+        callbacks: {
+          label: (ctx: any) => {
+            const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
+            const n = extractChartValue(ctx)
+            if (typeof dsLabel === 'string' && dsLabel.includes('TTK')) {
+              return `${dsLabel}: ${formatSeconds(n)}`
+            }
+            return `${dsLabel}: ${n !== undefined && Number.isFinite(n) ? formatNumber(n, 2) : '—'}`
+          }
+        },
       },
     },
     scales: {

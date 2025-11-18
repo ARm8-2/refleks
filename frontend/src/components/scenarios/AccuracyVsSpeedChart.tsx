@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Scatter } from 'react-chartjs-2';
 import { ChartBox } from '..';
 import { useChartTheme } from '../../hooks/useChartTheme';
+import { formatPct, formatUiValueForLabel } from '../../lib/utils';
 import { AccuracyVsSpeedDetails } from './AccuracyVsSpeedDetails';
 
 type AccuracyVsSpeedChartProps = {
@@ -51,7 +52,7 @@ export function AccuracyVsSpeedChart({ points, scatter }: AccuracyVsSpeedChartPr
           title: () => 'Kill',
           label: (ctx: any) => {
             const p = ctx.raw as { x: number; y: number; i: number }
-            return [`#${(p.i + 1)}`, `KPM: ${p.x.toFixed(1)}`, `Acc: ${(p.y * 100).toFixed(1)}%`]
+            return [`#${(p.i + 1)}`, `KPM: ${formatUiValueForLabel(p.x, 'KPM', 1)}`, `Acc: ${formatUiValueForLabel(p.y, 'Accuracy', 1)}`]
           },
         }
       },
@@ -68,7 +69,7 @@ export function AccuracyVsSpeedChart({ points, scatter }: AccuracyVsSpeedChartPr
       y: {
         suggestedMin: 0,
         suggestedMax: 1,
-        ticks: { color: colors.textSecondary, callback: (v: any) => `${(Number(v) * 100).toFixed(0)}%` },
+        ticks: { color: colors.textSecondary, callback: (v: any) => formatPct(v, 0) },
         grid: { color: colors.grid },
       },
     },
