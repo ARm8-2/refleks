@@ -88,6 +88,67 @@
   }
 }
 
+/* Markdown / AI formatting enhancements */
+.markdown-root h1.mk-h1 {
+  font-size: 1.4rem;
+  line-height: 1.25;
+  font-weight: 600;
+  margin: 1.2rem 0 0.75rem;
+}
+
+.markdown-root h2.mk-h2 {
+  font-size: 1.2rem;
+  line-height: 1.3;
+  font-weight: 600;
+  margin: 1.1rem 0 0.6rem;
+}
+
+.markdown-root h3.mk-h3 {
+  font-size: 1.05rem;
+  line-height: 1.35;
+  font-weight: 600;
+  margin: 0.9rem 0 0.5rem;
+}
+
+.markdown-root hr.mk-hr {
+  border: 0;
+  border-top: 1px solid var(--border-primary);
+  margin: 1.1rem 0;
+  opacity: 0.6;
+}
+
+.markdown-root ul.mk-ul,
+.markdown-root ol.mk-ol {
+  margin: 0.4rem 0 0.8rem 1.2rem;
+  padding: 0;
+}
+
+.markdown-root ul.mk-ul li,
+.markdown-root ol.mk-ol li {
+  margin: 0.15rem 0;
+}
+
+.markdown-root ul.mk-ul {
+  list-style: disc;
+}
+
+.markdown-root ol.mk-ol {
+  list-style: decimal;
+}
+
+.markdown-root p {
+  margin: 0.6rem 0;
+}
+
+.markdown-root pre.mk-code {
+  background: var(--bg-tertiary);
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  overflow: auto;
+}
+
 @font-face {
   font-family: "JetBrains Mono";
   font-style: normal;

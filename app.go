@@ -20,6 +20,7 @@ import (
 type App struct {
 	ctx      context.Context
 	appSvc   *appsvc.AppService
+	aiSvc    *appsvc.AIService
 	settings models.Settings
 }
 
@@ -48,6 +49,8 @@ func (a *App) startup(ctx context.Context) {
 
 	// Initialize coordinated AppService (wires mouse, watcher, updater)
 	a.appSvc = appsvc.NewAppService(a.ctx, &a.settings)
+	// Initialize AI service
+	a.aiSvc = appsvc.NewAIService(a.ctx, &a.settings)
 
 	// Fire-and-forget check for app updates; emit event if available
 	go func() {
@@ -205,3 +208,31 @@ func (a *App) DownloadAndInstallUpdate(version string) (bool, string) {
 	}()
 	return true, "ok"
 }
+
+// --- AI Insights (Sessions) ---
+
+// GenerateSessionInsights starts a streaming AI analysis for the provided session records.
+// Returns a requestId used to correlate streaming events or an error message on failure.
+func (a *App) GenerateSessionInsights(sessionId string, records []models.ScenarioRecord, prompt string, options models.AIOptions) (string, string) {
+	if a.aiSvc == nil {
+		a.aiSvc = appsvc.NewAIService(a.ctx, &a.settings)
+	}
+	if sessionId == "" {
+		sessionId = "session"
+	}
+	reqID := a.aiSvc.NewRequestID()
+	// Pass options directly (models.AIOptions) into the AI service.
+	a.aiSvc.GenerateSessionInsights(reqID, sessionId, records, prompt, options)
+	return reqID, "ok"
+}
+
+// CancelSessionInsights cancels a running AI stream by requestId.
+func (a *App) CancelSessionInsights(requestId string) (bool, string) {
+	if a.aiSvc == nil {
+		return false, "ai service not initialized"
+	}
+	a.aiSvc.Cancel(requestId)
+	return true, "ok"
+}
+
+// no-op: we now pass models.AIOptions through to the AI service directly

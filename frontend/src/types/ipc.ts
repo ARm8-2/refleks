@@ -72,6 +72,7 @@ export interface Settings {
   mouseTrackingEnabled?: boolean
   mouseBufferMinutes?: number
   maxExistingOnStart?: number
+  geminiApiKey?: string
 }
 
 export interface UpdateInfo {

@@ -1,0 +1,70 @@
+{
+  "✦ ADAD Trance - Challenge": {
+    "description": "Switching-focused scenario emphasizing rhythmic ADAD strafes. Encourages controlled micro-corrections and pacing.",
+    "tags": [
+      "switching",
+      "clicking",
+      "movement"
+    ],
+    "difficulty": 6,
+    "lengthSeconds": 60,
+    "percentiles": {
+      "globalHighscore": 22000,
+      "p90": 16000,
+      "p75": 14000,
+      "p50": 12000
+    },
+    "bot": {
+      "behavior": "ADAD strafe",
+      "size": "medium",
+      "speed": "medium",
+      "count": 1
+    },
+    "notes": "Keep cadence steady; avoid overflicking; focus on micro-correction after initial snap."
+  },
+  "Dynamic Micro Hell - Challenge": {
+    "description": "Micro-correction heavy scenario with high target volatility; punishes overshoot and latency in adjustment.",
+    "tags": [
+      "micro",
+      "clicking"
+    ],
+    "difficulty": 8,
+    "lengthSeconds": 60,
+    "percentiles": {
+      "globalHighscore": 20000,
+      "p90": 15000,
+      "p75": 13000,
+      "p50": 11000
+    },
+    "bot": {
+      "behavior": "unpredictable micro movements",
+      "size": "small",
+      "speed": "fast",
+      "count": 1
+    },
+    "notes": "Short, precise corrections; stabilize wrist; shoot on settle, not on swing."
+  },
+  "VT 1w3ts Intermediate S5 - Challenge": {
+    "description": "Static target switching (1 wall, 3 targets). Emphasizes click timing, switch discipline, and minimal overflick.",
+    "tags": [
+      "clicking",
+      "switching",
+      "static"
+    ],
+    "difficulty": 7,
+    "lengthSeconds": 60,
+    "percentiles": {
+      "globalHighscore": 30000,
+      "p90": 24000,
+      "p75": 21000,
+      "p50": 18000
+    },
+    "bot": {
+      "behavior": "mixed strafe with pauses",
+      "size": "medium",
+      "speed": "medium",
+      "count": 1
+    },
+    "notes": "Anticipate target path; lead subtly; avoid over-snapping on switches."
+  }
+}

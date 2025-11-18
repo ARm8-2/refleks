@@ -1,6 +1,8 @@
 import {
+  CancelSessionInsights as _CancelSessionInsights,
   CheckForUpdates as _CheckForUpdates,
   DownloadAndInstallUpdate as _DownloadAndInstallUpdate,
+  GenerateSessionInsights as _GenerateSessionInsights,
   GetBenchmarkProgress as _GetBenchmarkProgress,
   GetBenchmarks as _GetBenchmarks,
   GetDefaultSettings as _GetDefaultSettings,
@@ -117,5 +119,17 @@ export async function launchPlaylist(sharecode: string): Promise<void> {
   const res = await _LaunchKovaaksPlaylist(String(sharecode || ''))
   if (res !== true) {
     throw new Error(typeof res === 'string' ? res : 'LaunchKovaaksPlaylist failed')
+  }
+}
+
+export async function generateSessionInsights(sessionId: string, records: ScenarioRecord[], prompt: string, options: any): Promise<string> {
+  const reqId = await _GenerateSessionInsights(String(sessionId || 'session'), records as any, String(prompt || ''), options as any)
+  return String(reqId || '')
+}
+
+export async function cancelSessionInsights(requestId: string): Promise<void> {
+  const res = await _CancelSessionInsights(String(requestId || ''))
+  if (res !== true) {
+    throw new Error(typeof res === 'string' ? res : 'CancelSessionInsights failed')
   }
 }

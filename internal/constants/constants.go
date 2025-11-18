@@ -45,6 +45,8 @@ const (
 	EnvSteamIDVar = "REFLEKS_STEAM_ID"
 	// If set, this overrides the default stats directory (useful in dev containers)
 	EnvStatsDirVar = "REFLEKS_STATS_DIR"
+	// If set, this overrides the stored Gemini API key for AI insights
+	EnvGeminiAPIKeyVar = "REFLEKS_GEMINI_API_KEY"
 
 	// --- Updater/GitHub release info ---
 	// GitHub repository owner/name used for update checks and downloads
@@ -65,6 +67,13 @@ const (
 	UpdaterHTTPTimeoutSeconds = 10
 	// UpdaterDownloadTimeoutSeconds is used for downloading installer assets. Larger to accommodate slow links.
 	UpdaterDownloadTimeoutSeconds = 600
+)
+
+// --- AI defaults ---
+const (
+	AIDefaultModel              = "gemini-2.5-flash-lite"
+	AISessionAnalystPersona     = "session-analyst"
+	AIDefaultMaxRunsPerScenario = 12
 )
 
 // --- Sensitivity conversion defaults ---

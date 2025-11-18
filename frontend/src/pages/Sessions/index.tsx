@@ -88,7 +88,8 @@ function SessionDetail({ session }: { session: Session | null }) {
   const tabs = [
     { id: 'overview', label: 'Overview', content: <OverviewTab session={session} /> },
     { id: 'progress', label: 'Progress (all)', content: <ProgressAllTab /> },
-    { id: 'ai', label: 'AI Insights', content: <AiTab /> },
+    // Key AiTab by session id so it remounts on session change, while history persists via localStorage
+    { id: 'ai', label: 'AI Insights', content: <AiTab key={session?.id ?? 'none'} sessionId={session?.id} records={session?.items} /> },
   ]
   return <Tabs tabs={tabs} active={tab} onChange={(id) => setTab(id as any)} />
 }

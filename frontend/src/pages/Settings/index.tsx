@@ -19,6 +19,7 @@ export function SettingsPage() {
   const [mouseBuffer, setMouseBuffer] = useState(10)
   const [maxExisting, setMaxExisting] = useState(500)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [geminiKey, setGeminiKey] = useState('')
   // Updates state
   const [currentVersion, setCurrentVersion] = useState<string>("")
   const [update, setUpdate] = useState<UpdateInfo | null>(null)
@@ -40,6 +41,7 @@ export function SettingsPage() {
         setMouseEnabled(Boolean(s.mouseTrackingEnabled))
         setMouseBuffer(Number(s.mouseBufferMinutes))
         setMaxExisting(Number((s as any).maxExistingOnStart))
+        setGeminiKey((s as any).geminiApiKey || '')
       })
       .catch(() => { })
     // Load current version for display
@@ -47,7 +49,7 @@ export function SettingsPage() {
   }, [])
 
   const save = async () => {
-    const payload: Settings = { steamInstallDir: steamDir, steamIdOverride, statsDir: statsPath, tracesDir: tracesPath, sessionGapMinutes: gap, theme, mouseTrackingEnabled: mouseEnabled, mouseBufferMinutes: mouseBuffer, maxExistingOnStart: maxExisting }
+    const payload: Settings = { steamInstallDir: steamDir, steamIdOverride, statsDir: statsPath, tracesDir: tracesPath, sessionGapMinutes: gap, theme, mouseTrackingEnabled: mouseEnabled, mouseBufferMinutes: mouseBuffer, maxExistingOnStart: maxExisting, geminiApiKey: geminiKey }
     try {
       await updateSettings(payload)
       setTheme(theme)
@@ -70,6 +72,7 @@ export function SettingsPage() {
       setMouseEnabled(Boolean(s.mouseTrackingEnabled))
       setMouseBuffer(Number(s.mouseBufferMinutes))
       setMaxExisting(Number((s as any).maxExistingOnStart))
+      setGeminiKey((s as any).geminiApiKey || '')
     } catch (e) {
       console.error('ResetSettings error:', e)
     }
@@ -243,6 +246,17 @@ export function SettingsPage() {
                   className="w-24 px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
                 />
               </Field>
+              <Field label="Gemini API key">
+                <input
+                  value={geminiKey}
+                  onChange={e => setGeminiKey(e.target.value)}
+                  placeholder="AIza..."
+                  className="w-full px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                />
+              </Field>
+              <div className="text-xs text-[var(--text-secondary)]">
+                You can also set the environment variable <code className="px-1 py-0.5 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]">REFLEKS_GEMINI_API_KEY</code> to override this value at runtime.
+              </div>
             </div>
           )}
         </section>

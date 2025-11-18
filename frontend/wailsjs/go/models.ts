@@ -1,5 +1,19 @@
 export namespace models {
 	
+	export class AIOptions {
+	    maxRunsPerScenario: number;
+	    systemPersona: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AIOptions(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.maxRunsPerScenario = source["maxRunsPerScenario"];
+	        this.systemPersona = source["systemPersona"];
+	    }
+	}
 	export class BenchmarkSubcategory {
 	    subcategoryName: string;
 	    scenarioCount: number;
@@ -357,6 +371,7 @@ export namespace models {
 	    mouseTrackingEnabled: boolean;
 	    mouseBufferMinutes: number;
 	    maxExistingOnStart: number;
+	    geminiApiKey?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -374,6 +389,7 @@ export namespace models {
 	        this.mouseTrackingEnabled = source["mouseTrackingEnabled"];
 	        this.mouseBufferMinutes = source["mouseBufferMinutes"];
 	        this.maxExistingOnStart = source["maxExistingOnStart"];
+	        this.geminiApiKey = source["geminiApiKey"];
 	    }
 	}
 	export class UpdateInfo {

@@ -2,7 +2,7 @@ package models
 
 // Settings represents persisted application settings.
 type Settings struct {
-	SteamInstallDir string `json:"steamInstallDir"`
+	SteamInstallDir      string   `json:"steamInstallDir"`
 	SteamIDOverride      string   `json:"steamIdOverride,omitempty"`
 	StatsDir             string   `json:"statsDir"`
 	TracesDir            string   `json:"tracesDir"`
@@ -12,4 +12,5 @@ type Settings struct {
 	MouseTrackingEnabled bool     `json:"mouseTrackingEnabled"`
 	MouseBufferMinutes   int      `json:"mouseBufferMinutes"`
 	MaxExistingOnStart   int      `json:"maxExistingOnStart"`
+	GeminiAPIKey         string   `json:"geminiApiKey,omitempty"`
 }
