@@ -97,7 +97,14 @@ export function TraceAnalysis({
             <div className="mt-2 text-[var(--text-secondary)] text-xs">Try 3-10 runs at the suggested sensitivity to adapt, then revert to your original sensitivity and check whether overshoot/undershoot is reduced.</div>
           </div>
         </div>
-      ) : null}
+      ) : (
+        <div className="mt-3 p-3 bg-[var(--bg-tertiary)]/50 border border-[var(--border-primary)] border-dashed rounded text-sm text-[var(--text-secondary)]">
+          <div className="font-medium text-[var(--text-primary)] mb-1">Sensitivity Suggestion Unavailable</div>
+          <p className="text-xs leading-relaxed">
+            Not enough actionable data to calculate a reliable sensitivity suggestion. This feature works best with clicking/switching scenarios where discrete flick corrections can be analyzed. Pure tracking scenarios often lack the distinct over/undershoot patterns required for this calculation.
+          </p>
+        </div>
+      )}
       <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
         {shown.map((k, i) => (
           <button key={`${k.killIdx}-${i}`} onClick={() => onSelect?.({ startMs: k.startMs, endMs: k.endMs, killMs: k.endMs, classification: k.classification })} className="text-left bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80 border border-[var(--border-primary)] rounded p-2">
