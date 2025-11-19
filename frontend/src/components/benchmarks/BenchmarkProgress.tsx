@@ -1,8 +1,10 @@
 import { Play } from 'lucide-react'
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useMemo, useRef, useState } from 'react'
+import { useHorizontalWheelScroll } from '../../hooks/useHorizontalWheelScroll'
+import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
 import { useStore } from '../../hooks/useStore'
 import { groupByScenario } from '../../lib/analysis/metrics'
-import { autoHiddenRanks, cellFill, computeFillColor, computeRecommendationScores, gridCols, numberFmt } from '../../lib/benchmarks'
+import { autoHiddenRanks, cellFill, computeFillColor, computeRecommendationScores, numberFmt, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH, thresholdContribution } from '../../lib/benchmarks'
 import { launchScenario } from '../../lib/internal'
 import { getScenarioName, MISSING_STR } from '../../lib/utils'
 import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
@@ -23,38 +25,8 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
   const scenarios = useStore(s => s.scenarios)
   const sessions = useStore(s => s.sessions)
 
-  // Ref to the horizontal scroll container so we can map vertical wheel -> horizontal scroll
+  // Ref to horizontal scroll container
   const containerRef = useRef<HTMLDivElement | null>(null)
-
-  // Attach a native wheel listener with { passive: false } so preventDefault() works
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-
-    const handler = (e: WheelEvent) => {
-      // Only convert vertical wheel gestures to horizontal scroll when there is overflow
-      if (el.scrollWidth <= el.clientWidth) return
-
-      const deltaX = e.deltaX
-      const deltaY = e.deltaY
-      // If the user is primarily scrolling horizontally, don't interfere
-      if (Math.abs(deltaY) <= Math.abs(deltaX)) return
-
-      const atLeft = el.scrollLeft === 0
-      const atRight = Math.ceil(el.scrollLeft + el.clientWidth) >= el.scrollWidth
-      const goingRight = deltaY > 0
-      const goingLeft = deltaY < 0
-      const willScroll = (goingRight && !atRight) || (goingLeft && !atLeft)
-      if (willScroll) {
-        el.scrollLeft += deltaY
-        e.preventDefault()
-        e.stopPropagation()
-      }
-    }
-
-    el.addEventListener('wheel', handler, { passive: false })
-    return () => el.removeEventListener('wheel', handler)
-  }, [])
 
   // Helper: small triangle glyph like SummaryStats
   const triangle = (dir: 'up' | 'down', colorVar: string) => (
@@ -67,7 +39,8 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
     </span>
   )
 
-  const grid = gridCols
+  // Resizable scenario column state (effects & dynamic columns defined after rank visibility calc)
+  const { scenarioWidth, onHandleMouseDown } = useResizableScenarioColumn({ initialWidth: 220, min: 140, max: 600 })
 
   const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || MISSING_STR
 
@@ -152,6 +125,17 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
 
   const visibleRanks = useMemo(() => visibleRankIndices.map(i => rankDefs[i]), [visibleRankIndices, rankDefs])
 
+  // Constants for non-rank columns
+  const REC_W = RECOMMEND_COL_WIDTH, PLAY_W = PLAY_COL_WIDTH, SCORE_W = SCORE_COL_WIDTH
+  // Dynamic grid columns (flex growth for ranks): Scenario | Recom | Play | Score | Rank1..N
+  const dynamicColumns = useMemo(() => {
+    const rankTracks = visibleRankIndices.map(() => `minmax(${RANK_MIN_WIDTH}px,1fr)`).join(' ')
+    return `${Math.round(scenarioWidth)}px ${REC_W}px ${PLAY_W}px ${SCORE_W}px ${rankTracks}`
+  }, [scenarioWidth, visibleRankIndices.length])
+
+  // Attach refined wheel scroll: only active when cursor is to right of Scenario+Recom prefix
+  useHorizontalWheelScroll(containerRef, { excludeLeftWidth: scenarioWidth + REC_W })
+
   // Handlers for manual toggles
   const toggleManualRank = (idx: number) => {
     setManuallyHidden(prev => {
@@ -180,8 +164,20 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                   <div className="w-8 flex-shrink-0" />
                   <div className="w-8 flex-shrink-0" />
                   <div className="flex-1">
-                    <div className="grid gap-1" style={{ gridTemplateColumns: grid(visibleRanks.length) }}>
-                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">Scenario</div>
+                    <div className="grid gap-1" style={{ gridTemplateColumns: dynamicColumns }}>
+                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide relative select-none" style={{ width: scenarioWidth }}>
+                        <span>Scenario</span>
+                        {/* Drag handle */}
+                        <div
+                          onMouseDown={onHandleMouseDown}
+                          className="absolute top-0 right-0 h-full w-2 cursor-col-resize group"
+                          role="separator"
+                          aria-orientation="vertical"
+                          aria-label="Resize scenario column"
+                        >
+                          <div className="h-full w-px bg-[var(--border-secondary)] group-hover:bg-[var(--accent-primary)]" />
+                        </div>
+                      </div>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center" title="Recommendation score (negative means: switch)">Recom</div>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center">Play</div>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">Score</div>
@@ -197,7 +193,6 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
             {/* Category cards content (no repeated headers) */}
             {categories.map(({ name: catName, color: catColor, groups }) => {
               const ranks = rankDefs
-              const cols = grid(visibleRanks.length)
               return (
                 <div key={catName} className="border border-[var(--border-primary)] rounded bg-[var(--bg-tertiary)] overflow-hidden mt-3">
                   <div className="flex">
@@ -217,28 +212,14 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                             )}
                           </div>
                           <div className="flex-1 min-w-max">
-                            <div className="grid gap-1" style={{ gridTemplateColumns: cols }}>
+                            <div className="grid gap-1" style={{ gridTemplateColumns: dynamicColumns }}>
                               {g.scenarios.map((s) => {
                                 const sName = s.name
                                 const achieved = s.scenarioRank
                                 const maxes: number[] = s.thresholds
                                 const score = s.score
-                                // Threshold proximity contribution: push when close to next rank
-                                let thPts = 0
-                                if (maxes.length > 1) {
-                                  const rankN = ranks.length
-                                  const idx = Math.max(0, Math.min(rankN, achieved))
-                                  const prev = maxes[idx] ?? 0
-                                  const next = maxes[idx + 1] ?? null
-                                  if (next != null && next > prev) {
-                                    const frac = Math.max(0, Math.min(1, (score - prev) / (next - prev)))
-                                    thPts = 40 * frac
-                                  }
-                                  // Rank deficiency: prioritize weaker scenarios
-                                  const achievedNorm = Math.max(0, Math.min(1, achieved / Math.max(1, rankN)))
-                                  thPts += 20 * (1 - achievedNorm)
-                                }
                                 const base = recScore.get(sName) ?? 0
+                                const thPts = thresholdContribution(Number(achieved || 0), Number(score || 0), maxes, ranks.length)
                                 const totalRec = Math.round(base + thPts)
                                 return (
                                   <Fragment key={sName}>
