@@ -418,10 +418,12 @@ func (t *trackerWin) handleRawInput(lparam uintptr) {
 		// ring full -> drop event
 		return
 	}
-	needWake := (write == read)
+	// Always signal wake to avoid race conditions where the worker sleeps
+	// thinking the buffer is empty while we are writing to it.
+	// The overhead of a non-blocking select is negligible compared to the risk of stalling.
 	t.rb[write&t.rbMask] = rawEvent{dx: dx, dy: dy, flags: flags}
 	atomic.StoreUint32(&t.rbWrite, write+1)
-	if needWake && t.wakeCh != nil {
+	if t.wakeCh != nil {
 		select {
 		case t.wakeCh <- struct{}{}:
 		default:
