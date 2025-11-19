@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, Route, Routes } from 'react-router-dom'
 import { BrowserOpenURL, EventsOn } from '../wailsjs/runtime'
-import { KO_FI_SYMBOL } from './assets'
+import { DISCORD_SYMBOL, KO_FI_SYMBOL } from './assets'
 import { StoreProvider, useStore } from './hooks/useStore'
 import { checkForUpdates, downloadAndInstallUpdate, getRecentScenarios, getSettings, getVersion, startWatcher } from './lib/internal'
 import { applyTheme, getSavedTheme } from './lib/theme'
@@ -86,10 +86,18 @@ function TopNav() {
       {/* Right-side actions - pushed to the end with ml-auto */}
       <div className="flex items-center gap-2 ml-auto">
         <a
+          href="https://discord.gg/SFsf4GQhJU"
+          onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://discord.gg/SFsf4GQhJU') }}
+          title="Join our Discord"
+          className="px-3 py-1 rounded hover:bg-[var(--bg-tertiary)] flex items-center"
+        >
+          <img src={DISCORD_SYMBOL} alt="Discord" className="h-5 w-5" />
+        </a>
+
+        <a
           href="https://refleks-app.com/home/#support"
           onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/home/#support') }}
           title="Help"
-          aria-label="Open help (docs)"
           className="px-3 py-1 rounded hover:bg-[var(--bg-tertiary)] flex items-center"
         >
           <HelpCircle className="h-5 w-5" aria-hidden="true" />
