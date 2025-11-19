@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react'
 import { InfoBox } from '..'
-import { CHART_DECIMALS, formatNumber, formatSeconds, MISSING_STR } from '../../lib/utils'
+import { CHART_DECIMALS, formatNumber, formatSeconds } from '../../lib/utils'
 
 type TTKMovingAverageDetailsProps = {
   movingAvg: {
@@ -17,7 +17,7 @@ type TTKMovingAverageDetailsProps = {
 export function TTKMovingAverageDetails({
   movingAvg,
 }: TTKMovingAverageDetailsProps) {
-  const fmt = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? MISSING_STR : formatNumber(v, CHART_DECIMALS.detailNum))
+  const fmt = (v: number | undefined) => formatNumber(v, CHART_DECIMALS.detailNum)
   const fmtIdx = (i: number) => `#${i + 1}`
   const info = (
     <div>

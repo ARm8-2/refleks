@@ -1,5 +1,5 @@
 import { InfoBox } from '..'
-import { CHART_DECIMALS, formatNumber, formatPct, MISSING_STR } from '../../lib/utils'
+import { CHART_DECIMALS, formatNumber, formatPct } from '../../lib/utils'
 
 type AccuracyVsSpeedDetailsProps = {
   scatter: {
@@ -16,8 +16,8 @@ type AccuracyVsSpeedDetailsProps = {
 export function AccuracyVsSpeedDetails({
   scatter,
 }: AccuracyVsSpeedDetailsProps) {
-  const fmt = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? MISSING_STR : formatNumber(v, CHART_DECIMALS.detailNum))
-  const fmtPct = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? MISSING_STR : formatPct(v, CHART_DECIMALS.pctTooltip))
+  const fmt = (v: number | undefined) => formatNumber(v, CHART_DECIMALS.detailNum)
+  const fmtPct = (v: number | undefined) => formatPct(v, CHART_DECIMALS.pctTooltip)
   const info = (
     <div>
       <div className="mb-2">How to read these metrics:</div>

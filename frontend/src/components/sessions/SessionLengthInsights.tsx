@@ -18,6 +18,8 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
   const avgVsL = useMemo(() => expectedAvgVsLength(runs, metric), [runs, metric])
   const rec = useMemo(() => recommendLengths(byIdx, bestVsL, avgVsL), [byIdx, bestVsL, avgVsL])
 
+  const fmtTick = (v: any) => metric === 'acc' ? formatPct(v, CHART_DECIMALS.pctTick) : formatNumber(v, CHART_DECIMALS.numTick)
+
   const idxData = useMemo(() => ({
     labels: byIdx.mean.map((_, i) => `#${i + 1}`),
     datasets: [
@@ -65,7 +67,7 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
     },
     scales: {
       x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: (v: any) => metric === 'acc' ? formatPct(v, CHART_DECIMALS.pctTick) : formatNumber(v, CHART_DECIMALS.numTick) } },
+      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: fmtTick } },
       y2: { position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: theme.textSecondary, callback: (v: any) => formatNumber(v, CHART_DECIMALS.numTick) } },
     },
   }), [theme])
@@ -116,7 +118,7 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
     },
     scales: {
       x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: (v: any) => metric === 'acc' ? formatPct(v, CHART_DECIMALS.pctTick) : formatNumber(v, CHART_DECIMALS.numTick) } },
+      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: fmtTick } },
     },
   }), [theme])
 
@@ -173,7 +175,7 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
     },
     scales: {
       x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: (v: any) => metric === 'acc' ? formatPct(v, CHART_DECIMALS.pctTick) : formatNumber(v, CHART_DECIMALS.numTick) } },
+      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: fmtTick } },
     },
   }), [theme])
 

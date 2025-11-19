@@ -1,5 +1,5 @@
 import { InfoBox } from '..'
-import { CHART_DECIMALS, formatNumber, formatPct, formatSeconds, MISSING_STR } from '../../lib/utils'
+import { CHART_DECIMALS, formatNumber, formatPct, formatSeconds } from '../../lib/utils'
 
 type EventsOverTimeDetailsProps = {
   summary: {
@@ -20,8 +20,8 @@ type EventsOverTimeDetailsProps = {
 
 export function EventsOverTimeDetails({ summary }: EventsOverTimeDetailsProps) {
   const fmtPct = (v: number) => formatPct(v, CHART_DECIMALS.pctTooltip)
-  const fmt = (v: number) => (Number.isFinite(v) ? formatNumber(v, CHART_DECIMALS.numTooltip) : MISSING_STR)
-  const fmtS = (v: number) => (Number.isFinite(v) ? formatSeconds(v, CHART_DECIMALS.ttkTooltip) : MISSING_STR)
+  const fmt = (v: number) => formatNumber(v, CHART_DECIMALS.numTooltip)
+  const fmtS = (v: number) => formatSeconds(v, CHART_DECIMALS.ttkTooltip)
 
   const info = (
     <div>
