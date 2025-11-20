@@ -13,6 +13,7 @@ import {
   LaunchKovaaksPlaylist as _LaunchKovaaksPlaylist,
   LaunchKovaaksScenario as _LaunchKovaaksScenario,
   ResetSettings as _ResetSettings,
+  SaveScenarioNote as _SaveScenarioNote,
   SetFavoriteBenchmarks as _SetFavoriteBenchmarks,
   StartWatcher as _StartWatcher,
   StopWatcher as _StopWatcher,
@@ -65,6 +66,13 @@ export async function resetSettings(): Promise<void> {
   const res = await _ResetSettings()
   if (res !== true) {
     throw new Error(typeof res === 'string' ? res : 'ResetSettings failed')
+  }
+}
+
+export async function saveScenarioNote(scenario: string, notes: string, sens: string): Promise<void> {
+  const res = await _SaveScenarioNote(scenario, notes, sens)
+  if (res !== true) {
+    throw new Error(typeof res === 'string' ? res : 'SaveScenarioNote failed')
   }
 }
 

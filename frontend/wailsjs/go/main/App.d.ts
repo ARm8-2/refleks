@@ -30,6 +30,8 @@ export function LaunchKovaaksScenario(arg1:string,arg2:string):Promise<boolean|s
 
 export function ResetSettings():Promise<boolean|string>;
 
+export function SaveScenarioNote(arg1:string,arg2:string,arg3:string):Promise<boolean|string>;
+
 export function SetFavoriteBenchmarks(arg1:Array<string>):Promise<boolean|string>;
 
 export function StartWatcher(arg1:string):Promise<boolean|string>;

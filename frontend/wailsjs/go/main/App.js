@@ -58,6 +58,10 @@ export function ResetSettings() {
   return window['go']['main']['App']['ResetSettings']();
 }
 
+export function SaveScenarioNote(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SaveScenarioNote'](arg1, arg2, arg3);
+}
+
 export function SetFavoriteBenchmarks(arg1) {
   return window['go']['main']['App']['SetFavoriteBenchmarks'](arg1);
 }

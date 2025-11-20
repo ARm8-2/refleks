@@ -321,6 +321,20 @@ export namespace models {
 	
 	
 	
+	export class ScenarioNote {
+	    notes: string;
+	    sens: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ScenarioNote(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.notes = source["notes"];
+	        this.sens = source["sens"];
+	    }
+	}
 	
 	export class ScenarioRecord {
 	    filePath: string;
@@ -372,6 +386,7 @@ export namespace models {
 	    mouseBufferMinutes: number;
 	    maxExistingOnStart: number;
 	    geminiApiKey?: string;
+	    scenarioNotes?: Record<string, ScenarioNote>;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -390,7 +405,26 @@ export namespace models {
 	        this.mouseBufferMinutes = source["mouseBufferMinutes"];
 	        this.maxExistingOnStart = source["maxExistingOnStart"];
 	        this.geminiApiKey = source["geminiApiKey"];
+	        this.scenarioNotes = this.convertValues(source["scenarioNotes"], ScenarioNote, true);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class UpdateInfo {
 	    currentVersion: string;

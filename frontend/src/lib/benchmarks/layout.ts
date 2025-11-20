@@ -4,7 +4,8 @@ export const SCENARIO_MIN_WIDTH = 140
 export const SCENARIO_MAX_WIDTH = 600
 
 export const RECOMMEND_COL_WIDTH = 80
-export const PLAY_COL_WIDTH = 40
+export const NOTES_COL_WIDTH = 20
+export const PLAY_COL_WIDTH = 20
 export const SCORE_COL_WIDTH = 90
 
 export const RANK_MIN_WIDTH = 120

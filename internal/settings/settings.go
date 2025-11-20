@@ -62,6 +62,9 @@ func Sanitize(s models.Settings) models.Settings {
 	if s.MaxExistingOnStart <= 0 {
 		s.MaxExistingOnStart = constants.DefaultMaxExistingOnStart
 	}
+	if s.ScenarioNotes == nil {
+		s.ScenarioNotes = make(map[string]models.ScenarioNote)
+	}
 	return s
 }
 

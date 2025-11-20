@@ -1,13 +1,14 @@
-import { Play } from 'lucide-react'
-import { Fragment, useMemo, useRef, useState } from 'react'
+import { FileText, Play } from 'lucide-react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useHorizontalWheelScroll } from '../../hooks/useHorizontalWheelScroll'
 import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
 import { useStore } from '../../hooks/useStore'
 import { groupByScenario } from '../../lib/analysis/metrics'
-import { autoHiddenRanks, cellFill, computeFillColor, computeRecommendationScores, numberFmt, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH, thresholdContribution } from '../../lib/benchmarks'
-import { launchScenario } from '../../lib/internal'
+import { autoHiddenRanks, cellFill, computeFillColor, computeRecommendationScores, NOTES_COL_WIDTH, numberFmt, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH, thresholdContribution } from '../../lib/benchmarks'
+import { getSettings, launchScenario, saveScenarioNote } from '../../lib/internal'
 import { getScenarioName, MISSING_STR } from '../../lib/utils'
 import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
+import { NotesModal } from '../scenarios/NotesModal'
 import { Button } from '../shared/Button'
 import { Dropdown } from '../shared/Dropdown'
 import { Toggle } from '../shared/Toggle'
@@ -43,6 +44,35 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
   const { scenarioWidth, onHandleMouseDown } = useResizableScenarioColumn({ initialWidth: 220, min: 140, max: 600 })
 
   const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || MISSING_STR
+
+  // Notes modal state
+  const [settings, setSettings] = useState<any>(null)
+  useEffect(() => {
+    getSettings().then(setSettings).catch(() => { })
+  }, [])
+
+  const [modalState, setModalState] = useState<{ open: boolean, scenario: string, notes: string, sens: string }>({ open: false, scenario: '', notes: '', sens: '' })
+
+  const openNotes = (scenario: string) => {
+    const note = settings?.scenarioNotes?.[scenario]
+    setModalState({
+      open: true,
+      scenario,
+      notes: note?.notes || '',
+      sens: note?.sens || ''
+    })
+  }
+
+  const saveNotes = async (notes: string, sens: string) => {
+    await saveScenarioNote(modalState.scenario, notes, sens)
+    setSettings((prev: any) => ({
+      ...prev,
+      scenarioNotes: {
+        ...prev?.scenarioNotes,
+        [modalState.scenario]: { notes, sens }
+      }
+    }))
+  }
 
   // Build name sets and historical metrics used for recommendations
   const wantedNames = useMemo(() => {
@@ -126,11 +156,11 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
   const visibleRanks = useMemo(() => visibleRankIndices.map(i => rankDefs[i]), [visibleRankIndices, rankDefs])
 
   // Constants for non-rank columns
-  const REC_W = RECOMMEND_COL_WIDTH, PLAY_W = PLAY_COL_WIDTH, SCORE_W = SCORE_COL_WIDTH
-  // Dynamic grid columns (flex growth for ranks): Scenario | Recom | Play | Score | Rank1..N
+  const REC_W = RECOMMEND_COL_WIDTH, PLAY_W = PLAY_COL_WIDTH, SCORE_W = SCORE_COL_WIDTH, NOTES_W = NOTES_COL_WIDTH
+  // Dynamic grid columns (flex growth for ranks): Scenario | Recom | Play | Notes | Score | Rank1..N
   const dynamicColumns = useMemo(() => {
     const rankTracks = visibleRankIndices.map(() => `minmax(${RANK_MIN_WIDTH}px,1fr)`).join(' ')
-    return `${Math.round(scenarioWidth)}px ${REC_W}px ${PLAY_W}px ${SCORE_W}px ${rankTracks}`
+    return `${Math.round(scenarioWidth)}px ${REC_W}px ${PLAY_W}px ${NOTES_W}px ${SCORE_W}px ${rankTracks}`
   }, [scenarioWidth, visibleRankIndices.length])
 
   // Attach refined wheel scroll: only active when cursor is to right of Scenario+Recom prefix
@@ -179,7 +209,8 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                         </div>
                       </div>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center" title="Recommendation score (negative means: switch)">Recom</div>
-                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center">Play</div>
+                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center"></div>
+                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center"></div>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">Score</div>
                       {visibleRanks.map(r => (
                         <div key={r.name} className="text-[11px] uppercase tracking-wide text-center" style={{ color: r.color || 'var(--text-secondary)' }}>{r.name}</div>
@@ -230,9 +261,20 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                     </div>
                                     <div className="flex items-center justify-center">
                                       <button
+                                        className={`p-1 rounded hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-primary)] ${settings?.scenarioNotes?.[sName]?.notes ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}
+                                        title="Notes & Sensitivity"
+                                        onClick={() => openNotes(sName)}
+                                        aria-label={`Notes for ${sName}`}
+                                      >
+                                        <FileText size={14} />
+                                      </button>
+                                    </div>
+                                    <div className="flex items-center justify-center">
+                                      <button
                                         className="p-1 rounded hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-primary)]"
                                         title="Play in Kovaak's"
                                         onClick={() => launchScenario(sName, 'challenge').catch(() => { /* ignore */ })}
+                                        aria-label={`Play ${sName} in Kovaak's`}
                                       >
                                         <Play size={16} />
                                       </button>
@@ -313,6 +355,18 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
           </div>
         </div>
       </div>
+
+      {/* Notes modal (controlled by modalState) */}
+      {modalState.open && (
+        <NotesModal
+          isOpen={modalState.open}
+          scenarioName={modalState.scenario}
+          initialNotes={modalState.notes}
+          initialSens={modalState.sens}
+          onClose={() => setModalState(s => ({ ...s, open: false }))}
+          onSave={saveNotes}
+        />
+      )}
     </div>
   )
 }

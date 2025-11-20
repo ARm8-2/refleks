@@ -155,3 +155,21 @@ func (s *AppService) UpdateSettings(newS models.Settings) (bool, string) {
 	}
 	return true, "ok"
 }
+
+// SaveScenarioNote updates the note and sensitivity for a specific scenario.
+func (s *AppService) SaveScenarioNote(scenario, notes, sens string) (bool, string) {
+	if s.settings == nil {
+		return false, "settings not loaded"
+	}
+	if s.settings.ScenarioNotes == nil {
+		s.settings.ScenarioNotes = make(map[string]models.ScenarioNote)
+	}
+	s.settings.ScenarioNotes[scenario] = models.ScenarioNote{
+		Notes: notes,
+		Sens:  sens,
+	}
+	if err := appsettings.Save(*s.settings); err != nil {
+		return false, err.Error()
+	}
+	return true, ""
+}

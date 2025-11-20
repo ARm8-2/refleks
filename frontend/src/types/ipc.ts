@@ -73,6 +73,12 @@ export interface Settings {
   mouseBufferMinutes?: number
   maxExistingOnStart?: number
   geminiApiKey?: string
+  scenarioNotes?: Record<string, ScenarioNote>
+}
+
+export interface ScenarioNote {
+  notes: string
+  sens: string
 }
 
 export interface UpdateInfo {

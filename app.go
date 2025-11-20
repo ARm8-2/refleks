@@ -235,4 +235,10 @@ func (a *App) CancelSessionInsights(requestId string) (bool, string) {
 	return true, "ok"
 }
 
-// no-op: we now pass models.AIOptions through to the AI service directly
+// SaveScenarioNote persists a user note and sensitivity for a scenario.
+func (a *App) SaveScenarioNote(scenario, notes, sens string) (bool, string) {
+	if a.appSvc == nil {
+		return false, "app service not initialized"
+	}
+	return a.appSvc.SaveScenarioNote(scenario, notes, sens)
+}
