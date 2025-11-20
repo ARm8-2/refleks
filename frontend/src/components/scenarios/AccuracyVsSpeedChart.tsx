@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Scatter } from 'react-chartjs-2';
 import { ChartBox } from '..';
 import { useChartTheme } from '../../hooks/useChartTheme';
@@ -20,6 +20,7 @@ type AccuracyVsSpeedChartProps = {
 
 export function AccuracyVsSpeedChart({ points, scatter }: AccuracyVsSpeedChartProps) {
   const colors = useChartTheme()
+  const [isExpanded, setIsExpanded] = useState(false)
   const data = useMemo(() => ({
     datasets: [
       {
@@ -66,20 +67,25 @@ export function AccuracyVsSpeedChart({ points, scatter }: AccuracyVsSpeedChartPr
         grid: { color: colors.grid },
         suggestedMin: 0,
         suggestedMax: Math.max(60, Math.ceil(maxX / 10) * 10),
+        title: { display: isExpanded, text: 'Speed (KPM)', color: colors.textSecondary }
       },
       y: {
         suggestedMin: 0,
         suggestedMax: 1,
         ticks: { color: colors.textSecondary, callback: (v: any) => formatPct(v, CHART_DECIMALS.pctTick) },
         grid: { color: colors.grid },
+        title: { display: isExpanded, text: 'Accuracy (%)', color: colors.textSecondary }
       },
     },
-  }), [colors, maxX])
+  }), [colors, maxX, isExpanded])
 
   return (
     <div>
       <ChartBox
         title="Accuracy vs Speed (per kill)"
+        expandable={true}
+        isExpanded={isExpanded}
+        onExpandChange={setIsExpanded}
         info={<div className="text-sm">
           <div className="mb-2">Each point is a kill: X is speed (kills per minute - KPM), Y is per-kill accuracy (hits/shots). Tooltips show exact KPM and accuracy percentages for each point.</div>
           <div className="mb-2 font-medium">How to interpret</div>

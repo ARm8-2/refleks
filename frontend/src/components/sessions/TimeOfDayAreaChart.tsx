@@ -1,13 +1,17 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { CHART_DECIMALS, formatNumber } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
+import { ChartBox } from '../shared/ChartBox'
 
-type TimeOfDayAreaChartProps = { items: ScenarioRecord[] }
+type TimeOfDayAreaChartProps = {
+  items: ScenarioRecord[]
+}
 
 export function TimeOfDayAreaChart({ items }: TimeOfDayAreaChartProps) {
   const theme = useChartTheme()
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const counts = useMemo(() => {
     const arr = Array.from({ length: 24 }, () => 0)
@@ -69,15 +73,36 @@ export function TimeOfDayAreaChart({ items }: TimeOfDayAreaChartProps) {
       x: {
         grid: { color: theme.grid },
         ticks: { color: theme.textSecondary },
+        title: { display: isExpanded, text: 'Hour of Day', color: theme.textSecondary }
       },
       y: {
         grid: { color: theme.grid },
         ticks: { color: theme.textSecondary, precision: 0 },
         beginAtZero: true,
         suggestedMin: 0,
+        title: { display: isExpanded, text: 'Runs', color: theme.textSecondary }
       },
     },
-  }), [theme])
+  }), [theme, isExpanded])
 
-  return <Line data={data as any} options={options as any} />
+  return (
+    <ChartBox
+      title="Time of Day (Runs)"
+      expandable={true}
+      isExpanded={isExpanded}
+      onExpandChange={setIsExpanded}
+      info={<div>
+        <div className="mb-2">Shows the distribution of your runs across the 24-hour day.</div>
+        <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+          <li>Peaks indicate your most active playing times.</li>
+          <li>Useful for identifying when you perform best or play most often.</li>
+        </ul>
+      </div>}
+      height={300}
+    >
+      <div className="h-full">
+        <Line options={options} data={data} />
+      </div>
+    </ChartBox>
+  )
 }

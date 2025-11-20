@@ -76,6 +76,18 @@ export function ProgressAllTab() {
 
       <ChartBox
         title="Score, Accuracy and Real Avg TTK (all-time)"
+        expandable={true}
+        modalControls={
+          <MetricsControls
+            names={names}
+            selectedName={selectedName}
+            onSelect={(v) => { setSelectedName(v); setAutoSelectLast(false) }}
+            autoSelectLast={autoSelectLast}
+            onToggleAuto={setAutoSelectLast}
+            mode={mode}
+            onModeChange={setMode}
+          />
+        }
         controls={{
           dropdown: {
             label: 'Points',
@@ -109,23 +121,7 @@ export function ProgressAllTab() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <PerformanceVsSensChart items={scenarios} scenarioName={selectedName} />
-        <ChartBox
-          title="Practice time-of-day"
-          info={<div>
-            <div className="mb-2">Distribution of your practice runs by hour of day (local clock). Peaks indicate when you most frequently practice.</div>
-            <div className="mb-2 font-medium">How to interpret</div>
-            <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-              <li>Peaks show the hours when you run the most training sessions - great for identifying consistent practice windows.</li>
-              <li>Use this to align deliberate practice into your existing schedule or to compare performance on other charts with time-of-day buckets.</li>
-              <li>This chart shows frequency only. For performance-by-hour analysis, cross-reference with accuracy/TTK charts sliced by time-of-day.</li>
-            </ul>
-          </div>}
-          height={300}
-        >
-          <div className="h-full">
-            <TimeOfDayAreaChart items={scenarios} />
-          </div>
-        </ChartBox>
+        <TimeOfDayAreaChart items={scenarios} />
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
@@ -23,6 +23,7 @@ type TTKMovingAverageChartProps = {
 
 export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: TTKMovingAverageChartProps) {
   const colors = useChartTheme()
+  const [isExpanded, setIsExpanded] = useState(false)
   const trend = useMemo(() => ma5.map((_, i) => (movingAvg.intercept ?? 0) + movingAvg.slope * i), [ma5, movingAvg])
   const data = useMemo(() => ({
     labels,
@@ -83,15 +84,27 @@ export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: TTKMo
       },
     },
     scales: {
-      x: { ticks: { color: colors.textSecondary }, grid: { color: colors.grid } },
-      y: { ticks: { color: colors.textSecondary, callback: (v: any) => formatSeconds(v, CHART_DECIMALS.ttkTick) }, grid: { color: colors.grid }, suggestedMin: 0 },
+      x: {
+        ticks: { color: colors.textSecondary },
+        grid: { color: colors.grid },
+        title: { display: isExpanded, text: 'Kills (Sequence)', color: colors.textSecondary }
+      },
+      y: {
+        ticks: { color: colors.textSecondary, callback: (v: any) => formatSeconds(v, CHART_DECIMALS.ttkTick) },
+        grid: { color: colors.grid },
+        suggestedMin: 0,
+        title: { display: isExpanded, text: 'Time To Kill (s)', color: colors.textSecondary }
+      },
     },
-  }), [colors])
+  }), [colors, isExpanded])
 
   return (
     <div>
       <ChartBox
         title="TTK with Moving Average (5) & Trend"
+        expandable={true}
+        isExpanded={isExpanded}
+        onExpandChange={setIsExpanded}
         info={<div className="text-sm">
           <div className="mb-2">Shows raw TTK per kill, a trailing 5-sample moving average (MA(5)), and a dotted linear trend line of the moving average.</div>
           <div className="mb-2 font-medium">How to interpret</div>

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
@@ -34,6 +34,7 @@ export function EventsOverTimeChart({
   summary,
 }: EventsOverTimeChartProps) {
   const colors = useChartTheme()
+  const [isExpanded, setIsExpanded] = useState(false)
   const data = useMemo(() => {
     const acc = timeSec.map((x, i) => ({ x, y: accOverTime[i] }))
     const ttk = timeSec.map((x, i) => ({ x, y: realTTK[i] }))
@@ -120,6 +121,7 @@ export function EventsOverTimeChart({
           }
         },
         grid: { color: colors.grid },
+        title: { display: isExpanded, text: 'Time (mm:ss)', color: colors.textSecondary }
       },
       y1: {
         type: 'linear' as const,
@@ -131,6 +133,7 @@ export function EventsOverTimeChart({
           callback: (v: any) => formatPct(v, CHART_DECIMALS.pctTick),
         },
         grid: { color: colors.grid },
+        title: { display: isExpanded, text: 'Accuracy (%)', color: colors.textSecondary }
       },
       y2: {
         type: 'linear' as const,
@@ -138,6 +141,7 @@ export function EventsOverTimeChart({
         suggestedMin: 0,
         ticks: { color: colors.textSecondary, callback: (v: any) => formatSeconds(v, CHART_DECIMALS.ttkTick) },
         grid: { drawOnChartArea: false },
+        title: { display: isExpanded, text: 'Real TTK (s)', color: colors.textSecondary }
       },
       y3: {
         type: 'linear' as const,
@@ -150,14 +154,18 @@ export function EventsOverTimeChart({
           precision: 0,
         },
         grid: { drawOnChartArea: false },
+        title: { display: isExpanded, text: 'Cumulative Kills', color: colors.textSecondary }
       },
     },
-  }), [colors])
+  }), [colors, isExpanded])
 
   return (
     <div>
       <ChartBox
         title="Kills Over Time"
+        expandable={true}
+        isExpanded={isExpanded}
+        onExpandChange={setIsExpanded}
         info={<div>
           <div className="mb-2">This chart plots cumulative accuracy (left), real TTK between kills (right), and cumulative kills (stepped, secondary right) over the scenario timeline. The X‑axis is elapsed time from the scenario start. Hover points for exact values at a moment in time.</div>
           <div className="mb-2 font-medium">How to interpret</div>

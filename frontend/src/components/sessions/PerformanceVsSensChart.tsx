@@ -13,6 +13,7 @@ type PerformanceVsSensChartProps = {
 
 export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSensChartProps) {
   const colors = useChartTheme()
+  const [isExpanded, setIsExpanded] = usePageState<boolean>(`sens:expanded:${scenarioName}`, false)
   // Persist the selected metric per-scenario so the user's choice sticks while browsing
   const [metric, setMetric] = usePageState<'score' | 'acc' | 'ttk'>(`sens:metric:${scenarioName}`, 'score')
   // We'll compute two things here: the plotted points (aligned to bin centers) and
@@ -231,10 +232,12 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
         grid: { color: colors.grid },
         suggestedMin: Number.isFinite(xMin) ? Math.max(0, Math.floor(xMin - 1)) : 0,
         suggestedMax: Math.ceil((xMax || 20) * 1.05),
+        title: { display: isExpanded, text: 'Sensitivity (cm/360)', color: colors.textSecondary }
       },
       y: {
         ticks: { color: colors.textSecondary, callback: metric === 'acc' ? (v: any) => formatPct(v, CHART_DECIMALS.pctTick) : undefined },
         grid: { color: colors.grid },
+        title: { display: isExpanded, text: metricLabel, color: colors.textSecondary }
       },
       // Secondary axis for histogram counts
       yCount: {
@@ -243,13 +246,17 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
         grid: { display: false },
         beginAtZero: true,
         suggestedMax: bins && bins.length ? Math.max(1, Math.ceil(bins.reduce((m, b) => Math.max(m, b.count), 0) * 1.15)) : undefined,
+        title: { display: isExpanded, text: 'Run Count', color: colors.textSecondary }
       },
     },
-  }), [colors, xMax, xMin, metric, bins])
+  }), [colors, xMax, xMin, metric, bins, isExpanded])
 
   return (
     <ChartBox
       title="Performance vs Sens (cm/360)"
+      expandable={true}
+      isExpanded={isExpanded}
+      onExpandChange={setIsExpanded}
       controls={{
         dropdown: {
           label: 'Metric',

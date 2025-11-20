@@ -12,12 +12,11 @@ import {
   Title,
   Tooltip,
 } from 'chart.js'
-import { Info } from 'lucide-react'
-import type { CSSProperties, ReactNode } from 'react'
-import { useMemo, useState } from 'react'
-import { Line } from 'react-chartjs-2'
-import { useChartTheme } from '../../hooks/useChartTheme'
+import { Info, Maximize2 } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { createContext, useContext, useState } from 'react'
 import { Dropdown } from './Dropdown'
+import { Modal } from './Modal'
 import { SegmentedControl } from './SegmentedControl'
 import { Toggle } from './Toggle'
 
@@ -36,6 +35,10 @@ ChartJS.register(
   BarElement,
   ArcElement,
 )
+
+// Context to let children know if they are in an expanded view
+export const ChartBoxContext = createContext<{ isExpanded: boolean }>({ isExpanded: false })
+export const useChartBoxContext = () => useContext(ChartBoxContext)
 
 type DropdownOption = { label: string; value: string }
 
@@ -65,6 +68,10 @@ type ChartBoxProps = {
   children: ReactNode
   controls?: ChartBoxControls
   height?: number
+  modalControls?: ReactNode
+  expandable?: boolean
+  isExpanded?: boolean
+  onExpandChange?: (expanded: boolean) => void
 }
 
 export function ChartBox({
@@ -73,112 +80,126 @@ export function ChartBox({
   children,
   controls,
   height = 280,
+  modalControls,
+  expandable = false,
+  isExpanded: isExpandedProp,
+  onExpandChange,
 }: ChartBoxProps) {
   const [showInfo, setShowInfo] = useState(false)
-  const bodyStyle: CSSProperties = useMemo(() => ({ height: height - 44 }), [height]) // 44px header
+  const [isExpandedLocal, setIsExpandedLocal] = useState(false)
+
+  const isExpanded = isExpandedProp !== undefined ? isExpandedProp : isExpandedLocal
+  const handleExpandChange = (val: boolean) => {
+    if (onExpandChange) onExpandChange(val)
+    else setIsExpandedLocal(val)
+  }
+
   const titleText = typeof title === 'string' ? title : undefined
 
-  return (
-    <div className="bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)]" style={{ height }}>
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-primary)]">
-        <div className="text-sm font-medium text-[var(--text-primary)] truncate" title={titleText}>{title}</div>
-        <div className="flex items-center gap-2">
-          {controls?.dropdown && (
-            <Dropdown
-              size="sm"
-              label={controls.dropdown.label}
-              value={controls.dropdown.value}
-              onChange={(v) => controls.dropdown!.onChange(v)}
-              options={controls.dropdown.options}
-            />
-          )}
-          {controls?.segment && (
-            <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-              {controls.segment.label && <span>{controls.segment.label}</span>}
-              <SegmentedControl
-                size="sm"
-                options={controls.segment.options}
-                value={controls.segment.value}
-                onChange={(v) => controls.segment!.onChange(v)}
-              />
-            </div>
-          )}
-          {controls?.toggle && (
-            <Toggle
-              size="sm"
-              label={controls.toggle.label ?? 'Auto'}
-              checked={controls.toggle.checked}
-              onChange={(v) => controls.toggle!.onChange(v)}
-            />
-          )}
-          <button
-            aria-label="Info"
-            className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
-            onClick={() => setShowInfo(prev => !prev)}
-            title={showInfo ? 'Show chart' : 'Show info'}
-          >
-            <Info size={16} />
-          </button>
+  const renderControls = () => (
+    <>
+      {controls?.dropdown && (
+        <Dropdown
+          size="sm"
+          label={controls.dropdown.label}
+          value={controls.dropdown.value}
+          onChange={(v) => controls.dropdown!.onChange(v)}
+          options={controls.dropdown.options}
+        />
+      )}
+      {controls?.segment && (
+        <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+          {controls.segment.label && <span>{controls.segment.label}</span>}
+          <SegmentedControl
+            size="sm"
+            options={controls.segment.options}
+            value={controls.segment.value}
+            onChange={(v) => controls.segment!.onChange(v)}
+          />
         </div>
-      </div>
-      <div className="overflow-hidden" style={bodyStyle}>
-        {showInfo ? (
-          <div className="h-full overflow-y-auto text-sm text-[var(--text-primary)] p-3">
-            {info ?? <div>No additional info.</div>}
-          </div>
-        ) : (
-          <div className="h-full p-3">
-            {children}
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+      {controls?.toggle && (
+        <Toggle
+          size="sm"
+          label={controls.toggle.label ?? 'Auto'}
+          checked={controls.toggle.checked}
+          onChange={(v) => controls.toggle!.onChange(v)}
+        />
+      )}
+    </>
   )
-}
 
-// Convenience line chart component
-type LineChartProps = { labels: string[]; data: number[]; color?: string }
+  return (
+    <ChartBoxContext.Provider value={{ isExpanded }}>
+      {(!expandable || !isExpanded) && (
+        <div className="bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)] flex flex-col" style={{ height }}>
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-primary)] shrink-0">
+            <div className="text-sm font-medium text-[var(--text-primary)] truncate" title={titleText}>{title}</div>
+            <div className="flex items-center gap-2">
+              {renderControls()}
+              {expandable && (
+                <button
+                  aria-label="Expand"
+                  aria-expanded={isExpanded}
+                  className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                  onClick={() => handleExpandChange(true)}
+                  title="Expand chart"
+                >
+                  <Maximize2 size={16} />
+                </button>
+              )}
+              <button
+                aria-label="Info"
+                className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                onClick={() => setShowInfo(prev => !prev)}
+                title={showInfo ? 'Show chart' : 'Show info'}
+              >
+                <Info size={16} />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            {showInfo ? (
+              <div className="h-full overflow-y-auto text-sm text-[var(--text-primary)] p-3">
+                {info ?? <div>No additional info.</div>}
+              </div>
+            ) : (
+              <div className="h-full p-3">
+                {children}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-export function LineChart({
-  labels,
-  data,
-  color = 'rgb(16, 185, 129)',
-}: LineChartProps) {
-  const theme = useChartTheme()
-  const chartData = useMemo(() => ({
-    labels,
-    datasets: [
-      {
-        label: 'Score',
-        data,
-        borderColor: color,
-        backgroundColor: color.replace('rgb(', 'rgba(').replace(')', ', 0.25)'),
-        tension: 0.25,
-        pointRadius: 2,
-      },
-    ],
-  }), [labels, data, color])
-
-  const options = useMemo(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        intersect: false,
-        mode: 'index' as const,
-        backgroundColor: theme.tooltipBg,
-        titleColor: theme.textPrimary,
-        bodyColor: theme.textSecondary,
-        borderColor: theme.tooltipBorder,
-        borderWidth: 1,
-      },
-    },
-    scales: {
-      x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-    },
-  }), [theme])
-
-  return <Line options={options as any} data={chartData} />
+      {expandable && (
+        <Modal
+          isOpen={isExpanded}
+          onClose={() => handleExpandChange(false)}
+          title={title}
+          headerControls={
+            <>
+              {renderControls()}
+              {modalControls}
+            </>
+          }
+          width="90%"
+          height="90%"
+        >
+          <div className="flex flex-col h-full">
+            <div className="flex-1 min-h-0 p-4">
+              {children}
+            </div>
+            {info && (
+              <div className="h-1/4 border-t border-[var(--border-primary)] p-4 overflow-y-auto bg-[var(--bg-tertiary)]/10 shrink-0">
+                <div className="text-sm text-[var(--text-primary)]">
+                  {info}
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+    </ChartBoxContext.Provider>
+  )
 }

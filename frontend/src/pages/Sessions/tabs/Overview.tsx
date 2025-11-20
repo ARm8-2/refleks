@@ -92,6 +92,7 @@ export function OverviewTab({ session }: OverviewTabProps) {
 
       <ChartBox
         title="Score, Accuracy and Real Avg TTK"
+        expandable={true}
         controls={{
           dropdown: {
             label: 'Points',
@@ -106,6 +107,15 @@ export function OverviewTab({ session }: OverviewTabProps) {
             ],
           },
         }}
+        modalControls={
+          <MetricsControls
+            names={names}
+            selectedName={selectedName}
+            onSelect={(v) => { setSelectedName(v); setAutoSelectLast(false) }}
+            autoSelectLast={autoSelectLast}
+            onToggleAuto={setAutoSelectLast}
+          />
+        }
         info={<div>
           <div className="mb-2">Metrics for the selected scenario within this session. Latest point is the most recent run.</div>
           <ul className="list-disc pl-5 text-[var(--text-secondary)]">
@@ -136,6 +146,7 @@ export function OverviewTab({ session }: OverviewTabProps) {
         <PerformanceVsSensChart items={items} scenarioName={selectedName} />
         <ChartBox
           title="Session mix (scenarios played)"
+          expandable={true}
           info={<div>
             <div className="mb-2">Number of runs per scenario name within this session. Useful to see what you’ve been practicing.</div>
             <ul className="list-disc pl-5 text-[var(--text-secondary)]">
