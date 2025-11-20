@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { REFLEKS_LOGO } from '../../assets'
-import { cellFill, gridColsShare, hexToRgba, numberFmt } from '../../lib/benchmarks'
+import { cellFill, computeFillColor, gridColsShare, numberFmt } from '../../lib/benchmarks'
+import { MISSING_STR } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 
 export type ShareBenchmarkProgressProps = {
@@ -16,7 +17,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
   const rankDefs = progress?.ranks || []
   const categories = progress?.categories || []
 
-  const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || '—'
+  const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || MISSING_STR
 
   const cols = gridColsShare(rankDefs.length)
 
@@ -52,7 +53,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                 <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">Scenario</div>
                 <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">Score</div>
                 {rankDefs.map(r => (
-                  <div key={r.name} className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center">{r.name}</div>
+                  <div key={r.name} className="text-[11px] uppercase tracking-wide text-center" style={{ color: r.color || 'var(--text-secondary)' }}>{r.name}</div>
                 ))}
               </div>
             </div>
@@ -69,14 +70,14 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
               <div className="flex-1 p-2 space-y-3">
                 {groups.map((g, gi) => (
                   <div key={gi} className="flex gap-2">
-                    <div className="w-8 px-1 py-2 flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 px-1 flex items-center justify-center flex-shrink-0">
                       {g.name ? (
                         <span className="text-[10px] font-semibold" style={{ color: g.color || 'var(--text-secondary)', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{g.name}</span>
                       ) : (
-                        <span className="text-[10px] text-[var(--text-secondary)]" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>—</span>
+                        <span className="text-[10px] text-[var(--text-secondary)]" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>-</span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-max">
+                    <div className="flex-1 min-w-max content-center">
                       <div className="grid gap-1" style={{ gridTemplateColumns: cols }}>
                         {g.scenarios.map((s) => {
                           const sName = s.name
@@ -88,12 +89,12 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                               <div className="text-[12px] text-[var(--text-primary)] flex items-center">{numberFmt(score)}</div>
                               {rankDefs.map((r, i) => {
                                 const fill = cellFill(i, score, maxes)
-                                const border = r.color
+                                const fillColor = computeFillColor(s?.scenarioRank, rankDefs)
                                 const value = maxes?.[i + 1]
                                 return (
-                                  <div key={r.name + i} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center" style={{ border: `1px solid ${border}` }}>
-                                    <div className="absolute inset-y-0 left-0" style={{ width: `${Math.round(fill * 100)}%`, background: hexToRgba(r.color, 0.35) }} />
-                                    <span className="relative z-10">{value != null ? numberFmt(value) : '—'}</span>
+                                  <div key={r.name + i} className="text-[12px] text-center px-4 rounded relative overflow-hidden flex items-center justify-center bg-[var(--bg-secondary)]">
+                                    <div className="absolute inset-y-0 left-0 rounded-l transition-all duration-150" style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }} />
+                                    <span className="relative z-10 w-full h-full py-1 flex items-center justify-center" style={{ background: "radial-gradient(circle, var(--shadow-secondary), rgba(0, 0, 0, 0))" }}>{value != null ? numberFmt(value) : MISSING_STR}</span>
                                   </div>
                                 )
                               })}
@@ -111,7 +112,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
 
         {/* Footer note */}
         <div className="mt-4 text-[11px] text-[var(--text-secondary)]">
-          Generated with RefleK's — share your progress
+          Generated with RefleK's - share your progress
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { Button, Dropdown } from '../../components'
 import { useStore } from '../../hooks/useStore'
 import { checkForUpdates, downloadAndInstallUpdate, getSettings, getVersion, resetSettings, updateSettings } from '../../lib/internal'
 import { applyTheme, getSavedTheme, setTheme, THEMES, type Theme } from '../../lib/theme'
+import { MISSING_STR } from '../../lib/utils'
 import type { Settings, UpdateInfo } from '../../types/ipc'
 
 export function SettingsPage() {
@@ -86,7 +87,7 @@ export function SettingsPage() {
           <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Updates</h3>
           <div className="space-y-3 p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
             <div className="text-sm text-[var(--text-secondary)]">
-              Current version: <span className="text-[var(--text-primary)]">v{currentVersion || '—'}</span>
+              Current version: <span className="text-[var(--text-primary)]">v{currentVersion || MISSING_STR}</span>
             </div>
             {update?.hasUpdate ? (
               <div className="flex items-center gap-2">

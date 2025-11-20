@@ -1,4 +1,5 @@
 import { InfoBox } from '..'
+import { CHART_DECIMALS, formatNumber, formatPct } from '../../lib/utils'
 
 type AccuracyVsSpeedDetailsProps = {
   scatter: {
@@ -15,8 +16,8 @@ type AccuracyVsSpeedDetailsProps = {
 export function AccuracyVsSpeedDetails({
   scatter,
 }: AccuracyVsSpeedDetailsProps) {
-  const fmt = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? '-' : v.toFixed(3))
-  const fmtPct = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? '-' : `${(v * 100).toFixed(1)}%`)
+  const fmt = (v: number | undefined) => formatNumber(v, CHART_DECIMALS.detailNum)
+  const fmtPct = (v: number | undefined) => formatPct(v, CHART_DECIMALS.pctTooltip)
   const info = (
     <div>
       <div className="mb-2">How to read these metrics:</div>
@@ -30,7 +31,7 @@ export function AccuracyVsSpeedDetails({
   )
   return (
     <div className="mt-2">
-      <InfoBox title="Accuracy vs speed — metrics" info={info}>
+      <InfoBox title="Accuracy vs speed - metrics" info={info}>
         <ul className="space-y-1">
           <li>Pearson r (KPM vs accuracy): <b className="text-[var(--text-primary)]">{fmt(scatter.corrKpmAcc)}</b></li>
           <li>Within-speed-bin accuracy std (avg across {scatter.binsUsed} bins): <b className="text-[var(--text-primary)]">{fmt(scatter.meanBinStdAcc)}</b></li>

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Doughnut } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
+import { CHART_DECIMALS, formatNumber } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
 
@@ -54,7 +55,7 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
 
   const bgColors = useMemo(() => {
     const cols = rankDefs.map(r => r.color)
-    const below = 'rgba(148, 163, 184, 0.6)' // slate-400 with alpha
+    const below = '#94a3b8' // slate-400
     return counts.below > 0 ? [below, ...cols] : cols
   }, [rankDefs, counts.below])
 
@@ -65,7 +66,7 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
         label: 'Scenarios by achieved rank',
         data: counts.below > 0 ? [counts.below, ...counts.byRank] : counts.byRank,
         backgroundColor: bgColors,
-        borderColor: bgColors.map(c => c.replace('0.6', '1')),
+        borderColor: bgColors,
         borderWidth: 1,
       }
     ]
@@ -82,6 +83,12 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
         bodyColor: theme.textSecondary,
         borderColor: theme.tooltipBorder,
         borderWidth: 1,
+        callbacks: {
+          label: (ctx: any) => {
+            const v = ctx.parsed ?? ctx.raw ?? ctx.raw?.y ?? 0
+            return `${ctx.label}: ${formatNumber(Number(v ?? 0), CHART_DECIMALS.numTooltip)}`
+          }
+        }
       },
     },
   }), [theme])

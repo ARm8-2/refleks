@@ -3,6 +3,7 @@ import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { Metric, collectRunsBySession, expectedAvgVsLength, expectedBestVsLength, expectedByIndex, recommendLengths } from '../../lib/analysis/sessionLength'
+import { CHART_DECIMALS, extractChartValue, formatNumber, formatPct, formatUiValueForLabel } from '../../lib/utils'
 import type { Session } from '../../types/domain'
 
 type SessionLengthInsightsProps = { sessions: Session[]; scenarioName: string }
@@ -16,6 +17,8 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
   const bestVsL = useMemo(() => expectedBestVsLength(runs, metric), [runs, metric])
   const avgVsL = useMemo(() => expectedAvgVsLength(runs, metric), [runs, metric])
   const rec = useMemo(() => recommendLengths(byIdx, bestVsL, avgVsL), [byIdx, bestVsL, avgVsL])
+
+  const fmtTick = (v: any) => metric === 'acc' ? formatPct(v, CHART_DECIMALS.pctTick) : formatNumber(v, CHART_DECIMALS.numTick)
 
   const idxData = useMemo(() => ({
     labels: byIdx.mean.map((_, i) => `#${i + 1}`),
@@ -52,12 +55,20 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
         bodyColor: theme.textSecondary,
         borderColor: theme.tooltipBorder,
         borderWidth: 1,
+        callbacks: {
+          label: (ctx: any) => {
+            const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
+            const n = extractChartValue(ctx)
+            const decimals = metric === 'score' ? CHART_DECIMALS.numTooltip : CHART_DECIMALS.pctTooltip
+            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, decimals)}`
+          }
+        },
       },
     },
     scales: {
       x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y2: { position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: theme.textSecondary } },
+      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: fmtTick } },
+      y2: { position: 'right' as const, grid: { drawOnChartArea: false }, ticks: { color: theme.textSecondary, callback: (v: any) => formatNumber(v, CHART_DECIMALS.numTick) } },
     },
   }), [theme])
 
@@ -95,11 +106,19 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
         bodyColor: theme.textSecondary,
         borderColor: theme.tooltipBorder,
         borderWidth: 1,
+        callbacks: {
+          label: (ctx: any) => {
+            const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
+            const n = extractChartValue(ctx)
+            const decimals = metric === 'score' ? CHART_DECIMALS.numTooltip : CHART_DECIMALS.pctTooltip
+            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, decimals)}`
+          }
+        },
       },
     },
     scales: {
       x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
+      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: fmtTick } },
     },
   }), [theme])
 
@@ -144,11 +163,19 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
         bodyColor: theme.textSecondary,
         borderColor: theme.tooltipBorder,
         borderWidth: 1,
+        callbacks: {
+          label: (ctx: any) => {
+            const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
+            const n = extractChartValue(ctx)
+            const decimals = metric === 'score' ? CHART_DECIMALS.numTooltip : CHART_DECIMALS.pctTooltip
+            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, decimals)}`
+          }
+        },
       },
     },
     scales: {
       x: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
-      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary } },
+      y: { grid: { color: theme.grid }, ticks: { color: theme.textSecondary, callback: fmtTick } },
     },
   }), [theme])
 

@@ -1,4 +1,5 @@
 import { InfoBox } from '..'
+import { CHART_DECIMALS, formatNumber, formatPct, formatSeconds } from '../../lib/utils'
 
 type EventsOverTimeDetailsProps = {
   summary: {
@@ -18,9 +19,9 @@ type EventsOverTimeDetailsProps = {
 }
 
 export function EventsOverTimeDetails({ summary }: EventsOverTimeDetailsProps) {
-  const fmtPct = (v: number) => `${(v * 100).toFixed(1)}%`
-  const fmt = (v: number) => (Number.isFinite(v) ? v.toFixed(2) : '-')
-  const fmtS = (v: number) => (Number.isFinite(v) ? `${v.toFixed(2)}s` : '-')
+  const fmtPct = (v: number) => formatPct(v, CHART_DECIMALS.pctTooltip)
+  const fmt = (v: number) => formatNumber(v, CHART_DECIMALS.numTooltip)
+  const fmtS = (v: number) => formatSeconds(v, CHART_DECIMALS.ttkTooltip)
 
   const info = (
     <div>
@@ -36,7 +37,7 @@ export function EventsOverTimeDetails({ summary }: EventsOverTimeDetailsProps) {
 
   return (
     <div className="mt-2">
-      <InfoBox title="Kills over time — metrics" info={info}>
+      <InfoBox title="Kills over time - metrics" info={info}>
         <ul className="space-y-1">
           <li>Kills: <b className="text-[var(--text-primary)]">{summary.kills}</b> • Shots: <b className="text-[var(--text-primary)]">{summary.shots}</b> • Hits: <b className="text-[var(--text-primary)]">{summary.hits}</b> • Final accuracy: <b className="text-[var(--text-primary)]">{fmtPct(summary.finalAcc)}</b></li>
           <li>TTK avg/median/std: <b className="text-[var(--text-primary)]">{fmt(summary.avgTTK)}</b>s / <b className="text-[var(--text-primary)]">{fmt(summary.medianTTK)}</b>s / <b className="text-[var(--text-primary)]">{fmt(summary.stdTTK)}</b>s</li>

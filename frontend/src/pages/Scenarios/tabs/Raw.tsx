@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
+import { CHART_DECIMALS, formatNumber, formatPct, formatSeconds } from '../../../lib/utils'
 import type { ScenarioRecord } from '../../../types/ipc'
 
 type StatKey = string
@@ -18,13 +19,7 @@ const CATEGORY_DEFS: Record<string, StatKey[]> = {
 
 function isNumber(v: unknown): v is number { return typeof v === 'number' && Number.isFinite(v) }
 
-function formatPercent(value: number, digits = 2) {
-  return `${value.toFixed(digits)}%`
-}
-
-function formatSeconds(value: number, digits = 3) {
-  return `${value.toFixed(digits)} s`
-}
+// Using shared helpers for consistency
 
 function asBoolLabel(v: unknown) {
   if (typeof v === 'boolean') return v ? 'Yes' : 'No'
@@ -50,17 +45,17 @@ function hexToRgb(hex: string) {
 function formatValue(key: string, raw: unknown): ReactNode {
   // Special-case common fields
   if (key === 'Accuracy' && isNumber(raw)) {
-    const pct = raw <= 1 ? raw * 100 : raw
-    return formatPercent(pct, 2)
+    // formatPct accepts both [0,1] or [0..100] inputs
+    return formatPct(raw, CHART_DECIMALS.detailNum)
   }
   if ((key.includes('TTK') || key === 'Fight Time' || key === 'Pause Duration' || key === 'Time Remaining') && isNumber(raw)) {
-    return formatSeconds(raw, 3)
+    return formatSeconds(raw, CHART_DECIMALS.ttkTooltip)
   }
   if (key === 'Resolution Scale' && isNumber(raw)) {
-    return formatPercent(raw, 0)
+    return formatPct(raw, CHART_DECIMALS.pctTick)
   }
   if ((key.includes('FPS')) && isNumber(raw)) {
-    return key === 'Avg FPS' ? raw.toFixed(1) : Math.round(raw).toString()
+    return key === 'Avg FPS' ? formatNumber(raw, 1) : formatNumber(raw, 0)
   }
   if (key === 'Crosshair Color' && typeof raw === 'string') {
     const color = hexToRgb(raw)
@@ -83,7 +78,7 @@ function formatValue(key: string, raw: unknown): ReactNode {
   if (isNumber(raw)) {
     // Keep reasonable precision, no trailing zeros for integers
     const isInt = Math.abs(raw - Math.round(raw)) < 1e-9
-    return isInt ? String(Math.round(raw)) : raw.toFixed(3).replace(/\.0+$/, '')
+    return isInt ? formatNumber(raw, 0) : formatNumber(raw, CHART_DECIMALS.detailNum)
   }
   return String(raw)
 }

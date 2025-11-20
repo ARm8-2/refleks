@@ -51,6 +51,8 @@
   --accent-light: #60a5fa;
   --border-primary: #333333;
   --border-secondary: #404040;
+  --shadow-primary: #111316a9;
+  --shadow-secondary: #18191ca9;
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
@@ -86,6 +88,8 @@
   --accent-light: #38bdf8;
   --border-primary: #dcdfe4;
   --border-secondary: #c9cfd7;
+  --shadow-primary: #f6f7f9a9;
+  --shadow-secondary: #ffffffa9;
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
@@ -121,6 +125,8 @@
   --accent-light: #d8b6ff;
   --border-primary: #44475a;
   --border-secondary: #5b5e72;
+  --shadow-primary: #282a36a9;
+  --shadow-secondary: #2b2d3aa9;
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
@@ -156,6 +162,8 @@
   --accent-light: #ffd75f;
   --border-primary: #504945;
   --border-secondary: #665c54;
+  --shadow-primary: #282828a9;
+  --shadow-secondary: #3c3836a9;
   --success: #b8bb26;
   --warning: #fabd2f;
   --error: #fb4934;
@@ -191,6 +199,8 @@
   --accent-light: #ffd75f;
   --border-primary: #a89984;
   --border-secondary: #bdae93;
+  --shadow-primary: #fbf1c7a9;
+  --shadow-secondary: #ebdbb2a9;
   --success: #b8bb26;
   --warning: #fabd2f;
   --error: #fb4934;
@@ -226,6 +236,8 @@
   --accent-light: #a3cee0;
   --border-primary: #4c566a;
   --border-secondary: #5e6a7d;
+  --shadow-primary: #2e3440a9;
+  --shadow-secondary: #3b4252a9;
   --success: #a3be8c;
   --warning: #ebcb8b;
   --error: #bf616a;
@@ -261,6 +273,8 @@
   --accent-light: #22d3ee;
   --border-primary: #d6e1ef;
   --border-secondary: #c5d5e7;
+  --shadow-primary: #eaf2fba9;
+  --shadow-secondary: #ffffffa9;
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
@@ -296,6 +310,8 @@
   --accent-light: #5fb3d7;
   --border-primary: #0a3942;
   --border-secondary: #0e4a57;
+  --shadow-primary: #002b36a9;
+  --shadow-secondary: #073642a9;
   --success: #2aa198;
   --warning: #b58900;
   --error: #dc322f;
@@ -331,6 +347,8 @@
   --accent-light: #5fb3d7;
   --border-primary: #93a1a1;
   --border-secondary: #839496;
+  --shadow-primary: #fdf6e3a9;
+  --shadow-secondary: #eee8d5a9;
   --success: #2aa198;
   --warning: #b58900;
   --error: #dc322f;

@@ -1,4 +1,5 @@
 import type { ScenarioRecord } from '../../types/ipc'
+import { formatMmSs } from '../utils'
 
 export type ScenarioComputed = {
   labels: string[]
@@ -59,9 +60,7 @@ function toSec(v: any): number {
 
 function fmtRel(sec: number): string {
   if (!Number.isFinite(sec) || sec <= 0) return '0:00'
-  const m = Math.floor(sec / 60)
-  const s = sec - m * 60
-  return `${m}:${s.toFixed(2).padStart(5, '0')}`
+  return formatMmSs(sec, 2)
 }
 
 function mean(arr: number[]): number {

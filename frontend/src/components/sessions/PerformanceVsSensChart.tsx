@@ -3,7 +3,7 @@ import { Scatter } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
-import { getScenarioName } from '../../lib/utils'
+import { CHART_DECIMALS, formatNumber, formatPct, formatUiValueForLabel, getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 
 type PerformanceVsSensChartProps = {
@@ -209,7 +209,7 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
             const dsType = ctx.dataset && (ctx.dataset.type || ctx.dataset._metaType)
             if (ctx.dataset && (ctx.dataset.type === 'bar' || ctx.dataset.label === 'Sensitivity histogram')) {
               const b = bins[ctx.dataIndex]
-              if (b) return [`Range: ${b.start.toFixed(2)}–${b.end.toFixed(2)} cm/360`, `Runs: ${b.count}`]
+              if (b) return [`Range: ${formatNumber(b.start, CHART_DECIMALS.sensTooltip)}–${formatNumber(b.end, CHART_DECIMALS.sensTooltip)} cm/360`, `Runs: ${b.count}`]
               return [`Runs: ${ctx.parsed.y}`]
             }
 
@@ -217,10 +217,8 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
             const p = ctx.raw as { x: number; y: number; i: number; origX?: number }
             const rawX = typeof p.origX === 'number' ? p.origX : p.x
             const lines: string[] = []
-            lines.push(`cm/360: ${rawX.toFixed(2)}`)
-            if (metric === 'score') lines.push(`Score: ${p.y.toFixed(1)}`)
-            else if (metric === 'acc') lines.push(`Accuracy: ${p.y.toFixed(1)}%`)
-            else if (metric === 'ttk') lines.push(`TTK: ${p.y.toFixed(2)}s`)
+            lines.push(`cm/360: ${formatNumber(rawX, CHART_DECIMALS.sensTooltip)}`)
+            lines.push(`${metricLabel}: ${formatUiValueForLabel(p.y, metricLabel, metric === 'score' ? CHART_DECIMALS.numTooltip : (metric === 'acc' ? CHART_DECIMALS.pctTooltip : CHART_DECIMALS.ttkTooltip))}`)
             return lines
           },
         },
@@ -229,21 +227,18 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
     scales: {
       x: {
         type: 'linear' as const,
-        title: { display: true, text: 'Sensitivity (cm/360) — lower is faster', color: colors.textSecondary },
-        ticks: { color: colors.textSecondary },
+        ticks: { color: colors.textSecondary, callback: (v: any) => formatNumber(Number(v), CHART_DECIMALS.sensTick) },
         grid: { color: colors.grid },
         suggestedMin: Number.isFinite(xMin) ? Math.max(0, Math.floor(xMin - 1)) : 0,
         suggestedMax: Math.ceil((xMax || 20) * 1.05),
       },
       y: {
-        title: { display: true, text: metricLabel, color: colors.textSecondary },
-        ticks: { color: colors.textSecondary, callback: metric === 'acc' ? (v: any) => `${v}%` : undefined },
+        ticks: { color: colors.textSecondary, callback: metric === 'acc' ? (v: any) => formatPct(v, CHART_DECIMALS.pctTick) : undefined },
         grid: { color: colors.grid },
       },
       // Secondary axis for histogram counts
       yCount: {
         position: 'right' as const,
-        title: { display: true, text: 'Runs', color: colors.textSecondary },
         ticks: { color: colors.textSecondary, precision: 0 },
         grid: { display: false },
         beginAtZero: true,
@@ -268,11 +263,14 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
         },
       }}
       info={<div>
-        <div className="mb-2">Each point is a run for this scenario. X is your effective sensitivity (cm per full 360° turn), Y is the selected performance metric ({metric === 'score' ? 'Score' : metric === 'acc' ? 'Accuracy (%)' : 'Real Avg TTK (s)'}).</div>
+        <div className="mb-2">Each point is a run for this scenario. X is your effective sensitivity (cm per full 360° turn) and Y is the selected performance metric ({metric === 'score' ? 'Score' : metric === 'acc' ? 'Accuracy (%)' : 'Real Avg TTK (s)'}). Hover points or histogram bars for exact values and counts.</div>
+        <div className="mb-2 font-medium">How to interpret</div>
         <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-          <li>We only plot runs where sensitivity could be computed. Unsupported scales appear as cm/360 = 0 and are omitted.</li>
-          <li>Lower cm/360 means higher sensitivity. Try comparing clusters to find your sweet spot.</li>
-          <li>Point color shows recency: greyish = older, amber = newer.</li>
+          <li>Histogram bars show where most runs cluster; peaks are your most commonly used sensitivities.</li>
+          <li>Scatter points show per-run performance aligned to bin centers (hover to see actual sensitivity). Clusters with high metric values indicate sweet spots.</li>
+          <li>When the selected metric is Accuracy: look for sensitivity ranges that maximize accuracy. When TTK: lower is better (find minima).</li>
+          <li>Point color indicates recency - use it to detect whether newer runs favor different sensitivities.</li>
+          <li>Outliers may appear as isolated points; use counts from the histogram to judge whether a trend is meaningful.</li>
         </ul>
       </div>}
       height={300}

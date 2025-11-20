@@ -112,9 +112,12 @@ export function ProgressAllTab() {
         <ChartBox
           title="Practice time-of-day"
           info={<div>
-            <div className="mb-2">Distribution of your practice runs by hour of day. Useful to spot when you train most often.</div>
+            <div className="mb-2">Distribution of your practice runs by hour of day (local clock). Peaks indicate when you most frequently practice.</div>
+            <div className="mb-2 font-medium">How to interpret</div>
             <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-              <li>Computed from each run’s “Challenge Start” time (local clock).</li>
+              <li>Peaks show the hours when you run the most training sessions - great for identifying consistent practice windows.</li>
+              <li>Use this to align deliberate practice into your existing schedule or to compare performance on other charts with time-of-day buckets.</li>
+              <li>This chart shows frequency only. For performance-by-hour analysis, cross-reference with accuracy/TTK charts sliced by time-of-day.</li>
             </ul>
           </div>}
           height={300}
