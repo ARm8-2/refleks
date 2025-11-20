@@ -157,10 +157,10 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
 
   // Constants for non-rank columns
   const REC_W = RECOMMEND_COL_WIDTH, PLAY_W = PLAY_COL_WIDTH, SCORE_W = SCORE_COL_WIDTH, NOTES_W = NOTES_COL_WIDTH
-  // Dynamic grid columns (flex growth for ranks): Scenario | Recom | Play | Notes | Score | Rank1..N
+  // Dynamic grid columns (flex growth for ranks): Scenario | Recom | Notes | Play | Score | Rank1..N
   const dynamicColumns = useMemo(() => {
     const rankTracks = visibleRankIndices.map(() => `minmax(${RANK_MIN_WIDTH}px,1fr)`).join(' ')
-    return `${Math.round(scenarioWidth)}px ${REC_W}px ${PLAY_W}px ${NOTES_W}px ${SCORE_W}px ${rankTracks}`
+    return `${Math.round(scenarioWidth)}px ${REC_W}px ${NOTES_W}px ${PLAY_W}px ${SCORE_W}px ${rankTracks}`
   }, [scenarioWidth, visibleRankIndices.length])
 
   // Attach refined wheel scroll: only active when cursor is to right of Scenario+Recom prefix
@@ -259,7 +259,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                       {triangle(totalRec >= 0 ? 'up' : 'down', totalRec >= 0 ? '--success' : '--error')}
                                       <span>{totalRec}</span>
                                     </div>
-                                    <div className="flex items-center justify-center">
+                                    <div className="flex items-center justify-start">
                                       <button
                                         className={`p-1 rounded hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-primary)] ${settings?.scenarioNotes?.[sName]?.notes ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}
                                         title="Notes & Sensitivity"
@@ -269,7 +269,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                         <FileText size={14} />
                                       </button>
                                     </div>
-                                    <div className="flex items-center justify-center">
+                                    <div className="flex items-center justify-start">
                                       <button
                                         className="p-1 rounded hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-primary)]"
                                         title="Play in Kovaak's"
