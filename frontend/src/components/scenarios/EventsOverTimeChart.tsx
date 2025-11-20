@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
+import { CHART_DECIMALS, extractChartValue, formatMmSs, formatNumber, formatPct, formatSeconds, formatUiValueForLabel } from '../../lib/utils'
 import { EventsOverTimeDetails } from './EventsOverTimeDetails'
 
 type EventsOverTimeChartProps = {
@@ -56,6 +57,7 @@ export function EventsOverTimeChart({
           backgroundColor: 'rgba(239, 68, 68, 0.25)',
           tension: 0.25,
           pointRadius: 0,
+          hidden: true
         },
         {
           label: 'Cumulative Kills',
@@ -90,9 +92,20 @@ export function EventsOverTimeChart({
             if (!items || !items.length) return ''
             const x = items[0].raw?.x
             if (!Number.isFinite(x)) return ''
-            const m = Math.floor(x / 60)
-            const s = (x - m * 60).toFixed(2).padStart(5, '0')
-            return `${m}:${s}`
+            return formatMmSs(x, CHART_DECIMALS.timeTooltip)
+          },
+          label: (ctx: any) => {
+            const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
+            const n = extractChartValue(ctx)
+            if (typeof dsLabel === 'string' && (dsLabel.includes('Accuracy') || dsLabel.includes('Acc'))) {
+              return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, CHART_DECIMALS.pctTooltip)}`
+            }
+            if (typeof dsLabel === 'string' && dsLabel.includes('TTK')) {
+              return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, CHART_DECIMALS.ttkTooltip)}`
+            }
+            // Default: integer for kills else 1 decimal for other numbers
+            if (ctx.dataset && ctx.dataset.yAxisID === 'y3') return `${dsLabel}: ${formatNumber(n, CHART_DECIMALS.numTooltip)}`
+            return `${dsLabel}: ${formatUiValueForLabel(n, dsLabel, CHART_DECIMALS.numTooltip)}`
           },
         },
       },
@@ -103,9 +116,7 @@ export function EventsOverTimeChart({
         ticks: {
           color: colors.textSecondary, callback: (v: any) => {
             const x = Number(v)
-            const m = Math.floor(x / 60)
-            const s = (x - m * 60).toFixed(0).padStart(2, '0')
-            return `${m}:${s}`
+            return formatMmSs(x, CHART_DECIMALS.timeTick)
           }
         },
         grid: { color: colors.grid },
@@ -117,7 +128,7 @@ export function EventsOverTimeChart({
         suggestedMax: 1,
         ticks: {
           color: colors.textSecondary,
-          callback: (v: any) => `${(Number(v) * 100).toFixed(0)}%`,
+          callback: (v: any) => formatPct(v, CHART_DECIMALS.pctTick),
         },
         grid: { color: colors.grid },
       },
@@ -125,7 +136,7 @@ export function EventsOverTimeChart({
         type: 'linear' as const,
         position: 'right' as const,
         suggestedMin: 0,
-        ticks: { color: colors.textSecondary },
+        ticks: { color: colors.textSecondary, callback: (v: any) => formatSeconds(v, CHART_DECIMALS.ttkTick) },
         grid: { drawOnChartArea: false },
       },
       y3: {
@@ -135,7 +146,7 @@ export function EventsOverTimeChart({
         suggestedMin: 0,
         ticks: {
           color: colors.textSecondary,
-          callback: (v: any) => `${Number(v).toFixed(0)}`,
+          callback: (v: any) => `${formatNumber(v, CHART_DECIMALS.numTick)}`,
           precision: 0,
         },
         grid: { drawOnChartArea: false },
@@ -148,11 +159,13 @@ export function EventsOverTimeChart({
       <ChartBox
         title="Kills Over Time"
         info={<div>
-          <div className="mb-2">This chart plots cumulative accuracy (left), real TTK between kills (right), and cumulative kills (stepped, secondary right) over the scenario timeline. The X‑axis is elapsed time from the scenario start.</div>
+          <div className="mb-2">This chart plots cumulative accuracy (left), real TTK between kills (right), and cumulative kills (stepped, secondary right) over the scenario timeline. The X‑axis is elapsed time from the scenario start. Hover points for exact values at a moment in time.</div>
+          <div className="mb-2 font-medium">How to interpret</div>
           <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-            <li>Time origin is the scenario’s “Challenge Start”.</li>
-            <li>Real TTK = elapsed time between consecutive kills (first kill from start).</li>
-            <li>Cumulative accuracy = cumulative Hits / Shots.</li>
+            <li>Cumulative Accuracy shows how your accuracy evolves across a run. A rising curve indicates improvement; a flat line indicates stable accuracy.</li>
+            <li>Real TTK (s) shows the time between consecutive kills. Lower TTK indicates faster play; watch for large TTK spikes that indicate downtime or pauses.</li>
+            <li>Cumulative Kills indicates pacing - a steep slope means dense kill events. Combine with TTK to assess intensity versus steadiness.</li>
+            <li>Use the tooltips to inspect the exact values at particular times and compare across the traces.</li>
           </ul>
         </div>}
         height={320}

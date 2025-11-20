@@ -2,12 +2,13 @@ import { Copy } from 'lucide-react'
 import { Button } from '..'
 import type { KillAnalysis, MouseTraceAnalysis, SensSuggestion } from '../../lib/analysis/mouse'
 import { computeSuggestedSens } from '../../lib/analysis/mouse'
+import { CHART_DECIMALS, formatNumber, formatPct, formatSeconds } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 import { InfoBox } from '../shared/InfoBox'
 import { PreviewTag } from '../shared/PreviewTag'
 
 function SuggestedHeader({ suggestion }: { suggestion: NonNullable<SensSuggestion> }) {
-  const text = suggestion.recommended.toFixed(2)
+  const text = formatNumber(suggestion.recommended, CHART_DECIMALS.sensTooltip)
   const doCopy = async () => {
     try {
       await navigator.clipboard.writeText(text)
@@ -20,12 +21,12 @@ function SuggestedHeader({ suggestion }: { suggestion: NonNullable<SensSuggestio
   return (
     <div className="flex items-baseline justify-between">
       <div className="font-semibold text-[var(--text-primary)] flex items-center gap-2">
-        <span>Suggested: {suggestion.recommended.toFixed(2)} cm/360 <span className="text-[var(--text-secondary)]">({suggestion.changePct >= 0 ? '+' : ''}{suggestion.changePct.toFixed(0)}%)</span></span>
+        <span>Suggested: {formatNumber(suggestion.recommended, CHART_DECIMALS.sensTooltip)} cm/360 <span className="text-[var(--text-secondary)]">({suggestion.changePct >= 0 ? '+' : ''}{formatPct(suggestion.changePct, CHART_DECIMALS.pctTooltip)})</span></span>
         <Button variant="ghost" size="sm" onClick={doCopy} title={`Copy ${text} cm/360`} aria-label={`Copy suggested sensitivity ${text} cm/360`}>
           <Copy className="h-4 w-4" />
         </Button>
       </div>
-      <div className="text-xs text-[var(--text-secondary)]">Current: {suggestion.current.toFixed(2)} cm/360</div>
+      <div className="text-xs text-[var(--text-secondary)]">Current: {formatNumber(suggestion.current, CHART_DECIMALS.sensTooltip)} cm/360</div>
     </div>
   )
 }
@@ -47,7 +48,7 @@ export function TraceAnalysis({
   const shown = analysis.kills
   const total = shown.length
 
-  const fmtPct = (n: number) => total ? ((n / total) * 100).toFixed(0) + '%' : '0%'
+  const fmtPct = (n: number) => total ? formatPct(n / total, CHART_DECIMALS.pctTooltip) : formatPct(0, CHART_DECIMALS.pctTooltip)
 
   const pill = (cls: KillAnalysis['classification']) => {
     const base = 'px-2 py-0.5 rounded text-xs border'
@@ -85,7 +86,7 @@ export function TraceAnalysis({
             <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">Undershoot {analysis.counts.undershoot} ({fmtPct(analysis.counts.undershoot)})</span>
             <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Optimal {analysis.counts.optimal} ({fmtPct(analysis.counts.optimal)})</span>
           </div>
-          <div className="text-xs text-[var(--text-secondary)]">Avg efficiency <span className="text-[var(--text-primary)] font-semibold">{(analysis.avgEfficiency * 100).toFixed(1)}%</span></div>
+          <div className="text-xs text-[var(--text-secondary)]">Avg efficiency <span className="text-[var(--text-primary)] font-semibold">{formatPct(analysis.avgEfficiency)}</span></div>
         </div>
       </div>
       {suggestion ? (
@@ -96,7 +97,14 @@ export function TraceAnalysis({
             <div className="mt-2 text-[var(--text-secondary)] text-xs">Try 3-10 runs at the suggested sensitivity to adapt, then revert to your original sensitivity and check whether overshoot/undershoot is reduced.</div>
           </div>
         </div>
-      ) : null}
+      ) : (
+        <div className="mt-3 p-3 bg-[var(--bg-tertiary)]/50 border border-[var(--border-primary)] border-dashed rounded text-sm text-[var(--text-secondary)]">
+          <div className="font-medium text-[var(--text-primary)] mb-1">Sensitivity Suggestion Unavailable</div>
+          <p className="text-xs leading-relaxed">
+            Not enough actionable data to calculate a reliable sensitivity suggestion. This feature works best with clicking/switching scenarios where discrete flick corrections can be analyzed. Pure tracking scenarios often lack the distinct over/undershoot patterns required for this calculation.
+          </p>
+        </div>
+      )}
       <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
         {shown.map((k, i) => (
           <button key={`${k.killIdx}-${i}`} onClick={() => onSelect?.({ startMs: k.startMs, endMs: k.endMs, killMs: k.endMs, classification: k.classification })} className="text-left bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80 border border-[var(--border-primary)] rounded p-2">
@@ -105,9 +113,9 @@ export function TraceAnalysis({
               {pill(k.classification)}
             </div>
             <div className="mt-1 text-[var(--text-secondary)] text-xs flex items-center justify-between">
-              <div>TTK {(k.stats.ttkSec || 0).toFixed(3)}s</div>
-              <div>Shots {Math.round(k.stats.shots)}, Hits {Math.round(k.stats.hits)}</div>
-              <div className="text-[var(--text-primary)]" style={{ color: colorFor(k.classification) }}>{(k.efficiency * 100).toFixed(0)}%</div>
+              <div>TTK {formatSeconds(k.stats.ttkSec || 0, CHART_DECIMALS.ttkTooltip)}</div>
+              <div>Shots {formatNumber(k.stats.shots, 0)}, Hits {formatNumber(k.stats.hits, 0)}</div>
+              <div className="text-[var(--text-primary)]" style={{ color: colorFor(k.classification) }}>{formatPct(k.efficiency, CHART_DECIMALS.pctTooltip)}</div>
             </div>
           </button>
         ))}

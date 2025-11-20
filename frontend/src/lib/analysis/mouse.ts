@@ -1,4 +1,5 @@
 import type { Point, ScenarioRecord } from '../../types/ipc'
+import { formatNumber, formatPct } from '../utils'
 
 export type MouseKillEvent = {
   idx: number
@@ -281,8 +282,8 @@ export function computeSuggestedSens(analysis: MouseTraceAnalysis, stats: Record
 
   const direction = net > 0 ? 'faster' : 'slower'
   const reason = net > 0
-    ? `Overshoot detected in ${overPct > 0 ? (overPct * 100).toFixed(0) + '%' : 'some'} of kills${avgOvershootDistance > 10 ? ` with average overshoot distance of ${(avgOvershootDistance / 10).toFixed(1)} pixels` : ''}. Suggest training at the higher sensitivity (${recommended.toFixed(2)} cm/360) for a few runs; when you return to your original sensitivity (${curr.toFixed(2)} cm/360) you'll likely retain smaller physical motions which should reduce overshoot.`
-    : `Undershoot detected in ${underPct > 0 ? (underPct * 100).toFixed(0) + '%' : 'some'} of kills${avgUndershootFlips > 2 ? ` with frequent micro-corrections` : ''}. Suggest training at the lower sensitivity (${recommended.toFixed(2)} cm/360) for a few runs; when you return to your original sensitivity (${curr.toFixed(2)} cm/360) you'll likely retain slightly larger motions which should reduce undershoot.`
+    ? `Overshoot detected in ${overPct > 0 ? formatPct(overPct, 0) : 'some'} of kills${avgOvershootDistance > 10 ? ` with average overshoot distance of ${formatNumber(avgOvershootDistance / 10, 1)} pixels` : ''}. Suggest training at the higher sensitivity (${formatNumber(recommended, 2)} cm/360) for a few runs; when you return to your original sensitivity (${formatNumber(curr, 2)} cm/360) you'll likely retain smaller physical motions which should reduce overshoot.`
+    : `Undershoot detected in ${underPct > 0 ? formatPct(underPct, 0) : 'some'} of kills${avgUndershootFlips > 2 ? ` with frequent micro-corrections` : ''}. Suggest training at the lower sensitivity (${formatNumber(recommended, 2)} cm/360) for a few runs; when you return to your original sensitivity (${formatNumber(curr, 2)} cm/360) you'll likely retain slightly larger motions which should reduce undershoot.`
 
   return { current: curr, recommended, changePct, direction, reason }
 }

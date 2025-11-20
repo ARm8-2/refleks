@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
+import { CHART_DECIMALS, extractChartValue, formatNumber, formatSeconds, MISSING_STR } from '../../lib/utils'
 import { TTKMovingAverageDetails } from './TTKMovingAverageDetails'
 
 type TTKMovingAverageChartProps = {
@@ -60,6 +61,7 @@ export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: TTKMo
   const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
+    interaction: { intersect: false, mode: 'index' as const },
     plugins: {
       legend: { display: true, labels: { color: colors.textPrimary } },
       tooltip: {
@@ -68,11 +70,21 @@ export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: TTKMo
         bodyColor: colors.textSecondary,
         borderColor: colors.tooltipBorder,
         borderWidth: 1,
+        callbacks: {
+          label: (ctx: any) => {
+            const dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label : ''
+            const n = extractChartValue(ctx)
+            if (typeof dsLabel === 'string' && dsLabel.includes('TTK')) {
+              return `${dsLabel}: ${formatSeconds(n, CHART_DECIMALS.ttkTooltip)}`
+            }
+            return `${dsLabel}: ${n !== undefined && Number.isFinite(n) ? formatNumber(n, CHART_DECIMALS.numTooltip) : MISSING_STR}`
+          }
+        },
       },
     },
     scales: {
       x: { ticks: { color: colors.textSecondary }, grid: { color: colors.grid } },
-      y: { ticks: { color: colors.textSecondary }, grid: { color: colors.grid }, suggestedMin: 0 },
+      y: { ticks: { color: colors.textSecondary, callback: (v: any) => formatSeconds(v, CHART_DECIMALS.ttkTick) }, grid: { color: colors.grid }, suggestedMin: 0 },
     },
   }), [colors])
 
@@ -81,10 +93,13 @@ export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: TTKMo
       <ChartBox
         title="TTK with Moving Average (5) & Trend"
         info={<div className="text-sm">
-          <div className="mb-2">Shows raw TTK per kill, a trailing 5-sample moving average, and a dotted linear trend line of the moving average.</div>
+          <div className="mb-2">Shows raw TTK per kill, a trailing 5-sample moving average (MA(5)), and a dotted linear trend line of the moving average.</div>
+          <div className="mb-2 font-medium">How to interpret</div>
           <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-            <li>MA(5) = average of the last 5 TTK values.</li>
-            <li>The dotted line is a linear fit over MA(5) to visualize trend.</li>
+            <li>MA(5) smooths short-term noise; use it to track persistent changes rather than per-kill variability.</li>
+            <li>A downward slope in the trend signifies faster average TTK over time (improvement).</li>
+            <li>Stable segments (low rolling std) indicate periods of consistent play - use them as baselines.</li>
+            <li>Short spikes in raw TTK often reflect pauses or outliers; rely on MA(5) and trend for long-term signals.</li>
           </ul>
         </div>}
         height={320}

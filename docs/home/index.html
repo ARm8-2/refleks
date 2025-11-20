@@ -35,6 +35,15 @@
           class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-[var(--accent-primary)] text-black font-semibold hover:bg-[var(--accent-hover)] transition-colors min-h-[48px]">
           Download for Windows
         </a>
+
+        <a target="_blank" rel="noopener noreferrer" href="https://discord.gg/SFsf4GQhJU"
+          aria-label="Join RefleK's Discord server"
+          class="inline-flex items-center justify-center px-5 py-3.5 rounded-xl border border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors min-h-[48px]">
+          <img src="/assets/Discord-Symbol-White.png" alt="" aria-hidden="true"
+            class="h-5 w-auto mr-2 object-contain" />
+          Join Discord
+        </a>
+
         <a href="/help/#getting-started"
           class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl border border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors min-h-[48px]">
           Get started
@@ -281,8 +290,11 @@
             Discord.</p>
           <div class="panel-links space-y-2">
             <a class="panel-link block" href="/help/">Help &amp; Docs →</a>
-            <a class="panel-link block" target="_blank" href="https://github.com/ARm8-2/refleks/issues">Open an issue on
+            <a class="panel-link block" target="_blank" rel="noopener noreferrer"
+              href="https://github.com/ARm8-2/refleks/issues">Open an issue on
               GitHub →</a>
+            <a class="panel-link block" target="_blank" rel="noopener noreferrer"
+              href="https://discord.gg/SFsf4GQhJU">Join our Discord →</a>
             <div class="text-sm text-[var(--text-muted)]">or message <button
                 class="text-[var(--text-primary)] font-semibold hover:text-[var(--accent-primary)] cursor-pointer transition-colors inline-flex items-center gap-1"
                 onclick="navigator.clipboard.writeText('arm8').then(() => { const btn = this; const orig = btn.innerHTML; btn.innerHTML = '✓ copied'; setTimeout(() => btn.innerHTML = orig, 2000); })"

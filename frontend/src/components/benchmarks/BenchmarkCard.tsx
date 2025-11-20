@@ -29,7 +29,7 @@ export function BenchmarkCard({ id, title, abbreviation, color, isFavorite, onOp
           aria-label={isFavorite ? 'Unfavorite' : 'Favorite'}
           title={isFavorite ? 'Unfavorite' : 'Favorite'}
           onClick={handleToggle}
-          className="inline-flex items-center justify-center rounded w-8 h-8 text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] focus:outline-none"
+          className="inline-flex items-center justify-center rounded w-8 h-8 text-[var(--text-primary)] hover:text-[var(--accent-primary)] focus:outline-none"
         >
           <Star size={20} strokeWidth={1.5} style={{ color: isFavorite ? 'var(--accent-primary)' : undefined, fill: isFavorite ? 'var(--accent-primary)' : 'none' }} />
         </button>
