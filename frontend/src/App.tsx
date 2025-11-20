@@ -91,7 +91,7 @@ function TopNav() {
           title="Join our Discord"
           className="px-3 py-1 rounded hover:bg-[var(--bg-tertiary)] flex items-center"
         >
-          <img src={DISCORD_SYMBOL} alt="Discord" className="h-5 w-5" />
+          <img src={DISCORD_SYMBOL} alt="Discord" className="h-5 w-auto" />
         </a>
 
         <a
@@ -110,7 +110,7 @@ function TopNav() {
           title="Support on Ko-fi"
           className="px-3 py-1 rounded hover:bg-[var(--bg-tertiary)] flex items-center"
         >
-          <img src={KO_FI_SYMBOL} alt="Ko-fi" className="h-5 w-5" />
+          <img src={KO_FI_SYMBOL} alt="Ko-fi" className="h-5 w-auto" />
         </a>
 
         {link('/settings', (
