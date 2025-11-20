@@ -1,20 +1,13 @@
-export function hexToRgba(hex: string, alpha = 0.18): string {
-  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-  if (!m) return `rgba(255,255,255,${alpha})`
-  const r = parseInt(m[1], 16)
-  const g = parseInt(m[2], 16)
-  const b = parseInt(m[3], 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
 // Determine the fill color used for a scenario subbar based on the last achieved
-// rank and a fallback (simple gray). Returns a CSS rgba string at the requested alpha.
-export function computeFillColor(achievedRank: number | undefined | null, rankDefs: Array<{ color?: string }>, alpha = 0.35, fallback = '#9a9a9a'): string {
+// rank and a fallback. Returns a CSS color string (hex or similar).
+export function computeFillColor(achievedRank: number | undefined | null, rankDefs: Array<{ color?: string }>, fallback = '#9a9a9a'): string {
   const ach = Number(achievedRank || 0)
-  if (!ach || ach <= 0) return hexToRgba(fallback, alpha)
+  if (!ach || ach <= 0) return fallback
   const lastIdx = Math.max(0, Math.min((rankDefs?.length ?? 0) - 1, ach - 1))
   const lastColor = rankDefs?.[lastIdx]?.color
-  return lastColor ? hexToRgba(lastColor, alpha) : hexToRgba(fallback, alpha)
+  // Return the raw color value (usually a hex string) so the UI shows the
+  // true, non-dimmed color. If the color isn't present, fall back to gray.
+  return lastColor ?? fallback
 }
 
 // Contribution from threshold proximity + rank deficiency for recommendations.
@@ -35,7 +28,7 @@ export function thresholdContribution(achieved: number, score: number, threshold
 
 // Dynamic grid template for BenchmarkProgress (Scenario | Recom | Play | Score | Rank1..N)
 // If there is no horizontal overflow, let rank columns flex with minmax.
-import { PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCENARIO_DEFAULT_WIDTH, SCORE_COL_WIDTH } from './layout'
+import { PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH } from './layout'
 
 export function benchmarkGridTemplate(scenarioWidth: number, rankCount: number, hasOverflow: boolean): string {
   const rankSpec = hasOverflow ? `${RANK_MIN_WIDTH}px` : `minmax(${RANK_MIN_WIDTH}px,1fr)`
@@ -93,11 +86,6 @@ export function normalizedRankProgress(scenarioRank: number, score: number, thre
   const frac = Math.max(0, Math.min(1, (Number(score || 0) - prev) / (next - prev)))
   return (r - 1) / n + frac * (1 / n)
 }
-
-// Grid columns for BenchmarkProgress rows:
-// Scenario | Recom | Play | Score | Rank1..N
-// Deprecated static grid cols (prefer benchmarkGridTemplate + constants)
-export const gridCols = (count: number) => `minmax(${SCENARIO_DEFAULT_WIDTH}px,1fr) ${RECOMMEND_COL_WIDTH}px ${PLAY_COL_WIDTH}px ${SCORE_COL_WIDTH}px ${Array.from({ length: count }).map(() => `${RANK_MIN_WIDTH}px`).join(' ')}`
 
 // Grid columns for shareable image (no Recom/Play):
 // Scenario | Score | Rank1..N

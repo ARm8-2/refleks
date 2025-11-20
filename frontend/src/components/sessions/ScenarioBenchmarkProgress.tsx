@@ -130,9 +130,9 @@ export function ScenarioBenchmarkProgress({
                             const fillColor = computeFillColor(scenario.scenarioRank, ranks)
                             const value = maxes?.[i + 1]
                             return (
-                              <div key={r.name + i} className="text-[12px] text-center rounded px-2 py-1 relative overflow-hidden flex items-center justify-center bg-[var(--bg-secondary)] border-0">
+                              <div key={r.name + i} className="text-[12px] text-center px-4 rounded relative overflow-hidden flex items-center justify-center bg-[var(--bg-secondary)]">
                                 <div className="absolute inset-y-0 left-0 rounded-l transition-all duration-150" style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }} />
-                                <span className="relative z-10">{value != null ? numberFmt(value) : MISSING_STR}</span>
+                                <span className="relative z-10 w-full h-full py-1 flex items-center justify-center" style={{ background: "radial-gradient(circle, var(--shadow-secondary), rgba(0, 0, 0, 0))" }}>{value != null ? numberFmt(value) : MISSING_STR}</span>
                               </div>
                             )
                           })}

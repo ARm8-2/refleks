@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Bar, Radar } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
-import { hexToRgba, normalizedRankProgress } from '../../lib/benchmarks'
+import { normalizedRankProgress } from '../../lib/benchmarks'
 import { CHART_DECIMALS, formatNumber, formatPct } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
@@ -95,7 +95,7 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
       {
         label: 'Strength (avg progress to max rank) %',
         data: values,
-        backgroundColor: strength.map(r => hexToRgba(r.color, 0.35)),
+        backgroundColor: strength.map(r => r.color),
         borderColor: strength.map(r => r.color),
         borderWidth: 1,
       }

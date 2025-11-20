@@ -55,7 +55,7 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
 
   const bgColors = useMemo(() => {
     const cols = rankDefs.map(r => r.color)
-    const below = 'rgba(148, 163, 184, 0.6)' // slate-400 with alpha
+    const below = '#94a3b8' // slate-400
     return counts.below > 0 ? [below, ...cols] : cols
   }, [rankDefs, counts.below])
 
@@ -66,7 +66,7 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
         label: 'Scenarios by achieved rank',
         data: counts.below > 0 ? [counts.below, ...counts.byRank] : counts.byRank,
         backgroundColor: bgColors,
-        borderColor: bgColors.map(c => c.replace('0.6', '1')),
+        borderColor: bgColors,
         borderWidth: 1,
       }
     ]
