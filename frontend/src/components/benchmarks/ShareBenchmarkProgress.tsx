@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { REFLEKS_LOGO } from '../../assets'
+import { REFLEKS_SYMBOL } from '../../assets'
 import { cellFill, computeFillColor, gridColsShare, numberFmt } from '../../lib/benchmarks'
 import { MISSING_STR } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
@@ -27,7 +27,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
       <div className="px-6 pt-5 pb-3 border-b border-[var(--border-primary)]">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-h-[32px]">
-            <img src={REFLEKS_LOGO} alt="RefleK's" className="h-8 w-auto object-contain" />
+            <img src={REFLEKS_SYMBOL} alt="RefleK's" className="h-8 w-auto object-contain" />
             <div className="text-lg font-semibold">RefleK's</div>
           </div>
           <div className="text-xs text-[var(--text-secondary)]">refleks-app.com</div>
