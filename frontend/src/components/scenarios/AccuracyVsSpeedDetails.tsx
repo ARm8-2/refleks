@@ -31,7 +31,7 @@ export function AccuracyVsSpeedDetails({
   )
   return (
     <div className="mt-2">
-      <InfoBox title="Accuracy vs speed - metrics" info={info}>
+      <InfoBox id="scenarios:accuracy-vs-speed-metrics" title="Accuracy vs speed - metrics" info={info}>
         <ul className="space-y-1">
           <li>Pearson r (KPM vs accuracy): <b className="text-[var(--text-primary)]">{fmt(scatter.corrKpmAcc)}</b></li>
           <li>Within-speed-bin accuracy std (avg across {scatter.binsUsed} bins): <b className="text-[var(--text-primary)]">{fmt(scatter.meanBinStdAcc)}</b></li>

@@ -31,7 +31,7 @@ export function TTKMovingAverageDetails({
   )
   return (
     <div className="mt-2">
-      <InfoBox title="TTK moving average - metrics" info={info}>
+      <InfoBox id="scenarios:ttk-moving-average-metrics" title="TTK moving average - metrics" info={info}>
         <ul className="space-y-1">
           <li>Trend slope: <b className="text-[var(--text-primary)]">{formatSeconds(movingAvg.slope, CHART_DECIMALS.ttkTooltip)}</b> s/kill • Linear fit R²: <b className="text-[var(--text-primary)]">{fmt(movingAvg.r2)}</b></li>
           <li>MA(5) mean/std: <b className="text-[var(--text-primary)]">{formatSeconds(movingAvg.meanMA5, CHART_DECIMALS.ttkTooltip)}</b> / <b className="text-[var(--text-primary)]">{formatSeconds(movingAvg.stdMA5, CHART_DECIMALS.ttkTooltip)}</b> • Net change: <b className="text-[var(--text-primary)]">{formatSeconds(movingAvg.ma5NetChange, CHART_DECIMALS.ttkTooltip)}</b></li>

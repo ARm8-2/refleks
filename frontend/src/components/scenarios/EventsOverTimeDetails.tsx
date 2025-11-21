@@ -37,7 +37,7 @@ export function EventsOverTimeDetails({ summary }: EventsOverTimeDetailsProps) {
 
   return (
     <div className="mt-2">
-      <InfoBox title="Kills over time - metrics" info={info}>
+      <InfoBox id="scenarios:kills-over-time-metrics" title="Kills over time - metrics" info={info}>
         <ul className="space-y-1">
           <li>Kills: <b className="text-[var(--text-primary)]">{summary.kills}</b> • Shots: <b className="text-[var(--text-primary)]">{summary.shots}</b> • Hits: <b className="text-[var(--text-primary)]">{summary.hits}</b> • Final accuracy: <b className="text-[var(--text-primary)]">{fmtPct(summary.finalAcc)}</b></li>
           <li>TTK avg/median/std: <b className="text-[var(--text-primary)]">{fmt(summary.avgTTK)}</b>s / <b className="text-[var(--text-primary)]">{fmt(summary.medianTTK)}</b>s / <b className="text-[var(--text-primary)]">{fmt(summary.stdTTK)}</b>s</li>

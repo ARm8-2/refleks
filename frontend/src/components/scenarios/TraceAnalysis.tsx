@@ -66,6 +66,7 @@ export function TraceAnalysis({
   return (
     <InfoBox
       title={<span className="inline-flex items-center gap-1">Mouse path analysis <PreviewTag /></span>}
+      id="scenarios:mouse-path-analysis"
       info={<div>
         <div className="mb-2">Classifies each kill's approach path as overshoot, undershoot, or optimal by aligning kill events to your mouse trace and inspecting the final approach window.</div>
         <ul className="list-disc pl-5 text-[var(--text-secondary)]">

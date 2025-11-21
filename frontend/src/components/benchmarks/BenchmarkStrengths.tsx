@@ -168,6 +168,7 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
   return (
     <ChartBox
       title="Strengths and weaknesses"
+      expandable={true}
       info={<div>
         <div className="mb-2">Shows your average progress toward the maximum rank across the selected grouping.</div>
         <ul className="list-disc pl-5 text-[var(--text-secondary)]">

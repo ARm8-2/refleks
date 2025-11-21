@@ -4,6 +4,7 @@ import { usePageState } from '../../hooks/usePageState'
 import { formatNumber, formatPct01, formatSeconds, getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 import { Dropdown } from '../shared/Dropdown'
+import { InfoBox } from '../shared/InfoBox'
 
 type FindingsProps = { strongest: ScenarioRecord[]; weakest: ScenarioRecord[] }
 type FindingsRowProps = { rec: ScenarioRecord }
@@ -44,17 +45,14 @@ export function Findings({ strongest, weakest }: FindingsProps) {
   )
 
   return (
-    <div className="rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
-      <div className="px-3 py-2 border-b border-[var(--border-primary)] text-sm font-medium text-[var(--text-primary)] flex items-center justify-between">
-        <span>Performance findings</span>
-        <Dropdown
-          label="Open in"
-          value={openTab}
-          onChange={(v: string) => setOpenTab(v as 'analysis' | 'raw')}
-          options={[{ label: 'Analysis', value: 'analysis' }, { label: 'Raw Stats', value: 'raw' }]}
-        />
-      </div>
-      <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+    <InfoBox id="sessions:performance-findings" title={<span>Performance findings</span>} height={320} headerControls={<Dropdown
+      label="Open in"
+      value={openTab}
+      onChange={(v: string) => setOpenTab(v as 'analysis' | 'raw')}
+      options={[{ label: 'Analysis', value: 'analysis' }, { label: 'Raw Stats', value: 'raw' }]}
+    />}
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <div className="text-xs text-[var(--text-secondary)] mb-2">Strongest</div>
           <div className="space-y-2">
@@ -70,6 +68,6 @@ export function Findings({ strongest, weakest }: FindingsProps) {
           </div>
         </div>
       </div>
-    </div>
+    </InfoBox>
   )
 }

@@ -18,6 +18,7 @@ export function NextHighscoreForecast({ pred }: NextHighscoreForecastProps) {
   return (
     <InfoBox
       title={<span className="inline-flex items-center gap-1">Next high score forecast <PreviewTag /></span>}
+      id="sessions:next-highscore-forecast"
       info={<div>
         <div className="mb-2">Estimates when you are likely to beat your current personal best for the selected scenario.
           The model focuses on runs, not hours, and computes an optimal pause between runs for fastest progress.

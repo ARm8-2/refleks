@@ -103,6 +103,7 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
   return (
     <ChartBox
       title="Rank distribution"
+      expandable={true}
       info={<div>
         <div className="mb-2">Distribution of achieved ranks across the selected scope.</div>
         <ul className="list-disc pl-5 text-[var(--text-secondary)]">
