@@ -45,7 +45,7 @@ export function Findings({ strongest, weakest }: FindingsProps) {
   )
 
   return (
-    <InfoBox id="sessions:performance-findings" title={<span>Performance findings</span>} height={320} headerControls={<Dropdown
+    <InfoBox id="sessions:performance-findings" title={<span>Performance findings</span>} height={210} headerControls={<Dropdown
       label="Open in"
       value={openTab}
       onChange={(v: string) => setOpenTab(v as 'analysis' | 'raw')}
