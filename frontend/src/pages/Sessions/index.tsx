@@ -22,6 +22,7 @@ export function SessionsPage() {
       {/* <div className="text-lg font-medium">Session</div> */}
       <div className="flex-1 min-h-0">
         <ListDetail
+          id="sessions:recent"
           title="Recent Sessions"
           items={sessions}
           getKey={(s) => s.id}

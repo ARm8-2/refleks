@@ -66,6 +66,7 @@ export function ScenariosPage() {
       {/* <div className="text-lg font-medium">Scenario</div> */}
       <div className="flex-1 min-h-0">
         <ListDetail
+          id="scenarios:recent"
           title={`Recent Scenarios (${newCount})`}
           items={scenarios}
           getKey={(it) => it.filePath}
