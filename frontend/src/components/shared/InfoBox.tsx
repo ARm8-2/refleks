@@ -8,11 +8,7 @@ type InfoBoxProps = {
   info?: ReactNode
   children: ReactNode
   height?: number
-  /** Optional ID for persistent UI state (localStorage key). If not provided
-   *  and title is a string, the title will be used. If neither is present,
-   *  collapse state will not persist across reloads. */
   id?: string
-  /** Enable/disable collapse behavior (default true) */
   collapsible?: boolean
   headerControls?: ReactNode
   /** Optional className to apply to the body container (children). If omitted a default p-3 padding
