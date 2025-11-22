@@ -8,7 +8,7 @@ import { autoHiddenRanks, cellFill, computeFillColor, computeRecommendationScore
 import { getSettings, launchScenario, saveScenarioNote } from '../../lib/internal'
 import { getScenarioName, MISSING_STR } from '../../lib/utils'
 import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
-import { NotesModal } from '../scenarios/NotesModal'
+import { NotesModal } from './NotesModal'
 import { Button } from '../shared/Button'
 import { Dropdown } from '../shared/Dropdown'
 import { Toggle } from '../shared/Toggle'
