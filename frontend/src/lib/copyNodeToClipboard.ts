@@ -18,7 +18,6 @@ export async function copyNodeToClipboard(node: HTMLElement, opts: CopyOptions =
     pixelRatio,
     backgroundColor,
     cacheBust,
-    // filter: (el) => true, // keep everything; could hide elements with data-hide-on-share
   })
 
   if (!blob) throw new Error('Failed to render image')
