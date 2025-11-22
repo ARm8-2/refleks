@@ -1,4 +1,4 @@
-import { FileText, Play } from 'lucide-react'
+import { NotebookPen, Play } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useHorizontalWheelScroll } from '../../hooks/useHorizontalWheelScroll'
 import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
@@ -266,7 +266,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                         onClick={() => openNotes(sName)}
                                         aria-label={`Notes for ${sName}`}
                                       >
-                                        <FileText size={14} />
+                                        <NotebookPen size={16} />
                                       </button>
                                     </div>
                                     <div className="flex items-center justify-start">
