@@ -1,6 +1,8 @@
 import { NotebookPen, Play } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { useDragScroll } from '../../hooks/useDragScroll'
 import { useHorizontalWheelScroll } from '../../hooks/useHorizontalWheelScroll'
+import { usePageState } from '../../hooks/usePageState'
 import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
 import { useStore } from '../../hooks/useStore'
 import { groupByScenario } from '../../lib/analysis/metrics'
@@ -8,10 +10,10 @@ import { autoHiddenRanks, cellFill, computeFillColor, computeRecommendationScore
 import { getSettings, launchScenario, saveScenarioNote } from '../../lib/internal'
 import { getScenarioName, MISSING_STR } from '../../lib/utils'
 import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
-import { NotesModal } from './NotesModal'
 import { Button } from '../shared/Button'
 import { Dropdown } from '../shared/Dropdown'
 import { Toggle } from '../shared/Toggle'
+import { NotesModal } from './NotesModal'
 
 type BenchmarkProgressProps = {
   progress: ProgressModel
@@ -44,6 +46,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
   const { scenarioWidth, onHandleMouseDown } = useResizableScenarioColumn({ initialWidth: 220, min: 140, max: 600 })
 
   const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || MISSING_STR
+  const [hScrollEnabled, setHScrollEnabled] = usePageState<boolean>('bench:progress:horizontalScroll', true)
 
   // Notes modal state
   const [settings, setSettings] = useState<any>(null)
@@ -163,8 +166,12 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
     return `${Math.round(scenarioWidth)}px ${REC_W}px ${NOTES_W}px ${PLAY_W}px ${SCORE_W}px ${rankTracks}`
   }, [scenarioWidth, visibleRankIndices.length])
 
-  // Attach refined wheel scroll: only active when cursor is to right of Scenario+Recom prefix
-  useHorizontalWheelScroll(containerRef, { excludeLeftWidth: scenarioWidth + REC_W })
+  // Attach refined wheel scroll: only enable horizontal wheel mapping when
+  // the cursor is over the rank columns. We compute the left-offset where ranks begin.
+  useHorizontalWheelScroll(containerRef, { excludeLeftWidth: scenarioWidth + REC_W + NOTES_W + PLAY_W + SCORE_W, enabled: hScrollEnabled })
+  // Drag-> allow grabbing container to scroll horizontally (skip interactive elements / resize handles)
+  // Always enable drag-to-scroll regardless of the wheel mapping toggle
+  useDragScroll(containerRef, { axis: 'x', skipSelector: 'button, a, input, textarea, select, [role="button"]' })
 
   // Handlers for manual toggles
   const toggleManualRank = (idx: number) => {
@@ -179,8 +186,13 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-[var(--text-primary)]">
-        Overall Rank: <span className="font-medium">{overallRankName}</span> · Benchmark Progress: <span className="font-medium">{numberFmt(progress?.benchmarkProgress)}</span>
+      <div className="flex items-center justify-between text-sm text-[var(--text-primary)]">
+        <div>
+          Overall Rank: <span className="font-medium">{overallRankName}</span> · Benchmark Progress: <span className="font-medium">{numberFmt(progress?.benchmarkProgress)}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Toggle size="sm" label="Horizontal scroll" checked={hScrollEnabled} onChange={setHScrollEnabled} />
+        </div>
       </div>
 
       {categories && (

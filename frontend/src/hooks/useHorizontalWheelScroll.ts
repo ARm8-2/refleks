@@ -3,6 +3,10 @@ import { useEffect } from 'react'
 type HorizontalWheelOptions = {
   // Ignore wheel->horizontal mapping when cursor is left of this x offset (relative to container left)
   excludeLeftWidth?: number
+  // Ignore wheel->horizontal mapping when cursor is within this x offset from the right of the container
+  excludeRightWidth?: number
+  // Whether the wheel-to-horizontal mapping is currently enabled (default: true)
+  enabled?: boolean
 }
 
 // Maps vertical wheel movement to horizontal scrolling when content overflows.
@@ -11,12 +15,14 @@ export function useHorizontalWheelScroll(ref: React.RefObject<HTMLElement>, opti
   useEffect(() => {
     const el = ref.current
     if (!el) return
+    if (options.enabled === false) return
     const handler = (e: WheelEvent) => {
       if (el.scrollWidth <= el.clientWidth) return
-      if (options.excludeLeftWidth != null) {
+      if (options.excludeLeftWidth != null || options.excludeRightWidth != null) {
         const rect = el.getBoundingClientRect()
         const relX = e.clientX - rect.left
-        if (relX < options.excludeLeftWidth) return // do not intercept
+        if (options.excludeLeftWidth != null && relX < options.excludeLeftWidth) return // do not intercept
+        if (options.excludeRightWidth != null && (rect.width - relX) < options.excludeRightWidth) return // do not intercept
       }
       const { deltaX, deltaY } = e
       if (Math.abs(deltaY) <= Math.abs(deltaX)) return
@@ -33,5 +39,5 @@ export function useHorizontalWheelScroll(ref: React.RefObject<HTMLElement>, opti
     }
     el.addEventListener('wheel', handler, { passive: false })
     return () => el.removeEventListener('wheel', handler)
-  }, [ref, options.excludeLeftWidth])
+  }, [ref, options.excludeLeftWidth, options.excludeRightWidth, options.enabled])
 }

@@ -1,10 +1,13 @@
 import { useMemo, useRef } from 'react'
+import { useDragScroll } from '../../hooks/useDragScroll'
 import { useHorizontalWheelScroll } from '../../hooks/useHorizontalWheelScroll'
+import { usePageState } from '../../hooks/usePageState'
 import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
 import { cellFill, computeFillColor, numberFmt, RANK_MIN_WIDTH, SCORE_COL_WIDTH } from '../../lib/benchmarks'
 import { MISSING_STR } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 import { InfoBox } from '../shared/InfoBox'
+import { Toggle } from '../shared/Toggle'
 
 type ScenarioBenchmarkProgressProps = {
   bench?: Benchmark | null
@@ -52,8 +55,14 @@ export function ScenarioBenchmarkProgress({
     return `${Math.round(scenarioWidth)}px ${SCORE_COL_WIDTH}px ${rankTracks}`
   }, [scenarioWidth, ranks.length])
 
-  // Wheel -> horizontal scroll only when cursor is to right of Scenario + Score columns
-  useHorizontalWheelScroll(containerRef, { excludeLeftWidth: scenarioWidth + SCORE_COL_WIDTH })
+  // Wheel -> horizontal scroll only when hovering over the rank columns
+  // The ranks are placed after the scenario + score columns, so only start mapping
+  // when cursor is to the right of those columns.
+  const [hScrollEnabled, setHScrollEnabled] = usePageState<boolean>('sessions:scenario-progress:horizontalScroll', true)
+  useHorizontalWheelScroll(containerRef, { excludeLeftWidth: scenarioWidth + SCORE_COL_WIDTH, enabled: hScrollEnabled })
+  // Drag -> allow grabbing and dragging to scroll horizontally for all columns (except interactive elements / resize handle)
+  // Always enable drag-to-scroll regardless of the wheel mapping toggle
+  useDragScroll(containerRef, { axis: 'x' })
 
   const infoContent = (
     <div className="h-full overflow-y-auto text-sm text-[var(--text-primary)] px-3 pt-2">
@@ -74,6 +83,7 @@ export function ScenarioBenchmarkProgress({
       height={HEIGHT}
       bodyClassName="h-full overflow-hidden"
       info={infoContent}
+      headerControls={<div className="flex items-center gap-2"><Toggle size="sm" label="Horizontal scroll" checked={hScrollEnabled} onChange={setHScrollEnabled} /></div>}
     >
       <div className="h-full overflow-x-auto px-3 py-1" ref={containerRef}>
         {(!selectedBenchId) && (
