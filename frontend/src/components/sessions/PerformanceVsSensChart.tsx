@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Scatter } from 'react-chartjs-2'
-import { ChartBox } from '..'
+import { ChartBox, Dropdown } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
 import { CHART_DECIMALS, formatNumber, formatPct, formatUiValueForLabel, getScenarioName } from '../../lib/utils'
@@ -251,35 +251,40 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
     },
   }), [colors, xMax, xMin, metric, bins, isExpanded])
 
+  const infoContent = (
+    <div>
+      <div className="mb-2">Each point is a run for this scenario. X is your effective sensitivity (cm per full 360° turn) and Y is the selected performance metric ({metric === 'score' ? 'Score' : metric === 'acc' ? 'Accuracy (%)' : 'Real Avg TTK (s)'}). Hover points or histogram bars for exact values and counts.</div>
+      <div className="mb-2 font-medium">How to interpret</div>
+      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+        <li>Histogram bars show where most runs cluster; peaks are your most commonly used sensitivities.</li>
+        <li>Scatter points show per-run performance aligned to bin centers (hover to see actual sensitivity). Clusters with high metric values indicate sweet spots.</li>
+        <li>When the selected metric is Accuracy: look for sensitivity ranges that maximize accuracy. When TTK: lower is better (find minima).</li>
+        <li>Point color indicates recency - use it to detect whether newer runs favor different sensitivities.</li>
+        <li>Outliers may appear as isolated points; use counts from the histogram to judge whether a trend is meaningful.</li>
+      </ul>
+    </div>
+  )
+
   return (
     <ChartBox
       title="Performance vs Sens (cm/360)"
       expandable={true}
       isExpanded={isExpanded}
       onExpandChange={setIsExpanded}
-      controls={{
-        dropdown: {
-          label: 'Metric',
-          value: metric,
-          onChange: (v: string) => setMetric(v as any),
-          options: [
+      actions={
+        <Dropdown
+          size="sm"
+          label="Metric"
+          value={metric}
+          onChange={(v) => setMetric(v as any)}
+          options={[
             { label: 'Score', value: 'score' },
             { label: 'Accuracy (%)', value: 'acc' },
             { label: 'Real Avg TTK (s)', value: 'ttk' },
-          ],
-        },
-      }}
-      info={<div>
-        <div className="mb-2">Each point is a run for this scenario. X is your effective sensitivity (cm per full 360° turn) and Y is the selected performance metric ({metric === 'score' ? 'Score' : metric === 'acc' ? 'Accuracy (%)' : 'Real Avg TTK (s)'}). Hover points or histogram bars for exact values and counts.</div>
-        <div className="mb-2 font-medium">How to interpret</div>
-        <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-          <li>Histogram bars show where most runs cluster; peaks are your most commonly used sensitivities.</li>
-          <li>Scatter points show per-run performance aligned to bin centers (hover to see actual sensitivity). Clusters with high metric values indicate sweet spots.</li>
-          <li>When the selected metric is Accuracy: look for sensitivity ranges that maximize accuracy. When TTK: lower is better (find minima).</li>
-          <li>Point color indicates recency - use it to detect whether newer runs favor different sensitivities.</li>
-          <li>Outliers may appear as isolated points; use counts from the histogram to judge whether a trend is meaningful.</li>
-        </ul>
-      </div>}
+          ]}
+        />
+      }
+      info={infoContent}
       height={300}
     >
       <div className="h-full">

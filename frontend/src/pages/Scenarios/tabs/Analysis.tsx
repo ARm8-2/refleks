@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { AccuracyVsSpeedChart, EventsOverTimeChart, TTKMovingAverageChart } from '../../../components'
+import { AccuracyVsSpeedChart, AccuracyVsSpeedDetails, EventsOverTimeChart, EventsOverTimeDetails, TTKMovingAverageChart, TTKMovingAverageDetails } from '../../../components'
 import { computeScenarioAnalysis } from '../../../lib/analysis/scenario'
 import type { ScenarioRecord } from '../../../types/ipc'
 
@@ -11,11 +11,20 @@ export function AnalysisTab({ item }: ScenariosAnalysisTabProps) {
 
   return (
     <div className="space-y-3">
-      <EventsOverTimeChart timeSec={timeSec} accOverTime={accOverTime} realTTK={realTTK} cumKills={cumKills} summary={summary} />
+      <div>
+        <EventsOverTimeChart timeSec={timeSec} accOverTime={accOverTime} realTTK={realTTK} cumKills={cumKills} summary={summary} />
+        <EventsOverTimeDetails summary={summary} />
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <TTKMovingAverageChart labels={labels} realTTK={realTTK} ma5={movingAvg.ma5} movingAvg={movingAvg} />
+        <div>
+          <TTKMovingAverageChart labels={labels} realTTK={realTTK} ma5={movingAvg.ma5} movingAvg={movingAvg} />
+          <TTKMovingAverageDetails movingAvg={movingAvg} />
+        </div>
 
-        <AccuracyVsSpeedChart points={kpm.map((x, i) => ({ x, y: perKillAcc[i], i }))} scatter={scatter} />
+        <div>
+          <AccuracyVsSpeedChart points={kpm.map((x, i) => ({ x, y: perKillAcc[i], i }))} scatter={scatter} />
+          <AccuracyVsSpeedDetails scatter={scatter} />
+        </div>
       </div>
     </div>
   )

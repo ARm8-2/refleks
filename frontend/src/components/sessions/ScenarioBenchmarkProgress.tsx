@@ -55,23 +55,25 @@ export function ScenarioBenchmarkProgress({
   // Wheel -> horizontal scroll only when cursor is to right of Scenario + Score columns
   useHorizontalWheelScroll(containerRef, { excludeLeftWidth: scenarioWidth + SCORE_COL_WIDTH })
 
+  const infoContent = (
+    <div className="h-full overflow-y-auto text-sm text-[var(--text-primary)] px-3 pt-2">
+      <div>
+        <div className="mb-2">Shows your progress towards benchmark ranks for the currently selected scenario. This follows the benchmark you have open on the Benchmarks page.</div>
+        <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+          <li>Open a benchmark in the Benchmarks tab to display its progress here.</li>
+          <li>If this scenario isn’t part of the opened benchmark, an info message is shown.</li>
+        </ul>
+      </div>
+    </div>
+  )
+
   return (
     <InfoBox
       title="Benchmark progress for this scenario"
       id="sessions:scenario-benchmark-progress"
       height={HEIGHT}
       bodyClassName="h-full overflow-hidden"
-      info={
-        <div className="h-full overflow-y-auto text-sm text-[var(--text-primary)] px-3 pt-2">
-          <div>
-            <div className="mb-2">Shows your progress towards benchmark ranks for the currently selected scenario. This follows the benchmark you have open on the Benchmarks page.</div>
-            <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-              <li>Open a benchmark in the Benchmarks tab to display its progress here.</li>
-              <li>If this scenario isn’t part of the opened benchmark, an info message is shown.</li>
-            </ul>
-          </div>
-        </div>
-      }
+      info={infoContent}
     >
       <div className="h-full overflow-x-auto px-3 py-1" ref={containerRef}>
         {(!selectedBenchId) && (

@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
 import { Bar, Radar } from 'react-chartjs-2'
+import { ChartBox, Dropdown, SegmentedControl } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
 import { normalizedRankProgress } from '../../lib/benchmarks'
 import { CHART_DECIMALS, formatNumber, formatPct } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
-import { ChartBox } from '../shared/ChartBox'
 
 type BenchmarkStrengthsProps = {
   bench: Benchmark
@@ -19,10 +19,9 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
   const theme = useChartTheme()
 
   type Level = 'category' | 'subcategory' | 'scenario'
-  const benchKey = `${bench.abbreviation}-${bench.benchmarkName}`
-  const [level, setLevel] = usePageState<Level>(`bench:${benchKey}:diff:${difficultyIndex}:strengths:level`, 'category')
+  const [level, setLevel] = usePageState<Level>('bench:strengths:level', 'category')
   type Mode = 'bar' | 'radar'
-  const [mode, setMode] = usePageState<Mode>(`bench:${benchKey}:diff:${difficultyIndex}:strengths:mode`, 'bar')
+  const [mode, setMode] = usePageState<Mode>('bench:strengths:mode', 'bar')
 
   const categories = progress?.categories || []
 
@@ -165,39 +164,49 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
     }
   }), [theme])
 
+  const infoContent = (
+    <div>
+      <div className="mb-2">Shows your average progress toward the maximum rank across the selected grouping.</div>
+      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+        <li>0% = below first rank; 100% = at or beyond the highest rank.</li>
+        <li>Group by Category (e.g. Tracking, Clicking), Subcategory, or individual Scenario.</li>
+        <li>Bar colors reflect the approximate rank color for that group.</li>
+      </ul>
+    </div>
+  )
+
   return (
     <ChartBox
       title="Strengths and weaknesses"
       expandable={true}
-      info={<div>
-        <div className="mb-2">Shows your average progress toward the maximum rank across the selected grouping.</div>
-        <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-          <li>0% = below first rank; 100% = at or beyond the highest rank.</li>
-          <li>Group by Category (e.g. Tracking, Clicking), Subcategory, or individual Scenario.</li>
-          <li>Bar colors reflect the approximate rank color for that group.</li>
-        </ul>
-      </div>}
-      controls={{
-        dropdown: {
-          label: 'Group by',
-          value: level,
-          onChange: (v: string) => setLevel((v as Level) || 'category'),
-          options: [
-            { label: 'Category', value: 'category' },
-            { label: 'Subcategory', value: 'subcategory' },
-            { label: 'Scenario', value: 'scenario' },
-          ]
-        },
-        segment: {
-          label: 'View',
-          value: mode,
-          onChange: (v: string) => setMode((v as Mode) || 'bar'),
-          options: [
-            { label: 'Bar', value: 'bar' },
-            { label: 'Radar', value: 'radar' },
-          ]
-        }
-      }}
+      info={infoContent}
+      actions={
+        <>
+          <Dropdown
+            size="sm"
+            label="Group by"
+            value={level}
+            onChange={(v) => setLevel((v as Level) || 'category')}
+            options={[
+              { label: 'Category', value: 'category' },
+              { label: 'Subcategory', value: 'subcategory' },
+              { label: 'Scenario', value: 'scenario' },
+            ]}
+          />
+          <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+            <span>View</span>
+            <SegmentedControl
+              size="sm"
+              value={mode}
+              onChange={(v) => setMode((v as Mode) || 'bar')}
+              options={[
+                { label: 'Bar', value: 'bar' },
+                { label: 'Radar', value: 'radar' },
+              ]}
+            />
+          </div>
+        </>
+      }
       height={height}
     >
       {labels.length === 0 ? (

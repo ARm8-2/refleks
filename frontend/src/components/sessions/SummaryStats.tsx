@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { CHART_DECIMALS, formatNumber, formatPct, formatSeconds } from '../../lib/utils'
+import { usePageState } from '../../hooks/usePageState'
+import { formatNumber, formatPct, formatSeconds } from '../../lib/utils'
 import { Dropdown } from '../shared/Dropdown'
 
 function slope(arr: number[]): number {
@@ -24,11 +25,8 @@ type SummaryStatsProps = {
   score: number[]
   acc: number[]
   ttk: number[]
-  firstPct: number
-  lastPct: number
   title?: string
-  onFirstPct?: (n: number) => void
-  onLastPct?: (n: number) => void
+  storageKeyPrefix: string
 }
 
 type StatProps = { label: string; value: number; fmt: (n: number) => string; delta: number; slopeVal: number }
@@ -37,12 +35,12 @@ export function SummaryStats({
   score,
   acc,
   ttk,
-  firstPct,
-  lastPct,
   title = 'Session summary',
-  onFirstPct,
-  onLastPct,
+  storageKeyPrefix,
 }: SummaryStatsProps) {
+  const [firstPct, setFirstPct] = usePageState<number>(`${storageKeyPrefix}:firstPct`, 30)
+  const [lastPct, setLastPct] = usePageState<number>(`${storageKeyPrefix}:lastPct`, 30)
+
   const pctOptions = [20, 25, 30, 40, 50]
   const triangle = (dir: 'up' | 'down', colorVar: string) => (
     <span
@@ -100,32 +98,30 @@ export function SummaryStats({
   }
 
   return (
-    <div className="rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
-      <div className="px-3 py-2 border-b border-[var(--border-primary)] text-sm font-medium text-[var(--text-primary)] flex items-center justify-between">
-        <span>{title}</span>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--text-secondary)]">Δ window:</span>
-          <span className="text-xs text-[var(--text-secondary)]">last</span>
+    <div className="p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-sm font-medium text-[var(--text-primary)]">{title}</div>
+        <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+          <span>Compare first</span>
           <Dropdown
-            value={lastPct}
-            onChange={(v: string) => onLastPct ? onLastPct(Number(v)) : undefined}
-            options={pctOptions.map(p => ({ label: `${p}%`, value: p }))}
             size="sm"
+            value={String(firstPct)}
+            onChange={(v) => setFirstPct(Number(v))}
+            options={pctOptions.map(p => ({ label: `${p}%`, value: String(p) }))}
           />
-          <span className="text-xs text-[var(--text-secondary)]">vs</span>
-          <span className="text-xs text-[var(--text-secondary)]">first</span>
+          <span>vs last</span>
           <Dropdown
-            value={firstPct}
-            onChange={(v: string) => onFirstPct ? onFirstPct(Number(v)) : undefined}
-            options={pctOptions.map(p => ({ label: `${p}%`, value: p }))}
             size="sm"
+            value={String(lastPct)}
+            onChange={(v) => setLastPct(Number(v))}
+            options={pctOptions.map(p => ({ label: `${p}%`, value: String(p) }))}
           />
         </div>
       </div>
-      <div className="p-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Stat label="Score" value={data.latest.score} fmt={(n) => formatNumber(n, 0)} delta={data.delta.score} slopeVal={data.slope.score} />
-        <Stat label="Accuracy" value={data.latest.acc} fmt={(n) => formatPct(n)} delta={data.delta.acc} slopeVal={data.slope.acc} />
-        <Stat label="Real Avg TTK" value={data.latest.ttk} fmt={(n) => formatSeconds(n, CHART_DECIMALS.ttkTooltip)} delta={data.delta.ttk} slopeVal={data.slope.ttk} />
+      <div className="flex flex-wrap gap-3">
+        <Stat label="Score" value={data.latest.score} fmt={(v) => formatNumber(v, 0)} delta={data.delta.score} slopeVal={data.slope.score} />
+        <Stat label="Accuracy" value={data.latest.acc} fmt={(v) => formatPct(v)} delta={data.delta.acc} slopeVal={data.slope.acc} />
+        <Stat label="Real Avg TTK" value={data.latest.ttk} fmt={(v) => formatSeconds(v)} delta={data.delta.ttk} slopeVal={data.slope.ttk} />
       </div>
     </div>
   )

@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
-import { ChartBox } from '..'
+import { ChartBox, Dropdown } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { Metric, collectRunsBySession, expectedAvgVsLength, expectedBestVsLength, expectedByIndex, recommendLengths } from '../../lib/analysis/sessionLength'
 import { CHART_DECIMALS, extractChartValue, formatNumber, formatPct, formatUiValueForLabel } from '../../lib/utils'
 import type { Session } from '../../types/domain'
 
-type SessionLengthInsightsProps = { sessions: Session[]; scenarioName: string }
+type SessionLengthInsightsProps = {
+  sessions: Session[]
+  scenarioName: string
+}
 
 export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthInsightsProps) {
   const theme = useChartTheme()
@@ -181,21 +184,50 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
 
   const NotEnough = runs.length === 0 || (byIdx.mean.length === 0)
 
+  const infoOptimal = (
+    <div>
+      <div className="mb-2">Shows expected performance and variability at each run index across your sessions. We estimate warm‑up and suggest a session length based on average, consistency, and high‑score goals.</div>
+      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+        <li>Warm‑up = where improvement rate slows and variability drops.</li>
+        <li>Average = session length maximizing expected average performance.</li>
+        <li>Consistency = shortest length where recent variability is below typical.</li>
+      </ul>
+    </div>
+  )
+
+  const infoBest = (
+    <div>
+      <div className="mb-2">Expected best performance within the first L runs of a session. We pick the smallest L within 1% of the maximum and with low marginal gains.</div>
+    </div>
+  )
+
+  const infoAvg = (
+    <div>
+      <div className="mb-2">For each length L, we compute each session’s average over its first L runs, then aggregate across sessions. This shows the typical average performance and its bounds at different lengths.</div>
+      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+        <li>Mean = expected average if you play L runs.</li>
+        <li>Min/Max = lowest/highest per-session averages at L (across your data).</li>
+        <li>Use this with the Best vs L chart to balance consistency vs. peak hunting.</li>
+      </ul>
+    </div>
+  )
+
   return (
-    <div className="space-y-3">
-      {/* Emphasized recommendations summary */}
-      {!NotEnough && (
-        <div className="rounded-md border border-[var(--border-primary)] bg-[var(--bg-secondary)] p-3 text-sm">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[var(--text-secondary)]">
+    <div className="space-y-4">
+      {rec && (
+        <div className="p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)] flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm">
+          <div className="flex flex-col gap-1">
+            <div className="font-medium text-[var(--text-primary)]">Recommended session length</div>
+          </div>
+          <div className="flex flex-wrap gap-4 text-[var(--text-secondary)]">
             <div>
-              <span className="mr-2">Recommended Session length:</span>
-              <b className="text-[var(--text-primary)]">{rec.optimalAvgRuns}</b> runs (avg)
+              • For consistency ~ <b className="text-[var(--text-primary)]">{rec.optimalConsistentRuns}</b> runs
             </div>
             <div>
-              • Consistency: <b className="text-[var(--text-primary)]">{rec.optimalConsistentRuns}</b> runs
+              • For average ~ <b className="text-[var(--text-primary)]">{rec.optimalAvgRuns}</b> runs
             </div>
             <div>
-              • High‑score: <b className="text-[var(--text-primary)]">{rec.optimalHighscoreRuns}</b> runs
+              • For high scores ~ <b className="text-[var(--text-primary)]">{rec.optimalHighscoreRuns}</b> runs
             </div>
             <div>
               • Warm‑up ~ <b className="text-[var(--text-primary)]">{rec.warmupRuns}</b> runs
@@ -207,25 +239,19 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <ChartBox
           title="Optimal session length"
-          info={<div>
-            <div className="mb-2">Shows expected performance and variability at each run index across your sessions. We estimate warm‑up and suggest a session length based on average, consistency, and high‑score goals.</div>
-            <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-              <li>Warm‑up = where improvement rate slows and variability drops.</li>
-              <li>Average = session length maximizing expected average performance.</li>
-              <li>Consistency = shortest length where recent variability is below typical.</li>
-            </ul>
-          </div>}
-          controls={{
-            dropdown: {
-              label: 'Metric',
-              value: metric,
-              onChange: (v: string) => setMetric(v as Metric),
-              options: [
+          info={infoOptimal}
+          actions={
+            <Dropdown
+              size="sm"
+              label="Metric"
+              value={metric}
+              onChange={(v) => setMetric(v as Metric)}
+              options={[
                 { label: 'Score', value: 'score' },
                 { label: 'Accuracy (%)', value: 'acc' },
-              ],
-            },
-          }}
+              ]}
+            />
+          }
           height={240}
         >
           {NotEnough ? (
@@ -238,9 +264,7 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
         </ChartBox>
         <ChartBox
           title="Expected best vs session length"
-          info={<div>
-            <div className="mb-2">Expected best performance within the first L runs of a session. We pick the smallest L within 1% of the maximum and with low marginal gains.</div>
-          </div>}
+          info={infoBest}
           height={240}
         >
           {NotEnough ? (
@@ -253,14 +277,7 @@ export function SessionLengthInsights({ sessions, scenarioName }: SessionLengthI
         </ChartBox>
         <ChartBox
           title="Avg performance vs session length"
-          info={<div>
-            <div className="mb-2">For each length L, we compute each session’s average over its first L runs, then aggregate across sessions. This shows the typical average performance and its bounds at different lengths.</div>
-            <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-              <li>Mean = expected average if you play L runs.</li>
-              <li>Min/Max = lowest/highest per-session averages at L (across your data).</li>
-              <li>Use this with the Best vs L chart to balance consistency vs. peak hunting.</li>
-            </ul>
-          </div>}
+          info={infoAvg}
           height={240}
         >
           {NotEnough ? (

@@ -63,20 +63,24 @@ export function TraceAnalysis({
 
   const suggestion = computeSuggestedSens(analysis, item.stats)
 
+  const infoContent = (
+    <div>
+      <div className="mb-2">Classifies each kill's approach path as overshoot, undershoot, or optimal by aligning kill events to your mouse trace and inspecting the final approach window.</div>
+      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+        <li>Windows are capped at ~{analysis.windowCapSec}s per kill to handle tracking scenarios.</li>
+        <li>Overshoot: crossed the aim point, moved away, then returned at kill.</li>
+        <li>Undershoot: multiple micro-corrections near the target without crossing.</li>
+        <li>Optimality uses path efficiency (straight distance vs travelled path).</li>
+        <li>The suggested sensitivity may not appear when there is not enough reliable data to make a meaningful recommendation.</li>
+      </ul>
+    </div>
+  )
+
   return (
     <InfoBox
       title={<span className="inline-flex items-center gap-1">Mouse path analysis <PreviewTag /></span>}
       id="scenarios:mouse-path-analysis"
-      info={<div>
-        <div className="mb-2">Classifies each kill's approach path as overshoot, undershoot, or optimal by aligning kill events to your mouse trace and inspecting the final approach window.</div>
-        <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-          <li>Windows are capped at ~{analysis.windowCapSec}s per kill to handle tracking scenarios.</li>
-          <li>Overshoot: crossed the aim point, moved away, then returned at kill.</li>
-          <li>Undershoot: multiple micro-corrections near the target without crossing.</li>
-          <li>Optimality uses path efficiency (straight distance vs travelled path).</li>
-          <li>The suggested sensitivity may not appear when there is not enough reliable data to make a meaningful recommendation.</li>
-        </ul>
-      </div>}
+      info={infoContent}
       height={420}
     >
       <div className="flex flex-col md:flex-row gap-3 justify-between">

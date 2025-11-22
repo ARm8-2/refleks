@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
+import { usePageState } from '../../hooks/usePageState'
 import { CHART_DECIMALS, extractChartValue, formatMmSs, formatNumber, formatPct, formatSeconds, formatUiValueForLabel } from '../../lib/utils'
-import { EventsOverTimeDetails } from './EventsOverTimeDetails'
 
 type EventsOverTimeChartProps = {
   timeSec: number[]
@@ -34,7 +34,7 @@ export function EventsOverTimeChart({
   summary,
 }: EventsOverTimeChartProps) {
   const colors = useChartTheme()
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = usePageState('analysis:events-over-time:expanded', false)
   const data = useMemo(() => {
     const acc = timeSec.map((x, i) => ({ x, y: accOverTime[i] }))
     const ttk = timeSec.map((x, i) => ({ x, y: realTTK[i] }))
@@ -159,30 +159,30 @@ export function EventsOverTimeChart({
     },
   }), [colors, isExpanded])
 
-  return (
+  const infoContent = (
     <div>
-      <ChartBox
-        title="Kills Over Time"
-        expandable={true}
-        isExpanded={isExpanded}
-        onExpandChange={setIsExpanded}
-        info={<div>
-          <div className="mb-2">This chart plots cumulative accuracy (left), real TTK between kills (right), and cumulative kills (stepped, secondary right) over the scenario timeline. The X‑axis is elapsed time from the scenario start. Hover points for exact values at a moment in time.</div>
-          <div className="mb-2 font-medium">How to interpret</div>
-          <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-            <li>Cumulative Accuracy shows how your accuracy evolves across a run. A rising curve indicates improvement; a flat line indicates stable accuracy.</li>
-            <li>Real TTK (s) shows the time between consecutive kills. Lower TTK indicates faster play; watch for large TTK spikes that indicate downtime or pauses.</li>
-            <li>Cumulative Kills indicates pacing - a steep slope means dense kill events. Combine with TTK to assess intensity versus steadiness.</li>
-            <li>Use the tooltips to inspect the exact values at particular times and compare across the traces.</li>
-          </ul>
-        </div>}
-        height={320}
-      >
-        <div className="h-full">
-          <Line data={data as any} options={options as any} />
-        </div>
-      </ChartBox>
-      <EventsOverTimeDetails summary={summary} />
+      <div className="mb-2">Shows cumulative accuracy, kills, and real TTK over the duration of the run.</div>
+      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+        <li>X-axis is time in minutes:seconds.</li>
+        <li>Cumulative Accuracy (blue) shows how your accuracy evolved throughout the run.</li>
+        <li>Cumulative Kills (green) shows the pace of kills.</li>
+        <li>Real TTK (red, hidden by default) shows the time-to-kill for each individual kill event. Click the legend to toggle it.</li>
+      </ul>
     </div>
+  )
+
+  return (
+    <ChartBox
+      title="Events over time"
+      expandable={true}
+      isExpanded={isExpanded}
+      onExpandChange={setIsExpanded}
+      info={infoContent}
+      height={320}
+    >
+      <div className="h-full">
+        <Line data={data as any} options={options as any} />
+      </div>
+    </ChartBox>
   )
 }

@@ -18,7 +18,7 @@ export function AccuracyVsSpeedDetails({
 }: AccuracyVsSpeedDetailsProps) {
   const fmt = (v: number | undefined) => formatNumber(v, CHART_DECIMALS.detailNum)
   const fmtPct = (v: number | undefined) => formatPct(v, CHART_DECIMALS.pctTooltip)
-  const info = (
+  const infoContent = (
     <div>
       <div className="mb-2">How to read these metrics:</div>
       <ul className="list-disc pl-5 text-[var(--text-secondary)]">
@@ -31,7 +31,7 @@ export function AccuracyVsSpeedDetails({
   )
   return (
     <div className="mt-2">
-      <InfoBox id="scenarios:accuracy-vs-speed-metrics" title="Accuracy vs speed - metrics" info={info}>
+      <InfoBox id="scenarios:accuracy-vs-speed-metrics" title="Accuracy vs speed - metrics" info={infoContent}>
         <ul className="space-y-1">
           <li>Pearson r (KPM vs accuracy): <b className="text-[var(--text-primary)]">{fmt(scatter.corrKpmAcc)}</b></li>
           <li>Within-speed-bin accuracy std (avg across {scatter.binsUsed} bins): <b className="text-[var(--text-primary)]">{fmt(scatter.meanBinStdAcc)}</b></li>

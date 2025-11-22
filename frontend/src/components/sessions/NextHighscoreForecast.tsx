@@ -15,20 +15,24 @@ export function NextHighscoreForecast({ pred }: NextHighscoreForecastProps) {
     return <span className={`px-2 py-0.5 rounded text-xs border ${cls}`}>{label}</span>
   }
 
+  const infoContent = (
+    <div>
+      <div className="mb-2">Estimates when you are likely to beat your current personal best for the selected scenario.
+        The model focuses on runs, not hours, and computes an optimal pause between runs for fastest progress.
+      </div>
+      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+        <li>Recent runs matter more.</li>
+        <li>Optimal pause is learned from your data; it is not a historical average.</li>
+        <li>Confidence reflects fit quality (R²), sample size, and recency.</li>
+      </ul>
+    </div>
+  )
+
   return (
     <InfoBox
       title={<span className="inline-flex items-center gap-1">Next high score forecast <PreviewTag /></span>}
       id="sessions:next-highscore-forecast"
-      info={<div>
-        <div className="mb-2">Estimates when you are likely to beat your current personal best for the selected scenario.
-          The model focuses on runs, not hours, and computes an optimal pause between runs for fastest progress.
-        </div>
-        <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-          <li>Recent runs matter more.</li>
-          <li>Optimal pause is learned from your data; it is not a historical average.</li>
-          <li>Confidence reflects fit quality (R²), sample size, and recency.</li>
-        </ul>
-      </div>}
+      info={infoContent}
       height={114}
     >
       <div className="w-full flex flex-col md:flex-row md:items-center justify-between gap-3">

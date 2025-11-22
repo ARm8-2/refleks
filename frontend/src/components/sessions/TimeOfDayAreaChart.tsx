@@ -85,19 +85,23 @@ export function TimeOfDayAreaChart({ items }: TimeOfDayAreaChartProps) {
     },
   }), [theme, isExpanded])
 
+  const infoContent = (
+    <div>
+      <div className="mb-2">Shows the distribution of your runs across the 24-hour day.</div>
+      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+        <li>Peaks indicate your most active playing times.</li>
+        <li>Useful for identifying when you perform best or play most often.</li>
+      </ul>
+    </div>
+  )
+
   return (
     <ChartBox
       title="Time of Day (Runs)"
       expandable={true}
       isExpanded={isExpanded}
       onExpandChange={setIsExpanded}
-      info={<div>
-        <div className="mb-2">Shows the distribution of your runs across the 24-hour day.</div>
-        <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-          <li>Peaks indicate your most active playing times.</li>
-          <li>Useful for identifying when you perform best or play most often.</li>
-        </ul>
-      </div>}
+      info={infoContent}
       height={300}
     >
       <div className="h-full">

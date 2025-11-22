@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { Doughnut } from 'react-chartjs-2'
+import { ChartBox, Dropdown } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
 import { CHART_DECIMALS, formatNumber } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
-import { ChartBox } from '../shared/ChartBox'
 
 type RankDistributionDonutProps = {
   bench: Benchmark
@@ -18,10 +18,9 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
   const theme = useChartTheme()
 
   type ScopeLevel = 'all' | 'category' | 'subcategory'
-  const benchKey = `${bench.abbreviation}-${bench.benchmarkName}`
-  const [level, setLevel] = usePageState<ScopeLevel>(`bench:${benchKey}:diff:${difficultyIndex}:ranks:level`, 'all')
-  const [catIdx, setCatIdx] = usePageState<number>(`bench:${benchKey}:diff:${difficultyIndex}:ranks:catIdx`, 0)
-  const [subIdx, setSubIdx] = usePageState<number>(`bench:${benchKey}:diff:${difficultyIndex}:ranks:subIdx`, 0)
+  const [level, setLevel] = usePageState<ScopeLevel>('bench:ranks:level', 'all')
+  const [catIdx, setCatIdx] = usePageState<number>('bench:ranks:catIdx', 0)
+  const [subIdx, setSubIdx] = usePageState<number>('bench:ranks:subIdx', 0)
 
   const categories = progress?.categories || []
 
@@ -100,29 +99,34 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
     return (c?.groups || []).map((g, i) => ({ label: g.name || `Group ${i + 1}`, value: String(i) }))
   })()
 
+  const infoContent = (
+    <div>
+      <div className="mb-2">Distribution of achieved ranks across the selected scope.</div>
+      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+        <li>Colors match rank colors for the opened difficulty.</li>
+        <li>“Below R1” indicates scenarios not yet at the first rank.</li>
+      </ul>
+    </div>
+  )
+
   return (
     <ChartBox
       title="Rank distribution"
       expandable={true}
-      info={<div>
-        <div className="mb-2">Distribution of achieved ranks across the selected scope.</div>
-        <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-          <li>Colors match rank colors for the opened difficulty.</li>
-          <li>“Below R1” indicates scenarios not yet at the first rank.</li>
-        </ul>
-      </div>}
-      controls={{
-        dropdown: {
-          label: 'Scope',
-          value: level,
-          onChange: (v: string) => setLevel((v as ScopeLevel) || 'all'),
-          options: [
+      info={infoContent}
+      actions={
+        <Dropdown
+          size="sm"
+          label="Scope"
+          value={level}
+          onChange={(v) => setLevel((v as ScopeLevel) || 'all')}
+          options={[
             { label: 'All scenarios', value: 'all' },
             { label: 'Category', value: 'category' },
             { label: 'Subcategory', value: 'subcategory' },
-          ]
-        }
-      }}
+          ]}
+        />
+      }
       height={height}
     >
       <div className="h-full flex flex-col">

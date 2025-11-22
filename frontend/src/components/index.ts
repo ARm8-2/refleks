@@ -17,6 +17,8 @@ export { PerformanceVsSensChart } from './sessions/PerformanceVsSensChart';
 export { ScenarioBenchmarkProgress } from './sessions/ScenarioBenchmarkProgress';
 export { ScenarioMixRadarChart } from './sessions/ScenarioMixRadarChart';
 export { SessionLengthInsights } from './sessions/SessionLengthInsights';
+export { SessionMetricsChart } from './sessions/SessionMetricsChart';
+export { SessionMixChart } from './sessions/SessionMixChart';
 export { SummaryStats } from './sessions/SummaryStats';
 export { TimeOfDayAreaChart } from './sessions/TimeOfDayAreaChart';
 export { Button } from './shared/Button';
