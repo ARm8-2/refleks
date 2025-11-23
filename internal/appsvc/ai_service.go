@@ -2,6 +2,7 @@ package appsvc
 
 import (
 	"context"
+	"strings"
 	"sync"
 
 	"github.com/google/uuid"
@@ -64,7 +65,11 @@ func (s *AIService) GenerateSessionInsights(reqID string, sessionID string, reco
 			runtime.EventsEmit(s.ctx, "AI:Session:Delta", map[string]any{"requestId": reqID, "text": text})
 		})
 		if err != nil && err != context.Canceled {
-			runtime.EventsEmit(s.ctx, "AI:Session:Error", map[string]any{"requestId": reqID, "error": err.Error()})
+			msg := err.Error()
+			if strings.Contains(msg, "API key") || strings.Contains(msg, "400") || strings.Contains(msg, "403") {
+				msg = "Failed to connect to Gemini. Please check your API key."
+			}
+			runtime.EventsEmit(s.ctx, "AI:Session:Error", map[string]any{"requestId": reqID, "error": msg})
 		}
 	}()
 }

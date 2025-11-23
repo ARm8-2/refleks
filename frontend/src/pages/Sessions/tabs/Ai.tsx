@@ -78,7 +78,7 @@ export function AiTab({ sessionId, records }: { sessionId?: string; records?: Sc
       const rid = currentReqRef.current
       if (rid) { cancelSessionInsights(rid).catch(() => { }); currentReqRef.current = null }
     }
-  }, [setHistory])
+  }, [setHistory, sessionId])
 
   const disabled = useMemo(() => !hasKey || !records || records.length === 0, [hasKey, records])
   const isStreaming = Boolean(requestId)
@@ -90,7 +90,7 @@ export function AiTab({ sessionId, records }: { sessionId?: string; records?: Sc
   }, [history, requestId])
 
   // Auto-run once per new session if empty
-  useEffect(() => { autoRanRef.current = false }, [sessionId])
+  useEffect(() => { autoRanRef.current = false; setRequestId(null) }, [sessionId])
   useEffect(() => {
     if (!autoRanRef.current && hasKey && !isStreaming && history.length === 0 && records && records.length > 0) {
       autoRanRef.current = true
