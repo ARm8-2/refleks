@@ -8,6 +8,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"refleks/internal/benchmarks/rankcalc"
 	"refleks/internal/constants"
 	"refleks/internal/models"
 	"refleks/internal/steam"
@@ -74,13 +75,8 @@ func GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, error) {
 	return buildStructuredProgress(raw, benchmarkId)
 }
 
-// internal structures used during parsing
-type flatScenario struct {
-	Name         string
-	Score        float64
-	ScenarioRank int
-	Thresholds   []float64
-}
+// We intentionally parse directly into models.ScenarioProgress to keep our
+// downstream data flowing via the canonical type used by the frontend.
 
 type rawRank struct {
 	Name  string `json:"name"`
@@ -93,13 +89,13 @@ func buildStructuredProgress(raw string, benchmarkId int) (models.BenchmarkProgr
 	var out models.BenchmarkProgress
 
 	// Step 1: parse top-level values using a streaming decoder
-	flat, ranks, overallRank, benchProg, err := parseProgressTokens(raw)
+	scenarios, ranks, overallRank, benchProg, err := parseProgressTokens(raw)
 	if err != nil {
 		return out, err
 	}
 
 	// Step 2: locate matching difficulty metadata to derive grouping and colors
-	_, diff := findDifficultyByBenchmarkID(benchmarkId)
+	b, diff := findDifficultyByBenchmarkID(benchmarkId)
 
 	// Build rank defs combining upstream order with fallback colors from difficulty
 	out.Ranks = mergeRankDefs(ranks, diff)
@@ -107,7 +103,12 @@ func buildStructuredProgress(raw string, benchmarkId int) (models.BenchmarkProgr
 	out.BenchmarkProgress = benchProg
 
 	// Step 3: group scenarios into categories/subcategories by scenarioCount
-	out.Categories = groupScenariosByMeta(flat, diff)
+	out.Categories = groupScenariosByMeta(scenarios, diff)
+
+	// Attempt to compute any energies using the benchmark rank calculation.
+	if b != nil {
+		rankcalc.UpdateEnergies(b.RankCalculation, b, diff, &out.Categories)
+	}
 
 	return out, nil
 }
@@ -156,16 +157,12 @@ func mergeRankDefs(ranks []rawRank, diff *models.BenchmarkDifficulty) []models.R
 	return defs
 }
 
-func groupScenariosByMeta(flat []flatScenario, diff *models.BenchmarkDifficulty) []models.ProgressCategory {
+func groupScenariosByMeta(scenarios []models.ScenarioProgress, diff *models.BenchmarkDifficulty) []models.ProgressCategory {
 	cats := []models.ProgressCategory{}
 	pos := 0
 	if diff == nil || len(diff.Categories) == 0 {
-		g := models.ProgressGroup{Scenarios: make([]models.ScenarioProgress, 0, len(flat))}
-		for _, fs := range flat {
-			g.Scenarios = append(g.Scenarios, models.ScenarioProgress{
-				Name: fs.Name, Score: fs.Score, ScenarioRank: fs.ScenarioRank, Thresholds: fs.Thresholds,
-			})
-		}
+		g := models.ProgressGroup{Scenarios: make([]models.ScenarioProgress, 0, len(scenarios))}
+		g.Scenarios = append(g.Scenarios, scenarios...)
 		cats = append(cats, models.ProgressCategory{Name: "", Color: "", Groups: []models.ProgressGroup{g}})
 		return cats
 	}
@@ -179,28 +176,20 @@ func groupScenariosByMeta(flat []flatScenario, diff *models.BenchmarkDifficulty)
 				take = 0
 			}
 			end := pos + take
-			if end > len(flat) {
-				end = len(flat)
+			if end > len(scenarios) {
+				end = len(scenarios)
 			}
 			g := models.ProgressGroup{Name: sub.SubcategoryName, Color: sub.Color}
-			for i := pos; i < end; i++ {
-				fs := flat[i]
-				g.Scenarios = append(g.Scenarios, models.ScenarioProgress{
-					Name: fs.Name, Score: fs.Score, ScenarioRank: fs.ScenarioRank, Thresholds: fs.Thresholds,
-				})
+			if end > pos {
+				g.Scenarios = append(g.Scenarios, scenarios[pos:end]...)
 			}
 			pos = end
 			groups = append(groups, g)
 		}
-		if ci == len(diff.Categories)-1 && pos < len(flat) {
+		if ci == len(diff.Categories)-1 && pos < len(scenarios) {
 			g := models.ProgressGroup{}
-			for i := pos; i < len(flat); i++ {
-				fs := flat[i]
-				g.Scenarios = append(g.Scenarios, models.ScenarioProgress{
-					Name: fs.Name, Score: fs.Score, ScenarioRank: fs.ScenarioRank, Thresholds: fs.Thresholds,
-				})
-			}
-			pos = len(flat)
+			g.Scenarios = append(g.Scenarios, scenarios[pos:]...)
+			pos = len(scenarios)
 			groups = append(groups, g)
 		}
 		pc.Groups = groups
@@ -211,10 +200,10 @@ func groupScenariosByMeta(flat []flatScenario, diff *models.BenchmarkDifficulty)
 
 // parseProgressTokens walks the raw JSON token stream to extract ordered scenarios,
 // ranks, and summary numbers without decoding into Go maps (which would randomize order).
-func parseProgressTokens(raw string) (flat []flatScenario, ranks []rawRank, overallRank int, benchProg float64, err error) {
+func parseProgressTokens(raw string) (scenarios []models.ScenarioProgress, ranks []rawRank, overallRank int, benchProg float64, err error) {
 	dec := json.NewDecoder(strings.NewReader(raw))
 	dec.UseNumber()
-	flat = []flatScenario{}
+	scenarios = []models.ScenarioProgress{}
 	var tok json.Token
 	if tok, err = dec.Token(); err != nil {
 		return
@@ -232,7 +221,7 @@ func parseProgressTokens(raw string) (flat []flatScenario, ranks []rawRank, over
 		key, _ := kt.(string)
 		switch key {
 		case "categories":
-			if e := parseCategories(dec, &flat); e != nil {
+			if e := parseCategories(dec, &scenarios); e != nil {
 				err = e
 				return
 			}
@@ -281,7 +270,7 @@ func parseProgressTokens(raw string) (flat []flatScenario, ranks []rawRank, over
 	return
 }
 
-func parseCategories(dec *json.Decoder, flat *[]flatScenario) error {
+func parseCategories(dec *json.Decoder, scenarios *[]models.ScenarioProgress) error {
 	t, err := dec.Token()
 	if err != nil {
 		return err
@@ -311,7 +300,7 @@ func parseCategories(dec *json.Decoder, flat *[]flatScenario) error {
 			}
 			fkey, _ := fkeyTok.(string)
 			if fkey == "scenarios" {
-				if err := parseScenarios(dec, flat); err != nil {
+				if err := parseScenarios(dec, scenarios); err != nil {
 					return err
 				}
 				continue
@@ -329,7 +318,7 @@ func parseCategories(dec *json.Decoder, flat *[]flatScenario) error {
 	return err
 }
 
-func parseScenarios(dec *json.Decoder, flat *[]flatScenario) error {
+func parseScenarios(dec *json.Decoder, scenarios *[]models.ScenarioProgress) error {
 	t, err := dec.Token()
 	if err != nil {
 		return err
@@ -352,7 +341,7 @@ func parseScenarios(dec *json.Decoder, flat *[]flatScenario) error {
 		if !ok || d2 != '{' {
 			return fmt.Errorf("scenario: expected object")
 		}
-		s := flatScenario{Name: name}
+		s := models.ScenarioProgress{Name: name}
 		for dec.More() {
 			fkTok, err := dec.Token()
 			if err != nil {
@@ -401,7 +390,7 @@ func parseScenarios(dec *json.Decoder, flat *[]flatScenario) error {
 			base := initialThresholdBaselineGo(s.Thresholds)
 			s.Thresholds = append([]float64{base}, s.Thresholds...)
 		}
-		*flat = append(*flat, s)
+		*scenarios = append(*scenarios, s)
 	}
 	_, err = dec.Token()
 	return err
@@ -437,5 +426,3 @@ func initialThresholdBaselineGo(thresholds []float64) float64 {
 	}
 	return 0
 }
-
-// Note: use math.IsNaN / math.IsInf from the standard library above.

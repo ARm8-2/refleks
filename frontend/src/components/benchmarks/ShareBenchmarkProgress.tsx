@@ -19,7 +19,20 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
 
   const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || MISSING_STR
 
-  const cols = gridColsShare(rankDefs.length)
+  const hasEnergy = (() => {
+    if (!categories) return false
+    for (const cat of categories) {
+      for (const g of cat.groups) {
+        if (g.energy != null) return true
+        for (const s of g.scenarios) {
+          if (s.energy != null) return true
+        }
+      }
+    }
+    return false
+  })()
+
+  const cols = gridColsShare(rankDefs.length) + (hasEnergy ? ' 90px' : '')
 
   return (
     <div className="w-full max-w-[1600px] rounded-lg border border-[var(--border-primary)]" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
@@ -55,6 +68,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                 {rankDefs.map(r => (
                   <div key={r.name} className="text-[11px] uppercase tracking-wide text-center" style={{ color: r.color || 'var(--text-secondary)' }}>{r.name}</div>
                 ))}
+                {hasEnergy && <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center">Energy</div>}
               </div>
             </div>
           </div>
@@ -77,9 +91,9 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                         <span className="text-[10px] text-[var(--text-secondary)]" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>-</span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-max content-center">
+                    <div className="flex-1 min-w-0 content-center">
                       <div className="grid gap-1" style={{ gridTemplateColumns: cols }}>
-                        {g.scenarios.map((s) => {
+                        {g.scenarios.map((s, si) => {
                           const sName = s.name
                           const maxes = s.thresholds
                           const score = s.score
@@ -98,6 +112,17 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                                   </div>
                                 )
                               })}
+                              {hasEnergy && (s.energy == null && g.energy != null ? (
+                                si === 0 ? (
+                                  <div className="text-[12px] text-[var(--text-primary)] flex items-center justify-center" style={{ gridRow: `span ${g.scenarios.length}` }}>
+                                    {numberFmt(Number(g.energy))}
+                                  </div>
+                                ) : null
+                              ) : (
+                                <div className="text-[12px] text-[var(--text-primary)] flex items-center justify-center">
+                                  {s.energy != null ? numberFmt(Number(s.energy)) : MISSING_STR}
+                                </div>
+                              ))}
                             </Fragment>
                           )
                         })}

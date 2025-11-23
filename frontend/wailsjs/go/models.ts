@@ -149,6 +149,7 @@ export namespace models {
 	    score: number;
 	    scenarioRank: number;
 	    thresholds: number[];
+	    energy?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new ScenarioProgress(source);
@@ -160,12 +161,14 @@ export namespace models {
 	        this.score = source["score"];
 	        this.scenarioRank = source["scenarioRank"];
 	        this.thresholds = source["thresholds"];
+	        this.energy = source["energy"];
 	    }
 	}
 	export class ProgressGroup {
 	    name?: string;
 	    color?: string;
 	    scenarios: ScenarioProgress[];
+	    energy?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new ProgressGroup(source);
@@ -176,6 +179,7 @@ export namespace models {
 	        this.name = source["name"];
 	        this.color = source["color"];
 	        this.scenarios = this.convertValues(source["scenarios"], ScenarioProgress);
+	        this.energy = source["energy"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

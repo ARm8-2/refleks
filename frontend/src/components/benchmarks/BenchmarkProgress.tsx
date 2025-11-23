@@ -6,7 +6,7 @@ import { usePageState } from '../../hooks/usePageState'
 import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
 import { useStore } from '../../hooks/useStore'
 import { groupByScenario } from '../../lib/analysis/metrics'
-import { autoHiddenRanks, cellFill, computeFillColor, computeRecommendationScores, NOTES_COL_WIDTH, numberFmt, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH, thresholdContribution } from '../../lib/benchmarks'
+import { autoHiddenRanks, cellFill, computeFillColor, computeRecommendationScores, ENERGY_COL_WIDTH, NOTES_COL_WIDTH, numberFmt, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH, thresholdContribution } from '../../lib/benchmarks'
 import { getSettings, launchScenario, saveScenarioNote } from '../../lib/internal'
 import { getScenarioName, MISSING_STR } from '../../lib/utils'
 import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
@@ -17,6 +17,29 @@ import { NotesModal } from './NotesModal'
 
 type BenchmarkProgressProps = {
   progress: ProgressModel
+}
+
+function EnergyCell({ s, g, si, hasEnergy }: { s: any, g: any, si: number, hasEnergy: boolean }) {
+  if (!hasEnergy) return null
+
+  // Group Energy (vt-energy style)
+  if (s.energy == null && g.energy != null) {
+    if (si === 0) {
+      return (
+        <div className="text-[12px] text-[var(--text-primary)] flex items-center justify-center" style={{ gridRow: `span ${g.scenarios.length}` }}>
+          {numberFmt(Number(g.energy))}
+        </div>
+      )
+    }
+    return null
+  }
+
+  // Scenario Energy (ra-s5 style)
+  return (
+    <div className="text-[12px] text-[var(--text-primary)] flex items-center justify-center">
+      {s.energy != null ? numberFmt(Number(s.energy)) : MISSING_STR}
+    </div>
+  )
 }
 
 export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
@@ -158,13 +181,26 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
 
   const visibleRanks = useMemo(() => visibleRankIndices.map(i => rankDefs[i]), [visibleRankIndices, rankDefs])
 
+  const hasEnergy = useMemo(() => {
+    if (!categories) return false
+    for (const cat of categories) {
+      for (const g of cat.groups) {
+        if (g.energy != null) return true
+        for (const s of g.scenarios) {
+          if (s.energy != null) return true
+        }
+      }
+    }
+    return false
+  }, [categories])
+
   // Constants for non-rank columns
-  const REC_W = RECOMMEND_COL_WIDTH, PLAY_W = PLAY_COL_WIDTH, SCORE_W = SCORE_COL_WIDTH, NOTES_W = NOTES_COL_WIDTH
+  const REC_W = RECOMMEND_COL_WIDTH, PLAY_W = PLAY_COL_WIDTH, SCORE_W = SCORE_COL_WIDTH, NOTES_W = NOTES_COL_WIDTH, ENERGY_W = ENERGY_COL_WIDTH
   // Dynamic grid columns (flex growth for ranks): Scenario | Recom | Notes | Play | Score | Rank1..N
   const dynamicColumns = useMemo(() => {
     const rankTracks = visibleRankIndices.map(() => `minmax(${RANK_MIN_WIDTH}px,1fr)`).join(' ')
-    return `${Math.round(scenarioWidth)}px ${REC_W}px ${NOTES_W}px ${PLAY_W}px ${SCORE_W}px ${rankTracks}`
-  }, [scenarioWidth, visibleRankIndices.length])
+    return `${Math.round(scenarioWidth)}px ${REC_W}px ${NOTES_W}px ${PLAY_W}px ${SCORE_W}px ${rankTracks}${hasEnergy ? ` ${ENERGY_W}px` : ''}`
+  }, [scenarioWidth, visibleRankIndices.length, hasEnergy])
 
   // Attach refined wheel scroll: only enable horizontal wheel mapping when
   // the cursor is over the rank columns. We compute the left-offset where ranks begin.
@@ -227,6 +263,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                       {visibleRanks.map(r => (
                         <div key={r.name} className="text-[11px] uppercase tracking-wide text-center" style={{ color: r.color || 'var(--text-secondary)' }}>{r.name}</div>
                       ))}
+                      {hasEnergy && <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center">Energy</div>}
                     </div>
                   </div>
                 </div>
@@ -256,7 +293,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                           </div>
                           <div className="flex-1 min-w-max content-center">
                             <div className="grid gap-1" style={{ gridTemplateColumns: dynamicColumns }}>
-                              {g.scenarios.map((s) => {
+                              {g.scenarios.map((s, si) => {
                                 const sName = s.name
                                 const achieved = s.scenarioRank
                                 const maxes: number[] = s.thresholds
@@ -305,6 +342,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                         </div>
                                       )
                                     })}
+                                    <EnergyCell s={s} g={g} si={si} hasEnergy={hasEnergy} />
                                   </Fragment>
                                 )
                               })}

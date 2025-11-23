@@ -26,14 +26,12 @@ export function thresholdContribution(achieved: number, score: number, threshold
   return pts
 }
 
-// Dynamic grid template for BenchmarkProgress (Scenario | Recom | Play | Score | Rank1..N)
-// If there is no horizontal overflow, let rank columns flex with minmax.
-import { PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH } from './layout'
+import { ENERGY_COL_WIDTH, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH } from './layout'
 
 export function benchmarkGridTemplate(scenarioWidth: number, rankCount: number, hasOverflow: boolean): string {
   const rankSpec = hasOverflow ? `${RANK_MIN_WIDTH}px` : `minmax(${RANK_MIN_WIDTH}px,1fr)`
   const ranks = Array.from({ length: rankCount }).map(() => rankSpec).join(' ')
-  return `${Math.round(scenarioWidth)}px ${RECOMMEND_COL_WIDTH}px ${PLAY_COL_WIDTH}px ${SCORE_COL_WIDTH}px ${ranks}`
+  return `${Math.round(scenarioWidth)}px ${RECOMMEND_COL_WIDTH}px ${PLAY_COL_WIDTH}px ${SCORE_COL_WIDTH}px ${ranks} ${ENERGY_COL_WIDTH}px`
 }
 
 import { MISSING_STR } from '../utils'

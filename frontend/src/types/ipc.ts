@@ -38,12 +38,14 @@ export interface ProgressScenario {
   score: number
   scenarioRank: number
   thresholds: number[]
+  energy?: number
 }
 
 export interface ProgressGroup {
   name?: string
   color?: string
   scenarios: ProgressScenario[]
+  energy?: number
 }
 
 export interface ProgressCategory {
