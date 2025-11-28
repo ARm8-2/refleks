@@ -10,22 +10,6 @@ export function computeFillColor(achievedRank: number | undefined | null, rankDe
   return lastColor ?? fallback
 }
 
-// Contribution from threshold proximity + rank deficiency for recommendations.
-export function thresholdContribution(achieved: number, score: number, thresholds: number[], rankCount: number): number {
-  if (!Array.isArray(thresholds) || thresholds.length < 2 || rankCount <= 0) return 0
-  const idx = Math.max(0, Math.min(rankCount, achieved))
-  const prev = thresholds[idx] ?? 0
-  const next = thresholds[idx + 1] ?? null
-  let pts = 0
-  if (next != null && next > prev) {
-    const frac = Math.max(0, Math.min(1, (score - prev) / (next - prev)))
-    pts += 40 * frac
-  }
-  const achievedNorm = Math.max(0, Math.min(1, achieved / Math.max(1, rankCount)))
-  pts += 20 * (1 - achievedNorm)
-  return pts
-}
-
 import { ENERGY_COL_WIDTH, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH } from './layout'
 
 export function benchmarkGridTemplate(scenarioWidth: number, rankCount: number, hasOverflow: boolean): string {

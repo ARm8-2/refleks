@@ -1,19 +1,20 @@
 import { NotebookPen, Play } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { useBenchmarkVisibility } from '../../hooks/useBenchmarkVisibility'
 import { useDragScroll } from '../../hooks/useDragScroll'
 import { useHorizontalWheelScroll } from '../../hooks/useHorizontalWheelScroll'
 import { usePageState } from '../../hooks/usePageState'
 import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
 import { useStore } from '../../hooks/useStore'
-import { groupByScenario } from '../../lib/analysis/metrics'
-import { autoHiddenRanks, cellFill, computeFillColor, computeRecommendationScores, ENERGY_COL_WIDTH, NOTES_COL_WIDTH, numberFmt, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH, thresholdContribution } from '../../lib/benchmarks'
+import { cellFill, computeFillColor, computeRecommendationScores, ENERGY_COL_WIDTH, NOTES_COL_WIDTH, numberFmt, PADDING_COL_WIDTH, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH, type ScenarioBenchmarkData } from '../../lib/benchmarks'
 import { getSettings, launchScenario, saveScenarioNote } from '../../lib/internal'
 import { getScenarioName, MISSING_STR } from '../../lib/utils'
 import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
-import { Button } from '../shared/Button'
-import { Dropdown } from '../shared/Dropdown'
 import { Toggle } from '../shared/Toggle'
+import { BenchmarkControls } from './BenchmarkControls'
 import { NotesModal } from './NotesModal'
+import { RecommendationIcon } from './RecommendationIcon'
+import { RecommendationLegend } from './RecommendationLegend'
 
 type BenchmarkProgressProps = {
   progress: ProgressModel
@@ -111,7 +112,6 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
     return Array.from(set)
   }, [categories])
 
-  const byName = useMemo(() => groupByScenario(scenarios), [scenarios])
   const lastSession = useMemo(() => sessions[0] ?? null, [sessions])
   const lastSessionCount = useMemo(() => {
     const m = new Map<string, number>()
@@ -123,63 +123,39 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
     }
     return m
   }, [lastSession])
-  const lastPlayedMs = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const it of scenarios) {
-      const n = getScenarioName(it)
-      if (map.has(n)) continue
-      const ms = Date.parse(String(it.stats?.['Date Played'] ?? ''))
-      if (Number.isFinite(ms)) map.set(n, ms)
-    }
-    return map
-  }, [scenarios])
 
-  // Recommendation score per scenario name (base score without threshold proximity)
-  const recScore = useMemo(() => computeRecommendationScores({ wantedNames, byName, lastPlayedMs, lastSessionCount, sessions }), [wantedNames, byName, lastPlayedMs, lastSessionCount, sessions])
-
-  // Ranks visibility controls
-  const [autoHideCleared, setAutoHideCleared] = useState<boolean>(true)
-  const [manuallyHidden, setManuallyHidden] = useState<Set<number>>(() => new Set())
-  // Desired number of rank columns to keep visible (when auto-hide is enabled)
-  const [visibleRankCount, setVisibleRankCount] = useState<number>(4)
-
-  // Flatten all scenarios visible in this benchmark view
-  const allScenarios = useMemo(() => {
-    const list: Array<{ scenarioRank: number }> = []
+  // Build benchmark data map for recommendation engine
+  const benchmarkData = useMemo(() => {
+    const map = new Map<string, ScenarioBenchmarkData>()
     for (const { groups } of categories) {
       for (const g of groups) {
-        for (const s of g.scenarios) list.push({ scenarioRank: Number(s.scenarioRank || 0) })
+        for (const s of g.scenarios) {
+          map.set(s.name, {
+            rank: Number(s.scenarioRank || 0),
+            score: Number(s.score || 0),
+            thresholds: s.thresholds || []
+          })
+        }
       }
     }
-    return list
+    return map
   }, [categories])
 
-  // Auto-hide any rank where ALL scenarios have surpassed that rank
-  const autoHidden = useMemo(() => {
-    const n = rankDefs.length
-    // Precompute flat scenario rank array
-    const ranksArr = allScenarios.map(s => Number(s.scenarioRank || 0))
-    return autoHiddenRanks(n, ranksArr, autoHideCleared, visibleRankCount)
-  }, [rankDefs.length, allScenarios, autoHideCleared, visibleRankCount])
-
-  // Combine manual + auto hidden sets
-  const effectiveHidden = useMemo(() => {
-    const out = new Set<number>()
-    manuallyHidden.forEach(i => out.add(i))
-    autoHidden.forEach(i => out.add(i))
-    return out
-  }, [manuallyHidden, autoHidden])
-
-  // Compute the visible rank indices and rank defs. Ensure at least one is visible.
-  const visibleRankIndices = useMemo(() => {
-    const n = rankDefs.length
-    const all = Array.from({ length: n }, (_, i) => i)
-    let vis = all.filter(i => !effectiveHidden.has(i))
-    if (vis.length === 0 && n > 0) vis = [n - 1] // always show the top rank if everything would be hidden
-    return vis
-  }, [rankDefs.length, effectiveHidden])
-
-  const visibleRanks = useMemo(() => visibleRankIndices.map(i => rankDefs[i]), [visibleRankIndices, rankDefs])
+  // Recommendation score per scenario name
+  const recScore = useMemo(() => computeRecommendationScores({
+    wantedNames,
+    lastSessionCount,
+    sessions,
+    benchmarkData
+  }), [wantedNames, lastSessionCount, sessions, benchmarkData])  // Ranks visibility controls (refactored into hook)
+  const {
+    autoHideCleared, setAutoHideCleared,
+    visibleRankCount, setVisibleRankCount,
+    manuallyHidden, toggleManualRank, resetManual,
+    autoHidden,
+    visibleRankIndices,
+    visibleRanks
+  } = useBenchmarkVisibility(progress)
 
   const hasEnergy = useMemo(() => {
     if (!categories) return false
@@ -195,30 +171,19 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
   }, [categories])
 
   // Constants for non-rank columns
-  const REC_W = RECOMMEND_COL_WIDTH, PLAY_W = PLAY_COL_WIDTH, SCORE_W = SCORE_COL_WIDTH, NOTES_W = NOTES_COL_WIDTH, ENERGY_W = ENERGY_COL_WIDTH
-  // Dynamic grid columns (flex growth for ranks): Scenario | Recom | Notes | Play | Score | Rank1..N
+  const REC_W = RECOMMEND_COL_WIDTH, PLAY_W = PLAY_COL_WIDTH, SCORE_W = SCORE_COL_WIDTH, NOTES_W = NOTES_COL_WIDTH, ENERGY_W = ENERGY_COL_WIDTH, PAD_W = PADDING_COL_WIDTH
+  // Dynamic grid columns (flex growth for ranks): Scenario | Pad | Notes | Recom | Play | Pad | Score | Rank1..N
   const dynamicColumns = useMemo(() => {
     const rankTracks = visibleRankIndices.map(() => `minmax(${RANK_MIN_WIDTH}px,1fr)`).join(' ')
-    return `${Math.round(scenarioWidth)}px ${REC_W}px ${NOTES_W}px ${PLAY_W}px ${SCORE_W}px ${rankTracks}${hasEnergy ? ` ${ENERGY_W}px` : ''}`
+    return `${Math.round(scenarioWidth)}px ${PAD_W}px ${NOTES_W}px ${REC_W}px ${PLAY_W}px ${PAD_W}px ${SCORE_W}px ${rankTracks}${hasEnergy ? ` ${ENERGY_W}px` : ''}`
   }, [scenarioWidth, visibleRankIndices.length, hasEnergy])
 
   // Attach refined wheel scroll: only enable horizontal wheel mapping when
   // the cursor is over the rank columns. We compute the left-offset where ranks begin.
-  useHorizontalWheelScroll(containerRef, { excludeLeftWidth: scenarioWidth + REC_W + NOTES_W + PLAY_W + SCORE_W, enabled: hScrollEnabled })
+  useHorizontalWheelScroll(containerRef, { excludeLeftWidth: scenarioWidth + PAD_W + REC_W + NOTES_W + PLAY_W + PAD_W + SCORE_W, enabled: hScrollEnabled })
   // Drag-> allow grabbing container to scroll horizontally (skip interactive elements / resize handles)
   // Always enable drag-to-scroll regardless of the wheel mapping toggle
   useDragScroll(containerRef, { axis: 'x', skipSelector: 'button, a, input, textarea, select, [role="button"]' })
-
-  // Handlers for manual toggles
-  const toggleManualRank = (idx: number) => {
-    setManuallyHidden(prev => {
-      const next = new Set(prev)
-      if (next.has(idx)) next.delete(idx)
-      else next.add(idx)
-      return next
-    })
-  }
-  const resetManual = () => setManuallyHidden(new Set())
 
   return (
     <div className="space-y-4">
@@ -256,7 +221,9 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                           <div className="h-full w-px bg-[var(--border-secondary)] group-hover:bg-[var(--accent-primary)]" />
                         </div>
                       </div>
-                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center" title="Recommendation score (negative means: switch)">Recom</div>
+                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center"></div>
+                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center"></div>
+                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center" title="Recommendation score"></div>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center"></div>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center"></div>
                       <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">Score</div>
@@ -298,17 +265,13 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                 const achieved = s.scenarioRank
                                 const maxes: number[] = s.thresholds
                                 const score = s.score
-                                const base = recScore.get(sName) ?? 0
-                                const thPts = thresholdContribution(Number(achieved || 0), Number(score || 0), maxes, ranks.length)
-                                const totalRec = Math.round(base + thPts)
+                                const totalRec = recScore.get(sName) ?? 0
+
                                 return (
                                   <Fragment key={sName}>
                                     <div className="text-[13px] text-[var(--text-primary)] truncate flex items-center">{sName}</div>
-                                    <div className="text-[12px] text-[var(--text-primary)] flex items-center justify-center gap-1" title="Recommendation score">
-                                      {triangle(totalRec >= 0 ? 'up' : 'down', totalRec >= 0 ? '--success' : '--error')}
-                                      <span>{totalRec}</span>
-                                    </div>
-                                    <div className="flex items-center justify-start">
+                                    <div />
+                                    <div className="flex items-center justify-center">
                                       <button
                                         className={`p-1 rounded hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-primary)] ${settings?.scenarioNotes?.[sName]?.notes ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}
                                         title="Notes & Sensitivity"
@@ -318,7 +281,10 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                         <NotebookPen size={16} />
                                       </button>
                                     </div>
-                                    <div className="flex items-center justify-start">
+                                    <div className="text-[12px] flex items-center justify-center" title={`Recommendation score: ${totalRec}`}>
+                                      <RecommendationIcon score={totalRec} />
+                                    </div>
+                                    <div className="flex items-center justify-center">
                                       <button
                                         className="p-1 rounded hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-primary)]"
                                         title="Play in Kovaak's"
@@ -328,6 +294,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                         <Play size={16} />
                                       </button>
                                     </div>
+                                    <div />
                                     <div className="text-[12px] text-[var(--text-primary)] flex items-center">{numberFmt(score)}</div>
                                     {visibleRankIndices.map((ri) => {
                                       const r = ranks[ri]
@@ -359,52 +326,19 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
         </div>
       )}
       {/* Controls panel: placed under the progress content */}
-      <div className="bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)]">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-primary)]">
-          <div className="text-sm font-medium text-[var(--text-primary)]">Rank columns</div>
-          <div className="flex items-center gap-3">
-            <Toggle
-              size="sm"
-              label="Auto-hide earlier ranks"
-              checked={autoHideCleared}
-              onChange={setAutoHideCleared}
-            />
-            <Dropdown
-              size="sm"
-              label="Keep columns visible"
-              ariaLabel="Target number of visible rank columns"
-              value={String(visibleRankCount)}
-              onChange={v => setVisibleRankCount(Math.max(1, parseInt(v || '1', 10) || 1))}
-              options={Array.from({ length: Math.max(9, rankDefs.length) }, (_, i) => i + 1).map(n => ({ label: String(n), value: String(n) }))}
-            />
-            <Button size="sm" variant="ghost" onClick={resetManual} title="Reset manual visibility">Reset</Button>
-          </div>
-        </div>
-        <div className="p-3">
-          <div className="text-xs text-[var(--text-secondary)] mb-2">Toggle columns to show/hide. Auto-hidden columns are disabled.</div>
-          <div className="flex flex-wrap gap-1">
-            {rankDefs.map((r, i) => {
-              const auto = autoHidden.has(i)
-              const manualHidden = manuallyHidden.has(i)
-              const visible = !(auto || manualHidden)
-              return (
-                <Button
-                  key={r.name + i}
-                  size="sm"
-                  variant={visible ? 'secondary' : 'ghost'}
-                  onClick={() => toggleManualRank(i)}
-                  disabled={auto}
-                  className={auto ? 'opacity-60 cursor-not-allowed' : ''}
-                  title={auto ? 'Hidden automatically (all scenarios are past this rank)' : (visible ? 'Click to hide this column' : 'Click to show this column')}
-                  style={{ color: r.color || 'var(--text-secondary)' }}
-                >
-                  {r.name}
-                </Button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
+      <RecommendationLegend />
+
+      <BenchmarkControls
+        rankDefs={rankDefs}
+        autoHideCleared={autoHideCleared}
+        setAutoHideCleared={setAutoHideCleared}
+        visibleRankCount={visibleRankCount}
+        setVisibleRankCount={setVisibleRankCount}
+        manuallyHidden={manuallyHidden}
+        toggleManualRank={toggleManualRank}
+        resetManual={resetManual}
+        autoHidden={autoHidden}
+      />
 
       {/* Notes modal (controlled by modalState) */}
       {modalState.open && (

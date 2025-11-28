@@ -1,14 +1,37 @@
 import type { Session } from '../../types/domain'
-import type { MetricsSeries } from '../analysis/metrics'
-import { collectRunsBySession, expectedBestVsLength, expectedByIndex, recommendLengths } from '../analysis/sessionLength'
+import { getScenarioName } from '../utils'
+
+export type ScenarioBenchmarkData = {
+  rank: number
+  score: number
+  thresholds: number[]
+}
 
 export type RecommendationInputs = {
   wantedNames: string[]
-  byName: Map<string, MetricsSeries>
-  lastPlayedMs: Map<string, number>
   lastSessionCount: Map<string, number>
   sessions: Session[]
+  benchmarkData: Map<string, ScenarioBenchmarkData>
 }
+
+// Constants for recommendation scoring
+const THRESHOLD_VERY_WEAK = 0.15
+const THRESHOLD_WEAK = 0.05
+const THRESHOLD_AVERAGE = -0.05
+const THRESHOLD_VERY_STRONG = -0.15
+
+const SCORE_VERY_WEAK = 3
+const SCORE_WEAK = 2
+const SCORE_AVERAGE = 1
+const SCORE_VERY_STRONG = -1
+const SCORE_MAX_RANK_PENALTY = -3
+
+const SLOPE_WORSE = -0.5
+const SLOPE_PLATEAU = 0.1
+const SLOPE_IMPROVING = 0.2
+
+const SESSION_FATIGUE_HIGH = 12
+const SESSION_FATIGUE_MED = 6
 
 // Numeric helpers
 const mean = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
@@ -40,78 +63,106 @@ const weightedSlope = (arr: number[], alpha = 0.25): number => {
 }
 const recentStd = (arr: number[], k = 6) => stddev(arr.slice(0, Math.min(k, arr.length)))
 
-// Compute base recommendation score per scenario name, excluding threshold proximity.
+// Compute recommendation score per scenario name
+// Returns a score roughly -3 to +5, where higher means "Focus on this".
 export function computeRecommendationScores(input: RecommendationInputs): Map<string, number> {
-  const { wantedNames, byName, lastPlayedMs, lastSessionCount, sessions } = input
-  const now = Date.now()
+  const { wantedNames, lastSessionCount, sessions, benchmarkData } = input
   const out = new Map<string, number>()
 
-  // Median total runs across the currently listed scenarios
-  const counts: number[] = wantedNames.map(n => byName.get(n)?.score.length ?? 0)
-  const sorted = counts.slice().sort((a, b) => a - b)
-  const med = sorted.length ? (sorted[Math.floor(sorted.length / 2)] ?? 0) : 0
+  // 1. Calculate Normalized Progress for all scenarios to find averages
+  const progressMap = new Map<string, number>()
+  let totalProgress = 0
+  let count = 0
 
   for (const name of wantedNames) {
-    const hist = byName.get(name)
-    const histScores: number[] = hist?.score ?? []
-    const histAcc: number[] = hist?.acc ?? []
-    const histTtk: number[] = hist?.ttk ?? []
+    const data = benchmarkData.get(name)
+    if (!data) continue
+    const { rank, score, thresholds } = data
+    // Calculate normalized progress (0..1)
+    const maxRank = Math.max(1, thresholds.length - 1)
+    const r = Math.max(0, Math.min(rank, maxRank))
 
-    // Trend signals (normalized by variability), weighted to prefer recent evidence
-    const sSlope = weightedSlope(histScores)
-    const sStd = stddev(histScores)
-    const slopeNorm = sStd > 0 ? Math.max(-1, Math.min(1, sSlope / (3 * sStd))) : 0 // ~within +/-3σ per run
-    const slopePts = 10 * slopeNorm // -10..+10
+    let p = 0
+    if (r >= maxRank) {
+      p = 1
+    } else {
+      const prev = thresholds[r] ?? 0
+      const next = thresholds[r + 1] ?? prev
+      const range = next - prev
+      const frac = range > 0 ? (score - prev) / range : 0
+      p = (r + Math.max(0, Math.min(1, frac))) / maxRank
+    }
+    progressMap.set(name, p)
+    totalProgress += p
+    count++
+  }
 
-    const aSlope = weightedSlope(histAcc)
-    const aStd = stddev(histAcc)
-    const aNorm = aStd > 0 ? Math.max(-1, Math.min(1, aSlope / (3 * aStd))) : 0
-    const accPts = 5 * aNorm // -5..+5
+  const avgProgress = count > 0 ? totalProgress / count : 0
 
-    const tSlope = weightedSlope(histTtk)
-    const tStd = stddev(histTtk)
-    const tNorm = tStd > 0 ? Math.max(-1, Math.min(1, tSlope / (3 * tStd))) : 0
-    const ttkPts = -5 * tNorm // lower TTK is better
+  for (const name of wantedNames) {
+    let scoreVal = 0
 
-    // Plateau detection: flat trend and low recent variance
-    const isPlateau = Math.abs(slopeNorm) < 0.05 && recentStd(histScores) < (0.25 * (sStd || 1))
-    const plateauPts = isPlateau ? -10 : 0
+    // --- Factor 1: Relative Weakness (The lower the progress, the higher the recommendation) ---
+    const p = progressMap.get(name) ?? 1
+    const diff = avgProgress - p // Positive if weaker than average
 
-    const playedMs = lastPlayedMs.get(name) ?? 0
-    const hours = playedMs ? Math.max(0, (now - playedMs) / 3_600_000) : 999
-    const recencyPts = Math.max(-5, Math.min(10, (hours - 4) / 4)) // negative if replayed very recently
+    if (diff > THRESHOLD_VERY_WEAK) scoreVal += SCORE_VERY_WEAK // Very weak
+    else if (diff > THRESHOLD_WEAK) scoreVal += SCORE_WEAK // Weak
+    else if (diff > THRESHOLD_AVERAGE) scoreVal += SCORE_AVERAGE // Average
+    else if (diff < THRESHOLD_VERY_STRONG) scoreVal += SCORE_VERY_STRONG // Very strong compared to others -> mild suggestion to switch
 
-    const inLastSess = lastSessionCount.get(name) ?? 0
-
-    // Estimate optimal session length for this scenario if we have enough data
-    let lenPts = 0
-    try {
-      const runs = collectRunsBySession(sessions, name)
-      const byIdx = expectedByIndex(runs, 'score')
-      const bestVsL = expectedBestVsLength(runs, 'score')
-      const rec = recommendLengths(byIdx, bestVsL)
-      const opt = rec.optimalAvgRuns || 0
-      if (opt > 0) {
-        if (inLastSess === 0) {
-          lenPts = 0
-        } else if (inLastSess < opt) {
-          lenPts = Math.min(15, opt - inLastSess)
-        } else if (inLastSess > opt) {
-          lenPts = -Math.min(25, 2 * (inLastSess - opt))
-        }
-      }
-    } catch { /* ignore */ }
-
-    // Under-practiced bonus: encourage scenarios with few total runs
-    const totalRuns = histScores.length
-    let practicePts = 0
-    if (totalRuns < Math.max(3, med)) {
-      const denom = Math.max(1, med)
-      practicePts = Math.max(0, Math.min(8, Math.round(8 * (1 - totalRuns / denom))))
+    // Penalty for Max Rank
+    if (p >= 1) {
+      scoreVal += SCORE_MAX_RANK_PENALTY // Completed scenario -> Strong suggestion to switch
     }
 
-    const base = Math.round(slopePts + accPts + ttkPts + plateauPts + recencyPts + lenPts + practicePts)
-    out.set(name, base)
+    // --- Factor 2: Current Session Analysis ---
+    const inSessionCount = lastSessionCount.get(name) ?? 0
+
+    if (inSessionCount > 0) {
+      // We are currently playing this scenario.
+      // Check for fatigue/plateau in THIS session.
+
+      const lastSession = sessions[0]
+      if (lastSession) {
+        // Filter items for this scenario
+        const sessionRuns = lastSession.items.filter(it => getScenarioName(it) === name)
+
+        if (sessionRuns.length >= 3) {
+          const sessionScores = sessionRuns.map(r => Number(r.stats?.['Score'] ?? 0))
+          const slope = weightedSlope(sessionScores)
+          const std = stddev(sessionScores)
+          const meanScore = mean(sessionScores)
+
+          // If slope is negative (getting worse) -> Switch (-2)
+          // Normalize slope by std or mean
+          const normSlope = std > 0 ? slope / std : (meanScore > 0 ? slope / meanScore : 0)
+
+          if (normSlope < SLOPE_WORSE) {
+            scoreVal -= 2
+          }
+          // If slope is flat and low variance (Plateaued in session) -> Switch (-1)
+          else if (Math.abs(normSlope) < SLOPE_PLATEAU) {
+            scoreVal -= 1
+          }
+          // If improving -> Keep going (+1)
+          else if (normSlope > SLOPE_IMPROVING) {
+            scoreVal += 1
+          }
+        }
+
+        // Diminishing returns: If played TOO much in one session
+        if (inSessionCount > SESSION_FATIGUE_HIGH) scoreVal -= 2
+        else if (inSessionCount > SESSION_FATIGUE_MED) scoreVal -= 1
+      }
+    } else {
+      // Not played in this session.
+      // If it's a weak scenario, we already have points.
+      // Add a small bonus to encourage starting if it is weak
+      if (diff > 0 && p < 1) scoreVal += 1
+    }
+
+    out.set(name, scoreVal)
   }
 
   return out
