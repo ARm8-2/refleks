@@ -105,10 +105,8 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
         }
       }
     }
-    // Show strongest first; limit to top N for readability
     rows.sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
-    const TOP_N = 18
-    return rows.slice(0, TOP_N)
+    return rows
   }, [categories, level, rankDefs])
 
   const labels = strength.map(r => r.label)
