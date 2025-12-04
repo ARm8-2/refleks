@@ -13,7 +13,6 @@ export { FatigueAlert } from './sessions/FatigueAlert';
 export { Findings } from './sessions/Findings';
 export { MetricsControls } from './sessions/MetricsControls';
 export { MetricsLineChart } from './sessions/MetricsLineChart';
-export { NextHighscoreForecast } from './sessions/NextHighscoreForecast';
 export { PerformanceVsSensChart } from './sessions/PerformanceVsSensChart';
 export { ScenarioBenchmarkProgress } from './sessions/ScenarioBenchmarkProgress';
 export { ScenarioMixRadarChart } from './sessions/ScenarioMixRadarChart';

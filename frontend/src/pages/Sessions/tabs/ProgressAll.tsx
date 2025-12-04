@@ -1,8 +1,7 @@
 import { useEffect, useMemo } from 'react'
-import { MetricsControls, NextHighscoreForecast, PerformanceVsSensChart, SessionLengthRecommendation, SessionMetricsChart, SummaryStats, TimeOfDayAreaChart } from '../../../components'
+import { MetricsControls, PerformanceVsSensChart, SessionLengthRecommendation, SessionMetricsChart, SummaryStats, TimeOfDayAreaChart } from '../../../components'
 import { usePageState } from '../../../hooks/usePageState'
 import { useStore } from '../../../hooks/useStore'
-import { predictNextHighscore } from '../../../lib/analysis'
 import { computeSessionAverages, groupByScenario } from '../../../lib/analysis/metrics'
 import { getScenarioName } from '../../../lib/utils'
 
@@ -84,8 +83,6 @@ export function ProgressAllTab() {
       />
 
       <SummaryStats title="Progress summary" score={metrics.score} acc={metrics.acc} ttk={metrics.ttk} storageKeyPrefix="progressAll" />
-
-      <NextHighscoreForecast pred={useMemo(() => predictNextHighscore(scenarios, selectedName), [scenarios, selectedName])} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <PerformanceVsSensChart items={scenarios} scenarioName={selectedName} />
