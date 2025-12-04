@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Findings, MetricsControls, PerformanceVsSensChart, ScenarioBenchmarkProgress, SessionMetricsChart, SessionMixChart, SummaryStats } from '../../../components'
+import { FatigueAlert, Findings, MetricsControls, PerformanceVsSensChart, ScenarioBenchmarkProgress, SessionMetricsChart, SessionMixChart, SessionStatus, SummaryStats } from '../../../components'
 import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkProgress'
 import { usePageState } from '../../../hooks/usePageState'
+import { useStore } from '../../../hooks/useStore'
 import { useUIState } from '../../../hooks/useUIState'
 import { computeFindings } from '../../../lib/analysis/findings'
 import { groupByScenario } from '../../../lib/analysis/metrics'
@@ -13,6 +14,8 @@ type OverviewTabProps = { session: Session | null }
 
 export function OverviewTab({ session }: OverviewTabProps) {
   const items = session?.items ?? []
+  const allSessions = useStore(s => s.sessions)
+
   // Group per scenario name and collect metrics (newest -> oldest order)
   const byName = useMemo(() => groupByScenario(items), [items])
 
@@ -59,6 +62,12 @@ export function OverviewTab({ session }: OverviewTabProps) {
 
   return (
     <div className="space-y-3">
+      {/* Fatigue detection alert - shows when performance decline detected */}
+      <FatigueAlert currentSession={session} allSessions={allSessions} />
+
+      {/* Quick session status bar */}
+      <SessionStatus currentSession={session} allSessions={allSessions} />
+
       {/* Global controls for this tab */}
       <MetricsControls
         names={names}
