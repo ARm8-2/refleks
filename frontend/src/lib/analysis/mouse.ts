@@ -28,6 +28,12 @@ export type KillAnalysis = {
   avgDistanceFromTarget: number
   directionFlips: number
   overshootSeverity: number
+  // New metrics for improved analysis
+  confidence: number // 0-1 confidence in the classification
+  velocityAtKill: number // speed at the moment of kill (pixels/ms)
+  maxVelocity: number // peak velocity during approach
+  crossingCount: number // number of times cursor crossed the target center
+  clickedWhileMoving: boolean // true if click occurred while cursor was still moving fast
 }
 
 export type MouseTraceAnalysis = {
@@ -138,64 +144,192 @@ export function findWindow(points: Point[], ev: MouseKillEvent, capSec: number):
 
 export function analyzeWindow(points: Point[], win: { startMs: number; endMs: number; startIndex: number; endIndex: number }, ev: MouseKillEvent): KillAnalysis {
   const { startIndex, endIndex, startMs, endMs } = win
-  const s = points[startIndex]
-  const k = points[Math.min(points.length - 1, endIndex)] || points[points.length - 1]
-  const center = { x: k.x, y: k.y }
+  // Points: the starting point for this analysis window, and the point where the kill occurred
+  const startPoint = points[startIndex]
+  const killPoint = points[Math.min(points.length - 1, endIndex)] || points[points.length - 1]
+  const center = { x: killPoint.x, y: killPoint.y }
+
   // path metrics
   let pathLen = 0
-  let prev = points[startIndex]
+  let prevPoint = points[startIndex]
   for (let i = startIndex + 1; i <= endIndex; i++) {
     const p = points[i]
-    pathLen += Math.hypot(p.x - prev.x, p.y - prev.y)
-    prev = p
+    pathLen += Math.hypot(p.x - prevPoint.x, p.y - prevPoint.y)
+    prevPoint = p
   }
-  const straight = Math.hypot((k.x - s.x), (k.y - s.y))
+  const straight = Math.hypot((killPoint.x - startPoint.x), (killPoint.y - startPoint.y))
   const efficiency = pathLen > 0 ? Math.max(0, Math.min(1, straight / pathLen)) : 1
 
-  // overshoot/undershoot via distance-to-kill analysis
-  const r = clamp(Math.max(2, straight * 0.05), 2, 20)
-  const r2 = r * r
-  const dists: number[] = []
+  // Improved target zone radius calculation
+  // Base it on the flick distance but also consider scenario type (via hits count)
+  // Clicking scenarios (1 hit) need tighter zones, tracking (many hits) need larger zones
+  const isTrackingLike = ev.hits > 100
+  const isClickingLike = ev.hits <= 2
+  let radius: number
+  if (isClickingLike) {
+    // Clicking: tighter zone, ~3-8% of flick distance
+    radius = clamp(Math.max(3, straight * 0.04), 3, 15)
+  } else if (isTrackingLike) {
+    // Tracking: wider zone, ~8-12% of movement
+    radius = clamp(Math.max(5, straight * 0.10), 5, 30)
+  } else {
+    // Switching/hybrid: medium zone
+    radius = clamp(Math.max(4, straight * 0.06), 4, 20)
+  }
+  const radiusSq = radius * radius
+
+  // Compute distances to kill point and velocities
+  // Squared distances to kill point for efficiency (avoid sqrt per point)
+  const distSq: number[] = []
+  const velocities: number[] = []
   for (let i = startIndex; i <= endIndex; i++) {
     const p = points[i]
-    const dx = p.x - k.x, dy = p.y - k.y
-    dists.push(dx * dx + dy * dy)
-  }
-  // Overshoot: enter within r, move away beyond r, then return to within r at end.
-  let enteredAt = -1
-  let leftAfterEnter = false
-  for (let i = 0; i < dists.length - 1; i++) {
-    const d = dists[i]
-    if (enteredAt === -1) {
-      if (d <= r2) enteredAt = i
-    } else {
-      if (d > r2 * 1.2) leftAfterEnter = true
+    const dx = p.x - killPoint.x, dy = p.y - killPoint.y
+    distSq.push(dx * dx + dy * dy)
+
+    if (i > startIndex) {
+      const prevP = points[i - 1]
+      const dt = tsMs(p.ts) - tsMs(prevP.ts)
+      const dist = Math.hypot(p.x - prevP.x, p.y - prevP.y)
+      velocities.push(dt > 0 ? dist / dt : 0)
     }
   }
-  const endWithin = dists[dists.length - 1] <= r2
-  const isOvershoot = enteredAt !== -1 && leftAfterEnter && endWithin
 
-  // Undershoot: within last 300ms, multiple radial direction flips while outside r, but never overshoot
-  const last300msStart = lowerBound(points, endMs - 300, startIndex, endIndex)
-  let flips = 0
-  let prevSign = 0
-  for (let i = Math.max(1, last300msStart - startIndex); i < dists.length; i++) {
-    const dd = dists[i] - dists[i - 1]
-    const sign = dd === 0 ? prevSign : (dd > 0 ? 1 : -1)
-    // Only count flips while still outside r (approach corrections)
-    const outside = dists[i] > r2
-    if (outside && prevSign !== 0 && sign !== prevSign) flips++
-    prevSign = sign
+  // Overshoot detection: detect when the player enters the target zone, leaves significantly,
+  // and then returns — or when they oscillate by crossing the primary axis multiple times.
+
+  let zoneEntryIndex = -1
+  let leftZoneAfterEntry = false
+  let crossingCount = 0
+  let lastSideOnPrimaryAxis: 'left' | 'right' | 'above' | 'below' | null = null
+
+  // Track which side of target the cursor is on (for crossing detection)
+  const primaryAxisIsX = Math.abs(killPoint.x - startPoint.x) > Math.abs(killPoint.y - startPoint.y)
+  for (let i = 0; i < distSq.length; i++) {
+    const p = points[startIndex + i]
+    const dx = p.x - killPoint.x
+    const dy = p.y - killPoint.y
+
+    // Primary movement axis detection
+    const curSideX: 'left' | 'right' = dx < 0 ? 'left' : 'right'
+    const curSideY: 'above' | 'below' = dy < 0 ? 'above' : 'below'
+
+    // Use the axis with larger movement for crossing detection
+    const curSide = primaryAxisIsX ? curSideX : curSideY
+
+    if (lastSideOnPrimaryAxis !== null && lastSideOnPrimaryAxis !== curSide && Math.sqrt(distSq[i]) < radius * 3) {
+      crossingCount++
+    }
+    lastSideOnPrimaryAxis = curSide
+
+    // Classic enter/leave detection with conservative hysteresis
+    const d = distSq[i]
+    if (zoneEntryIndex === -1) {
+      if (d <= radiusSq) zoneEntryIndex = i
+    } else {
+      // Require significant exit (2.25x area) from the zone to avoid small boundary noise
+      if (d > radiusSq * 2.25) leftZoneAfterEntry = true
+    }
   }
-  const isUndershoot = !isOvershoot && flips >= 2
+
+  const endWithin = distSq[distSq.length - 1] <= radiusSq
+  const classicOvershoot = zoneEntryIndex !== -1 && leftZoneAfterEntry && endWithin
+
+  // Velocity metrics
+  const maxVelocity = velocities.length > 0 ? Math.max(...velocities) : 0
+  const velocityAtKill = velocities.length > 0 ? velocities[velocities.length - 1] : 0
+  const avgVelocity = velocities.length > 0 ? velocities.reduce((a, b) => a + b, 0) / velocities.length : 0
+
+  // Only count as overshoot if:
+  // - Classic pattern (enter, leave significantly, return) OR
+  // - Multiple crossings (3+) with end inside zone (suggests oscillation)
+  const isOvershoot = classicOvershoot || (crossingCount >= 3 && endWithin)
+
+  // === IMPROVED UNDERSHOOT DETECTION ===
+  // Detect patterns:
+  // 1. Multiple direction flips while approaching (hesitation)
+  // 2. Deceleration followed by micro-corrections
+  // 3. Multiple small movements without reaching target confidently
+
+  // For undershoot we consider recent signal within the last 300ms: direction flips and
+  // deceleration-triggered corrections are common undershoot patterns.
+  const startIndexLast300Ms = lowerBound(points, endMs - 300, startIndex, endIndex)
+  let directionFlipCount = 0
+  let previousSign = 0
+  let decelerationFlipCount = 0
+
+  for (let i = Math.max(1, startIndexLast300Ms - startIndex); i < distSq.length; i++) {
+    const dd = distSq[i] - distSq[i - 1]
+    const sign = dd === 0 ? previousSign : (dd > 0 ? 1 : -1)
+    const outside = distSq[i] > radiusSq
+
+    // Count flips while outside target zone
+    if (outside && previousSign !== 0 && sign !== previousSign) {
+      directionFlipCount++
+      // Extra weight if this happens during deceleration
+      if (i > 1 && velocities[i - 1] < velocities[i - 2]) {
+        decelerationFlipCount++
+      }
+    }
+    previousSign = sign
+  }
+
+  // Also check for "stalling" - very slow movement near but outside target
+  let stallCount = 0
+  for (let i = Math.max(0, distSq.length - 15); i < distSq.length - 1; i++) {
+    const distFromTarget = Math.sqrt(distSq[i])
+    const nearTarget = distFromTarget < radius * 3 && distFromTarget > radius
+    const slowMoving = velocities[i] !== undefined && velocities[i] < avgVelocity * 0.25
+    if (nearTarget && slowMoving) stallCount++
+  }
+
+  // Undershoot requires clear hesitation pattern:
+  // - 3+ flips (clear indecision) OR
+  // - 2 flips during deceleration (common undershoot pattern) OR
+  // - Significant stalling (4+) with any flipping
+  const isUndershoot = !isOvershoot && (
+    directionFlipCount >= 3 ||
+    (decelerationFlipCount >= 2 && directionFlipCount >= 2) ||
+    (stallCount >= 4 && directionFlipCount >= 1)
+  )
+
+  // === CLICK TIMING ANALYSIS ===
+  // Check if the kill click happened while cursor was still moving fast
+  const clickedWhileMoving = velocityAtKill > avgVelocity * 0.6 && velocityAtKill > 0.15
+
+  // === CONFIDENCE SCORING ===
+  // Higher confidence when:
+  // - Clear pattern match (not borderline cases)
+  // - Sufficient data points in the window
+  // - Consistent movement patterns
+  const numPoints = endIndex - startIndex + 1
+  let confidence = 0.5 // base confidence
+
+  if (numPoints >= 20) confidence += 0.15
+  else if (numPoints >= 10) confidence += 0.1
+
+  if (isOvershoot) {
+    if (classicOvershoot && crossingCount >= 2) confidence += 0.25 // strong pattern
+    else if (classicOvershoot) confidence += 0.15
+    else if (crossingCount >= 3) confidence += 0.15 // oscillation pattern
+  } else if (isUndershoot) {
+    if (directionFlipCount >= 3) confidence += 0.2
+    else if (directionFlipCount >= 2 && decelerationFlipCount >= 1) confidence += 0.15
+    else confidence += 0.1
+  } else {
+    // Optimal - high confidence if clearly inside zone with smooth approach
+    if (efficiency > 0.85 && !leftZoneAfterEntry) confidence += 0.2
+  }
+
+  confidence = clamp(confidence, 0, 1)
 
   const classification: 'optimal' | 'overshoot' | 'undershoot' = isOvershoot ? 'overshoot' : (isUndershoot ? 'undershoot' : 'optimal')
 
   // Calculate additional metrics for better sensitivity suggestions
-  const maxDistanceFromTarget = Math.sqrt(Math.max(...dists))
-  const avgDistanceFromTarget = Math.sqrt(dists.reduce((a, b) => a + b, 0) / dists.length)
-  const directionFlips = flips // from undershoot analysis
-  const overshootSeverity = isOvershoot ? Math.max(0, Math.sqrt(Math.max(...dists)) - r) : 0
+  const maxDistanceFromTarget = Math.sqrt(Math.max(...distSq))
+  const avgDistanceFromTarget = Math.sqrt(distSq.reduce((a, b) => a + b, 0) / distSq.length)
+  const directionFlips = directionFlipCount
+  const overshootSeverity = isOvershoot ? Math.max(0, Math.sqrt(Math.max(...distSq)) - radius) : 0
 
   return {
     killIdx: ev.idx,
@@ -214,10 +348,14 @@ export function analyzeWindow(points: Point[], win: { startMs: number; endMs: nu
     avgDistanceFromTarget,
     directionFlips,
     overshootSeverity,
+    confidence,
+    velocityAtKill,
+    maxVelocity,
+    crossingCount,
+    clickedWhileMoving,
   }
 }
 
-// --- Utilities ---
 function parseTTK(s: any): number {
   const m = String(s || '').match(/([0-9]*\.?[0-9]+)s/i)
   return m ? parseFloat(m[1]) : NaN
@@ -246,44 +384,62 @@ export function computeSuggestedSens(analysis: MouseTraceAnalysis, stats: Record
   const total = Math.max(1, analysis.kills.length)
   const over = analysis.counts.overshoot
   const under = analysis.counts.undershoot
+  const optimal = analysis.counts.optimal
   const overPct = over / total
   const underPct = under / total
+  const optimalPct = optimal / total
 
-  // Calculate trace-based severity metrics
-  const { avgOvershootDistance, avgUndershootFlips } = calculateTraceSeverity(analysis)
+  // Calculate trace-based severity metrics with confidence weighting
+  const { avgOvershootDistance, avgUndershootFlips, avgConfidence, clickWhileMovingRate } = calculateTraceSeverity(analysis)
 
-  // Improved decision logic with lower threshold and trace data
+  // Only provide suggestions if we have reasonable confidence in the analysis
+  if (avgConfidence < 0.45) return null
+
+  // If mostly optimal, no suggestion needed
+  if (optimalPct > 0.7) return null
+
+  // Improved decision logic with confidence weighting
   let net = overPct - underPct // positive => overshoot dominant
 
-  // If percentages are very close, prioritize fixing overshoot (it's worse than undershoot)
+  // Weight by confidence - if confidence is low, reduce the magnitude of suggestions
+  const confidenceMultiplier = 0.5 + (avgConfidence * 0.5)
+
+  // If percentages are very close but both significant, don't suggest (mixed issues)
   const pctDiff = Math.abs(overPct - underPct)
-  if (pctDiff < 0.05 && overPct > 0.1) { // Within 5% and at least 10% overshoot
-    net = 0.05 // Small positive bias toward fixing overshoot
+  if (pctDiff < 0.08 && overPct > 0.15 && underPct > 0.15) {
+    // Mixed pattern - both overshoot and undershoot present, no clear direction
+    return null
   }
 
-  // Lower threshold for providing suggestions, but consider trace severity
-  const baseMinNet = 0.08 // 8% instead of 12%
-  const severityBoost = Math.max(0, Math.min(0.04, avgOvershootDistance / 100)) // Boost based on overshoot distance
-  const minNetToSuggest = baseMinNet - severityBoost
+  // Factor in click-while-moving as additional evidence of overshoot tendency
+  // but only if it's a significant pattern
+  if (clickWhileMovingRate > 0.4 && over > 0) {
+    net += clickWhileMovingRate * 0.08
+  }
 
-  if (Math.abs(net) < minNetToSuggest || total < 4) return null
+  // Higher threshold for providing suggestions - require clearer pattern
+  const minNetToSuggest = 0.12 // 12% difference needed
 
-  // Calculate adjustment based on both percentage bias and trace severity
-  const pctAdjustment = net * 0.6 // Base adjustment from percentages
-  const severityAdjustment = avgOvershootDistance > 10 ? Math.min(0.3, avgOvershootDistance / 50) : 0
+  if (Math.abs(net) < minNetToSuggest || total < 5) return null
+
+  // Calculate adjustment based on both percentage bias and severity
+  // More conservative adjustments to avoid over-correction
+  const pctAdjustment = net * 0.4 * confidenceMultiplier
+  const severityAdjustment = avgOvershootDistance > 15 ? Math.min(0.2, avgOvershootDistance / 80) * confidenceMultiplier : 0
   const totalAdjustment = Math.abs(pctAdjustment) + severityAdjustment
 
-  // Scale the adjustment proportionally, but clamp to reasonable bounds.
-  const maxAdjustment = 0.5 // 50% max instead of 60%
+  // More conservative max adjustment - 35% max
+  const maxAdjustment = 0.35
   const adj = Math.max(-maxAdjustment, Math.min(maxAdjustment, net > 0 ? totalAdjustment : -totalAdjustment))
 
   const recommended = Math.max(0.0001, curr * (1 - adj))
   const changePct = ((recommended / curr) - 1) * 100
 
   const direction = net > 0 ? 'faster' : 'slower'
+  const confidenceNote = avgConfidence < 0.6 ? ' (moderate confidence)' : ''
   const reason = net > 0
-    ? `Overshoot detected in ${overPct > 0 ? formatPct(overPct, 0) : 'some'} of kills${avgOvershootDistance > 10 ? ` with average overshoot distance of ${formatNumber(avgOvershootDistance / 10, 1)} pixels` : ''}. Suggest training at the higher sensitivity (${formatNumber(recommended, 2)} cm/360) for a few runs; when you return to your original sensitivity (${formatNumber(curr, 2)} cm/360) you'll likely retain smaller physical motions which should reduce overshoot.`
-    : `Undershoot detected in ${underPct > 0 ? formatPct(underPct, 0) : 'some'} of kills${avgUndershootFlips > 2 ? ` with frequent micro-corrections` : ''}. Suggest training at the lower sensitivity (${formatNumber(recommended, 2)} cm/360) for a few runs; when you return to your original sensitivity (${formatNumber(curr, 2)} cm/360) you'll likely retain slightly larger motions which should reduce undershoot.`
+    ? `Overshoot detected in ${overPct > 0 ? formatPct(overPct, 0) : 'some'} of kills${avgOvershootDistance > 10 ? ` with average overshoot distance of ${formatNumber(avgOvershootDistance / 10, 1)} pixels` : ''}${clickWhileMovingRate > 0.3 ? `, often clicking while cursor still moving` : ''}. Suggest training at the higher sensitivity (${formatNumber(recommended, 2)} cm/360) for a few runs; when you return to your original sensitivity (${formatNumber(curr, 2)} cm/360) you'll likely retain smaller physical motions which should reduce overshoot${confidenceNote}.`
+    : `Undershoot detected in ${underPct > 0 ? formatPct(underPct, 0) : 'some'} of kills${avgUndershootFlips > 2 ? ` with frequent micro-corrections` : ''}. Suggest training at the lower sensitivity (${formatNumber(recommended, 2)} cm/360) for a few runs; when you return to your original sensitivity (${formatNumber(curr, 2)} cm/360) you'll likely retain slightly larger motions which should reduce undershoot${confidenceNote}.`
 
   return { current: curr, recommended, changePct, direction, reason }
 }
@@ -294,8 +450,13 @@ function calculateTraceSeverity(analysis: MouseTraceAnalysis) {
   let overshootCount = 0
   let totalUndershootFlips = 0
   let undershootCount = 0
+  let totalConfidence = 0
+  let clickWhileMovingCount = 0
 
   for (const kill of analysis.kills) {
+    totalConfidence += kill.confidence
+    if (kill.clickedWhileMoving) clickWhileMovingCount++
+
     if (kill.classification === 'overshoot') {
       totalOvershootDistance += kill.overshootSeverity
       overshootCount++
@@ -305,8 +466,11 @@ function calculateTraceSeverity(analysis: MouseTraceAnalysis) {
     }
   }
 
+  const total = analysis.kills.length
   return {
     avgOvershootDistance: overshootCount > 0 ? totalOvershootDistance / overshootCount : 0,
-    avgUndershootFlips: undershootCount > 0 ? totalUndershootFlips / undershootCount : 0
+    avgUndershootFlips: undershootCount > 0 ? totalUndershootFlips / undershootCount : 0,
+    avgConfidence: total > 0 ? totalConfidence / total : 0,
+    clickWhileMovingRate: total > 0 ? clickWhileMovingCount / total : 0,
   }
 }
