@@ -61,7 +61,7 @@ export interface BenchmarkProgress {
   categories: ProgressCategory[]
 }
 
-import type { Theme } from '../lib/theme'
+import type { Font, Theme } from '../lib/theme'
 
 export interface Settings {
   steamInstallDir?: string
@@ -70,6 +70,7 @@ export interface Settings {
   tracesDir: string
   sessionGapMinutes: number
   theme: Theme
+  font: Font
   favoriteBenchmarks?: string[]
   mouseTrackingEnabled?: boolean
   mouseBufferMinutes?: number

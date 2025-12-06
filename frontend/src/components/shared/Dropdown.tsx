@@ -62,7 +62,7 @@ export function Dropdown({
 
   return (
     <div
-      className={`inline-flex items-center gap-2 text-[var(--text-secondary)] ${size === 'md' ? 'text-sm' : 'text-xs'} ${fullWidth ? 'w-full' : ''
+      className={`inline-flex items-center gap-2 text-secondary ${size === 'md' ? 'text-sm' : 'text-xs'} ${fullWidth ? 'w-full' : ''
         }`}
     >
       {label && <span className="select-none">{label}</span>}
@@ -71,7 +71,7 @@ export function Dropdown({
           type="button"
           aria-label={ariaLabel || label}
           aria-expanded={isOpen}
-          className={`flex items-center justify-between ${pad} rounded-md bg-[var(--bg-secondary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]/60 hover:bg-[var(--bg-tertiary)] w-full ${className}`}
+          className={`flex items-center justify-between ${pad} rounded-md bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-2 focus:ring-accent/60 hover:bg-surface-3 w-full ${className}`}
           onClick={() => setIsOpen(v => !v)}
           onKeyDown={e => {
             if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
@@ -81,16 +81,16 @@ export function Dropdown({
           }}
         >
           <span className="truncate">{selectedLabel || 'Select...'}</span>
-          <ChevronDown className="ml-2 h-4 w-4 text-[var(--text-muted)]" aria-hidden />
+          <ChevronDown className="ml-2 h-4 w-4 text-muted" aria-hidden />
         </button>
 
         {isOpen && (
           <div
-            className={`absolute left-0 z-10 mt-1 ${fullWidth ? 'w-full' : 'min-w-[12rem]'} rounded-md bg-[var(--bg-secondary)] border border-[var(--border-primary)] shadow-lg`}
+            className={`absolute left-0 z-10 mt-1 ${fullWidth ? 'w-full' : 'min-w-[12rem]'} rounded-md bg-surface-2 border border-primary shadow-lg`}
           >
             <ul role="listbox" className="max-h-72 overflow-auto text-xs">
               {options.length === 0 && (
-                <li className="px-2 py-1 text-[var(--text-secondary)] select-none">No options</li>
+                <li className="px-2 py-1 text-secondary select-none">No options</li>
               )}
               {options.map(opt => {
                 const isSelected = String(opt.value) === String(value)
@@ -101,8 +101,8 @@ export function Dropdown({
                     role="option"
                     aria-selected={isSelected}
                     className={`px-2 py-1 cursor-pointer outline-none ${isSelected
-                      ? 'bg-[var(--accent-primary)] text-white'
-                      : 'text-[var(--text-primary)] hover:bg-[var(--bg-hover)] focus:bg-[var(--bg-hover)]'
+                      ? 'bg-accent text-on-accent'
+                      : 'text-primary hover:bg-hover focus:bg-hover'
                       }`}
                     onClick={() => handleSelect(opt.value)}
                     onKeyDown={e => {

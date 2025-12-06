@@ -56,14 +56,14 @@ export function Modal({
         aria-hidden="true"
       />
       <div
-        className={`relative bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)] shadow-xl flex flex-col ${className}`}
+        className={`relative bg-surface-2 rounded-lg border border-primary shadow-xl flex flex-col ${className}`}
         style={{ width, height, maxHeight: '95vh', maxWidth: '95vw' }}
         ref={containerRef}
         tabIndex={-1}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-primary)] shrink-0 gap-4">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-primary shrink-0 gap-4">
           <div className="flex items-center gap-4 min-w-0 flex-1">
-            <div className="text-lg font-medium text-[var(--text-primary)] truncate shrink">{title}</div>
+            <div className="text-lg font-medium text-primary truncate shrink">{title}</div>
             {headerControls && (
               <div className="flex items-center gap-2 shrink-0">
                 {headerControls}
@@ -72,7 +72,7 @@ export function Modal({
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors ml-4 shrink-0"
+            className="p-1 rounded hover:bg-surface-3 text-secondary hover:text-primary transition-colors ml-4 shrink-0"
           >
             <X size={20} />
           </button>

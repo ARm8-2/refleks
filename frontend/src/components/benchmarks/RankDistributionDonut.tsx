@@ -54,9 +54,9 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
 
   const bgColors = useMemo(() => {
     const cols = rankDefs.map(r => r.color)
-    const below = '#94a3b8' // slate-400
+    const below = theme.neutral
     return counts.below > 0 ? [below, ...cols] : cols
-  }, [rankDefs, counts.below])
+  }, [rankDefs, counts.below, theme.neutral])
 
   const data = useMemo(() => ({
     labels,

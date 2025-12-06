@@ -385,6 +385,7 @@ export namespace models {
 	    tracesDir: string;
 	    sessionGapMinutes: number;
 	    theme: string;
+	    font?: string;
 	    favoriteBenchmarks?: string[];
 	    mouseTrackingEnabled: boolean;
 	    mouseBufferMinutes: number;
@@ -404,6 +405,7 @@ export namespace models {
 	        this.tracesDir = source["tracesDir"];
 	        this.sessionGapMinutes = source["sessionGapMinutes"];
 	        this.theme = source["theme"];
+	        this.font = source["font"];
 	        this.favoriteBenchmarks = source["favoriteBenchmarks"];
 	        this.mouseTrackingEnabled = source["mouseTrackingEnabled"];
 	        this.mouseBufferMinutes = source["mouseBufferMinutes"];

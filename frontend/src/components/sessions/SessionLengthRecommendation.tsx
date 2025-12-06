@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
+import { useChartTheme } from '../../hooks/useChartTheme'
 import { buildScenarioProfiles, recommendSessionLength } from '../../lib/analysis/sessionAnalysis'
+import { colorWithAlpha } from '../../lib/theme'
 import type { Session } from '../../types/domain'
 import { InfoBox } from '../shared/InfoBox'
 
@@ -31,7 +33,7 @@ export function SessionLengthRecommendation({ sessions }: SessionLengthRecommend
         <li><b>Diminishing returns:</b> Point after which additional runs show less benefit.</li>
       </ul>
       {insights.length > 0 && (
-        <div className="pt-2 border-t border-[var(--border-primary)]">
+        <div className="pt-2 border-t border-primary">
           <div className="font-medium mb-1">Insights:</div>
           <ul className="list-disc pl-5 space-y-1">
             {insights.map((insight, i) => <li key={i}>{insight}</li>)}
@@ -50,7 +52,7 @@ export function SessionLengthRecommendation({ sessions }: SessionLengthRecommend
         id="sessions:length-recommendation"
         height={100}
       >
-        <div className="text-[var(--text-secondary)]">
+        <div className="text-secondary">
           Play at least 3 sessions with 3+ runs each to get personalized recommendations.
           {sessionsAnalyzed > 0 && ` (${sessionsAnalyzed} qualifying session${sessionsAnalyzed !== 1 ? 's' : ''} so far)`}
         </div>
@@ -68,28 +70,28 @@ export function SessionLengthRecommendation({ sessions }: SessionLengthRecommend
       <div className="space-y-3">
         {/* Main recommendation */}
         <div className="flex items-baseline gap-2">
-          <span className="text-[var(--text-secondary)]">Suggested:</span>
-          <span className="text-lg font-bold text-[var(--text-primary)]">~{suggestedRuns} runs</span>
+          <span className="text-secondary">Suggested:</span>
+          <span className="text-lg font-bold text-primary">~{suggestedRuns} runs</span>
           <span className="text-xs" style={{ color: confidenceLabel.color }}>({confidenceLabel.text})</span>
         </div>
 
         {/* Quick stats */}
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
           <span>
-            <span className="text-[var(--text-muted)]">Warm-up:</span>{' '}
-            <span className="text-[var(--text-primary)]">{warmupRuns} run{warmupRuns !== 1 ? 's' : ''}</span>
+            <span className="text-muted">Warm-up:</span>{' '}
+            <span className="text-primary">{warmupRuns} run{warmupRuns !== 1 ? 's' : ''}</span>
           </span>
           <span>
-            <span className="text-[var(--text-muted)]">Peak zone:</span>{' '}
-            <span className="text-[var(--text-primary)]">#{peakPerformanceWindow[0]}–{peakPerformanceWindow[1]}</span>
+            <span className="text-muted">Peak zone:</span>{' '}
+            <span className="text-primary">#{peakPerformanceWindow[0]}–{peakPerformanceWindow[1]}</span>
           </span>
           <span>
-            <span className="text-[var(--text-muted)]">Diminishing at:</span>{' '}
-            <span className="text-[var(--text-primary)]">#{diminishingReturnsAt}</span>
+            <span className="text-muted">Diminishing at:</span>{' '}
+            <span className="text-primary">#{diminishingReturnsAt}</span>
           </span>
           <span>
-            <span className="text-[var(--text-muted)]">Based on:</span>{' '}
-            <span className="text-[var(--text-primary)]">{sessionsAnalyzed} sessions (avg. {avgSessionLength} runs)</span>
+            <span className="text-muted">Based on:</span>{' '}
+            <span className="text-primary">{sessionsAnalyzed} sessions (avg. {avgSessionLength} runs)</span>
           </span>
         </div>
 
@@ -113,47 +115,53 @@ function SessionPhaseBar({ warmup, peakStart, peakEnd, suggested, maxRuns }: {
   suggested: number
   maxRuns: number
 }) {
+  const palette = useChartTheme()
+  const warmupColor = colorWithAlpha(palette.warning, 0.3, 'rgba(245,158,11,0.3)')
+  const peakColor = colorWithAlpha(palette.success, 0.4, 'rgba(16,185,129,0.4)')
+  const markerColor = palette.accent
+
   const toPercent = (n: number) => (n / maxRuns) * 100
 
   return (
     <div>
       {/* Bar */}
-      <div className="relative h-2 rounded-full bg-[var(--bg-tertiary)] overflow-hidden">
+      <div className="relative h-2 rounded-full bg-surface-3 overflow-hidden">
         {/* Warm-up phase */}
         <div
-          className="absolute inset-y-0 left-0 bg-amber-500/30"
-          style={{ width: `${toPercent(warmup)}%` }}
+          className="absolute inset-y-0 left-0"
+          style={{ width: `${toPercent(warmup)}%`, backgroundColor: warmupColor }}
         />
         {/* Peak phase */}
         <div
-          className="absolute inset-y-0 bg-emerald-500/40"
+          className="absolute inset-y-0"
           style={{
             left: `${toPercent(peakStart - 1)}%`,
-            width: `${toPercent(peakEnd - peakStart + 1)}%`
+            width: `${toPercent(peakEnd - peakStart + 1)}%`,
+            backgroundColor: peakColor,
           }}
         />
         {/* Suggested marker */}
         <div
-          className="absolute top-0 bottom-0 w-0.5 bg-[var(--accent-primary)]"
-          style={{ left: `${toPercent(suggested)}%` }}
+          className="absolute top-0 bottom-0 w-0.5"
+          style={{ left: `${toPercent(suggested)}%`, backgroundColor: markerColor }}
         />
       </div>
 
       {/* Legend */}
       <div className="flex items-center gap-3 mt-1.5 text-[10px]">
         <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-sm bg-amber-500/30" />
-          <span className="text-[var(--text-muted)]">Warm-up</span>
+          <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: warmupColor }} />
+          <span className="text-muted">Warm-up</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-sm bg-emerald-500/40" />
-          <span className="text-[var(--text-muted)]">Peak</span>
+          <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: peakColor }} />
+          <span className="text-muted">Peak</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-2 h-0.5 bg-[var(--accent-primary)]" />
-          <span className="text-[var(--text-muted)]">Suggested</span>
+          <div className="w-2 h-0.5" style={{ backgroundColor: markerColor }} />
+          <span className="text-muted">Suggested</span>
         </div>
-        <span className="ml-auto text-[var(--text-muted)]">{maxRuns} runs</span>
+        <span className="ml-auto text-muted">{maxRuns} runs</span>
       </div>
     </div>
   )

@@ -31,8 +31,8 @@ export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: TTKMo
       {
         label: 'TTK (s)',
         data: realTTK,
-        borderColor: 'rgb(239,68,68)',
-        backgroundColor: 'rgba(239,68,68,0.2)',
+        borderColor: colors.danger,
+        backgroundColor: colors.dangerSoft,
         yAxisID: 'y',
         tension: 0.15,
         pointRadius: 0,
@@ -40,8 +40,8 @@ export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: TTKMo
       {
         label: 'MA(5) TTK',
         data: ma5,
-        borderColor: 'rgb(59,130,246)',
-        backgroundColor: 'rgba(59,130,246,0.2)',
+        borderColor: colors.accent,
+        backgroundColor: colors.accentSoft,
         yAxisID: 'y',
         tension: 0.15,
         pointRadius: 0,
@@ -49,15 +49,15 @@ export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: TTKMo
       {
         label: 'MA(5) Trend',
         data: trend,
-        borderColor: 'rgb(156,163,175)',
-        backgroundColor: 'rgba(156,163,175,0.0)',
+        borderColor: colors.neutral,
+        backgroundColor: colors.neutralSoft,
         yAxisID: 'y',
         tension: 0,
         pointRadius: 0,
         borderDash: [6, 6],
       },
     ],
-  }), [labels, realTTK, ma5, trend])
+  }), [labels, realTTK, ma5, trend, colors])
 
   const options = useMemo(() => ({
     responsive: true,

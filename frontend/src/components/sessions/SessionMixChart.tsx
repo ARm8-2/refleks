@@ -28,7 +28,7 @@ export function SessionMixChart({ items, height = 300 }: SessionMixChartProps) {
   const infoContent = (
     <div>
       <div className="mb-2">Number of runs per scenario name within this session. Useful to see what you’ve been practicing.</div>
-      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+      <ul className="list-disc pl-5 text-secondary">
         <li>Shows up to the top 12 scenarios by frequency for readability.</li>
         <li>Values start at zero and reflect raw counts.</li>
       </ul>
@@ -45,7 +45,7 @@ export function SessionMixChart({ items, height = 300 }: SessionMixChartProps) {
       {radar.labels.length > 0 ? (
         <ScenarioMixRadarChart labels={radar.labels} counts={radar.counts} />
       ) : (
-        <div className="h-full flex items-center justify-center text-sm text-[var(--text-secondary)]">No scenarios in this session.</div>
+        <div className="h-full flex items-center justify-center text-sm text-secondary">No scenarios in this session.</div>
       )}
     </ChartBox>
   )

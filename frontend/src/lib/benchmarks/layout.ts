@@ -13,4 +13,4 @@ export const ENERGY_COL_WIDTH = 90
 export const RANK_MIN_WIDTH = 120
 export const RANK_MAX_GROWTH_FACTOR = 2
 
-export const FILL_FALLBACK_COLOR = '#9a9a9a'
+export const FILL_FALLBACK_COLOR = 'var(--chart-neutral)'

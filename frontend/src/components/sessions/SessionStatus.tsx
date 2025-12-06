@@ -23,34 +23,34 @@ export function SessionStatus({ currentSession, allSessions }: SessionStatusProp
   const statusConfig = getStatusConfig(analysis.healthLevel, analysis.performanceTrend)
 
   return (
-    <div className="flex flex-wrap items-center gap-4 p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)] text-sm">
+    <div className="flex flex-wrap items-center gap-4 p-3 rounded border border-primary bg-surface-2 text-sm">
       {/* Session health indicator */}
       <div className="flex items-center gap-2">
         <div
           className="w-2 h-2 rounded-full"
           style={{ backgroundColor: statusConfig.color }}
         />
-        <span className="text-[var(--text-secondary)]">
+        <span className="text-secondary">
           {statusConfig.label}
         </span>
       </div>
 
-      <div className="h-4 w-px bg-[var(--border-primary)]" />
+      <div className="h-4 border-l border-primary" />
 
       {/* Duration */}
-      <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+      <div className="flex items-center gap-1.5 text-secondary">
         <Clock size={14} />
         <span>{formatDuration(analysis.durationMinutes * 60000) || '<1m'}</span>
       </div>
 
       {/* Run count */}
-      <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+      <div className="flex items-center gap-1.5 text-secondary">
         <Target size={14} />
         <span>{analysis.totalRuns} runs</span>
       </div>
 
       {/* Scenarios */}
-      <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+      <div className="flex items-center gap-1.5 text-secondary">
         <Activity size={14} />
         <span>{analysis.uniqueScenarios} scenario{analysis.uniqueScenarios !== 1 ? 's' : ''}</span>
       </div>
@@ -58,7 +58,7 @@ export function SessionStatus({ currentSession, allSessions }: SessionStatusProp
       {/* Performance trend - only show if we have enough data */}
       {!analysis.hasInsufficientData && (
         <>
-          <div className="h-4 w-px bg-[var(--border-primary)]" />
+          <div className="h-4 border-l border-primary" />
           <TrendIndicator trend={analysis.performanceTrend} />
         </>
       )}

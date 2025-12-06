@@ -63,7 +63,7 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
         return {
           label: cat.name,
           value,
-          color: rankDef?.color || cat.color || '#4b5563',
+          color: rankDef?.color || cat.color || theme.neutral,
           rankName: rankDef?.name || 'Unranked',
           score: avgScore
         }
@@ -80,7 +80,7 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
           rows.push({
             label,
             value,
-            color: rankDef?.color || g.color || cat.color || '#4b5563',
+            color: rankDef?.color || g.color || cat.color || theme.neutral,
             rankName: rankDef?.name || 'Unranked',
             score: avgScore
           })
@@ -98,7 +98,7 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
           rows.push({
             label: s.name,
             value,
-            color: rankDef?.color || '#60a5fa',
+            color: rankDef?.color || theme.accent,
             rankName: rankDef?.name || 'Unranked',
             score: avgScore
           })
@@ -107,7 +107,7 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
     }
     rows.sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
     return rows
-  }, [categories, level, rankDefs])
+  }, [categories, level, rankDefs, theme.accent, theme.neutral])
 
   const labels = strength.map(r => r.label)
   const values = strength.map(r => r.value)
@@ -166,13 +166,13 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
           data: values,
           pointRadius: 3,
           pointBackgroundColor: strength.map(r => r.color),
-          pointBorderColor: '#fff',
+          pointBorderColor: theme.contrast,
           borderWidth: 2,
           borderColor: (context: any) => {
             const chart = context.chart
             const { ctx, chartArea } = chart
-            if (!chartArea || !strength.length) return 'rgb(59, 130, 246)'
-            if (!ctx.createConicGradient) return 'rgb(59, 130, 246)'
+            if (!chartArea || !strength.length) return theme.accent
+            if (!ctx.createConicGradient) return theme.accent
 
             const centerX = (chartArea.left + chartArea.right) / 2
             const centerY = (chartArea.top + chartArea.bottom) / 2

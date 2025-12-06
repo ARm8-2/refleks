@@ -27,10 +27,10 @@ export function SessionsPage() {
           items={sessions}
           getKey={(s) => s.id}
           renderItem={(sess) => (
-            <button key={sess.id} onClick={() => setActive(sess.id)} className={`w-full text-left p-2 rounded border ${active === sess.id ? 'bg-[var(--bg-tertiary)] border-[var(--border-primary)]' : 'border-[var(--border-primary)] hover:bg-[var(--bg-tertiary)]'}`}>
+            <button key={sess.id} onClick={() => setActive(sess.id)} className={`w-full text-left p-2 rounded border ${active === sess.id ? 'bg-surface-3 border-primary' : 'border-primary hover:bg-surface-3'}`}>
               <div className="w-full">
                 <div className="flex justify-between items-center">
-                  <div className="font-medium text-[var(--text-primary)]">
+                  <div className="font-medium text-primary">
                     {(() => {
                       const ts = Number.isFinite(Number(sess.start)) ? Number(sess.start) : Date.parse(String(sess.start))
                       if (!Number.isFinite(ts)) {
@@ -42,7 +42,7 @@ export function SessionsPage() {
                       return <span title={d.toLocaleString()}>{dateOnly}</span>
                     })()}
                   </div>
-                  <div className="text-xs text-[var(--text-secondary)] ml-2 whitespace-nowrap text-right">
+                  <div className="text-xs text-secondary ml-2 whitespace-nowrap text-right">
                     {(() => {
                       const ts = Number.isFinite(Number(sess.start)) ? Number(sess.start) : Date.parse(String(sess.start))
                       if (!Number.isFinite(ts)) return ''
@@ -52,7 +52,7 @@ export function SessionsPage() {
                     })()}
                   </div>
                 </div>
-                <div className="text-xs text-[var(--text-secondary)] flex justify-between items-center">
+                <div className="text-xs text-secondary flex justify-between items-center">
                   <div>
                     {(() => {
                       const tsn = (v: any) => {
@@ -76,7 +76,7 @@ export function SessionsPage() {
               </div>
             </button>
           )}
-          emptyPlaceholder={<div className="p-3 text-sm text-[var(--text-secondary)]">No sessions yet.</div>}
+          emptyPlaceholder={<div className="p-3 text-sm text-secondary">No sessions yet.</div>}
           detail={<SessionDetail session={sessions.find(s => s.id === active) ?? null} />}
         />
       </div>

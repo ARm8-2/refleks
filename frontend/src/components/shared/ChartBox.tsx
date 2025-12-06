@@ -74,16 +74,16 @@ export function ChartBox({
   return (
     <ChartBoxContext.Provider value={{ isExpanded }}>
       {(!expandable || !isExpanded) && (
-        <div className="bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)] flex flex-col" style={{ height }}>
-          <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-primary)] shrink-0">
-            <div className="text-sm font-medium text-[var(--text-primary)] truncate" title={titleText}>{title}</div>
+        <div className="bg-surface-2 rounded border border-primary flex flex-col" style={{ height }}>
+          <div className="flex items-center justify-between px-3 py-2 border-b border-primary shrink-0">
+            <div className="text-sm font-medium text-primary truncate" title={titleText}>{title}</div>
             <div className="flex items-center gap-2">
               {actions}
               {expandable && (
                 <button
                   aria-label="Expand"
                   aria-expanded={isExpanded}
-                  className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                  className="p-1 rounded hover:bg-surface-3 text-primary"
                   onClick={() => handleExpandChange(true)}
                   title="Expand chart"
                 >
@@ -92,7 +92,7 @@ export function ChartBox({
               )}
               <button
                 aria-label="Info"
-                className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+                className="p-1 rounded hover:bg-surface-3 text-primary"
                 onClick={() => setShowInfo(prev => !prev)}
                 title={showInfo ? 'Show chart' : 'Show info'}
               >
@@ -102,7 +102,7 @@ export function ChartBox({
           </div>
           <div className="flex-1 overflow-hidden">
             {showInfo ? (
-              <div className="h-full overflow-y-auto text-sm text-[var(--text-primary)] p-3">
+              <div className="h-full overflow-y-auto text-sm text-primary p-3">
                 {info ?? <div>No additional info.</div>}
               </div>
             ) : (
@@ -133,8 +133,8 @@ export function ChartBox({
               {children}
             </div>
             {info && (
-              <div className="max-h-[25%] border-t border-[var(--border-primary)] p-4 overflow-y-auto bg-[var(--bg-tertiary)]/10 shrink-0">
-                <div className="text-sm text-[var(--text-primary)]">
+              <div className="max-h-[25%] border-t border-primary p-4 overflow-y-auto bg-surface-3/10 shrink-0">
+                <div className="text-sm text-primary">
                   {info}
                 </div>
               </div>

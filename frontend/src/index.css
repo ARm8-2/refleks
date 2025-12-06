@@ -14,12 +14,99 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", monospace;
+    font-family: var(--font-body, "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
   }
 
   body {
     margin: 0;
     min-height: 100vh;
+    font-family: var(--font-body, "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+  }
+
+
+  /* Explicit font classes for reliable switching across platforms (e.g., WebView2) */
+  /* Small helper for range inputs when you want a white thumb but dark track.
+     Useful for scrub bars where the track stays background and the thumb should
+     be text-primary for better contrast. */
+  /* Range pill: pill-shaped thumb on a thin track, white thumb on dark track */
+  input[type="range"].range-pill {
+
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"].range-pill::-webkit-slider-runnable-track {
+    height: var(--range-track-height);
+    border-radius: 9999px;
+    background: var(--range-track-bg);
+  }
+
+  input[type="range"].range-pill::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    width: var(--range-thumb-width);
+    height: var(--range-thumb-height);
+    border-radius: 9999px;
+    background: var(--range-thumb-bg);
+    border: var(--range-thumb-border) solid var(--border-primary);
+    /* center the thumb relative to the track */
+    margin-top: calc((var(--range-track-height) - var(--range-thumb-height)) / 2);
+    transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+
+  input[type="range"].range-pill:hover::-webkit-slider-thumb,
+  input[type="range"].range-pill:active::-webkit-slider-thumb {
+    transform: scale(1.05);
+  }
+
+  input[type="range"].range-pill:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px var(--focus-ring);
+  }
+
+  /* Firefox */
+  input[type="range"].range-pill::-moz-range-track {
+    height: var(--range-track-height);
+    border-radius: 9999px;
+    background: var(--range-track-bg);
+  }
+
+  input[type="range"].range-pill::-moz-range-thumb {
+    box-sizing: border-box;
+    width: var(--range-thumb-width);
+    height: var(--range-thumb-height);
+    border-radius: 9999px;
+    background: var(--range-thumb-bg);
+    border: var(--range-thumb-border) solid var(--border-primary);
+    transition: transform 120ms ease, box-shadow 120ms ease;
+    margin-top: calc((var(--range-track-height) - var(--range-thumb-height)) / 2);
+  }
+
+  input[type="range"].range-pill:hover::-moz-range-thumb,
+  input[type="range"].range-pill:active::-moz-range-thumb {
+    transform: scale(1.05);
+  }
+
+  input[type="range"].range-pill:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 4px var(--focus-ring);
+  }
+
+  html.font-montserrat,
+  body.font-montserrat {
+    font-family: var(--font-stack-montserrat) !important;
+  }
+
+  html.font-inter,
+  body.font-inter {
+    font-family: var(--font-stack-inter) !important;
+  }
+
+  html.font-jetbrains-mono,
+  body.font-jetbrains-mono {
+    font-family: var(--font-stack-jetbrains-mono) !important;
   }
 
   /* Fleet-style global scrollbar
@@ -150,10 +237,17 @@
 }
 
 @font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: local("") url("./assets/fonts/Montserrat-VariableFont_wght.ttf") format("truetype-variations");
+}
+
+@font-face {
   font-family: "JetBrains Mono";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: local(""),
-    url("./assets/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  src: local("") url("./assets/fonts/JetBrainsMono-Regular.woff2") format("woff2");
 }

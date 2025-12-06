@@ -1,6 +1,6 @@
 // Determine the fill color used for a scenario subbar based on the last achieved
 // rank and a fallback. Returns a CSS color string (hex or similar).
-export function computeFillColor(achievedRank: number | undefined | null, rankDefs: Array<{ color?: string }>, fallback = '#9a9a9a'): string {
+export function computeFillColor(achievedRank: number | undefined | null, rankDefs: Array<{ color?: string }>, fallback = 'var(--chart-neutral)'): string {
   const ach = Number(achievedRank || 0)
   if (!ach || ach <= 0) return fallback
   const lastIdx = Math.max(0, Math.min((rankDefs?.length ?? 0) - 1, ach - 1))

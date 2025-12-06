@@ -8,6 +8,7 @@ type Settings struct {
 	TracesDir            string                  `json:"tracesDir"`
 	SessionGapMinutes    int                     `json:"sessionGapMinutes"`
 	Theme                string                  `json:"theme"`
+	Font                 string                  `json:"font,omitempty"`
 	FavoriteBenchmarks   []string                `json:"favoriteBenchmarks,omitempty"`
 	MouseTrackingEnabled bool                    `json:"mouseTrackingEnabled"`
 	MouseBufferMinutes   int                     `json:"mouseBufferMinutes"`

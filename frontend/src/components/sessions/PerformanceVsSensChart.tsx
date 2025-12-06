@@ -3,6 +3,7 @@ import { Scatter } from 'react-chartjs-2'
 import { ChartBox, Dropdown } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
+import { colorWithAlpha, cssColorToRGB } from '../../lib/theme'
 import { CHART_DECIMALS, formatNumber, formatPct, formatUiValueForLabel, getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 
@@ -106,13 +107,15 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
   const maxIndex = useMemo(() => points.reduce((m, p) => Math.max(m, p.i), -1), [points])
 
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t
-  // Slate(older) -> Amber(newer)
+  // Neutral (older) -> Warning/amber (newer)
+  const neutralRgb = cssColorToRGB(colors.neutral, [148, 163, 184])
+  const warnRgb = cssColorToRGB(colors.warning, [234, 179, 8])
   const colorAt = (t: number, forBorder = false) => {
     // clamp
     if (t < 0) t = 0
     if (t > 1) t = 1
-    const o = { r: 148, g: 163, b: 184, a: forBorder ? 0.7 : 0.45 }
-    const n = { r: 234, g: 179, b: 8, a: forBorder ? 0.95 : 0.8 }
+    const o = { r: neutralRgb[0], g: neutralRgb[1], b: neutralRgb[2], a: forBorder ? 0.7 : 0.45 }
+    const n = { r: warnRgb[0], g: warnRgb[1], b: warnRgb[2], a: forBorder ? 0.95 : 0.8 }
     const r = Math.round(lerp(o.r, n.r, t))
     const g = Math.round(lerp(o.g, n.g, t))
     const b = Math.round(lerp(o.b, n.b, t))
@@ -132,8 +135,8 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
         label: 'Sensitivity histogram',
         data: bins.map(b => ({ x: b.center, y: b.count })),
         parsing: false,
-        backgroundColor: 'rgba(148,163,184,0.06)',
-        borderColor: 'rgba(148,163,184,0.08)',
+        backgroundColor: colorWithAlpha(colors.neutral, 0.08, 'rgba(148,163,184,0.08)'),
+        borderColor: colorWithAlpha(colors.neutral, 0.25, 'rgba(148,163,184,0.25)'),
         borderWidth: 1,
         // Draw behind the scatter
         order: 1,
@@ -162,8 +165,8 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
         parsing: false,
         showLine: false,
         // Fallback colors (overridden per-point below)
-        borderColor: 'rgb(234, 179, 8)',
-        backgroundColor: 'rgba(234, 179, 8, 0.65)',
+        borderColor: colors.warning,
+        backgroundColor: colorWithAlpha(colors.warning, 0.65, 'rgba(234,179,8,0.65)'),
         pointBackgroundColor: (ctx: any) => {
           const p = ctx.raw as { i: number }
           const t = maxIndex > 0 ? p.i / maxIndex : 1
@@ -181,7 +184,7 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
         order: 2,
       },
     ],
-  }), [bins, points, maxIndex, metricLabel])
+  }), [bins, points, maxIndex, metricLabel, colors.neutral, colors.warning, neutralRgb, warnRgb])
 
   // Use original raw bounds (before aligning to bin centers) for axis suggestions
   const xMax = rawXMax
@@ -255,7 +258,7 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
     <div>
       <div className="mb-2">Each point is a run for this scenario. X is your effective sensitivity (cm per full 360° turn) and Y is the selected performance metric ({metric === 'score' ? 'Score' : metric === 'acc' ? 'Accuracy (%)' : 'Real Avg TTK (s)'}). Hover points or histogram bars for exact values and counts.</div>
       <div className="mb-2 font-medium">How to interpret</div>
-      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+      <ul className="list-disc pl-5 text-secondary">
         <li>Histogram bars show where most runs cluster; peaks are your most commonly used sensitivities.</li>
         <li>Scatter points show per-run performance aligned to bin centers (hover to see actual sensitivity). Clusters with high metric values indicate sweet spots.</li>
         <li>When the selected metric is Accuracy: look for sensitivity ranges that maximize accuracy. When TTK: lower is better (find minima).</li>

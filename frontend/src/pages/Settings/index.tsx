@@ -4,7 +4,7 @@ import { BrowserOpenURL } from '../../../wailsjs/runtime'
 import { Button, Dropdown } from '../../components'
 import { useStore } from '../../hooks/useStore'
 import { checkForUpdates, downloadAndInstallUpdate, getSettings, getVersion, resetSettings, updateSettings } from '../../lib/internal'
-import { applyTheme, getSavedTheme, setTheme, THEMES, type Theme } from '../../lib/theme'
+import { FONTS, getSavedFont, getSavedTheme, setFont, setTheme, THEMES, type Font, type Theme } from '../../lib/theme'
 import { MISSING_STR } from '../../lib/utils'
 import type { Settings, UpdateInfo } from '../../types/ipc'
 
@@ -16,6 +16,7 @@ export function SettingsPage() {
   const [tracesPath, setTracesPath] = useState('')
   const [gap, setGap] = useState(15)
   const [theme, setThemeState] = useState<Theme>(getSavedTheme())
+  const [font, setFontState] = useState<Font>(getSavedFont())
   const [mouseEnabled, setMouseEnabled] = useState(false)
   const [mouseBuffer, setMouseBuffer] = useState(10)
   const [maxExisting, setMaxExisting] = useState(500)
@@ -39,7 +40,10 @@ export function SettingsPage() {
         setTracesPath((s as any).tracesDir || '')
         setGap(s.sessionGapMinutes)
         setThemeState(s.theme)
-        applyTheme(s.theme)
+        setTheme(s.theme)
+        const incomingFont = (s as any).font || getSavedFont()
+        setFontState(incomingFont)
+        setFont(incomingFont)
         setMouseEnabled(Boolean(s.mouseTrackingEnabled))
         setMouseBuffer(Number(s.mouseBufferMinutes))
         setMaxExisting(Number((s as any).maxExistingOnStart))
@@ -53,10 +57,11 @@ export function SettingsPage() {
   const save = async () => {
     if (saving) return
     setSaving(true)
-    const payload: Settings = { steamInstallDir: steamDir, steamIdOverride, statsDir: statsPath, tracesDir: tracesPath, sessionGapMinutes: gap, theme, mouseTrackingEnabled: mouseEnabled, mouseBufferMinutes: mouseBuffer, maxExistingOnStart: maxExisting, geminiApiKey: geminiKey }
+    const payload: Settings = { steamInstallDir: steamDir, steamIdOverride, statsDir: statsPath, tracesDir: tracesPath, sessionGapMinutes: gap, theme, font, mouseTrackingEnabled: mouseEnabled, mouseBufferMinutes: mouseBuffer, maxExistingOnStart: maxExisting, geminiApiKey: geminiKey }
     try {
       await updateSettings(payload)
       setTheme(theme)
+      setFont(font)
       setSessionGap(gap)
     } catch (e) {
       console.error('UpdateSettings error:', e)
@@ -75,6 +80,9 @@ export function SettingsPage() {
       setGap(s.sessionGapMinutes)
       setThemeState(s.theme)
       setTheme(s.theme)
+      const incomingFont = (s as any).font || getSavedFont()
+      setFontState(incomingFont)
+      setFont(incomingFont)
       setMouseEnabled(Boolean(s.mouseTrackingEnabled))
       setMouseBuffer(Number(s.mouseBufferMinutes))
       setMaxExisting(Number((s as any).maxExistingOnStart))
@@ -187,6 +195,13 @@ export function SettingsPage() {
                 className="w-24 px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
               />
             </Field>
+          </div>
+        </section>
+
+        {/* Appearance */}
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Appearance</h3>
+          <div className="space-y-3 p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
             <Field label="Theme">
               <Dropdown
                 value={theme}
@@ -195,6 +210,14 @@ export function SettingsPage() {
                   label: t.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
                   value: t,
                 }))}
+                size="md"
+              />
+            </Field>
+            <Field label="Font">
+              <Dropdown
+                value={font}
+                onChange={(v: string) => setFontState(v as Font)}
+                options={FONTS.map(f => ({ label: f.label, value: f.id }))}
                 size="md"
               />
             </Field>

@@ -6,9 +6,7 @@ import { CHART_DECIMALS, formatNumber } from '../../lib/utils';
 type ScenarioMixRadarChartProps = { labels: string[]; counts: number[] }
 
 export function ScenarioMixRadarChart({ labels, counts }: ScenarioMixRadarChartProps) {
-  const { textSecondary, grid } = useChartTheme()
-  const stroke = 'rgb(34, 197, 94)'
-  const fill = 'rgba(34, 197, 94, 0.25)'
+  const { textSecondary, grid, success, successSoft } = useChartTheme()
 
   const data = useMemo(() => ({
     labels,
@@ -16,15 +14,15 @@ export function ScenarioMixRadarChart({ labels, counts }: ScenarioMixRadarChartP
       {
         label: 'Scenarios played',
         data: counts,
-        borderColor: stroke,
-        backgroundColor: fill,
-        pointBackgroundColor: stroke,
-        pointBorderColor: stroke,
+        borderColor: success,
+        backgroundColor: successSoft,
+        pointBackgroundColor: success,
+        pointBorderColor: success,
         pointRadius: 3,
         borderWidth: 2,
       },
     ],
-  }), [labels, counts])
+  }), [labels, counts, success, successSoft])
 
   const options = useMemo(() => ({
     responsive: true,

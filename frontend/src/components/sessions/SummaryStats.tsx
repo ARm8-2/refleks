@@ -84,13 +84,13 @@ export function SummaryStats({
           : `${delta >= 0 ? '+' : ''}${formatNumber(delta, 0)}`
     )
     return (
-      <div className="flex-1 min-w-[160px] p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-tertiary)]">
-        <div className="text-xs text-[var(--text-secondary)]">{label}</div>
-        <div className="text-lg font-medium text-[var(--text-primary)] flex items-center gap-2">
+      <div className="flex-1 min-w-[160px] p-3 rounded border border-primary bg-surface-3">
+        <div className="text-xs text-secondary">{label}</div>
+        <div className="text-lg font-medium text-primary flex items-center gap-2">
           <span>{fmt(value)}</span>
           <span className="flex items-center gap-1 text-xs" aria-label={`Change vs first: ${formattedDelta}`}>
             {triangle(dir, colorVar)}
-            <span className="color-[var(--text-primary)]">{formattedDelta}</span>
+            <span className="text-primary">{formattedDelta}</span>
           </span>
         </div>
       </div>
@@ -98,10 +98,10 @@ export function SummaryStats({
   }
 
   return (
-    <div className="p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
+    <div className="p-3 rounded border border-primary bg-surface-2">
       <div className="flex items-center justify-between mb-3">
-        <div className="text-sm font-medium text-[var(--text-primary)]">{title}</div>
-        <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+        <div className="text-sm font-medium text-primary">{title}</div>
+        <div className="flex items-center gap-2 text-xs text-secondary">
           <span>Compare first</span>
           <Dropdown
             size="sm"

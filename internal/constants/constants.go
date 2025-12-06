@@ -17,6 +17,7 @@ const (
 	// Default UI/analysis values
 	DefaultSessionGapMinutes  = 15
 	DefaultTheme              = "dark"
+	DefaultFont               = "montserrat"
 	DefaultMouseBufferMinutes = 2
 	DefaultMaxExistingOnStart = 500
 

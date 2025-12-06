@@ -30,7 +30,7 @@ export function MetricsControls({
         options={names.map(n => ({ label: n, value: n }))}
       />
       {onModeChange && (
-        <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+        <div className="flex items-center gap-2 text-xs text-secondary">
           <span>View</span>
           <SegmentedControl
             options={[

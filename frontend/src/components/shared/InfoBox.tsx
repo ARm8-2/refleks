@@ -43,22 +43,22 @@ export function InfoBox({
   const HEADER_H = 44
   const containerStyle: CSSProperties = useMemo(() => ({ height: collapsed ? HEADER_H : height }), [height, collapsed])
   const bodyStyle: CSSProperties = useMemo(() => ({ height: collapsed ? 0 : height - HEADER_H }), [height, collapsed]) // 44px header
-  const leftBodyClass = 'h-full overflow-y-auto text-xs text-[var(--text-secondary)] '
+  const leftBodyClass = 'h-full overflow-y-auto text-xs text-secondary '
   const leftBodyClassDefault = leftBodyClass + 'p-3'
-  const rightBodyClass = 'h-full overflow-y-auto text-sm text-[var(--text-primary)] '
+  const rightBodyClass = 'h-full overflow-y-auto text-sm text-primary '
   const rightBodyClassDefault = rightBodyClass + 'p-3'
 
   return (
-    <div className="bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)] overflow-hidden transition-all duration-150 ease-out" style={containerStyle}>
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-primary)]">
-        <div className="text-sm font-medium text-[var(--text-primary)] truncate" title={titleText}>{title}</div>
+    <div className="bg-surface-2 rounded border border-primary overflow-hidden transition-all duration-150 ease-out" style={containerStyle}>
+      <div className="flex items-center justify-between px-3 py-2 border-b border-primary">
+        <div className="text-sm font-medium text-primary truncate" title={titleText}>{title}</div>
         <div className="flex items-center gap-2">
           {headerControls}
           {collapsible && (
             <button
               aria-label={collapsed ? 'Expand' : 'Collapse'}
               aria-expanded={!collapsed}
-              className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+              className="p-1 rounded hover:bg-surface-3 text-primary"
               onClick={() => { setCollapsed(c => !c); setShowInfo(false); }}
               title={collapsed ? 'Expand' : 'Collapse'}
             >
@@ -67,7 +67,7 @@ export function InfoBox({
           )}
           <button
             aria-label="Info"
-            className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+            className="p-1 rounded hover:bg-surface-3 text-primary"
             onClick={() => setShowInfo(v => !v)}
             title={showInfo ? 'Show details' : 'Show info'}
             aria-expanded={showInfo}

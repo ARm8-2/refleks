@@ -33,6 +33,7 @@ func Default() models.Settings {
 		TracesDir:            DefaultTracesDirString(),
 		SessionGapMinutes:    constants.DefaultSessionGapMinutes,
 		Theme:                constants.DefaultTheme,
+		Font:                 constants.DefaultFont,
 		MouseTrackingEnabled: false,
 		MouseBufferMinutes:   constants.DefaultMouseBufferMinutes,
 		MaxExistingOnStart:   constants.DefaultMaxExistingOnStart,
@@ -55,6 +56,9 @@ func Sanitize(s models.Settings) models.Settings {
 	}
 	if strings.TrimSpace(s.Theme) == "" {
 		s.Theme = constants.DefaultTheme
+	}
+	if strings.TrimSpace(s.Font) == "" {
+		s.Font = constants.DefaultFont
 	}
 	if s.MouseBufferMinutes <= 0 {
 		s.MouseBufferMinutes = constants.DefaultMouseBufferMinutes

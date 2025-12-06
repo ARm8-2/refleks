@@ -21,7 +21,7 @@ export function SegmentedControl<T extends string = string>({
 }: SegmentedControlProps<T>) {
   const pad = size === 'md' ? 'px-3 py-1.5' : 'px-3 py-1'
   return (
-    <div className={`inline-flex rounded overflow-hidden border border-[var(--border-primary)] bg-[var(--bg-secondary)] ${className}`} role="tablist" aria-orientation="horizontal">
+    <div className={`inline-flex rounded overflow-hidden border border-primary bg-surface-2 ${className}`} role="tablist" aria-orientation="horizontal">
       {options.map((opt, idx) => {
         const active = opt.value === value
         return (
@@ -30,7 +30,7 @@ export function SegmentedControl<T extends string = string>({
             type="button"
             role="tab"
             aria-selected={active}
-            className={`${pad} text-xs ${active ? 'bg-[var(--bg-tertiary)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'} transition-colors`}
+            className={`${pad} text-xs ${active ? 'bg-surface-3 text-primary' : 'text-secondary hover:bg-surface-3'} transition-colors`}
             onClick={() => onChange(opt.value)}
           >
             {opt.label}

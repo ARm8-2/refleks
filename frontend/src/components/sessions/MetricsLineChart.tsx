@@ -22,8 +22,8 @@ export function MetricsLineChart({ labels, score, acc, ttk }: MetricsLineChartPr
         label: 'Score',
         data: score,
         yAxisID: 'yScore',
-        borderColor: 'rgb(16, 185, 129)',
-        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+        borderColor: colors.success,
+        backgroundColor: colors.successSoft,
         tension: 0.25,
         pointRadius: 2,
       },
@@ -31,8 +31,8 @@ export function MetricsLineChart({ labels, score, acc, ttk }: MetricsLineChartPr
         label: 'Accuracy (%)',
         data: acc,
         yAxisID: 'yAcc',
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.25)',
+        borderColor: colors.accent,
+        backgroundColor: colors.accentSoft,
         tension: 0.25,
         pointRadius: 2,
       },
@@ -40,14 +40,14 @@ export function MetricsLineChart({ labels, score, acc, ttk }: MetricsLineChartPr
         label: 'Real Avg TTK (s)',
         data: ttk,
         yAxisID: 'yTTK',
-        borderColor: 'rgb(239, 68, 68)',
-        backgroundColor: 'rgba(239, 68, 68, 0.25)',
+        borderColor: colors.danger,
+        backgroundColor: colors.dangerSoft,
         tension: 0.25,
         pointRadius: 2,
         hidden: true
       },
     ]
-  }), [labels, score, acc, ttk])
+  }), [labels, score, acc, ttk, colors])
 
   const options = useMemo(() => ({
     responsive: true,

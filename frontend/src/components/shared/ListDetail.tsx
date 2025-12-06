@@ -181,16 +181,16 @@ export function ListDetail<T = any>({
         <div
           ref={sidebarRef}
           aria-expanded={!isCollapsed}
-          className={`absolute left-0 top-0 bottom-0 bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)] flex flex-col min-h-0 overflow-hidden ${isResizing ? 'transition-none' : 'transition-all duration-150 ease-out'}`}
+          className={`absolute left-0 top-0 bottom-0 bg-surface-2 rounded border border-primary flex flex-col min-h-0 overflow-hidden ${isResizing ? 'transition-none' : 'transition-all duration-150 ease-out'}`}
           style={{ width: `${isExpanded ? clampedWidth : COLLAPSED_W}px`, willChange: 'width' }}
         >
           {/* Header */}
-          <div ref={headerRef} className={`flex items-center ${isExpanded ? 'justify-between px-3' : 'justify-center px-1'} py-2 border-b border-[var(--border-primary)] shrink-0`}>
+          <div ref={headerRef} className={`flex items-center ${isExpanded ? 'justify-between px-3' : 'justify-center px-1'} py-2 border-b border-primary shrink-0`}>
             {isExpanded && (
-              <div className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">{title}</div>
+              <div className="text-xs font-medium text-secondary uppercase tracking-wide">{title}</div>
             )}
             <button
-              className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+              className="p-1 rounded hover:bg-surface-3 text-primary"
               title={collapsed ? 'Expand' : 'Collapse'}
               aria-label={collapsed ? 'Expand' : 'Collapse'}
               onClick={() => (collapsed ? expand() : collapse())}
@@ -204,7 +204,7 @@ export function ListDetail<T = any>({
             <div className="min-h-0 flex-1">
               <div className="h-full">
                 {items.length === 0 ? (
-                  emptyPlaceholder ?? <div className="p-3 text-sm text-[var(--text-secondary)]">No items.</div>
+                  emptyPlaceholder ?? <div className="p-3 text-sm text-secondary">No items.</div>
                 ) : (
                   <VirtualizedList
                     items={items}
@@ -228,7 +228,7 @@ export function ListDetail<T = any>({
             role="separator"
             aria-orientation="vertical"
             tabIndex={0}
-            className="absolute inset-y-0 right-0 w-4 cursor-col-resize hover:bg-[var(--bg-tertiary)]/50 focus:outline-none focus:ring-1 focus:ring-[var(--border-primary)]"
+            className="absolute inset-y-0 right-0 w-4 cursor-col-resize hover:bg-surface-3/50 focus:outline-none focus:ring-1 focus:ring-primary"
             onPointerDown={onPointerDown}
             title="Drag to resize"
             onDoubleClick={() => { if (!collapsed) { setWidth(initialWidth); lastWidthRef.current = initialWidth } else { expand() } }}
@@ -246,15 +246,15 @@ export function ListDetail<T = any>({
               }
             }}
           >
-            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-[var(--border-primary)]/60" />
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-primary/60" />
           </div>
         </div>
       </div>
 
       {/* Detail */}
-      <div className="flex-1 bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)] overflow-y-auto min-h-0 flex flex-col">
+      <div className="flex-1 bg-surface-2 rounded border border-primary overflow-y-auto min-h-0 flex flex-col">
         {detailHeader ? (
-          <div className="px-3 py-2 border-b border-[var(--border-primary)] shrink-0">{detailHeader}</div>
+          <div className="px-3 py-2 border-b border-primary shrink-0">{detailHeader}</div>
         ) : null}
         <div className="p-3 flex-1 min-h-0 overflow-y-auto">
           {detail}

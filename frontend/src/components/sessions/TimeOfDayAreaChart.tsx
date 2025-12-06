@@ -32,14 +32,14 @@ export function TimeOfDayAreaChart({ items }: TimeOfDayAreaChartProps) {
       {
         label: 'Runs per hour',
         data: counts,
-        borderColor: 'rgb(99,102,241)',
+        borderColor: theme.accent,
         backgroundColor: (ctx: any) => {
           const chart = ctx.chart
           const { ctx: c, chartArea } = chart
-          if (!chartArea) return 'rgba(99,102,241,0.25)'
+          if (!chartArea) return theme.accentSoft
           const g = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
-          g.addColorStop(0, 'rgba(99,102,241,0.45)')
-          g.addColorStop(1, 'rgba(99,102,241,0.00)')
+          g.addColorStop(0, theme.accent)
+          g.addColorStop(1, theme.accentSoft)
           return g
         },
         fill: 'start',
@@ -47,7 +47,7 @@ export function TimeOfDayAreaChart({ items }: TimeOfDayAreaChartProps) {
         pointRadius: 0,
       },
     ],
-  }), [labels, counts])
+  }), [labels, counts, theme])
 
   const options = useMemo(() => ({
     responsive: true,
@@ -88,7 +88,7 @@ export function TimeOfDayAreaChart({ items }: TimeOfDayAreaChartProps) {
   const infoContent = (
     <div>
       <div className="mb-2">Shows the distribution of your runs across the 24-hour day.</div>
-      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+      <ul className="list-disc pl-5 text-secondary">
         <li>Peaks indicate your most active playing times.</li>
         <li>Useful for identifying when you perform best or play most often.</li>
       </ul>
