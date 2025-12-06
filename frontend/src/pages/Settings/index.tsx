@@ -26,6 +26,7 @@ export function SettingsPage() {
   const [update, setUpdate] = useState<UpdateInfo | null>(null)
   const [checking, setChecking] = useState<boolean>(false)
   const [checkError, setCheckError] = useState<string>("")
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     // Load settings from backend and trust backend-sanitized values.
@@ -50,6 +51,8 @@ export function SettingsPage() {
   }, [])
 
   const save = async () => {
+    if (saving) return
+    setSaving(true)
     const payload: Settings = { steamInstallDir: steamDir, steamIdOverride, statsDir: statsPath, tracesDir: tracesPath, sessionGapMinutes: gap, theme, mouseTrackingEnabled: mouseEnabled, mouseBufferMinutes: mouseBuffer, maxExistingOnStart: maxExisting, geminiApiKey: geminiKey }
     try {
       await updateSettings(payload)
@@ -57,6 +60,8 @@ export function SettingsPage() {
       setSessionGap(gap)
     } catch (e) {
       console.error('UpdateSettings error:', e)
+    } finally {
+      setSaving(false)
     }
   }
   const onReset = async () => {
@@ -265,8 +270,8 @@ export function SettingsPage() {
         {/* Actions & Help */}
         <section>
           <div className="flex items-center gap-2">
-            <Button variant="accent" size="md" onClick={save}>Save</Button>
-            <Button variant="secondary" size="md" onClick={onReset}>Reset to defaults</Button>
+            <Button variant="accent" size="md" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
+            <Button variant="secondary" size="md" onClick={onReset} disabled={saving}>Reset to defaults</Button>
           </div>
         </section>
       </div>

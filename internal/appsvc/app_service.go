@@ -81,18 +81,30 @@ func (s *AppService) IsWatcherRunning() bool {
 // sub-services (mouse, watcher, traces) to reflect the change.
 func (s *AppService) UpdateSettings(newS models.Settings) (bool, string) {
 	newS = appsettings.Sanitize(newS)
-	prevTraces := ""
+
+	var prevSettings models.Settings
+	hasPrev := false
 	if s.settings != nil {
-		prevTraces = s.settings.TracesDir
+		prevSettings = *s.settings
+		hasPrev = true
+
 		// carry over favorites if omitted
 		if len(newS.FavoriteBenchmarks) == 0 && len(s.settings.FavoriteBenchmarks) > 0 {
 			newS.FavoriteBenchmarks = s.settings.FavoriteBenchmarks
 		}
+		// carry over notes if omitted
+		if len(newS.ScenarioNotes) == 0 && len(s.settings.ScenarioNotes) > 0 {
+			newS.ScenarioNotes = s.settings.ScenarioNotes
+		}
 	}
+
 	// replace in-place so callers holding the pointer observe the change
 	if s.settings != nil {
 		*s.settings = newS
+	} else {
+		s.settings = &newS
 	}
+
 	if err := appsettings.Save(newS); err != nil {
 		return false, err.Error()
 	}
@@ -113,6 +125,17 @@ func (s *AppService) UpdateSettings(newS models.Settings) (bool, string) {
 		}
 	}
 
+	// Determine if we need to restart the watcher (which triggers a full reload of stats)
+	needsWatcherRestart := true
+	if hasPrev {
+		// Only restart if core watcher config changed
+		if prevSettings.StatsDir == newS.StatsDir &&
+			prevSettings.SessionGapMinutes == newS.SessionGapMinutes &&
+			prevSettings.MaxExistingOnStart == newS.MaxExistingOnStart {
+			needsWatcherRestart = false
+		}
+	}
+
 	// Ensure watcher reflects latest settings. If running, restart with new config; if stopped, just update config.
 	if s.watcher != nil {
 		cfg := models.WatcherConfig{
@@ -122,26 +145,36 @@ func (s *AppService) UpdateSettings(newS models.Settings) (bool, string) {
 			ParseExistingOnStart: true,
 			ParseExistingLimit:   newS.MaxExistingOnStart,
 		}
-		if s.watcher.IsRunning() {
-			_, _ = s.watcher.Stop()
-			if err := s.watcher.UpdateConfig(cfg); err != nil {
-				return false, err.Error()
-			}
-			s.watcher.Clear()
-			if s.mouse != nil {
-				s.watcher.SetMouseProvider(s.mouse)
-			}
-			if ok, msg := s.watcher.Start(newS.StatsDir, s.settings, s.mouse); !ok {
-				runtime.LogErrorf(s.ctx, "Watcher restart error: %s", msg)
-				return false, msg
+
+		if needsWatcherRestart {
+			if s.watcher.IsRunning() {
+				_, _ = s.watcher.Stop()
+				if err := s.watcher.UpdateConfig(cfg); err != nil {
+					return false, err.Error()
+				}
+				s.watcher.Clear()
+				if s.mouse != nil {
+					s.watcher.SetMouseProvider(s.mouse)
+				}
+				if ok, msg := s.watcher.Start(newS.StatsDir, s.settings, s.mouse); !ok {
+					runtime.LogErrorf(s.ctx, "Watcher restart error: %s", msg)
+					return false, msg
+				}
+			} else {
+				if err := s.watcher.UpdateConfig(cfg); err != nil {
+					return false, err.Error()
+				}
+				s.watcher.Clear()
+				if s.mouse != nil {
+					s.watcher.SetMouseProvider(s.mouse)
+				}
 			}
 		} else {
-			if err := s.watcher.UpdateConfig(cfg); err != nil {
-				return false, err.Error()
-			}
-			s.watcher.Clear()
-			if s.mouse != nil {
-				s.watcher.SetMouseProvider(s.mouse)
+			// If not restarting, try to update config if stopped (safe).
+			// If running, we can't update config, but since we determined needsWatcherRestart=false,
+			// the relevant config parts haven't changed anyway.
+			if !s.watcher.IsRunning() {
+				_ = s.watcher.UpdateConfig(cfg)
 			}
 		}
 	}
@@ -149,6 +182,10 @@ func (s *AppService) UpdateSettings(newS models.Settings) (bool, string) {
 	// Apply traces directory override for persistence and reload if changed
 	tracesDir := appsettings.ExpandPathPlaceholders(newS.TracesDir)
 	traces.SetBaseDir(tracesDir)
+	prevTraces := ""
+	if hasPrev {
+		prevTraces = prevSettings.TracesDir
+	}
 	if s.watcher != nil && appsettings.ExpandPathPlaceholders(prevTraces) != tracesDir {
 		n := s.watcher.ReloadTraces()
 		runtime.LogInfof(s.ctx, "reloaded traces for %d scenarios after tracesDir change", n)
