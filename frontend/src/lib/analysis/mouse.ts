@@ -10,6 +10,9 @@ export type MouseKillEvent = {
   hits: number
 }
 
+// Severity grading for over/undershoot - focuses on magnitude, not just occurrence
+export type SeverityGrade = 'none' | 'slight' | 'moderate' | 'severe'
+
 export type KillAnalysis = {
   killIdx: number
   tsIso: string
@@ -23,17 +26,24 @@ export type KillAnalysis = {
   efficiency: number // straight / pathLength in [0,1]
   classification: 'optimal' | 'overshoot' | 'undershoot'
   stats: { shots: number; hits: number; ttkSec: number }
-  // Additional metrics for better sensitivity suggestions
+  // Magnitude-based metrics (pixels) - these are what matter most
+  overshootPixels: number // max distance past target (0 if no overshoot)
+  undershootPixels: number // distance stopped short of target (0 if no undershoot)
+  overshootSeverity: SeverityGrade
+  undershootSeverity: SeverityGrade
+  // Additional context metrics
   maxDistanceFromTarget: number
   avgDistanceFromTarget: number
   directionFlips: number
-  overshootSeverity: number
-  // New metrics for improved analysis
+  // Confidence and velocity metrics
   confidence: number // 0-1 confidence in the classification
   velocityAtKill: number // speed at the moment of kill (pixels/ms)
   maxVelocity: number // peak velocity during approach
   crossingCount: number // number of times cursor crossed the target center
   clickedWhileMoving: boolean // true if click occurred while cursor was still moving fast
+  // Correction metrics
+  correctionDistance: number // total distance of corrections after initial approach
+  correctionCount: number // number of distinct correction movements
 }
 
 export type MouseTraceAnalysis = {
@@ -41,6 +51,15 @@ export type MouseTraceAnalysis = {
   counts: { overshoot: number; undershoot: number; optimal: number }
   avgEfficiency: number
   windowCapSec: number
+  // Magnitude-based aggregate metrics (more useful than counts)
+  avgOvershootPixels: number // average pixels overshot (across overshoot kills only)
+  avgUndershootPixels: number // average pixels undershot (across undershoot kills only)
+  overallOvershootPixels: number // average across ALL kills (even optimal ones may have slight overshoot)
+  overallUndershootPixels: number // average across ALL kills
+  severityCounts: {
+    overshoot: { slight: number; moderate: number; severe: number }
+    undershoot: { slight: number; moderate: number; severe: number }
+  }
 }
 
 export type SensSuggestion = {
@@ -49,6 +68,10 @@ export type SensSuggestion = {
   changePct: number
   direction: 'slower' | 'faster'
   reason: string
+  // Detailed breakdown for UI
+  primaryIssue: 'overshoot' | 'undershoot'
+  avgMagnitudePixels: number
+  severity: SeverityGrade
 } | null
 
 
@@ -62,12 +85,9 @@ export function computeMouseTraceAnalysis(item: ScenarioRecord): MouseTraceAnaly
   const kills = parseEventsToKills(events, baseIso)
   if (!kills.length) return null
 
-  // Heuristic window cap based on shots per kill (median)
-  const medShots = median(kills.map(k => k.shots))
-  let windowCapSec = 1.0
-  if (medShots >= 300) windowCapSec = 1.0 // tracking-like: only analyze last 1s
-  else if (medShots >= 60) windowCapSec = 1.2 // switching-ish
-  else windowCapSec = 0.9 // small targets
+  // Adaptive window cap - we'll determine per-kill based on TTK and hits
+  // Use a reasonable default that works for most scenarios
+  const windowCapSec = 1.0
 
   const analyses: KillAnalysis[] = []
   for (const ev of kills) {
@@ -76,23 +96,60 @@ export function computeMouseTraceAnalysis(item: ScenarioRecord): MouseTraceAnaly
     const ka = analyzeWindow(points, win, ev)
     analyses.push(ka)
   }
+
+  // Aggregate counts
   let overshoot = 0, undershoot = 0, optimal = 0
   let effSum = 0, effN = 0
+
+  // Magnitude aggregates
+  let totalOvershootPixels = 0, overshootKillCount = 0
+  let totalUndershootPixels = 0, undershootKillCount = 0
+  let allKillsOvershootPixels = 0, allKillsUndershootPixels = 0
+
+  // Severity counters
+  const severityCounts = {
+    overshoot: { slight: 0, moderate: 0, severe: 0 },
+    undershoot: { slight: 0, moderate: 0, severe: 0 }
+  }
+
   for (const a of analyses) {
-    if (a.classification === 'overshoot') overshoot++
-    else if (a.classification === 'undershoot') undershoot++
-    else optimal++
+    if (a.classification === 'overshoot') {
+      overshoot++
+      totalOvershootPixels += a.overshootPixels
+      overshootKillCount++
+      if (a.overshootSeverity === 'slight') severityCounts.overshoot.slight++
+      else if (a.overshootSeverity === 'moderate') severityCounts.overshoot.moderate++
+      else if (a.overshootSeverity === 'severe') severityCounts.overshoot.severe++
+    } else if (a.classification === 'undershoot') {
+      undershoot++
+      totalUndershootPixels += a.undershootPixels
+      undershootKillCount++
+      if (a.undershootSeverity === 'slight') severityCounts.undershoot.slight++
+      else if (a.undershootSeverity === 'moderate') severityCounts.undershoot.moderate++
+      else if (a.undershootSeverity === 'severe') severityCounts.undershoot.severe++
+    } else {
+      optimal++
+    }
+
+    // Track ALL kill over/undershoot for overall analysis
+    allKillsOvershootPixels += a.overshootPixels
+    allKillsUndershootPixels += a.undershootPixels
+
     if (Number.isFinite(a.efficiency)) { effSum += a.efficiency; effN++ }
   }
+
   return {
     kills: analyses,
     counts: { overshoot, undershoot, optimal },
     avgEfficiency: effN ? (effSum / effN) : 0,
     windowCapSec,
+    avgOvershootPixels: overshootKillCount > 0 ? totalOvershootPixels / overshootKillCount : 0,
+    avgUndershootPixels: undershootKillCount > 0 ? totalUndershootPixels / undershootKillCount : 0,
+    overallOvershootPixels: analyses.length > 0 ? allKillsOvershootPixels / analyses.length : 0,
+    overallUndershootPixels: analyses.length > 0 ? allKillsUndershootPixels / analyses.length : 0,
+    severityCounts,
   }
-}
-
-// --- Core helpers ---
+}// --- Core helpers ---
 export function parseEventsToKills(events: string[][], baseIso: string): MouseKillEvent[] {
   const out: MouseKillEvent[] = []
   const end = new Date(baseIso)
@@ -160,32 +217,34 @@ export function analyzeWindow(points: Point[], win: { startMs: number; endMs: nu
   const straight = Math.hypot((killPoint.x - startPoint.x), (killPoint.y - startPoint.y))
   const efficiency = pathLen > 0 ? Math.max(0, Math.min(1, straight / pathLen)) : 1
 
-  // Improved target zone radius calculation
-  // Base it on the flick distance but also consider scenario type (via hits count)
-  // Clicking scenarios (1 hit) need tighter zones, tracking (many hits) need larger zones
-  const isTrackingLike = ev.hits > 100
-  const isClickingLike = ev.hits <= 2
+  // Adaptive target zone radius based on per-kill characteristics
+  // Uses hits/shots to determine if this is clicking-like or tracking-like
+  const isTrackingLike = ev.hits > 30
+  const isClickingLike = ev.hits <= 2 && ev.shots <= 2
+
   let radius: number
   if (isClickingLike) {
-    // Clicking: tighter zone, ~3-8% of flick distance
-    radius = clamp(Math.max(3, straight * 0.04), 3, 15)
+    // Clicking: tight zone, 3-6% of flick distance
+    radius = clamp(Math.max(3, straight * 0.045), 3, 12)
   } else if (isTrackingLike) {
-    // Tracking: wider zone, ~8-12% of movement
-    radius = clamp(Math.max(5, straight * 0.10), 5, 30)
+    // Tracking: larger zone for continuous tracking
+    radius = clamp(Math.max(6, straight * 0.10), 6, 35)
   } else {
-    // Switching/hybrid: medium zone
-    radius = clamp(Math.max(4, straight * 0.06), 4, 20)
+    // Mixed/switching: medium zone
+    radius = clamp(Math.max(4, straight * 0.055), 4, 20)
   }
   const radiusSq = radius * radius
 
   // Compute distances to kill point and velocities
-  // Squared distances to kill point for efficiency (avoid sqrt per point)
   const distSq: number[] = []
   const velocities: number[] = []
+  const signedDistances: { dx: number; dy: number }[] = [] // For overshoot direction analysis
+
   for (let i = startIndex; i <= endIndex; i++) {
     const p = points[i]
     const dx = p.x - killPoint.x, dy = p.y - killPoint.y
     distSq.push(dx * dx + dy * dy)
+    signedDistances.push({ dx, dy })
 
     if (i > startIndex) {
       const prevP = points[i - 1]
@@ -195,141 +254,225 @@ export function analyzeWindow(points: Point[], win: { startMs: number; endMs: nu
     }
   }
 
-  // Overshoot detection: detect when the player enters the target zone, leaves significantly,
-  // and then returns — or when they oscillate by crossing the primary axis multiple times.
+  // === IMPROVED OVERSHOOT DETECTION WITH MAGNITUDE ===
+  // Track when cursor passes through/beyond target and by how much
 
+  const primaryAxisIsX = Math.abs(killPoint.x - startPoint.x) > Math.abs(killPoint.y - startPoint.y)
+  const approachSign = primaryAxisIsX
+    ? Math.sign(killPoint.x - startPoint.x)  // Direction we're approaching from
+    : Math.sign(killPoint.y - startPoint.y)
+
+  let maxOvershootDist = 0 // Maximum distance past the target (in pixels)
+  let crossingCount = 0
+  let lastSide: number = 0
   let zoneEntryIndex = -1
   let leftZoneAfterEntry = false
-  let crossingCount = 0
-  let lastSideOnPrimaryAxis: 'left' | 'right' | 'above' | 'below' | null = null
+  let maxDistWhileInZone = 0
 
-  // Track which side of target the cursor is on (for crossing detection)
-  const primaryAxisIsX = Math.abs(killPoint.x - startPoint.x) > Math.abs(killPoint.y - startPoint.y)
   for (let i = 0; i < distSq.length; i++) {
-    const p = points[startIndex + i]
-    const dx = p.x - killPoint.x
-    const dy = p.y - killPoint.y
+    const { dx, dy } = signedDistances[i]
+    const dist = Math.sqrt(distSq[i])
 
-    // Primary movement axis detection
-    const curSideX: 'left' | 'right' = dx < 0 ? 'left' : 'right'
-    const curSideY: 'above' | 'below' = dy < 0 ? 'above' : 'below'
+    // Determine which side of target we're on (relative to approach direction)
+    const curSide = primaryAxisIsX
+      ? Math.sign(dx) * -approachSign  // +1 = overshot, -1 = hasn't reached
+      : Math.sign(dy) * -approachSign
 
-    // Use the axis with larger movement for crossing detection
-    const curSide = primaryAxisIsX ? curSideX : curSideY
-
-    if (lastSideOnPrimaryAxis !== null && lastSideOnPrimaryAxis !== curSide && Math.sqrt(distSq[i]) < radius * 3) {
+    // Track crossing count
+    if (lastSide !== 0 && curSide !== 0 && lastSide !== curSide && dist < radius * 4) {
       crossingCount++
     }
-    lastSideOnPrimaryAxis = curSide
+    lastSide = curSide || lastSide
 
-    // Classic enter/leave detection with conservative hysteresis
-    const d = distSq[i]
+    // Track overshoot magnitude (how far past the target)
+    if (curSide > 0) {
+      // We're past the target - measure overshoot distance
+      const overshootDist = primaryAxisIsX ? Math.abs(dx) : Math.abs(dy)
+      maxOvershootDist = Math.max(maxOvershootDist, overshootDist)
+    }
+
+    // Zone entry/exit tracking
     if (zoneEntryIndex === -1) {
-      if (d <= radiusSq) zoneEntryIndex = i
+      if (distSq[i] <= radiusSq) zoneEntryIndex = i
     } else {
-      // Require significant exit (2.25x area) from the zone to avoid small boundary noise
-      if (d > radiusSq * 2.25) leftZoneAfterEntry = true
+      if (distSq[i] > radiusSq * 2.5) leftZoneAfterEntry = true
+      if (distSq[i] <= radiusSq) {
+        maxDistWhileInZone = Math.max(maxDistWhileInZone, dist)
+      }
     }
   }
 
   const endWithin = distSq[distSq.length - 1] <= radiusSq
   const classicOvershoot = zoneEntryIndex !== -1 && leftZoneAfterEntry && endWithin
+  const lateEntry = zoneEntryIndex !== -1 && zoneEntryIndex >= distSq.length - 2
 
   // Velocity metrics
   const maxVelocity = velocities.length > 0 ? Math.max(...velocities) : 0
   const velocityAtKill = velocities.length > 0 ? velocities[velocities.length - 1] : 0
   const avgVelocity = velocities.length > 0 ? velocities.reduce((a, b) => a + b, 0) / velocities.length : 0
 
-  // Only count as overshoot if:
-  // - Classic pattern (enter, leave significantly, return) OR
-  // - Multiple crossings (3+) with end inside zone (suggests oscillation)
-  const isOvershoot = classicOvershoot || (crossingCount >= 3 && endWithin)
+  // === IMPROVED UNDERSHOOT DETECTION WITH MAGNITUDE ===
+  // Detect stopping short and measure by how much
 
-  // === IMPROVED UNDERSHOOT DETECTION ===
-  // Detect patterns:
-  // 1. Multiple direction flips while approaching (hesitation)
-  // 2. Deceleration followed by micro-corrections
-  // 3. Multiple small movements without reaching target confidently
-
-  // For undershoot we consider recent signal within the last 300ms: direction flips and
-  // deceleration-triggered corrections are common undershoot patterns.
   const startIndexLast300Ms = lowerBound(points, endMs - 300, startIndex, endIndex)
   let directionFlipCount = 0
-  let previousSign = 0
+  let previousDistSign = 0
   let decelerationFlipCount = 0
+  let correctionDistance = 0 // Total distance of corrections
+  let correctionCount = 0
+  let inCorrection = false
 
   for (let i = Math.max(1, startIndexLast300Ms - startIndex); i < distSq.length; i++) {
     const dd = distSq[i] - distSq[i - 1]
-    const sign = dd === 0 ? previousSign : (dd > 0 ? 1 : -1)
+    const sign = dd === 0 ? previousDistSign : (dd > 0 ? 1 : -1)
     const outside = distSq[i] > radiusSq
 
-    // Count flips while outside target zone
-    if (outside && previousSign !== 0 && sign !== previousSign) {
+    // Count direction flips while outside target zone
+    if (outside && previousDistSign !== 0 && sign !== previousDistSign) {
       directionFlipCount++
-      // Extra weight if this happens during deceleration
-      if (i > 1 && velocities[i - 1] < velocities[i - 2]) {
+      if (!inCorrection) {
+        inCorrection = true
+        correctionCount++
+      }
+      if (i > 1 && velocities[i - 1] !== undefined && velocities[i - 2] !== undefined && velocities[i - 1] < velocities[i - 2]) {
         decelerationFlipCount++
       }
+    } else if (sign === previousDistSign && inCorrection) {
+      inCorrection = false
     }
-    previousSign = sign
+
+    // Track correction distance
+    if (inCorrection && i < distSq.length - 1) {
+      const p1 = points[startIndex + i]
+      const p2 = points[startIndex + i + 1]
+      if (p1 && p2) {
+        correctionDistance += Math.hypot(p2.x - p1.x, p2.y - p1.y)
+      }
+    }
+
+    previousDistSign = sign
   }
 
-  // Also check for "stalling" - very slow movement near but outside target
+  // Check for "stalling" - very slow movement near but outside target
   let stallCount = 0
+  let avgStallDistance = 0
   for (let i = Math.max(0, distSq.length - 15); i < distSq.length - 1; i++) {
     const distFromTarget = Math.sqrt(distSq[i])
     const nearTarget = distFromTarget < radius * 3 && distFromTarget > radius
     const slowMoving = velocities[i] !== undefined && velocities[i] < avgVelocity * 0.25
-    if (nearTarget && slowMoving) stallCount++
+    if (nearTarget && slowMoving) {
+      stallCount++
+      avgStallDistance += distFromTarget - radius
+    }
   }
+  avgStallDistance = stallCount > 0 ? avgStallDistance / stallCount : 0
 
-  // Undershoot requires clear hesitation pattern:
-  // - 3+ flips (clear indecision) OR
-  // - 2 flips during deceleration (common undershoot pattern) OR
-  // - Significant stalling (4+) with any flipping
-  const isUndershoot = !isOvershoot && (
+  // === CLASSIFICATION WITH MAGNITUDE ===
+
+  // Overshoot classification based on magnitude AND pattern
+  const hasSignificantOvershoot = maxOvershootDist > radius * 0.5
+  const hasOvershootPattern = classicOvershoot || (crossingCount >= 2 && hasSignificantOvershoot)
+  // Avoid marking as overshoot when we barely entered the zone at the end and didn't truly pass the target
+  const lateEntryGuard = !(lateEntry && crossingCount <= 1 && maxOvershootDist < radius * 1.5)
+  const isOvershoot = hasOvershootPattern && maxOvershootDist > Math.max(2, radius * 0.35) && lateEntryGuard // At least a minimal overshoot
+
+  // Undershoot classification based on magnitude AND pattern
+  const hasUndershootPattern = (
     directionFlipCount >= 3 ||
     (decelerationFlipCount >= 2 && directionFlipCount >= 2) ||
-    (stallCount >= 4 && directionFlipCount >= 1)
+    (stallCount >= 3 && directionFlipCount >= 1) ||
+    (correctionCount >= 2 && avgStallDistance > radius * 0.3)
   )
 
+  // Measure undershoot as the average distance we were short by during corrections
+  const undershootMagnitude = hasUndershootPattern ? Math.max(avgStallDistance, correctionDistance / Math.max(1, correctionCount * 3)) : 0
+  const isUndershoot = !isOvershoot && hasUndershootPattern && undershootMagnitude > 1
+
+  // === SEVERITY GRADING (based on pixels, not just occurrence) ===
+
+  let overshootSeverity: SeverityGrade = 'none'
+  let undershootSeverity: SeverityGrade = 'none'
+
+  // Overshoot severity based on pixels overshot relative to target zone
+  if (isOvershoot) {
+    // Use both absolute pixels and relative size so tiny radii don't over-mark severe
+    const relativeOvershoot = maxOvershootDist / radius
+    if (maxOvershootDist < 10 || relativeOvershoot < 1.0) {
+      overshootSeverity = 'slight'
+    } else if (maxOvershootDist < 22 || relativeOvershoot < 2.2) {
+      overshootSeverity = 'moderate'
+    } else {
+      overshootSeverity = 'severe'
+    }
+  }
+
+  // Undershoot severity based on pixels short and correction count
+  if (isUndershoot) {
+    const relativeUndershoot = undershootMagnitude / radius
+    if (undershootMagnitude < 9 || relativeUndershoot < 0.9 || correctionCount <= 2) {
+      undershootSeverity = 'slight'
+    } else if (undershootMagnitude < 18 || relativeUndershoot < 1.6 || correctionCount <= 4) {
+      undershootSeverity = 'moderate'
+    } else {
+      undershootSeverity = 'severe'
+    }
+  }
+
   // === CLICK TIMING ANALYSIS ===
-  // Check if the kill click happened while cursor was still moving fast
-  const clickedWhileMoving = velocityAtKill > avgVelocity * 0.6 && velocityAtKill > 0.15
+  const clickedWhileMoving = velocityAtKill > avgVelocity * 0.5 && velocityAtKill > 0.12
 
   // === CONFIDENCE SCORING ===
-  // Higher confidence when:
-  // - Clear pattern match (not borderline cases)
-  // - Sufficient data points in the window
-  // - Consistent movement patterns
   const numPoints = endIndex - startIndex + 1
-  let confidence = 0.5 // base confidence
+  let confidence = 0.5
 
   if (numPoints >= 20) confidence += 0.15
   else if (numPoints >= 10) confidence += 0.1
 
   if (isOvershoot) {
-    if (classicOvershoot && crossingCount >= 2) confidence += 0.25 // strong pattern
-    else if (classicOvershoot) confidence += 0.15
-    else if (crossingCount >= 3) confidence += 0.15 // oscillation pattern
+    if (classicOvershoot && crossingCount >= 2) confidence += 0.25
+    else if (classicOvershoot || maxOvershootDist > radius * 1.5) confidence += 0.15
+    else confidence += 0.08
+
+    // Penalize weak evidence (e.g., likely target switch / just moving on)
+    if (!classicOvershoot && crossingCount < 2) confidence -= 0.08
   } else if (isUndershoot) {
-    if (directionFlipCount >= 3) confidence += 0.2
-    else if (directionFlipCount >= 2 && decelerationFlipCount >= 1) confidence += 0.15
+    if (directionFlipCount >= 4) confidence += 0.22
+    else if (directionFlipCount >= 3 || (stallCount >= 3 && correctionCount >= 2)) confidence += 0.15
     else confidence += 0.1
+
+    // Penalize very weak undershoot evidence
+    if (directionFlipCount < 2 && correctionCount < 2) confidence -= 0.08
   } else {
     // Optimal - high confidence if clearly inside zone with smooth approach
-    if (efficiency > 0.85 && !leftZoneAfterEntry) confidence += 0.2
+    if (efficiency > 0.85 && !leftZoneAfterEntry && crossingCount <= 1) confidence += 0.25
+    else if (efficiency > 0.7) confidence += 0.15
   }
+
+  // Mild penalty when entry into target zone is extremely late (likely just arriving, not overshooting)
+  if (lateEntry) confidence -= 0.05
 
   confidence = clamp(confidence, 0, 1)
 
+  // Soften severity when confidence or evidence is weak
+  const downgradeSeverity = (sev: SeverityGrade): SeverityGrade => sev === 'severe' ? 'moderate' : (sev === 'moderate' ? 'slight' : sev)
+
+  if (isOvershoot) {
+    const weakOvershootEvidence = (!classicOvershoot && crossingCount < 3) || lateEntry
+    if (weakOvershootEvidence || confidence < 0.62) overshootSeverity = downgradeSeverity(overshootSeverity)
+    if (confidence < 0.45) overshootSeverity = downgradeSeverity(overshootSeverity)
+  }
+
+  if (isUndershoot) {
+    const weakUndershootEvidence = (directionFlipCount < 3 && correctionCount < 2) || (stallCount < 2 && avgStallDistance < radius * 0.4)
+    if (weakUndershootEvidence || confidence < 0.62) undershootSeverity = downgradeSeverity(undershootSeverity)
+    if (confidence < 0.45) undershootSeverity = downgradeSeverity(undershootSeverity)
+  }
+
   const classification: 'optimal' | 'overshoot' | 'undershoot' = isOvershoot ? 'overshoot' : (isUndershoot ? 'undershoot' : 'optimal')
 
-  // Calculate additional metrics for better sensitivity suggestions
+  // Calculate additional metrics
   const maxDistanceFromTarget = Math.sqrt(Math.max(...distSq))
   const avgDistanceFromTarget = Math.sqrt(distSq.reduce((a, b) => a + b, 0) / distSq.length)
-  const directionFlips = directionFlipCount
-  const overshootSeverity = isOvershoot ? Math.max(0, Math.sqrt(Math.max(...distSq)) - radius) : 0
 
   return {
     killIdx: ev.idx,
@@ -344,15 +487,20 @@ export function analyzeWindow(points: Point[], win: { startMs: number; endMs: nu
     efficiency,
     classification,
     stats: { shots: ev.shots, hits: ev.hits, ttkSec: ev.ttkSec },
+    overshootPixels: isOvershoot ? maxOvershootDist : 0,
+    undershootPixels: isUndershoot ? undershootMagnitude : 0,
+    overshootSeverity,
+    undershootSeverity,
     maxDistanceFromTarget,
     avgDistanceFromTarget,
-    directionFlips,
-    overshootSeverity,
+    directionFlips: directionFlipCount,
     confidence,
     velocityAtKill,
     maxVelocity,
     crossingCount,
     clickedWhileMoving,
+    correctionDistance,
+    correctionCount,
   }
 }
 
@@ -377,100 +525,174 @@ function median(arr: number[]): number { const a = arr.filter(Number.isFinite).s
 
 // Suggest a sensitivity adjustment (cm/360) given an analysis and the run stats.
 // Returns null when no useful suggestion can be made.
+// Now focuses on MAGNITUDE (how many pixels over/undershot) rather than just counts.
 export function computeSuggestedSens(analysis: MouseTraceAnalysis, stats: Record<string, any>): SensSuggestion {
   const curr = Number(stats?.['cm/360'] ?? 0)
   if (!Number.isFinite(curr) || curr <= 0) return null
 
   const total = Math.max(1, analysis.kills.length)
-  const over = analysis.counts.overshoot
-  const under = analysis.counts.undershoot
-  const optimal = analysis.counts.optimal
-  const overPct = over / total
-  const underPct = under / total
-  const optimalPct = optimal / total
 
-  // Calculate trace-based severity metrics with confidence weighting
-  const { avgOvershootDistance, avgUndershootFlips, avgConfidence, clickWhileMovingRate } = calculateTraceSeverity(analysis)
+  // Calculate confidence-weighted severity metrics
+  const severity = calculateTraceSeverity(analysis)
 
-  // Only provide suggestions if we have reasonable confidence in the analysis
-  if (avgConfidence < 0.45) return null
+  // Only provide suggestions if we have reasonable confidence and enough data
+  if (severity.avgConfidence < 0.42 || total < 4) return null
 
-  // If mostly optimal, no suggestion needed
-  if (optimalPct > 0.7) return null
+  // === MAGNITUDE-BASED DECISION ===
+  // Focus on HOW MUCH pixels are overshot/undershot, not just counts
 
-  // Improved decision logic with confidence weighting
-  let net = overPct - underPct // positive => overshoot dominant
+  const overallOvershoot = analysis.overallOvershootPixels
+  const overallUndershoot = analysis.overallUndershootPixels
 
-  // Weight by confidence - if confidence is low, reduce the magnitude of suggestions
-  const confidenceMultiplier = 0.5 + (avgConfidence * 0.5)
+  // Determine primary issue by magnitude (pixels), not just count
+  // This gives better feedback because 3 severe overshoots matter more than 10 slight ones
+  const overshootScore = severity.weightedOvershootPixels
+  const undershootScore = severity.weightedUndershootPixels
 
-  // If percentages are very close but both significant, don't suggest (mixed issues)
-  const pctDiff = Math.abs(overPct - underPct)
-  if (pctDiff < 0.08 && overPct > 0.15 && underPct > 0.15) {
-    // Mixed pattern - both overshoot and undershoot present, no clear direction
-    return null
+  // If both scores are very low, aim is optimal - no suggestion needed
+  if (overshootScore < 3 && undershootScore < 2) return null
+
+  // If scores are close and both significant, mixed pattern - harder to give clear advice
+  const scoreDiff = Math.abs(overshootScore - undershootScore)
+  if (scoreDiff < Math.max(overshootScore, undershootScore) * 0.25 && overshootScore > 5 && undershootScore > 5) {
+    return null // Mixed issues, no clear direction
   }
 
-  // Factor in click-while-moving as additional evidence of overshoot tendency
-  // but only if it's a significant pattern
-  if (clickWhileMovingRate > 0.4 && over > 0) {
-    net += clickWhileMovingRate * 0.08
+  const primaryIssue: 'overshoot' | 'undershoot' = overshootScore > undershootScore ? 'overshoot' : 'undershoot'
+  const avgMagnitudePixels = primaryIssue === 'overshoot'
+    ? analysis.avgOvershootPixels
+    : analysis.avgUndershootPixels
+
+  // Determine overall severity
+  const severityCounts = primaryIssue === 'overshoot'
+    ? analysis.severityCounts.overshoot
+    : analysis.severityCounts.undershoot
+
+  let overallSeverity: SeverityGrade = 'slight'
+  if (severityCounts.severe > severityCounts.moderate && severityCounts.severe > severityCounts.slight) {
+    overallSeverity = 'severe'
+  } else if (severityCounts.moderate >= severityCounts.slight) {
+    overallSeverity = 'moderate'
   }
 
-  // Higher threshold for providing suggestions - require clearer pattern
-  const minNetToSuggest = 0.12 // 12% difference needed
+  // Calculate adjustment based on severity AND magnitude
+  const baseAdjustment = overallSeverity === 'severe' ? 0.20
+    : overallSeverity === 'moderate' ? 0.12
+      : 0.06
 
-  if (Math.abs(net) < minNetToSuggest || total < 5) return null
+  // Scale by magnitude (more pixels = larger adjustment needed)
+  const magnitudeScale = clamp(avgMagnitudePixels / 15, 0.5, 1.8)
 
-  // Calculate adjustment based on both percentage bias and severity
-  // More conservative adjustments to avoid over-correction
-  const pctAdjustment = net * 0.4 * confidenceMultiplier
-  const severityAdjustment = avgOvershootDistance > 15 ? Math.min(0.2, avgOvershootDistance / 80) * confidenceMultiplier : 0
-  const totalAdjustment = Math.abs(pctAdjustment) + severityAdjustment
+  // Scale by confidence
+  const confidenceScale = 0.6 + (severity.avgConfidence * 0.4)
 
-  // More conservative max adjustment - 35% max
-  const maxAdjustment = 0.35
-  const adj = Math.max(-maxAdjustment, Math.min(maxAdjustment, net > 0 ? totalAdjustment : -totalAdjustment))
+  // Final adjustment (capped)
+  const maxAdjustment = 0.30
+  let adj = clamp(baseAdjustment * magnitudeScale * confidenceScale, 0.03, maxAdjustment)
 
-  const recommended = Math.max(0.0001, curr * (1 - adj))
+  // Direction: overshoot => increase sens (smaller physical motion), undershoot => decrease sens
+  if (primaryIssue === 'undershoot') adj = -adj
+
+  const recommended = Math.max(0.001, curr * (1 + adj))
   const changePct = ((recommended / curr) - 1) * 100
+  const direction = adj > 0 ? 'faster' : 'slower'
 
-  const direction = net > 0 ? 'faster' : 'slower'
-  const confidenceNote = avgConfidence < 0.6 ? ' (moderate confidence)' : ''
-  const reason = net > 0
-    ? `Overshoot detected in ${overPct > 0 ? formatPct(overPct, 0) : 'some'} of kills${avgOvershootDistance > 10 ? ` with average overshoot distance of ${formatNumber(avgOvershootDistance / 10, 1)} pixels` : ''}${clickWhileMovingRate > 0.3 ? `, often clicking while cursor still moving` : ''}. Suggest training at the higher sensitivity (${formatNumber(recommended, 2)} cm/360) for a few runs; when you return to your original sensitivity (${formatNumber(curr, 2)} cm/360) you'll likely retain smaller physical motions which should reduce overshoot${confidenceNote}.`
-    : `Undershoot detected in ${underPct > 0 ? formatPct(underPct, 0) : 'some'} of kills${avgUndershootFlips > 2 ? ` with frequent micro-corrections` : ''}. Suggest training at the lower sensitivity (${formatNumber(recommended, 2)} cm/360) for a few runs; when you return to your original sensitivity (${formatNumber(curr, 2)} cm/360) you'll likely retain slightly larger motions which should reduce undershoot${confidenceNote}.`
+  // Build descriptive reason
+  const confidenceNote = severity.avgConfidence < 0.58 ? ' (moderate confidence)' : ''
+  const severityWord = overallSeverity === 'severe' ? 'significant'
+    : overallSeverity === 'moderate' ? 'noticeable'
+      : 'slight'
 
-  return { current: curr, recommended, changePct, direction, reason }
+  const pct = primaryIssue === 'overshoot'
+    ? (analysis.counts.overshoot / total)
+    : (analysis.counts.undershoot / total)
+
+  let reason: string
+  if (primaryIssue === 'overshoot') {
+    const pixelNote = avgMagnitudePixels > 10
+      ? `averaging ${formatNumber(avgMagnitudePixels, 1)} pixels past target`
+      : ''
+    const clickNote = severity.clickWhileMovingRate > 0.35
+      ? '; often clicking before fully settled'
+      : ''
+
+    reason = `${severityWord.charAt(0).toUpperCase() + severityWord.slice(1)} overshoot detected in ${formatPct(pct, 0)} of kills${pixelNote ? ` (${pixelNote})` : ''}${clickNote}. `
+      + `Training at ${formatNumber(recommended, 2)} cm/360 (${direction}) for 3-10 runs can help calibrate smaller movements. `
+      + `When you return to ${formatNumber(curr, 2)} cm/360, your muscle memory should produce more precise flicks${confidenceNote}.`
+  } else {
+    const correctionNote = severity.avgCorrectionCount > 2
+      ? ` with ${formatNumber(severity.avgCorrectionCount, 1)} corrections per kill on average`
+      : ''
+
+    reason = `${severityWord.charAt(0).toUpperCase() + severityWord.slice(1)} undershoot detected in ${formatPct(pct, 0)} of kills${correctionNote}. `
+      + `You're stopping short of targets and making micro-adjustments. Training at ${formatNumber(recommended, 2)} cm/360 (${direction}) `
+      + `can help calibrate larger initial movements. When you return to ${formatNumber(curr, 2)} cm/360, your initial flicks should land closer to target${confidenceNote}.`
+  }
+
+  return {
+    current: curr,
+    recommended,
+    changePct,
+    direction,
+    reason,
+    primaryIssue,
+    avgMagnitudePixels,
+    severity: overallSeverity
+  }
 }
 
-// Calculate trace-based severity metrics for overshoot and undershoot
+// Calculate trace-based severity metrics with focus on magnitude (pixels)
 function calculateTraceSeverity(analysis: MouseTraceAnalysis) {
-  let totalOvershootDistance = 0
+  let totalOvershootPixels = 0
   let overshootCount = 0
-  let totalUndershootFlips = 0
+  let totalUndershootPixels = 0
   let undershootCount = 0
   let totalConfidence = 0
   let clickWhileMovingCount = 0
+  let totalCorrectionCount = 0
+  let analyzedKillCount = 0
+
+  // Weighted scores that factor in severity
+  let weightedOvershootPixels = 0
+  let weightedUndershootPixels = 0
 
   for (const kill of analysis.kills) {
     totalConfidence += kill.confidence
     if (kill.clickedWhileMoving) clickWhileMovingCount++
 
-    if (kill.classification === 'overshoot') {
-      totalOvershootDistance += kill.overshootSeverity
+    // Always track overshoot/undershoot pixels even for "optimal" kills
+    // (they may have slight over/undershoot)
+    if (kill.overshootPixels > 0) {
+      totalOvershootPixels += kill.overshootPixels
       overshootCount++
-    } else if (kill.classification === 'undershoot') {
-      totalUndershootFlips += kill.directionFlips
-      undershootCount++
+      // Weight by severity
+      const weight = kill.overshootSeverity === 'severe' ? 3.0
+        : kill.overshootSeverity === 'moderate' ? 1.5
+          : 1.0
+      weightedOvershootPixels += kill.overshootPixels * weight * kill.confidence
     }
+
+    if (kill.undershootPixels > 0) {
+      totalUndershootPixels += kill.undershootPixels
+      undershootCount++
+      const weight = kill.undershootSeverity === 'severe' ? 3.0
+        : kill.undershootSeverity === 'moderate' ? 1.5
+          : 1.0
+      weightedUndershootPixels += kill.undershootPixels * weight * kill.confidence
+    }
+
+    totalCorrectionCount += kill.correctionCount
+    analyzedKillCount++
   }
 
   const total = analysis.kills.length
   return {
-    avgOvershootDistance: overshootCount > 0 ? totalOvershootDistance / overshootCount : 0,
-    avgUndershootFlips: undershootCount > 0 ? totalUndershootFlips / undershootCount : 0,
+    avgOvershootPixels: overshootCount > 0 ? totalOvershootPixels / overshootCount : 0,
+    avgUndershootPixels: undershootCount > 0 ? totalUndershootPixels / undershootCount : 0,
+    weightedOvershootPixels: total > 0 ? weightedOvershootPixels / total : 0,
+    weightedUndershootPixels: total > 0 ? weightedUndershootPixels / total : 0,
     avgConfidence: total > 0 ? totalConfidence / total : 0,
     clickWhileMovingRate: total > 0 ? clickWhileMovingCount / total : 0,
+    avgCorrectionCount: analyzedKillCount > 0 ? totalCorrectionCount / analyzedKillCount : 0,
   }
 }

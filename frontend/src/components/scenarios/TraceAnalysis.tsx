@@ -18,6 +18,12 @@ function SuggestedHeader({ suggestion }: { suggestion: NonNullable<SensSuggestio
       } catch (_) { }
     }
   }
+
+  // Severity badge color
+  const severityColor = suggestion.severity === 'severe' ? 'text-rose-400'
+    : suggestion.severity === 'moderate' ? 'text-amber-400'
+      : 'text-blue-400'
+
   return (
     <div className="flex items-baseline justify-between">
       <div className="font-semibold text-[var(--text-primary)] flex items-center gap-2">
@@ -26,10 +32,15 @@ function SuggestedHeader({ suggestion }: { suggestion: NonNullable<SensSuggestio
           <Copy className="h-4 w-4" />
         </Button>
       </div>
-      <div className="text-xs text-[var(--text-secondary)]">Current: {formatNumber(suggestion.current, CHART_DECIMALS.sensTooltip)} cm/360</div>
+      <div className="text-xs flex items-center gap-2">
+        <span className={`${severityColor} capitalize`}>{suggestion.severity} {suggestion.primaryIssue}</span>
+        <span className="text-[var(--text-secondary)]">• Current: {formatNumber(suggestion.current, CHART_DECIMALS.sensTooltip)} cm/360</span>
+      </div>
     </div>
   )
 }
+
+
 
 type TraceAnalysisProps = {
   item: ScenarioRecord
@@ -50,11 +61,37 @@ export function TraceAnalysis({
 
   const fmtPct = (n: number) => total ? formatPct(n / total, CHART_DECIMALS.pctTooltip) : formatPct(0, CHART_DECIMALS.pctTooltip)
 
-  const pill = (cls: KillAnalysis['classification']) => {
-    const base = 'px-2 py-0.5 rounded text-xs border'
-    if (cls === 'overshoot') return <span className={`${base} bg-rose-500/20 text-rose-300 border-rose-500/40`}>Overshoot</span>
-    if (cls === 'undershoot') return <span className={`${base} bg-amber-500/20 text-amber-300 border-amber-500/40`}>Undershoot</span>
-    return <span className={`${base} bg-emerald-500/20 text-emerald-300 border-emerald-500/40`}>Optimal</span>
+  // Produce a subtle background gradient that blends the issue color with 'optimal'
+  const getPillStyle = (k: KillAnalysis) => {
+    const base = 'px-2 py-0.5 rounded text-xs border flex items-center gap-1'
+    const optimalBase = '16,185,129' // emerald-500
+    if (k.classification === 'overshoot') {
+      const primaryBase = '244,63,94' // rose-500
+      const sev = k.overshootSeverity || 'moderate'
+      const pct = sev === 'severe' ? 80 : sev === 'moderate' ? 55 : 25
+      const bg = `linear-gradient(90deg, rgba(${primaryBase},0.16) 0%, rgba(${primaryBase},0.16) ${pct}%, rgba(${optimalBase},0.06) ${pct}%, rgba(${optimalBase},0.06) 100%)`
+      const cls = sev === 'severe' ? 'text-rose-200 border-rose-500/60'
+        : sev === 'moderate' ? 'text-rose-300 border-rose-500/40'
+          : 'text-rose-400 border-rose-500/30'
+      return { style: { background: bg }, classes: `${base} ${cls}` }
+    }
+    if (k.classification === 'undershoot') {
+      const primaryBase = '245,158,11' // amber-500
+      const sev = k.undershootSeverity || 'moderate'
+      const pct = sev === 'severe' ? 80 : sev === 'moderate' ? 55 : 25
+      const bg = `linear-gradient(90deg, rgba(${primaryBase},0.16) 0%, rgba(${primaryBase},0.16) ${pct}%, rgba(${optimalBase},0.06) ${pct}%, rgba(${optimalBase},0.06) 100%)`
+      const cls = sev === 'severe' ? 'text-amber-200 border-amber-500/60'
+        : sev === 'moderate' ? 'text-amber-300 border-amber-500/40'
+          : 'text-amber-400 border-amber-500/30'
+      return { style: { background: bg }, classes: `${base} ${cls}` }
+    }
+    // Optimal
+    return { style: undefined, classes: `${base} bg-emerald-500/20 text-emerald-300 border-emerald-500/40` }
+  }
+
+  const pill = (k: KillAnalysis) => {
+    const s = getPillStyle(k)
+    return <span className={`${s.classes}`} style={s.style}>{k.classification === 'optimal' ? 'Optimal' : (k.classification === 'overshoot' ? 'Overshoot' : 'Undershoot')}</span>
   }
 
   const colorFor = (cls: KillAnalysis['classification']) => cls === 'overshoot' ? 'rgba(244,63,94,0.9)'
@@ -65,16 +102,24 @@ export function TraceAnalysis({
 
   const infoContent = (
     <div>
-      <div className="mb-2">Classifies each kill's approach path as overshoot, undershoot, or optimal by aligning kill events to your mouse trace and inspecting the final approach window.</div>
+      <div className="mb-2">Classifies each kill's approach path as overshoot, undershoot, or optimal by analyzing mouse movement patterns. Severity grades (slight/moderate/severe) indicate how many pixels past or short of target.</div>
       <ul className="list-disc pl-5 text-[var(--text-secondary)]">
-        <li>Windows are capped at ~{analysis.windowCapSec}s per kill to handle tracking scenarios.</li>
-        <li>Overshoot: crossed the aim point, moved away, then returned at kill.</li>
-        <li>Undershoot: multiple micro-corrections near the target without crossing.</li>
-        <li>Optimality uses path efficiency (straight distance vs travelled path).</li>
-        <li>The suggested sensitivity may not appear when there is not enough reliable data to make a meaningful recommendation.</li>
+        <li>Analysis window: ~{analysis.windowCapSec}s per kill</li>
+        <li>Overshoot: cursor went past target and had to correct back. Severity based on pixels overshot.</li>
+        <li>Undershoot: stopped short and made micro-corrections. Severity based on correction pattern.</li>
+        <li>Avg overshoot: {formatNumber(analysis.avgOvershootPixels, 1)}px • Avg undershoot: {formatNumber(analysis.avgUndershootPixels, 1)}px</li>
+        <li>Sensitivity suggestions focus on magnitude (how far off) rather than just count of issues.</li>
       </ul>
     </div>
-  )
+  )  // Summary with severity breakdown
+  const severitySummary = (type: 'overshoot' | 'undershoot') => {
+    const counts = analysis.severityCounts[type]
+    const parts = []
+    if (counts.severe > 0) parts.push(`${counts.severe} severe`)
+    if (counts.moderate > 0) parts.push(`${counts.moderate} moderate`)
+    if (counts.slight > 0) parts.push(`${counts.slight} slight`)
+    return parts.length > 0 ? ` (${parts.join(', ')})` : ''
+  }
 
   return (
     <InfoBox
@@ -84,14 +129,22 @@ export function TraceAnalysis({
       height={420}
     >
       <div className="flex flex-col md:flex-row gap-3 justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div className="text-sm">Summary:</div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="px-2 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30">Overshoot {analysis.counts.overshoot} ({fmtPct(analysis.counts.overshoot)})</span>
-            <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">Undershoot {analysis.counts.undershoot} ({fmtPct(analysis.counts.undershoot)})</span>
+          <div className="flex items-center gap-2 text-xs flex-wrap">
+            <span className="px-2 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30" title={severitySummary('overshoot')}>
+              Overshoot {analysis.counts.overshoot} ({fmtPct(analysis.counts.overshoot)})
+              {analysis.avgOvershootPixels > 0 && <span className="ml-1 opacity-70">~{formatNumber(analysis.avgOvershootPixels, 0)}px</span>}
+            </span>
+            <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30" title={severitySummary('undershoot')}>
+              Undershoot {analysis.counts.undershoot} ({fmtPct(analysis.counts.undershoot)})
+              {analysis.avgUndershootPixels > 0 && <span className="ml-1 opacity-70">~{formatNumber(analysis.avgUndershootPixels, 0)}px</span>}
+            </span>
             <span className="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Optimal {analysis.counts.optimal} ({fmtPct(analysis.counts.optimal)})</span>
           </div>
-          <div className="text-xs text-[var(--text-secondary)]">Avg efficiency <span className="text-[var(--text-primary)] font-semibold">{formatPct(analysis.avgEfficiency)}</span></div>
+          <div className="text-xs text-[var(--text-secondary)]">
+            Efficiency <span className="text-[var(--text-primary)] font-semibold">{formatPct(analysis.avgEfficiency)}</span>
+          </div>
         </div>
       </div>
       {suggestion ? (
@@ -106,7 +159,7 @@ export function TraceAnalysis({
         <div className="mt-3 p-3 bg-[var(--bg-tertiary)]/50 border border-[var(--border-primary)] border-dashed rounded text-sm text-[var(--text-secondary)]">
           <div className="font-medium text-[var(--text-primary)] mb-1">Sensitivity Suggestion Unavailable</div>
           <p className="text-xs leading-relaxed">
-            Not enough actionable data to calculate a reliable sensitivity suggestion. This feature works best with clicking/switching scenarios where discrete flick corrections can be analyzed. Pure tracking scenarios often lack the distinct over/undershoot patterns required for this calculation.
+            Not enough actionable data to calculate a reliable sensitivity suggestion. This can happen when: aim is already optimal, issues are mixed (both over and undershoot), or the scenario type (e.g., pure tracking) lacks distinct flick patterns.
           </p>
         </div>
       )}
@@ -115,11 +168,21 @@ export function TraceAnalysis({
           <button key={`${k.killIdx}-${i}`} onClick={() => onSelect?.({ startMs: k.startMs, endMs: k.endMs, killMs: k.endMs, classification: k.classification })} className="text-left bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80 border border-[var(--border-primary)] rounded p-2">
             <div className="flex items-center justify-between gap-2">
               <div className="text-[var(--text-primary)] font-medium">#{k.killIdx}</div>
-              {pill(k.classification)}
+              {pill(k)}
             </div>
             <div className="mt-1 text-[var(--text-secondary)] text-xs flex items-center justify-between">
               <div>TTK {formatSeconds(k.stats.ttkSec || 0, CHART_DECIMALS.ttkTooltip)}</div>
-              <div>Shots {formatNumber(k.stats.shots, 0)}, Hits {formatNumber(k.stats.hits, 0)}</div>
+              <div>
+                {k.classification === 'overshoot' && k.overshootPixels > 0 && (
+                  <span className="text-rose-400">{formatNumber(k.overshootPixels, 0)}px over</span>
+                )}
+                {k.classification === 'undershoot' && k.undershootPixels > 0 && (
+                  <span className="text-amber-400">{formatNumber(k.undershootPixels, 0)}px short</span>
+                )}
+                {k.classification === 'optimal' && (
+                  <span className="text-emerald-400">direct</span>
+                )}
+              </div>
               <div className="text-[var(--text-primary)]" style={{ color: colorFor(k.classification) }}>{formatPct(k.efficiency, CHART_DECIMALS.pctTooltip)}</div>
             </div>
           </button>
