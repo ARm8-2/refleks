@@ -6,7 +6,7 @@ import { useHorizontalWheelScroll } from '../../hooks/useHorizontalWheelScroll'
 import { usePageState } from '../../hooks/usePageState'
 import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
 import { useStore } from '../../hooks/useStore'
-import { cellFill, computeFillColor, computeRecommendationScores, ENERGY_COL_WIDTH, NOTES_COL_WIDTH, numberFmt, PADDING_COL_WIDTH, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH, type ScenarioBenchmarkData } from '../../lib/benchmarks'
+import { cellFill, computeFillColor, computeRecommendationScores, ENERGY_COL_WIDTH, NOTES_COL_WIDTH, numberFmt, PADDING_COL_WIDTH, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH, selectTopPicks, type ScenarioBenchmarkData } from '../../lib/benchmarks'
 import { getSettings, launchScenario, saveScenarioNote } from '../../lib/internal'
 import { getScenarioName, MISSING_STR } from '../../lib/utils'
 import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
@@ -128,14 +128,29 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
   // Build benchmark data map for recommendation engine
   const benchmarkData = useMemo(() => {
     const map = new Map<string, ScenarioBenchmarkData>()
-    for (const { groups } of categories) {
+    for (const { groups, name: catName } of categories) {
       for (const g of groups) {
         for (const s of g.scenarios) {
           map.set(s.name, {
             rank: Number(s.scenarioRank || 0),
             score: Number(s.score || 0),
-            thresholds: s.thresholds || []
+            thresholds: s.thresholds || [],
+            category: catName
           })
+        }
+      }
+    }
+    return map
+  }, [categories])
+
+  // Map scenario -> category name for diversity
+  const scenarioCategoryMap = useMemo(() => {
+    const map = new Map<string, string>()
+    if (!categories) return map
+    for (const cat of categories) {
+      for (const g of cat.groups) {
+        for (const s of g.scenarios) {
+          map.set(s.name, cat.name)
         }
       }
     }
@@ -148,7 +163,15 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
     lastSessionCount,
     sessions,
     benchmarkData
-  }), [wantedNames, lastSessionCount, sessions, benchmarkData])  // Ranks visibility controls (refactored into hook)
+  }), [wantedNames, lastSessionCount, sessions, benchmarkData])
+
+  // Identify top picks (top 3 with score >= 2, diverse categories)
+  const topPicks = useMemo(() => {
+    const maxPicks = categories ? Math.max(3, categories.length) : 3
+    return selectTopPicks(recScore, scenarioCategoryMap, maxPicks)
+  }, [recScore, scenarioCategoryMap, categories])
+
+  // Ranks visibility controls (refactored into hook)
   const {
     autoHideCleared, setAutoHideCleared,
     visibleRankCount, setVisibleRankCount,
@@ -268,6 +291,8 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                 const maxes: number[] = s.thresholds
                                 const score = s.score
                                 const totalRec = recScore.get(sName) ?? 0
+                                const isTopPick = topPicks.has(sName)
+                                const isCompleted = achieved != null && maxes && achieved >= (maxes.length - 1)
                                 const rankColor = computeFillColor(achieved, ranks)
 
                                 return (
@@ -288,7 +313,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                       </button>
                                     </div>
                                     <div className="text-[12px] flex items-center justify-center" title={`Recommendation score: ${totalRec}`}>
-                                      <RecommendationIcon score={totalRec} compact={compactMode} />
+                                      <RecommendationIcon score={totalRec} compact={compactMode} isTopPick={isTopPick} isCompleted={isCompleted} />
                                     </div>
                                     <div className="flex items-center justify-center">
                                       <button

@@ -5,6 +5,7 @@ export type ScenarioBenchmarkData = {
   rank: number
   score: number
   thresholds: number[]
+  category?: string
 }
 
 export type RecommendationInputs = {
@@ -68,6 +69,19 @@ const recentStd = (arr: number[], k = 6) => stddev(arr.slice(0, Math.min(k, arr.
 export function computeRecommendationScores(input: RecommendationInputs): Map<string, number> {
   const { wantedNames, lastSessionCount, sessions, benchmarkData } = input
   const out = new Map<string, number>()
+
+  // Pre-calculate category recency
+  const categoryLastPlayed = new Map<string, number>()
+  for (let i = 0; i < Math.min(sessions.length, 20); i++) {
+    const s = sessions[i]
+    for (const item of s.items) {
+      const name = getScenarioName(item)
+      const data = benchmarkData.get(name)
+      if (data?.category && !categoryLastPlayed.has(data.category)) {
+        categoryLastPlayed.set(data.category, i)
+      }
+    }
+  }
 
   // 1. Calculate Normalized Progress for all scenarios to find averages
   const progressMap = new Map<string, number>()
@@ -162,8 +176,124 @@ export function computeRecommendationScores(input: RecommendationInputs): Map<st
       if (diff > 0 && p < 1) scoreVal += 1
     }
 
+    // --- Factor 3: Recency ---
+    // If the scenario hasn't been played in a while (e.g. > 3 sessions ago)
+    // and it's not fully mastered (p < 1), give it a nudge.
+    let sessionsSincePlayed = 0
+    let found = false
+    // Scan up to 10 recent sessions
+    for (let i = 0; i < Math.min(sessions.length, 10); i++) {
+      if (sessions[i].items.some(it => getScenarioName(it) === name)) {
+        found = true
+        break
+      }
+      sessionsSincePlayed++
+    }
+    if (!found) sessionsSincePlayed = 10
+
+    if (sessionsSincePlayed >= 3 && p < 1) {
+      scoreVal += 1
+    }
+
+    // --- Factor 4: Neglected Category ---
+    const data = benchmarkData.get(name)
+    if (data?.category) {
+      const lastIdx = categoryLastPlayed.get(data.category) ?? 20
+      if (lastIdx > 5 && p < 1) {
+        scoreVal += 1
+      }
+    }
+
+    // --- Factor 5: PB Proximity ---
+    if (data && p < 1) {
+      const { rank, score, thresholds } = data
+      const maxRank = Math.max(1, thresholds.length - 1)
+      const r = Math.max(0, Math.min(rank, maxRank))
+      const prev = thresholds[r] ?? 0
+      const next = thresholds[r + 1] ?? prev
+      const range = next - prev
+      if (range > 0) {
+        const dist = next - score
+        if (dist > 0 && dist / range < 0.1) {
+          scoreVal += 1
+        }
+      }
+    }
+
+    // --- Factor 6: Historical Trend ---
+    const history: number[] = []
+    for (let i = 0; i < Math.min(sessions.length, 10); i++) {
+      const s = sessions[i]
+      const runs = s.items.filter(it => getScenarioName(it) === name)
+      if (runs.length > 0) {
+        const scores = runs.map(r => Number(r.stats?.['Score'] ?? 0))
+        history.push(Math.max(...scores))
+      }
+    }
+
+    if (history.length >= 3) {
+      const slope = weightedSlope(history)
+      const std = stddev(history)
+      const meanScore = mean(history)
+      const normSlope = std > 0 ? slope / std : (meanScore > 0 ? slope / meanScore : 0)
+
+      if (normSlope > 0.1) {
+        scoreVal += 0.5 // Momentum bonus
+      }
+    }
+
+    // Tie-breakers (fractional)
+    // 1. Prefer less recently played (up to +0.1)
+    scoreVal += 0.01 * Math.min(sessionsSincePlayed, 10)
+    // 2. Prefer lower progress (up to +0.001)
+    scoreVal += 0.001 * (1 - p)
+    // 3. Deterministic random to avoid alphabetical bias
+    let hash = 0
+    for (let i = 0; i < name.length; i++) hash = (hash << 5) - hash + name.charCodeAt(i)
+    scoreVal += (Math.abs(hash) % 100) * 0.00001
+
     out.set(name, scoreVal)
   }
 
   return out
+}
+
+export function selectTopPicks(
+  recScore: Map<string, number>,
+  scenarioCategoryMap: Map<string, string>,
+  maxPicks: number
+): Set<string> {
+  const entries = Array.from(recScore.entries())
+  let candidates = entries.filter(([_, s]) => s >= 2)
+  candidates.sort((a, b) => b[1] - a[1])
+
+  if (candidates.length === 0) return new Set<string>()
+
+  const topScore = candidates[0][1]
+  candidates = candidates.filter(([_, s]) => s >= topScore - 1.5)
+
+  const selected = new Set<string>()
+  const selectedCats = new Set<string>()
+
+  // First pass: try to pick unique categories
+  for (const [name] of candidates) {
+    if (selected.size >= maxPicks) break
+    const cat = scenarioCategoryMap.get(name)
+    if (cat && !selectedCats.has(cat)) {
+      selected.add(name)
+      selectedCats.add(cat)
+    }
+  }
+
+  // Second pass: fill remaining spots if any
+  if (selected.size < maxPicks) {
+    for (const [name] of candidates) {
+      if (selected.size >= maxPicks) break
+      if (!selected.has(name)) {
+        selected.add(name)
+      }
+    }
+  }
+
+  return selected
 }
