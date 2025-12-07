@@ -16,10 +16,10 @@ export function RecommendationIcon({ score, compact, isTopPick, isCompleted }: R
   const colorStyle = isTopPick ? { color: 'var(--accent-primary)' } : undefined
   const successClass = isTopPick ? '' : 'text-[var(--success)]'
 
-  if (score >= 3) return <div className={`flex flex-col items-center ${space} ${successClass}`} style={colorStyle}><ChevronUp size={s} /><ChevronUp size={s} /></div>
-  if (score === 2) return <div className={`flex flex-col items-center ${space} ${successClass}`} style={colorStyle}><ChevronUp size={s} /></div>
-  if (score === 1) return <div className={`flex flex-col items-center ${space} text-[var(--warning)]`}><ChevronUp size={s} /></div>
-  if (score === -1) return <div className={`flex flex-col items-center ${space} text-[var(--warning)]`}><ChevronDown size={s} /></div>
-  if (score <= -2) return <div className={`flex flex-col items-center ${space} text-[var(--error)]`}><ChevronDown size={s} /><ChevronDown size={s} /></div>
+  if (score >= 5) return <div className={`flex flex-col items-center ${space} ${successClass}`} style={colorStyle}><ChevronUp size={s} /><ChevronUp size={s} /></div>
+  if (score >= 3) return <div className={`flex flex-col items-center ${space} ${successClass}`} style={colorStyle}><ChevronUp size={s} /></div>
+  if (score >= 1) return <div className={`flex flex-col items-center ${space} text-[var(--warning)]`}><ChevronUp size={s} /></div>
+  if (score <= -3) return <div className={`flex flex-col items-center ${space} text-[var(--error)]`}><ChevronDown size={s} /><ChevronDown size={s} /></div>
+  if (score <= -1) return <div className={`flex flex-col items-center ${space} text-[var(--warning)]`}><ChevronDown size={s} /></div>
   return <Minus size={s} className="text-[var(--text-tertiary)]" />
 }
