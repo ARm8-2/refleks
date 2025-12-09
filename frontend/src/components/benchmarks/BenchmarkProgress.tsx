@@ -1,4 +1,4 @@
-import { NotebookPen, Play } from 'lucide-react'
+import { Info, NotebookPen, Play, Settings2 } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useBenchmarkVisibility } from '../../hooks/useBenchmarkVisibility'
 import { useDragScroll } from '../../hooks/useDragScroll'
@@ -10,6 +10,7 @@ import { cellFill, computeFillColor, computeRecommendationScores, ENERGY_COL_WID
 import { getSettings, launchScenario, saveScenarioNote } from '../../lib/internal'
 import { getScenarioName, MISSING_STR } from '../../lib/utils'
 import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
+import { Modal } from '../shared/Modal'
 import { Toggle } from '../shared/Toggle'
 import { BenchmarkControls } from './BenchmarkControls'
 import { NotesModal } from './NotesModal'
@@ -72,6 +73,8 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
   const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || MISSING_STR
   const [hScrollEnabled, setHScrollEnabled] = usePageState<boolean>('bench:progress:horizontalScroll', true)
   const [compactMode, setCompactMode] = usePageState<boolean>('bench:progress:compactMode', false)
+  const [showLegend, setShowLegend] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   // Notes modal state
   const [settings, setSettings] = useState<any>(null)
@@ -218,6 +221,20 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
         <div className="flex items-center gap-3">
           <Toggle size="sm" label="Compact mode" checked={compactMode} onChange={setCompactMode} />
           <Toggle size="sm" label="Horizontal scroll" checked={hScrollEnabled} onChange={setHScrollEnabled} />
+          <button
+            className="p-1 rounded hover:bg-surface-3 text-primary"
+            onClick={() => setShowSettings(true)}
+            title="Rank column settings"
+          >
+            <Settings2 size={18} />
+          </button>
+          <button
+            className="p-1 rounded hover:bg-surface-3 text-primary"
+            onClick={() => setShowLegend(true)}
+            title="Recommendation legend"
+          >
+            <Info size={18} />
+          </button>
         </div>
       </div>
 
@@ -389,21 +406,31 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
         </div>
       )}
       {/* Controls panel: placed under the progress content */}
-      <RecommendationLegend />
+      {/* Moved to modals */}
 
-      <BenchmarkControls
-        rankDefs={rankDefs}
-        autoHideCleared={autoHideCleared}
-        setAutoHideCleared={setAutoHideCleared}
-        visibleRankCount={visibleRankCount}
-        setVisibleRankCount={setVisibleRankCount}
-        manuallyHidden={manuallyHidden}
-        toggleManualRank={toggleManualRank}
-        resetManual={resetManual}
-        autoHidden={autoHidden}
-      />
+      <Modal isOpen={showLegend} onClose={() => setShowLegend(false)} title="Recommendation Legend" width="600px" height="auto">
+        <div className="p-4">
+          <RecommendationLegend embedded />
+        </div>
+      </Modal>
 
-      {/* Notes modal (controlled by modalState) */}
+      <Modal isOpen={showSettings} onClose={() => setShowSettings(false)} title="Rank Column Settings" width="600px" height="auto">
+        <div className="p-4">
+          <BenchmarkControls
+            rankDefs={rankDefs}
+            autoHideCleared={autoHideCleared}
+            setAutoHideCleared={setAutoHideCleared}
+            visibleRankCount={visibleRankCount}
+            setVisibleRankCount={setVisibleRankCount}
+            manuallyHidden={manuallyHidden}
+            toggleManualRank={toggleManualRank}
+            resetManual={resetManual}
+            autoHidden={autoHidden}
+            embedded
+          />
+        </div>
+      </Modal>
+
       {modalState.open && (
         <NotesModal
           isOpen={modalState.open}
