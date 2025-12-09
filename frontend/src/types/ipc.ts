@@ -25,6 +25,7 @@ export interface Benchmark {
   abbreviation: string
   color: string
   spreadsheetURL: string
+  dateAdded?: string
   difficulties: BenchmarkDifficulty[]
 }
 

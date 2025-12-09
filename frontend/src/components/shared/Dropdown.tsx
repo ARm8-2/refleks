@@ -12,6 +12,7 @@ type DropdownProps = {
   size?: 'sm' | 'md'
   ariaLabel?: string
   fullWidth?: boolean
+  prefix?: string
 }
 
 export function Dropdown({
@@ -23,6 +24,7 @@ export function Dropdown({
   size = 'sm',
   ariaLabel,
   fullWidth = false,
+  prefix,
 }: DropdownProps) {
   const pad = size === 'md' ? 'px-3 py-2 text-sm' : 'px-2 py-1 text-xs'
 
@@ -71,7 +73,7 @@ export function Dropdown({
           type="button"
           aria-label={ariaLabel || label}
           aria-expanded={isOpen}
-          className={`flex items-center justify-between ${pad} rounded-md bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-2 focus:ring-accent/60 hover:bg-surface-3 w-full ${className}`}
+          className={`flex items-center justify-between ${pad} rounded bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-2 focus:ring-accent/60 hover:bg-surface-3 w-full ${className}`}
           onClick={() => setIsOpen(v => !v)}
           onKeyDown={e => {
             if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
@@ -80,13 +82,13 @@ export function Dropdown({
             }
           }}
         >
-          <span className="truncate">{selectedLabel || 'Select...'}</span>
+          <span className="truncate">{prefix}{selectedLabel || 'Select...'}</span>
           <ChevronDown className="ml-2 h-4 w-4 text-muted" aria-hidden />
         </button>
 
         {isOpen && (
           <div
-            className={`absolute left-0 z-10 mt-1 ${fullWidth ? 'w-full' : 'min-w-[12rem]'} rounded-md bg-surface-2 border border-primary shadow-lg`}
+            className={`absolute left-0 z-10 mt-1 ${fullWidth ? 'w-full' : 'min-w-[12rem]'} rounded bg-surface-2 border border-primary shadow-lg`}
           >
             <ul role="listbox" className="max-h-72 overflow-auto text-xs">
               {options.length === 0 && (

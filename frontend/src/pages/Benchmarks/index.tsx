@@ -11,7 +11,7 @@ import { getBenchmarks, getFavoriteBenchmarks, launchPlaylist, setFavoriteBenchm
 import type { Benchmark } from '../../types/ipc'
 import { AiTab, AnalysisTab, OverviewTab } from './tabs'
 
-type BenchItem = { id: string; title: string; abbreviation: string; subtitle?: string; color?: string }
+type BenchItem = { id: string; title: string; abbreviation: string; subtitle?: string; color?: string; dateAdded?: string }
 
 export function BenchmarksPage() {
   const [sp, setSp] = useSearchParams()
@@ -37,6 +37,7 @@ export function BenchmarksPage() {
           abbreviation: b.abbreviation,
           subtitle: b.rankCalculation,
           color: b.color,
+          dateAdded: b.dateAdded,
         }))
         setItems(mapped)
         const map: Record<string, Benchmark> = {}
@@ -111,27 +112,103 @@ export function BenchmarksPage() {
     />
 }
 
+function useBenchmarkSortAndGroup(items: BenchItem[]) {
+  const [sortBy, setSortBy] = usePageState<'name' | 'abbr' | 'date'>('explore:sortBy', 'name')
+  const [groupBy, setGroupBy] = usePageState<'none' | 'abbr' | 'category'>('explore:groupBy', 'none')
+
+  const groups = useMemo(() => {
+    // 1. Sort
+    const sorted = [...items].sort((a, b) => {
+      if (sortBy === 'name') return a.title.localeCompare(b.title)
+      if (sortBy === 'abbr') return a.abbreviation.localeCompare(b.abbreviation)
+      if (sortBy === 'date') return (b.dateAdded || '').localeCompare(a.dateAdded || '')
+      return 0
+    })
+
+    // 2. Group
+    if (groupBy === 'none') return { 'All': sorted }
+
+    const g: Record<string, BenchItem[]> = {}
+    for (const item of sorted) {
+      let key = ''
+      if (groupBy === 'abbr') {
+        key = item.abbreviation
+      } else if (groupBy === 'category') {
+        const abbr = item.abbreviation.toUpperCase()
+        if (abbr === 'VT' || abbr.includes('VOLTAIC')) key = 'Voltaic'
+        else if (abbr === 'RA' || abbr.includes('REVOSECT')) key = 'Revosect'
+        else if (abbr === 'A7' || abbr.includes('AIMER7')) key = 'Aimer7'
+        else if (abbr === 'PURE' || abbr.includes('PUREG')) key = 'PureG'
+        else key = 'Community / Other'
+      }
+      if (!g[key]) g[key] = []
+      g[key].push(item)
+    }
+    return g
+  }, [items, sortBy, groupBy])
+
+  const groupKeys = useMemo(() => Object.keys(groups).sort((a, b) => {
+    if (a === 'Community / Other') return 1
+    if (b === 'Community / Other') return -1
+    return a.localeCompare(b)
+  }), [groups])
+
+  return { sortBy, setSortBy, groupBy, setGroupBy, groups, groupKeys }
+}
+
 function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, query, onQuery, showFavOnly, onToggleFavOnly, onRandom }:
   { items: BenchItem[]; favorites: string[]; loading: boolean; onToggleFav: (id: string) => void; onOpen: (id: string) => void; query: string; onQuery: (v: string) => void; showFavOnly: boolean; onToggleFavOnly: () => void; onRandom: () => void }) {
+
+  const { sortBy, setSortBy, groupBy, setGroupBy, groups, groupKeys } = useBenchmarkSortAndGroup(items)
+
   return (
     <div className="space-y-4 h-full p-4 overflow-auto">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="text-lg font-medium">Benchmark - Explore</div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="relative">
             <Search size={16} className="text-secondary absolute left-2 top-1/2 -translate-y-1/2" strokeWidth={1.5} />
             <input
               value={query}
               onChange={e => onQuery(e.target.value)}
-              placeholder="Search benchmarks..."
+              placeholder="Search..."
               aria-label="Search benchmarks"
-              className="pl-8 pr-2 py-1.5 rounded bg-surface-2 border border-primary text-sm placeholder:text-secondary focus:outline-none focus:ring-1 focus:ring-accent hover:bg-surface-3"
+              className="pl-8 pr-2 py-2 rounded bg-surface-2 border border-primary text-sm placeholder:text-secondary focus:outline-none focus:ring-1 focus:ring-accent hover:bg-surface-3 w-32 sm:w-48 transition-all focus:w-64"
             />
           </div>
-          <button onClick={onRandom} className="px-2 py-1.5 rounded bg-surface-3 border border-primary text-sm hover:bg-surface-2">Random</button>
+
+          <div className="flex items-center gap-1">
+            <Dropdown
+              prefix="Sort: "
+              value={sortBy}
+              onChange={(v) => setSortBy(v as any)}
+              options={[
+                { label: 'Name', value: 'name' },
+                { label: 'Abbreviation', value: 'abbr' },
+                { label: 'Date Added', value: 'date' },
+              ]}
+              size="md"
+            />
+          </div>
+
+          <div className="flex items-center gap-1">
+            <Dropdown
+              prefix="Group: "
+              value={groupBy}
+              onChange={(v) => setGroupBy(v as any)}
+              options={[
+                { label: 'None', value: 'none' },
+                { label: 'Abbreviation', value: 'abbr' },
+                { label: 'Category', value: 'category' },
+              ]}
+              size="md"
+            />
+          </div>
+
+          <button onClick={onRandom} className="px-3 py-2 rounded bg-surface-2 border border-primary text-sm hover:bg-surface-3">Random</button>
           <button
             onClick={onToggleFavOnly}
-            className={`px-2 py-1.5 rounded border text-sm flex items-center gap-2 focus:outline-none focus:ring-1 focus:ring-primary transition-colors ${showFavOnly ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30' : 'bg-surface-3 border-primary text-primary hover:bg-surface-2 hover:text-accent'}`}
+            className={`px-3 py-2 rounded border text-sm flex items-center gap-2 focus:outline-none focus:ring-1 focus:ring-primary transition-colors ${showFavOnly ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30' : 'bg-surface-2 border-primary text-primary hover:bg-surface-3 hover:text-accent'}`}
             title={showFavOnly ? 'Showing favorites' : 'Show all'}
           >
             <Star
@@ -143,19 +220,33 @@ function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, que
           </button>
         </div>
       </div>
-      <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
-        {items.map(b => (
-          <BenchmarkCard
-            key={b.id}
-            id={b.id}
-            title={b.title}
-            abbreviation={b.abbreviation}
-            color={b.color}
-            isFavorite={favorites.includes(b.id)}
-            onOpen={onOpen}
-            onToggleFavorite={onToggleFav}
-          />
+
+      <div className="space-y-6">
+        {groupKeys.map(group => (
+          <div key={group} className="space-y-2">
+            {groupBy !== 'none' && (
+              <div className="flex items-center gap-3 text-sm font-medium text-secondary mt-2 mb-2">
+                <span className="whitespace-nowrap">{group} <span className="text-xs opacity-50">({groups[group].length})</span></span>
+                <div className="h-px bg-primary/10 flex-1" />
+              </div>
+            )}
+            <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+              {groups[group].map(b => (
+                <BenchmarkCard
+                  key={b.id}
+                  id={b.id}
+                  title={b.title}
+                  abbreviation={b.abbreviation}
+                  color={b.color}
+                  isFavorite={favorites.includes(b.id)}
+                  onOpen={onOpen}
+                  onToggleFavorite={onToggleFav}
+                />
+              ))}
+            </div>
+          </div>
         ))}
+
         {items.length === 0 && (
           <div className="text-sm text-secondary">
             {loading ? 'Loading benchmarks…' : (
@@ -166,9 +257,7 @@ function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, que
       </div>
     </div>
   )
-}
-
-type BenchmarksDetailProps = { id: string; bench?: Benchmark; favorites: string[]; onToggleFav: (id: string) => void; onBack: () => void }
+} type BenchmarksDetailProps = { id: string; bench?: Benchmark; favorites: string[]; onToggleFav: (id: string) => void; onBack: () => void }
 
 function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: BenchmarksDetailProps) {
   const [tab, setTab] = useUIState<'overview' | 'analysis' | 'ai'>(`benchmark:${id}:tab`, 'overview')
