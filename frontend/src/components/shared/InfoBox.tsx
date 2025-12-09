@@ -1,6 +1,6 @@
 import { ChevronUp, Info } from 'lucide-react'
 import type { CSSProperties, ReactNode } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useUIState } from '../../hooks/useUIState'
 
 type InfoBoxProps = {
@@ -36,30 +36,16 @@ export function InfoBox({
 
   const [collapsed, setCollapsed] = useUIState<boolean>(storageKey, false)
 
-  // Store last seen value so we can reset showInfo when collapsing
-  const savedCollapsedRef = useRef<boolean | null>(null)
-  useEffect(() => { savedCollapsedRef.current = collapsed }, [collapsed])
-
   const HEADER_H = 44
-  const containerStyle: CSSProperties = useMemo(() => {
-    if (collapsed) return { height: HEADER_H }
-    if (typeof height === 'string') return { height }
-    return { height }
-  }, [height, collapsed])
+  const containerStyle: CSSProperties = useMemo(() => ({
+    height: collapsed ? HEADER_H : height
+  }), [height, collapsed])
 
-  const bodyStyle: CSSProperties = useMemo(() => {
-    if (collapsed) return { height: 0 }
-    if (typeof height === 'string') return { height: `calc(${height} - ${HEADER_H}px)` }
-    return { height: height - HEADER_H }
-  }, [height, collapsed]) // 44px header
-  const leftBodyClass = 'h-full overflow-y-auto text-xs text-secondary '
-  const leftBodyClassDefault = leftBodyClass + 'p-3'
-  const rightBodyClass = 'h-full overflow-y-auto text-sm text-primary '
-  const rightBodyClassDefault = rightBodyClass + 'p-3'
+  const baseBodyClass = 'h-full overflow-y-auto p-3'
 
   return (
-    <div className="bg-surface-2 rounded border border-primary overflow-hidden transition-all duration-150 ease-out" style={containerStyle}>
-      <div className="flex items-center justify-between px-3 py-2 border-b border-primary">
+    <div className="bg-surface-2 rounded border border-primary overflow-hidden transition-all duration-150 ease-out flex flex-col" style={containerStyle}>
+      <div className="flex items-center justify-between px-3 h-[44px] border-b border-primary shrink-0">
         <div className="text-sm font-medium text-primary truncate" title={titleText}>{title}</div>
         <div className="flex items-center gap-2">
           {headerControls}
@@ -86,13 +72,13 @@ export function InfoBox({
           </button>
         </div>
       </div>
-      <div className="overflow-hidden" style={bodyStyle}>
+      <div className="flex-1 overflow-hidden min-h-0">
         {showInfo ? (
-          <div className={bodyClassName ?? rightBodyClassDefault}>
+          <div className={bodyClassName ?? `${baseBodyClass} text-sm text-primary`}>
             {info ?? <div>No additional info.</div>}
           </div>
         ) : (
-          <div className={bodyClassName ?? leftBodyClassDefault}>
+          <div className={bodyClassName ?? `${baseBodyClass} text-xs text-secondary`}>
             {children}
           </div>
         )}
