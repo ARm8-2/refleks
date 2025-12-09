@@ -1,25 +1,27 @@
 import { Coffee, TrendingDown, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { analyzeSessionHealth, buildScenarioProfiles, SessionHealthLevel } from '../../lib/analysis/sessionAnalysis'
+import { useState } from 'react'
+import { SessionAnalysis, SessionHealthLevel } from '../../lib/analysis'
 import { formatDuration } from '../../lib/utils'
 import type { Session } from '../../types/domain'
 
 type FatigueAlertProps = {
   currentSession: Session | null
-  allSessions: Session[]
+  analysis: SessionAnalysis
 }
 
-export function FatigueAlert({ currentSession, allSessions }: FatigueAlertProps) {
-  const [dismissed, setDismissed] = useState(false)
+export function FatigueAlert({ currentSession, analysis }: FatigueAlertProps) {
+  const [dismissedAtRun, setDismissedAtRun] = useState<number | null>(null)
 
-  const profiles = useMemo(() => buildScenarioProfiles(allSessions), [allSessions])
-  const analysis = useMemo(
-    () => analyzeSessionHealth(currentSession, allSessions, profiles),
-    [currentSession, allSessions, profiles]
-  )
+  // Reset dismissal if session changes
+  if (currentSession && dismissedAtRun !== null && analysis.totalRuns < dismissedAtRun) {
+    setDismissedAtRun(null)
+  }
+
+  // Check if currently dismissed (snoozed for 2 runs)
+  const isSnoozed = dismissedAtRun !== null && analysis.totalRuns < dismissedAtRun + 2
 
   // Only show for declining or fatigued states
-  if (analysis.healthLevel === 'optimal' || analysis.healthLevel === 'good' || dismissed) {
+  if (analysis.healthLevel === 'optimal' || analysis.healthLevel === 'good' || isSnoozed) {
     return null
   }
 
@@ -34,9 +36,9 @@ export function FatigueAlert({ currentSession, allSessions }: FatigueAlertProps)
       }}
     >
       <button
-        onClick={() => setDismissed(true)}
+        onClick={() => setDismissedAtRun(analysis.totalRuns)}
         className="absolute top-3 right-3 p-1 rounded hover:bg-hover text-secondary hover:text-primary transition-colors"
-        title="Dismiss"
+        title="Dismiss for now (remind me later)"
       >
         <X size={14} />
       </button>

@@ -318,8 +318,12 @@ export function analyzeSessionHealth(
     const learningDiscount = hasLearningCurve ? 0.5 : 1 // Learning curves look like fatigue but aren't
     const varianceDiscount = consistencyScore // High variance = less confident
 
+    // "Bad day" protection: If trend is flat (stable), we shouldn't flag fatigue just because performance is low.
+    // We only count belowAvgFactor if there is also a negative trend.
+    const effectiveBelowAvg = trendFactor > 0.1 ? belowAvgFactor : 0
+
     fatigueConfidence = (
-      (trendFactor * 0.4 + belowAvgFactor * 0.3 + sessionLengthFactor * 0.2 + durationFactor * 0.1)
+      (trendFactor * 0.5 + effectiveBelowAvg * 0.2 + sessionLengthFactor * 0.2 + durationFactor * 0.1)
       * learningDiscount
       * varianceDiscount
     )
@@ -330,14 +334,18 @@ export function analyzeSessionHealth(
   let healthMessage = ''
   let shouldTakeBreak = false
 
+  // Get recommendation for context-aware limits
+  const recommendation = recommendSessionLength(allSessions, profiles)
+  const recommendedLimit = recommendation.suggestedRuns
+
   if (hasInsufficientData) {
     healthLevel = 'good'
     healthMessage = 'Keep playing to build performance insights'
-  } else if (fatigueConfidence > 0.7 && performanceTrend < -0.1) {
+  } else if (fatigueConfidence > 0.6 && performanceTrend < -0.1) {
     healthLevel = 'fatigued'
     healthMessage = 'Performance declining significantly – consider taking a break'
     shouldTakeBreak = true
-  } else if (fatigueConfidence > 0.5 || (performanceTrend < -0.15 && totalRuns >= 6)) {
+  } else if (fatigueConfidence > 0.45 || (performanceTrend < -0.15 && totalRuns >= 6)) {
     healthLevel = 'declining'
     healthMessage = 'Performance trending down – a short break might help'
   } else if (performanceTrend > 0.05) {
@@ -351,8 +359,13 @@ export function analyzeSessionHealth(
     healthMessage = 'Slight variance in performance – this is normal'
   }
 
-  // Extended session warning
-  if (healthLevel !== 'fatigued' && totalRuns >= 20 && durationMinutes >= 60) {
+  // Extended session warning (dynamic based on history)
+  // Warn if we are well past the recommended limit
+  if (healthLevel !== 'fatigued' && totalRuns > recommendedLimit * 1.3 && totalRuns >= 10) {
+    healthLevel = 'declining'
+    healthMessage = `Session longer than recommended (${recommendedLimit} runs) – focus may be slipping`
+  } else if (healthLevel !== 'fatigued' && totalRuns >= 30 && durationMinutes >= 60) {
+    // Fallback hard limit for very long sessions
     healthLevel = 'declining'
     healthMessage = 'Long session – regular breaks help maintain focus'
   }
@@ -405,11 +418,35 @@ export function recommendSessionLength(
   // Build profiles if not provided
   const scenarioProfiles = profiles ?? buildScenarioProfiles(sessions)
 
+  // 1. Filter out "short" sessions dynamically to avoid skewing data
+  // Calculate lengths of all valid sessions first
+  const validLengths = sessions
+    .map(s => s.items.length)
+    .filter(len => len >= 3)
+    .sort((a, b) => a - b)
+
+  let minLengthThreshold = 3
+  let excludedCount = 0
+
+  if (validLengths.length >= 5) {
+    const mid = Math.floor(validLengths.length / 2)
+    const medianLength = validLengths.length % 2 !== 0
+      ? validLengths[mid]
+      : (validLengths[mid - 1] + validLengths[mid]) / 2
+
+    // Exclude sessions that are significantly shorter than the median (e.g., < 40%)
+    // But always keep at least 3 runs
+    minLengthThreshold = Math.max(3, Math.floor(medianLength * 0.4))
+  }
+
   // Analyze each session's performance curve
   const sessionCurves: { percentiles: number[]; length: number }[] = []
 
   for (const sess of sessions) {
-    if (sess.items.length < 3) continue
+    if (sess.items.length < minLengthThreshold) {
+      if (sess.items.length >= 3) excludedCount++ // Only count as excluded if it was "valid" but short
+      continue
+    }
 
     // Order items chronologically (oldest first)
     const ordered = [...sess.items].sort((a, b) => {
@@ -541,6 +578,10 @@ export function recommendSessionLength(
 
   if (sessionCurves.length < 8) {
     insights.push('More sessions will improve recommendation accuracy')
+  }
+
+  if (excludedCount > 0) {
+    insights.push(`Excluded ${excludedCount} short session${excludedCount !== 1 ? 's' : ''} from analysis`)
   }
 
   return {

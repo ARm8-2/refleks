@@ -1,20 +1,20 @@
-import { Activity, Clock, Minus, Target, TrendingDown, TrendingUp } from 'lucide-react'
-import { useMemo } from 'react'
-import { analyzeSessionHealth, buildScenarioProfiles, SessionHealthLevel } from '../../lib/analysis/sessionAnalysis'
+import { Activity, Clock } from 'lucide-react'
+import { useUIState } from '../../hooks/useUIState'
+import { SessionAnalysis, SessionHealthLevel, SessionLengthRecommendation } from '../../lib/analysis'
 import { formatDuration } from '../../lib/utils'
 import type { Session } from '../../types/domain'
+import { SessionProgressBar } from './SessionProgressBar'
 
 type SessionStatusProps = {
   currentSession: Session | null
-  allSessions: Session[]
+  analysis: SessionAnalysis
+  recommendation: SessionLengthRecommendation
 }
 
-export function SessionStatus({ currentSession, allSessions }: SessionStatusProps) {
-  const profiles = useMemo(() => buildScenarioProfiles(allSessions), [allSessions])
-  const analysis = useMemo(
-    () => analyzeSessionHealth(currentSession, allSessions, profiles),
-    [currentSession, allSessions, profiles]
-  )
+export function SessionStatus({ currentSession, analysis, recommendation }: SessionStatusProps) {
+  const sessionId = currentSession?.id ?? 'none'
+  const [userTarget, setUserTarget] = useUIState<number | null>(`session:${sessionId}:target`, null)
+  const targetRuns = userTarget ?? recommendation.suggestedRuns
 
   if (!currentSession || currentSession.items.length === 0) {
     return null
@@ -43,25 +43,25 @@ export function SessionStatus({ currentSession, allSessions }: SessionStatusProp
         <span>{formatDuration(analysis.durationMinutes * 60000) || '<1m'}</span>
       </div>
 
-      {/* Run count */}
-      <div className="flex items-center gap-1.5 text-secondary">
-        <Target size={14} />
-        <span>{analysis.totalRuns} runs</span>
-      </div>
-
       {/* Scenarios */}
       <div className="flex items-center gap-1.5 text-secondary">
         <Activity size={14} />
         <span>{analysis.uniqueScenarios} scenario{analysis.uniqueScenarios !== 1 ? 's' : ''}</span>
       </div>
 
-      {/* Performance trend - only show if we have enough data */}
-      {!analysis.hasInsufficientData && (
-        <>
-          <div className="h-4 border-l border-primary" />
-          <TrendIndicator trend={analysis.performanceTrend} />
-        </>
-      )}
+      {/* Session Progress Bar (Right aligned) */}
+      <div className="ml-auto flex-grow min-w-[200px]">
+        <SessionProgressBar
+          currentRuns={analysis.totalRuns}
+          targetRuns={targetRuns}
+          defaultTarget={recommendation.suggestedRuns}
+          onTargetChange={setUserTarget}
+          warmup={recommendation.warmupRuns}
+          peakStart={recommendation.peakPerformanceWindow[0]}
+          peakEnd={recommendation.peakPerformanceWindow[1]}
+          maxRuns={Math.max(targetRuns + 5, recommendation.diminishingReturnsAt + 5, 20)}
+        />
+      </div>
     </div>
   )
 }
@@ -78,20 +78,4 @@ function getStatusConfig(level: SessionHealthLevel, trend: number): { label: str
     default:
       return { label: 'Active', color: 'var(--accent-primary)' }
   }
-}
-
-function TrendIndicator({ trend }: { trend: number }) {
-  const isPositive = trend > 0.03
-  const isNegative = trend < -0.03
-
-  const Icon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus
-  const color = isPositive ? 'var(--success)' : isNegative ? 'var(--error)' : 'var(--text-muted)'
-  const label = isPositive ? 'Improving' : isNegative ? 'Declining' : 'Stable'
-
-  return (
-    <div className="flex items-center gap-1.5" style={{ color }}>
-      <Icon size={14} />
-      <span className="text-xs">{label}</span>
-    </div>
-  )
 }

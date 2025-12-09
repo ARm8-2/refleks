@@ -7,6 +7,7 @@ import { useStore } from '../../../hooks/useStore'
 import { useUIState } from '../../../hooks/useUIState'
 import { computeFindings } from '../../../lib/analysis/findings'
 import { groupByScenario } from '../../../lib/analysis/metrics'
+import { analyzeSessionHealth, buildScenarioProfiles, recommendSessionLength } from '../../../lib/analysis/session'
 import { getScenarioName } from '../../../lib/utils'
 import type { Session } from '../../../types/domain'
 
@@ -15,6 +16,17 @@ type OverviewTabProps = { session: Session | null }
 export function OverviewTab({ session }: OverviewTabProps) {
   const items = session?.items ?? []
   const allSessions = useStore(s => s.sessions)
+
+  // Pre-calculate session analysis to avoid double computation in child components
+  const profiles = useMemo(() => buildScenarioProfiles(allSessions), [allSessions])
+  const analysis = useMemo(
+    () => analyzeSessionHealth(session, allSessions, profiles),
+    [session, allSessions, profiles]
+  )
+  const recommendation = useMemo(
+    () => recommendSessionLength(allSessions, profiles),
+    [allSessions, profiles]
+  )
 
   // Group per scenario name and collect metrics (newest -> oldest order)
   const byName = useMemo(() => groupByScenario(items), [items])
@@ -63,10 +75,10 @@ export function OverviewTab({ session }: OverviewTabProps) {
   return (
     <div className="space-y-3">
       {/* Fatigue detection alert - shows when performance decline detected */}
-      <FatigueAlert currentSession={session} allSessions={allSessions} />
+      <FatigueAlert currentSession={session} analysis={analysis} />
 
       {/* Quick session status bar */}
-      <SessionStatus currentSession={session} allSessions={allSessions} />
+      <SessionStatus currentSession={session} analysis={analysis} recommendation={recommendation} />
 
       {/* Global controls for this tab */}
       <MetricsControls
