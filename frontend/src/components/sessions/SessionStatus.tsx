@@ -12,8 +12,7 @@ type SessionStatusProps = {
 }
 
 export function SessionStatus({ currentSession, analysis, recommendation }: SessionStatusProps) {
-  const sessionId = currentSession?.id ?? 'none'
-  const [userTarget, setUserTarget] = useUIState<number | null>(`session:${sessionId}:target`, null)
+  const [userTarget, setUserTarget] = useUIState<number | null>(`session:target`, null)
   const targetRuns = userTarget ?? recommendation.suggestedRuns
 
   if (!currentSession || currentSession.items.length === 0) {

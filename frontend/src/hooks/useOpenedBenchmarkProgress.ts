@@ -6,7 +6,7 @@ import { useUIState } from './useUIState'
 
 export function useOpenedBenchmarkProgress(input?: { id?: string | null; bench?: Benchmark | null }) {
   const resolvedId = input?.id ?? null
-  const [benchDifficultyIdx, setBenchDifficultyIdx] = useUIState<number>(`Benchmark:${resolvedId ?? ''}:difficultyIdx`, 0)
+  const [benchDifficultyIdx, setBenchDifficultyIdx] = useUIState<number>(`benchmark:${resolvedId ?? ''}:difficultyIdx`, 0)
 
   const [bench, setBench] = useState<Benchmark | null>(input?.bench ?? null)
   const [progress, setProgress] = useState<BenchmarkProgress | null>(null)
