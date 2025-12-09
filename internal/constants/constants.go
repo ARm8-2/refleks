@@ -15,11 +15,11 @@ const (
 	DefaultRecentCap = 500
 
 	// Default UI/analysis values
-	DefaultSessionGapMinutes  = 15
+	DefaultSessionGapMinutes  = 20
 	DefaultTheme              = "dark"
 	DefaultFont               = "montserrat"
 	DefaultMouseBufferMinutes = 2
-	DefaultMaxExistingOnStart = 500
+	DefaultMaxExistingOnStart = 1000
 
 	// Watcher defaults
 	DefaultPollIntervalSeconds = 5
