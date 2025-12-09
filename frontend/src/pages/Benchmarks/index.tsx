@@ -16,78 +16,15 @@ type BenchItem = { id: string; title: string; abbreviation: string; subtitle?: s
 export function BenchmarksPage() {
   const [sp, setSp] = useSearchParams()
   const selected = sp.get('b') || null
-  // Global open benchmark id (shared across pages)
   const [openBenchId, setOpenBenchId] = useUIState<string | null>('global:openBenchmark', null)
-  const [items, setItems] = useState<BenchItem[]>([])
-  const [byId, setById] = useState<Record<string, Benchmark>>({})
-  const [benchLoading, setBenchLoading] = useState<boolean>(true)
-  const [query, setQuery] = usePageState<string>('explore:query', '')
-  const [showFavOnly, setShowFavOnly] = usePageState<boolean>('explore:showFavOnly', false)
-  const [favorites, setFavorites] = useState<string[]>([])
 
-  useEffect(() => {
-    let isMounted = true
-    setBenchLoading(true)
-    getBenchmarks()
-      .then((list: Benchmark[]) => {
-        if (!isMounted) return
-        const mapped: BenchItem[] = list.map(b => ({
-          id: `${b.abbreviation}-${b.benchmarkName}`,
-          title: b.benchmarkName,
-          abbreviation: b.abbreviation,
-          subtitle: b.rankCalculation,
-          color: b.color,
-          dateAdded: b.dateAdded,
-        }))
-        setItems(mapped)
-        const map: Record<string, Benchmark> = {}
-        for (const b of list) {
-          map[`${b.abbreviation}-${b.benchmarkName}`] = b
-        }
-        setById(map)
-        setBenchLoading(false)
-      })
-      .catch(err => {
-        console.warn('getBenchmarks failed', err)
-        setBenchLoading(false)
-      })
-    getFavoriteBenchmarks()
-      .then(ids => { if (isMounted) setFavorites(ids) })
-      .catch(() => { })
-    return () => { isMounted = false }
-  }, [])
+  const { items, byId, loading, favorites, toggleFavorite } = useBenchmarkData()
 
-  // selection is derived from URL; no local state or effects needed
-
-  // selected comes from URL (?b)
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    let list = items
-    if (q) list = list.filter(i => i.title.toLowerCase().includes(q) || i.abbreviation.toLowerCase().includes(q) || (i.subtitle ?? '').toLowerCase().includes(q))
-    if (showFavOnly) list = list.filter(i => favorites.includes(i.id))
-    return list
-  }, [items, query, showFavOnly, favorites])
-
-  const toggleFavorite = async (id: string) => {
-    const next = favorites.includes(id) ? favorites.filter(x => x !== id) : [...favorites, id]
-    setFavorites(next)
-    try { await setFavoriteBenchmarks(next) } catch (e) { console.warn('setFavoriteBenchmarks failed', e) }
-  }
-
-  const pickRandom = () => {
-    const list = filtered.length ? filtered : items
-    if (list.length === 0) return
-    const r = list[Math.floor(Math.random() * list.length)]
-    setOpenBenchId(r.id)
-    setSp({ b: r.id })
-  }
-
-  // Keep last selected benchmark in per-page state
+  // Sync URL and State
   useEffect(() => {
     if (selected && selected !== openBenchId) setOpenBenchId(selected)
   }, [selected, openBenchId, setOpenBenchId])
 
-  // On first mount, if no selection in URL but we have a remembered one, restore it
   useEffect(() => {
     if (!selected && openBenchId) {
       const params = new URLSearchParams(sp)
@@ -96,29 +33,125 @@ export function BenchmarksPage() {
     }
   }, [selected, openBenchId, setSp, sp])
 
-  return selected
-    ? <BenchmarksDetail bench={byId[selected!]} id={selected} favorites={favorites} onToggleFav={toggleFavorite} onBack={() => { const p = new URLSearchParams(sp); p.delete('b'); setSp(p); setOpenBenchId(null) }} />
-    : <BenchmarksExplore
-      items={filtered}
+  const handleOpen = (id: string) => {
+    setOpenBenchId(id)
+    setSp({ b: id })
+  }
+
+  const handleBack = () => {
+    const p = new URLSearchParams(sp)
+    p.delete('b')
+    setSp(p)
+    setOpenBenchId(null)
+  }
+
+  if (selected) {
+    return (
+      <BenchmarksDetail
+        bench={byId[selected]}
+        id={selected}
+        favorites={favorites}
+        onToggleFav={toggleFavorite}
+        onBack={handleBack}
+      />
+    )
+  }
+
+  return (
+    <BenchmarksExplore
+      items={items}
       favorites={favorites}
-      loading={benchLoading}
+      loading={loading}
       onToggleFav={toggleFavorite}
-      onOpen={(id) => { setOpenBenchId(id); setSp({ b: id }) }}
-      query={query}
-      onQuery={setQuery}
-      showFavOnly={showFavOnly}
-      onToggleFavOnly={() => setShowFavOnly(v => !v)}
-      onRandom={pickRandom}
+      onOpen={handleOpen}
     />
+  )
 }
 
-function useBenchmarkSortAndGroup(items: BenchItem[]) {
+function useBenchmarkData() {
+  const [items, setItems] = useState<BenchItem[]>([])
+  const [byId, setById] = useState<Record<string, Benchmark>>({})
+  const [loading, setLoading] = useState<boolean>(true)
+  const [favorites, setFavorites] = useState<string[]>([])
+
+  useEffect(() => {
+    let isMounted = true
+    setLoading(true)
+
+    Promise.all([getBenchmarks(), getFavoriteBenchmarks()])
+      .then(([list, favs]) => {
+        if (!isMounted) return
+
+        const mapped: BenchItem[] = list.map(b => ({
+          id: `${b.abbreviation}-${b.benchmarkName}`,
+          title: b.benchmarkName,
+          abbreviation: b.abbreviation,
+          subtitle: b.rankCalculation,
+          color: b.color,
+          dateAdded: b.dateAdded,
+        }))
+
+        const map: Record<string, Benchmark> = {}
+        for (const b of list) {
+          map[`${b.abbreviation}-${b.benchmarkName}`] = b
+        }
+
+        setItems(mapped)
+        setById(map)
+        setFavorites(favs)
+        setLoading(false)
+      })
+      .catch(err => {
+        console.warn('Failed to load benchmarks data', err)
+        if (isMounted) setLoading(false)
+      })
+
+    return () => { isMounted = false }
+  }, [])
+
+  const toggleFavorite = async (id: string) => {
+    const next = favorites.includes(id) ? favorites.filter(x => x !== id) : [...favorites, id]
+    setFavorites(next)
+    try { await setFavoriteBenchmarks(next) } catch (e) { console.warn('setFavoriteBenchmarks failed', e) }
+  }
+
+  return { items, byId, loading, favorites, toggleFavorite }
+}
+
+function getBenchmarkCategory(abbreviation: string): string {
+  const abbr = abbreviation.toUpperCase()
+  if (abbr === 'VT' || abbr.includes('VOLTAIC')) return 'Voltaic'
+  if (abbr === 'RA' || abbr.includes('REVOSECT')) return 'Revosect'
+  if (abbr === 'A7' || abbr.includes('AIMER7')) return 'Aimer7'
+  if (abbr === 'PURE' || abbr.includes('PUREG')) return 'PureG'
+  return 'Community / Other'
+}
+
+function useBenchmarkList(items: BenchItem[], favorites: string[]) {
+  const [query, setQuery] = usePageState<string>('explore:query', '')
+  const [showFavOnly, setShowFavOnly] = usePageState<boolean>('explore:showFavOnly', false)
   const [sortBy, setSortBy] = usePageState<'name' | 'abbr' | 'date'>('explore:sortBy', 'name')
   const [groupBy, setGroupBy] = usePageState<'none' | 'abbr' | 'category'>('explore:groupBy', 'none')
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    let list = items
+    if (q) {
+      list = list.filter(i =>
+        i.title.toLowerCase().includes(q) ||
+        i.abbreviation.toLowerCase().includes(q) ||
+        (i.subtitle ?? '').toLowerCase().includes(q)
+      )
+    }
+    if (showFavOnly) {
+      list = list.filter(i => favorites.includes(i.id))
+    }
+    return list
+  }, [items, query, showFavOnly, favorites])
+
   const groups = useMemo(() => {
     // 1. Sort
-    const sorted = [...items].sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       if (sortBy === 'name') return a.title.localeCompare(b.title)
       if (sortBy === 'abbr') return a.abbreviation.localeCompare(b.abbreviation)
       if (sortBy === 'date') return (b.dateAdded || '').localeCompare(a.dateAdded || '')
@@ -134,32 +167,62 @@ function useBenchmarkSortAndGroup(items: BenchItem[]) {
       if (groupBy === 'abbr') {
         key = item.abbreviation
       } else if (groupBy === 'category') {
-        const abbr = item.abbreviation.toUpperCase()
-        if (abbr === 'VT' || abbr.includes('VOLTAIC')) key = 'Voltaic'
-        else if (abbr === 'RA' || abbr.includes('REVOSECT')) key = 'Revosect'
-        else if (abbr === 'A7' || abbr.includes('AIMER7')) key = 'Aimer7'
-        else if (abbr === 'PURE' || abbr.includes('PUREG')) key = 'PureG'
-        else key = 'Community / Other'
+        key = getBenchmarkCategory(item.abbreviation)
       }
       if (!g[key]) g[key] = []
       g[key].push(item)
     }
     return g
-  }, [items, sortBy, groupBy])
+  }, [filtered, sortBy, groupBy])
 
   const groupKeys = useMemo(() => Object.keys(groups).sort((a, b) => {
+    if (a === 'All') return -1
+    if (b === 'All') return 1
     if (a === 'Community / Other') return 1
     if (b === 'Community / Other') return -1
     return a.localeCompare(b)
   }), [groups])
 
-  return { sortBy, setSortBy, groupBy, setGroupBy, groups, groupKeys }
+  const getRandomId = () => {
+    const list = filtered.length ? filtered : items
+    if (list.length === 0) return null
+    const r = list[Math.floor(Math.random() * list.length)]
+    return r.id
+  }
+
+  return {
+    query, setQuery,
+    showFavOnly, setShowFavOnly,
+    sortBy, setSortBy,
+    groupBy, setGroupBy,
+    groups, groupKeys,
+    getRandomId,
+    hasResults: filtered.length > 0,
+    totalCount: items.length
+  }
 }
 
-function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, query, onQuery, showFavOnly, onToggleFavOnly, onRandom }:
-  { items: BenchItem[]; favorites: string[]; loading: boolean; onToggleFav: (id: string) => void; onOpen: (id: string) => void; query: string; onQuery: (v: string) => void; showFavOnly: boolean; onToggleFavOnly: () => void; onRandom: () => void }) {
+function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen }: {
+  items: BenchItem[];
+  favorites: string[];
+  loading: boolean;
+  onToggleFav: (id: string) => void;
+  onOpen: (id: string) => void;
+}) {
+  const {
+    query, setQuery,
+    showFavOnly, setShowFavOnly,
+    sortBy, setSortBy,
+    groupBy, setGroupBy,
+    groups, groupKeys,
+    getRandomId,
+    hasResults
+  } = useBenchmarkList(items, favorites)
 
-  const { sortBy, setSortBy, groupBy, setGroupBy, groups, groupKeys } = useBenchmarkSortAndGroup(items)
+  const handleRandom = () => {
+    const id = getRandomId()
+    if (id) onOpen(id)
+  }
 
   return (
     <div className="space-y-4 h-full p-4 overflow-auto">
@@ -170,7 +233,7 @@ function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, que
             <Search size={16} className="text-secondary absolute left-2 top-1/2 -translate-y-1/2" strokeWidth={1.5} />
             <input
               value={query}
-              onChange={e => onQuery(e.target.value)}
+              onChange={e => setQuery(e.target.value)}
               placeholder="Search..."
               aria-label="Search benchmarks"
               className="pl-8 pr-2 py-2 rounded bg-surface-2 border border-primary text-sm placeholder:text-secondary focus:outline-none focus:ring-1 focus:ring-accent hover:bg-surface-3 w-32 sm:w-48 transition-all focus:w-64"
@@ -205,9 +268,9 @@ function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, que
             />
           </div>
 
-          <button onClick={onRandom} className="px-3 py-2 rounded bg-surface-2 border border-primary text-sm hover:bg-surface-3">Random</button>
+          <button onClick={handleRandom} className="px-3 py-2 rounded bg-surface-2 border border-primary text-sm hover:bg-surface-3">Random</button>
           <button
-            onClick={onToggleFavOnly}
+            onClick={() => setShowFavOnly(!showFavOnly)}
             className={`px-3 py-2 rounded border text-sm flex items-center gap-2 focus:outline-none focus:ring-1 focus:ring-primary transition-colors ${showFavOnly ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30' : 'bg-surface-2 border-primary text-primary hover:bg-surface-3 hover:text-accent'}`}
             title={showFavOnly ? 'Showing favorites' : 'Show all'}
           >
@@ -247,7 +310,7 @@ function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, que
           </div>
         ))}
 
-        {items.length === 0 && (
+        {!hasResults && (
           <div className="text-sm text-secondary">
             {loading ? 'Loading benchmarks…' : (
               showFavOnly ? (favorites.length ? 'No favorites match your filters.' : 'No favorites yet.') : (query ? 'No results.' : 'No benchmarks found.')
@@ -259,12 +322,7 @@ function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, que
   )
 } type BenchmarksDetailProps = { id: string; bench?: Benchmark; favorites: string[]; onToggleFav: (id: string) => void; onBack: () => void }
 
-function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: BenchmarksDetailProps) {
-  const [tab, setTab] = useUIState<'overview' | 'analysis' | 'ai'>(`benchmark:${id}:tab`, 'overview')
-  // Use shared hook for progress + live updates and difficulty state
-  const { progress, loading, error, difficultyIndex, setDifficultyIndex } = useOpenedBenchmarkProgress({ id, bench: bench ?? null })
-
-  // Share image: render offscreen card on demand and copy to clipboard
+function useBenchmarkShare() {
   const [renderShare, setRenderShare] = useState(false)
   const shareRef = useRef<HTMLDivElement | null>(null)
 
@@ -275,7 +333,6 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: Benchma
       const node = shareRef.current
       if (!node) { setRenderShare(false); return }
       try {
-        // Wait for any images inside the share node to finish loading so html-to-image captures them
         const imgs = Array.from(node.querySelectorAll('img')) as HTMLImageElement[]
         await Promise.all(imgs.map(img => new Promise<void>(resolve => {
           if (img.complete && img.naturalWidth !== 0) return resolve()
@@ -302,6 +359,14 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: Benchma
     return () => { cancelled = true }
   }, [renderShare])
 
+  return { renderShare, setRenderShare, shareRef }
+}
+
+function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: BenchmarksDetailProps) {
+  const [tab, setTab] = useUIState<'overview' | 'analysis' | 'ai'>(`benchmark:${id}:tab`, 'overview')
+  const { progress, loading, error, difficultyIndex, setDifficultyIndex } = useOpenedBenchmarkProgress({ id, bench: bench ?? null })
+  const { renderShare, setRenderShare, shareRef } = useBenchmarkShare()
+
   return (
     <div className="space-y-3 p-4 h-full overflow-auto">
       <div className="flex items-center gap-2">
@@ -315,7 +380,6 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: Benchma
         </button>
         <div className="text-lg font-medium flex items-center gap-2">
           <span>Benchmark: {bench ? `${bench.abbreviation} ${bench.benchmarkName}` : id}</span>
-          {/* Play playlist for selected difficulty */}
           <button
             onClick={() => { if (bench) launchPlaylist(bench.difficulties[difficultyIndex].sharecode) }}
             disabled={!bench}
@@ -325,7 +389,6 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: Benchma
           >
             <Play size={18} />
           </button>
-          {/* Share (screenshot) button */}
           <button
             onClick={() => { if (bench && progress) setRenderShare(true) }}
             disabled={!bench || !progress}
@@ -366,7 +429,6 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: Benchma
         { id: 'ai', label: 'AI Insights', content: <AiTab /> },
       ]} active={tab} onChange={(id) => setTab(id as any)} />
 
-      {/* Offscreen share renderer */}
       {bench && progress && renderShare && (
         <div style={{ position: 'fixed', left: -99999, top: -99999, pointerEvents: 'none' }} aria-hidden>
           <div ref={shareRef}>
