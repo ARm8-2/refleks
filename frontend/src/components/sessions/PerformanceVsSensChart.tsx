@@ -107,19 +107,21 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
   const maxIndex = useMemo(() => points.reduce((m, p) => Math.max(m, p.i), -1), [points])
 
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t
-  // Neutral (older) -> Warning/amber (newer)
+  // Newest (t=0) -> Oldest (t=1) gradient coloring
   const neutralRgb = cssColorToRGB(colors.neutral, [148, 163, 184])
   const warnRgb = cssColorToRGB(colors.warning, [234, 179, 8])
   const colorAt = (t: number, forBorder = false) => {
     // clamp
     if (t < 0) t = 0
     if (t > 1) t = 1
-    const o = { r: neutralRgb[0], g: neutralRgb[1], b: neutralRgb[2], a: forBorder ? 0.7 : 0.45 }
-    const n = { r: warnRgb[0], g: warnRgb[1], b: warnRgb[2], a: forBorder ? 0.95 : 0.8 }
-    const r = Math.round(lerp(o.r, n.r, t))
-    const g = Math.round(lerp(o.g, n.g, t))
-    const b = Math.round(lerp(o.b, n.b, t))
-    const a = lerp(o.a, n.a, t)
+    // Start (t=0, newest) is Warning/Amber. End (t=1, oldest) is Neutral/Gray.
+    const start = { r: warnRgb[0], g: warnRgb[1], b: warnRgb[2], a: forBorder ? 0.95 : 0.8 }
+    const end = { r: neutralRgb[0], g: neutralRgb[1], b: neutralRgb[2], a: forBorder ? 0.7 : 0.45 }
+
+    const r = Math.round(lerp(start.r, end.r, t))
+    const g = Math.round(lerp(start.g, end.g, t))
+    const b = Math.round(lerp(start.b, end.b, t))
+    const a = lerp(start.a, end.a, t)
     return `rgba(${r}, ${g}, ${b}, ${a})`
   }
 
@@ -169,12 +171,12 @@ export function PerformanceVsSensChart({ items, scenarioName }: PerformanceVsSen
         backgroundColor: colorWithAlpha(colors.warning, 0.65, 'rgba(234,179,8,0.65)'),
         pointBackgroundColor: (ctx: any) => {
           const p = ctx.raw as { i: number }
-          const t = maxIndex > 0 ? p.i / maxIndex : 1
+          const t = maxIndex > 0 ? p.i / maxIndex : 0
           return colorAt(t, false)
         },
         pointBorderColor: (ctx: any) => {
           const p = ctx.raw as { i: number }
-          const t = maxIndex > 0 ? p.i / maxIndex : 1
+          const t = maxIndex > 0 ? p.i / maxIndex : 0
           return colorAt(t, true)
         },
         pointRadius: 3,
