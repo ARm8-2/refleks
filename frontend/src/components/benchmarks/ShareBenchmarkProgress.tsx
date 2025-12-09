@@ -75,65 +75,91 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
         </div>
 
         {/* Category groups */}
-        {categories.map(({ name: catName, color: catColor, groups }) => (
-          <div key={catName} className="border border-[var(--border-primary)] rounded bg-[var(--bg-tertiary)] overflow-hidden mt-3">
-            <div className="flex">
-              <div className="w-8 px-1 py-2 flex items-center justify-center">
-                <span className="text-[10px] font-semibold" style={{ color: catColor || 'var(--text-secondary)', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{catName}</span>
-              </div>
-              <div className="flex-1 p-2 space-y-3">
-                {groups.map((g, gi) => (
-                  <div key={gi} className="flex gap-2">
-                    <div className="w-8 px-1 flex items-center justify-center flex-shrink-0">
-                      {g.name ? (
-                        <span className="text-[10px] font-semibold" style={{ color: g.color || 'var(--text-secondary)', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{g.name}</span>
-                      ) : (
-                        <span className="text-[10px] text-[var(--text-secondary)]" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>-</span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 content-center">
-                      <div className="grid gap-1" style={{ gridTemplateColumns: cols }}>
-                        {g.scenarios.map((s, si) => {
-                          const sName = s.name
-                          const maxes = s.thresholds
-                          const score = s.score
-                          return (
-                            <Fragment key={sName}>
-                              <div className="text-[13px] text-[var(--text-primary)] truncate flex items-center">{sName}</div>
-                              <div className="text-[12px] text-[var(--text-primary)] flex items-center">{numberFmt(score)}</div>
-                              {rankDefs.map((r, i) => {
-                                const fill = cellFill(i, score, maxes)
-                                const fillColor = computeFillColor(s?.scenarioRank, rankDefs)
-                                const value = maxes?.[i + 1]
-                                return (
-                                  <div key={r.name + i} className="text-[12px] text-center px-4 rounded relative overflow-hidden flex items-center justify-center bg-[var(--bg-secondary)]">
-                                    <div className="absolute inset-y-0 left-0 rounded-l transition-all duration-150" style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }} />
-                                    <span className="relative z-10 w-full h-full py-1 flex items-center justify-center" style={{ background: "radial-gradient(circle, var(--shadow-secondary), rgba(0, 0, 0, 0))" }}>{value != null ? numberFmt(value) : MISSING_STR}</span>
-                                  </div>
-                                )
-                              })}
-                              {hasEnergy && (s.energy == null && g.energy != null ? (
-                                si === 0 ? (
-                                  <div className="text-[12px] text-[var(--text-primary)] flex items-center justify-center" style={{ gridRow: `span ${g.scenarios.length}` }}>
-                                    {numberFmt(Number(g.energy))}
-                                  </div>
-                                ) : null
-                              ) : (
-                                <div className="text-[12px] text-[var(--text-primary)] flex items-center justify-center">
-                                  {s.energy != null ? numberFmt(Number(s.energy)) : MISSING_STR}
-                                </div>
-                              ))}
-                            </Fragment>
-                          )
-                        })}
+        {categories.map(({ name: catName, color: catColor, groups }) => {
+          const displayCatColor = catColor ? `color-mix(in srgb, ${catColor} 85%, white)` : 'var(--text-primary)'
+          return (
+            <div key={catName} className="border border-[var(--border-primary)] rounded bg-[var(--bg-tertiary)] overflow-hidden mt-3">
+              <div className="flex">
+                <div className="w-8 px-1 py-2 flex items-center justify-center">
+                  <span
+                    className="font-bold tracking-wide text-[11px]"
+                    style={{
+                      color: displayCatColor,
+                      textShadow: `0 0 20px ${catColor || 'var(--text-primary)'}`,
+                      writingMode: 'vertical-rl',
+                      transform: 'rotate(180deg)'
+                    }}
+                  >
+                    {catName}
+                  </span>
+                </div>
+                <div className="flex-1 p-2 space-y-3">
+                  {groups.map((g, gi) => {
+                    const displaySubColor = g.color ? `color-mix(in srgb, ${g.color} 85%, white)` : 'var(--text-primary)'
+                    return (
+                      <div key={gi} className="flex gap-1">
+                        <div className="w-8 px-1 flex items-center justify-center flex-shrink-0">
+                          {g.name ? (
+                            <span
+                              className="font-bold tracking-wide text-[11px]"
+                              style={{
+                                color: displaySubColor,
+                                textShadow: `0 0 15px ${g.color || 'var(--text-primary)'}`,
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)'
+                              }}
+                            >
+                              {g.name}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-[var(--text-secondary)]" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>-</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0 content-center">
+                          <div className="grid gap-1" style={{ gridTemplateColumns: cols }}>
+                            {g.scenarios.map((s, si) => {
+                              const sName = s.name
+                              const maxes = s.thresholds
+                              const score = s.score
+                              return (
+                                <Fragment key={sName}>
+                                  <div className="text-[13px] text-[var(--text-primary)] truncate flex items-center">{sName}</div>
+                                  <div className="text-[12px] text-[var(--text-primary)] flex items-center">{numberFmt(score)}</div>
+                                  {rankDefs.map((r, i) => {
+                                    const fill = cellFill(i, score, maxes)
+                                    const fillColor = computeFillColor(s?.scenarioRank, rankDefs)
+                                    const value = maxes?.[i + 1]
+                                    return (
+                                      <div key={r.name + i} className="text-[12px] text-center px-4 rounded relative overflow-hidden flex items-center justify-center bg-[var(--bg-secondary)]">
+                                        <div className="absolute inset-y-0 left-0 rounded-l transition-all duration-150" style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }} />
+                                        <span className="relative z-10 w-full h-full py-1 flex items-center justify-center" style={{ background: "radial-gradient(circle, var(--shadow-secondary), rgba(0, 0, 0, 0))" }}>{value != null ? numberFmt(value) : MISSING_STR}</span>
+                                      </div>
+                                    )
+                                  })}
+                                  {hasEnergy && (s.energy == null && g.energy != null ? (
+                                    si === 0 ? (
+                                      <div className="text-[12px] text-[var(--text-primary)] flex items-center justify-center" style={{ gridRow: `span ${g.scenarios.length}` }}>
+                                        {numberFmt(Number(g.energy))}
+                                      </div>
+                                    ) : null
+                                  ) : (
+                                    <div className="text-[12px] text-[var(--text-primary)] flex items-center justify-center">
+                                      {s.energy != null ? numberFmt(Number(s.energy)) : MISSING_STR}
+                                    </div>
+                                  ))}
+                                </Fragment>
+                              )
+                            })}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    )
+                  })}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
 
         {/* Footer note */}
         <div className="mt-4 text-[11px] text-[var(--text-secondary)]">

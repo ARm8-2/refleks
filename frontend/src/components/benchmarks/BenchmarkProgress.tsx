@@ -262,92 +262,118 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
               </div>
             </div>
 
-            {/* Category cards content (no repeated headers) */}
+            {/* Category cards content */}
             {categories.map(({ name: catName, color: catColor, groups }) => {
               const ranks = rankDefs
+              // Lighten the category color for better readability on dark backgrounds
+              const displayCatColor = catColor ? `color-mix(in srgb, ${catColor} 85%, white)` : 'var(--text-primary)'
+
               return (
                 <div key={catName} className={`border border-[var(--border-primary)] rounded bg-[var(--bg-tertiary)] overflow-hidden ${compactMode ? 'mt-1' : 'mt-3'}`}>
                   <div className="flex">
                     {/* Category vertical label with fixed width for alignment */}
                     <div className="w-8 px-1 py-2 flex items-center justify-center">
-                      <span className={`font-semibold ${compactMode ? 'text-[9px]' : 'text-[10px]'}`} style={{ color: catColor || 'var(--text-secondary)', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{catName}</span>
+                      <span
+                        className={`font-bold tracking-wide ${compactMode ? 'text-[10px]' : 'text-[11px]'}`}
+                        style={{
+                          color: displayCatColor,
+                          textShadow: `0 0 20px ${catColor || 'var(--text-primary)'}`,
+                          writingMode: 'vertical-rl',
+                          transform: 'rotate(180deg)'
+                        }}
+                      >
+                        {catName}
+                      </span>
                     </div>
                     <div className={`flex-1 p-2 ${compactMode ? 'space-y-1' : 'space-y-3'}`}>
-                      {groups.map((g, gi) => (
-                        <div key={gi} className="flex gap-2">
-                          {/* Subcategory vertical label with fixed width for alignment */}
-                          <div className="w-8 px-1 flex items-center justify-center flex-shrink-0">
-                            {g.name ? (
-                              <span className={`font-semibold ${compactMode ? 'text-[9px]' : 'text-[10px]'}`} style={{ color: g.color || 'var(--text-secondary)', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{g.name}</span>
-                            ) : (
-                              <span className={`text-[var(--text-secondary)] ${compactMode ? 'text-[9px]' : 'text-[10px]'}`} style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{MISSING_STR}</span>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-max content-center">
-                            <div className="grid gap-1" style={{ gridTemplateColumns: dynamicColumns }}>
-                              {g.scenarios.map((s, si) => {
-                                const sName = s.name
-                                const achieved = s.scenarioRank
-                                const maxes: number[] = s.thresholds
-                                const score = s.score
-                                const totalRec = recScore.get(sName) ?? 0
-                                const isTopPick = topPicks.has(sName)
-                                const isCompleted = achieved != null && maxes && achieved >= (maxes.length - 1)
-                                const rankColor = computeFillColor(achieved, ranks)
+                      {groups.map((g, gi) => {
+                        const displaySubColor = g.color ? `color-mix(in srgb, ${g.color} 85%, white)` : 'var(--text-primary)'
+                        return (
+                          <div key={gi} className="flex gap-2">
+                            {/* Subcategory vertical label with fixed width for alignment */}
+                            <div className="w-6 pr-2 flex items-center justify-center flex-shrink-0">
+                              {g.name ? (
+                                <span
+                                  className={`font-bold tracking-wide ${compactMode ? 'text-[10px]' : 'text-[11px]'}`}
+                                  style={{
+                                    color: displaySubColor,
+                                    textShadow: `0 0 15px ${g.color || 'var(--text-primary)'}`,
+                                    writingMode: 'vertical-rl',
+                                    transform: 'rotate(180deg)'
+                                  }}
+                                >
+                                  {g.name}
+                                </span>
+                              ) : (
+                                <span className={`text-[var(--text-secondary)] ${compactMode ? 'text-[9px]' : 'text-[10px]'}`} style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{MISSING_STR}</span>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-max content-center">
+                              <div className="grid gap-1" style={{ gridTemplateColumns: dynamicColumns }}>
+                                {g.scenarios.map((s, si) => {
+                                  const sName = s.name
+                                  const achieved = s.scenarioRank
+                                  const maxes: number[] = s.thresholds
+                                  const score = s.score
+                                  const totalRec = recScore.get(sName) ?? 0
+                                  const isTopPick = topPicks.has(sName)
+                                  const isCompleted = achieved != null && maxes && achieved >= (maxes.length - 1)
+                                  const rankColor = computeFillColor(achieved, ranks)
 
-                                return (
-                                  <Fragment key={sName}>
-                                    <div className={`${compactMode ? 'text-[11px]' : 'text-[13px]'} text-[var(--text-primary)] truncate flex items-center`}>
-                                      <div className="w-1 h-3 rounded-full mr-2 flex-shrink-0" style={{ backgroundColor: rankColor }} />
-                                      {sName}
-                                    </div>
-                                    <div />
-                                    <div className="flex items-center justify-center">
-                                      <button
-                                        className={`${compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-primary)] ${settings?.scenarioNotes?.[sName]?.notes ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}
-                                        title="Notes & Sensitivity"
-                                        onClick={() => openNotes(sName)}
-                                        aria-label={`Notes for ${sName}`}
-                                      >
-                                        <NotebookPen size={compactMode ? 14 : 16} />
-                                      </button>
-                                    </div>
-                                    <div className="text-[12px] flex items-center justify-center" title={`Recommendation score: ${totalRec}`}>
-                                      <RecommendationIcon score={totalRec} compact={compactMode} isTopPick={isTopPick} isCompleted={isCompleted} />
-                                    </div>
-                                    <div className="flex items-center justify-center">
-                                      <button
-                                        className={`${compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-primary)]`}
-                                        title="Play in Kovaak's"
-                                        onClick={() => launchScenario(sName, 'challenge').catch(() => { /* ignore */ })}
-                                        aria-label={`Play ${sName} in Kovaak's`}
-                                      >
-                                        <Play size={compactMode ? 14 : 16} />
-                                      </button>
-                                    </div>
-                                    <div />
-                                    <div className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} text-[var(--text-primary)] flex items-center`}>{numberFmt(score)}</div>
-                                    {visibleRankIndices.map((ri) => {
-                                      const r = ranks[ri]
-                                      const fill = cellFill(ri, score, maxes)
-                                      // Use the last achieved rank's color for the fill. When no rank achieved, fallback to gray.
-                                      const fillColor = computeFillColor(achieved, ranks)
-                                      const value = maxes?.[ri + 1]
-                                      return (
-                                        <div key={r.name + ri} className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} text-center px-4 rounded relative overflow-hidden flex items-center justify-center bg-[var(--bg-secondary)]`}>
-                                          <div className="absolute inset-y-0 left-0 rounded-l transition-all duration-150" style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }} />
-                                          <span className={`relative z-10 w-full h-full ${compactMode ? 'py-0' : 'py-1'} flex items-center justify-center`} style={{ background: "radial-gradient(circle, var(--shadow-secondary), rgba(0, 0, 0, 0))" }}>{value != null ? numberFmt(value) : MISSING_STR}</span>
-                                        </div>
-                                      )
-                                    })}
-                                    <EnergyCell s={s} g={g} si={si} hasEnergy={hasEnergy} />
-                                  </Fragment>
-                                )
-                              })}
+                                  return (
+                                    <Fragment key={sName}>
+                                      <div className={`${compactMode ? 'text-[11px]' : 'text-[13px]'} text-[var(--text-primary)] truncate flex items-center`}>
+                                        <div className="w-1 h-3 rounded-full mr-2 flex-shrink-0" style={{ backgroundColor: rankColor }} />
+                                        {sName}
+                                      </div>
+                                      <div />
+                                      <div className="flex items-center justify-center">
+                                        <button
+                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-primary)] ${settings?.scenarioNotes?.[sName]?.notes ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}
+                                          title="Notes & Sensitivity"
+                                          onClick={() => openNotes(sName)}
+                                          aria-label={`Notes for ${sName}`}
+                                        >
+                                          <NotebookPen size={compactMode ? 14 : 16} />
+                                        </button>
+                                      </div>
+                                      <div className="text-[12px] flex items-center justify-center" title={`Recommendation score: ${totalRec}`}>
+                                        <RecommendationIcon score={totalRec} compact={compactMode} isTopPick={isTopPick} isCompleted={isCompleted} />
+                                      </div>
+                                      <div className="flex items-center justify-center">
+                                        <button
+                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-primary)]`}
+                                          title="Play in Kovaak's"
+                                          onClick={() => launchScenario(sName, 'challenge').catch(() => { /* ignore */ })}
+                                          aria-label={`Play ${sName} in Kovaak's`}
+                                        >
+                                          <Play size={compactMode ? 14 : 16} />
+                                        </button>
+                                      </div>
+                                      <div />
+                                      <div className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} text-[var(--text-primary)] flex items-center`}>{numberFmt(score)}</div>
+                                      {visibleRankIndices.map((ri) => {
+                                        const r = ranks[ri]
+                                        const fill = cellFill(ri, score, maxes)
+                                        // Use the last achieved rank's color for the fill. When no rank achieved, fallback to gray.
+                                        const fillColor = computeFillColor(achieved, ranks)
+                                        const value = maxes?.[ri + 1]
+                                        return (
+                                          <div key={r.name + ri} className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} text-center px-4 rounded relative overflow-hidden flex items-center justify-center bg-[var(--bg-secondary)]`}>
+                                            <div className="absolute inset-y-0 left-0 rounded-l transition-all duration-150" style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }} />
+                                            <span className={`relative z-10 w-full h-full ${compactMode ? 'py-0' : 'py-1'} flex items-center justify-center`} style={{ background: "radial-gradient(circle, var(--shadow-secondary), rgba(0, 0, 0, 0))" }}>{value != null ? numberFmt(value) : MISSING_STR}</span>
+                                          </div>
+                                        )
+                                      })}
+                                      <EnergyCell s={s} g={g} si={si} hasEnergy={hasEnergy} />
+                                    </Fragment>
+                                  )
+                                })}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
