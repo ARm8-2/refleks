@@ -97,10 +97,10 @@ export function SettingsPage() {
       <div className="space-y-6 max-w-5xl">
         {/* Updates */}
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Updates</h3>
-          <div className="space-y-3 p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
-            <div className="text-sm text-[var(--text-secondary)]">
-              Current version: <span className="text-[var(--text-primary)]">v{currentVersion || MISSING_STR}</span>
+          <h3 className="text-sm font-semibold text-secondary uppercase tracking-wider">Updates</h3>
+          <div className="space-y-3 p-3 rounded border border-primary bg-surface-2">
+            <div className="text-sm text-secondary">
+              Current version: <span className="text-primary">v{currentVersion || MISSING_STR}</span>
             </div>
             {update?.hasUpdate ? (
               <div className="flex items-center gap-2">
@@ -123,7 +123,7 @@ export function SettingsPage() {
                   Install update
                 </Button>
                 <a
-                  className="text-xs underline underline-offset-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  className="text-xs underline underline-offset-2 text-secondary hover:text-primary"
                   href="https://refleks-app.com/updates/"
                   onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/updates/') }}
                 >
@@ -154,10 +154,10 @@ export function SettingsPage() {
                 </Button>
                 {checkError && <span className="text-xs text-red-400">{checkError}</span>}
                 {update && !update.hasUpdate && !checking && (
-                  <span className="text-xs text-[var(--text-secondary)]">You’re up to date.</span>
+                  <span className="text-xs text-secondary">You’re up to date.</span>
                 )}
                 <a
-                  className="text-xs underline underline-offset-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  className="text-xs underline underline-offset-2 text-secondary hover:text-primary"
                   href="https://refleks-app.com/updates/"
                   onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/updates/') }}
                 >
@@ -170,13 +170,13 @@ export function SettingsPage() {
 
         {/* General (primary settings) */}
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">General</h3>
-          <div className="space-y-3 p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
+          <h3 className="text-sm font-semibold text-secondary uppercase tracking-wider">General</h3>
+          <div className="space-y-3 p-3 rounded border border-primary bg-surface-2">
             <Field label="Stats directory">
               <input
                 value={statsPath}
                 onChange={e => setStatsPath(e.target.value)}
-                className="w-full px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
               />
             </Field>
             <Field label="Enable mouse tracking (Windows)">
@@ -192,7 +192,7 @@ export function SettingsPage() {
                 type="number"
                 value={gap}
                 onChange={e => setGap(Number(e.target.value))}
-                className="w-24 px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                className="w-24 px-2 py-1 rounded bg-surface-3 border border-primary"
               />
             </Field>
           </div>
@@ -200,8 +200,8 @@ export function SettingsPage() {
 
         {/* Appearance */}
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Appearance</h3>
-          <div className="space-y-3 p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
+          <h3 className="text-sm font-semibold text-secondary uppercase tracking-wider">Appearance</h3>
+          <div className="space-y-3 p-3 rounded border border-primary bg-surface-2">
             <Field label="Theme">
               <Dropdown
                 value={theme}
@@ -227,21 +227,21 @@ export function SettingsPage() {
         {/* Advanced - nested under General as a collapsible block */}
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Advanced</h3>
+            <h3 className="text-sm font-semibold text-secondary uppercase tracking-wider">Advanced</h3>
             <button
               onClick={() => setShowAdvanced(v => !v)}
-              className="text-xs px-2 py-1 rounded bg-[var(--bg-secondary)] border border-[var(--border-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]"
+              className="text-xs px-2 py-1 rounded bg-surface-2 border border-primary text-secondary hover:bg-surface-3"
             >
               {showAdvanced ? 'Hide' : 'Show'} advanced
             </button>
           </div>
           {showAdvanced && (
-            <div className="space-y-3 p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
+            <div className="space-y-3 p-3 rounded border border-primary bg-surface-2">
               <Field label="Steam install directory">
                 <input
                   value={steamDir}
                   onChange={e => setSteamDir(e.target.value)}
-                  className="w-full px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                  className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
               </Field>
               <Field label="SteamID override (optional)">
@@ -249,14 +249,14 @@ export function SettingsPage() {
                   value={steamIdOverride}
                   onChange={e => setSteamIdOverride(e.target.value)}
                   placeholder="7656119..."
-                  className="w-full px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                  className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
               </Field>
               <Field label="Traces directory">
                 <input
                   value={tracesPath}
                   onChange={e => setTracesPath(e.target.value)}
-                  className="w-full px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                  className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
               </Field>
               <Field label="Mouse buffer (minutes)">
@@ -264,7 +264,7 @@ export function SettingsPage() {
                   type="number"
                   value={mouseBuffer}
                   onChange={e => setMouseBuffer(Math.max(1, Number(e.target.value)))}
-                  className="w-24 px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                  className="w-24 px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
               </Field>
               <Field label="Parse existing on start (max)">
@@ -272,7 +272,7 @@ export function SettingsPage() {
                   type="number"
                   value={maxExisting}
                   onChange={e => setMaxExisting(Math.max(0, Number(e.target.value)))}
-                  className="w-24 px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                  className="w-24 px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
               </Field>
               <Field label="Gemini API key">
@@ -280,11 +280,11 @@ export function SettingsPage() {
                   value={geminiKey}
                   onChange={e => setGeminiKey(e.target.value)}
                   placeholder="AIza..."
-                  className="w-full px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                  className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
               </Field>
-              <div className="text-xs text-[var(--text-secondary)]">
-                You can also set the environment variable <code className="px-1 py-0.5 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]">REFLEKS_GEMINI_API_KEY</code> to override this value at runtime.
+              <div className="text-xs text-secondary">
+                You can also set the environment variable <code className="px-1 py-0.5 rounded bg-surface-3 border border-primary">REFLEKS_GEMINI_API_KEY</code> to override this value at runtime.
               </div>
             </div>
           )}
@@ -307,7 +307,7 @@ type FieldProps = { label: string; children: ReactNode }
 function Field({ label, children }: FieldProps) {
   return (
     <label className="flex items-center gap-3">
-      <div className="w-48 text-sm text-[var(--text-primary)]">{label}</div>
+      <div className="w-48 text-sm text-primary">{label}</div>
       <div className="flex-1">{children}</div>
     </label>
   )

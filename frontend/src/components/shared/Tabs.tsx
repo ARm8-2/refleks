@@ -10,7 +10,7 @@ export function Tabs({ tabs, active, onChange }: TabsProps) {
       <div className="flex gap-2">
         {tabs.map(t => (
           <button key={t.id} onClick={() => onChange(t.id)}
-            className={`px-3 py-1 rounded ${active === t.id ? 'bg-[var(--bg-tertiary)]' : 'hover:bg-[var(--bg-tertiary)]'}`}>
+            className={`px-3 py-1 rounded ${active === t.id ? 'bg-surface-3' : 'hover:bg-surface-3'}`}>
             {t.label}
           </button>
         ))}

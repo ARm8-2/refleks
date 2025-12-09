@@ -270,7 +270,7 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
   const infoContent = (
     <div>
       <div className="mb-2">Shows your average progress toward the maximum rank across the selected grouping.</div>
-      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+      <ul className="list-disc pl-5 text-secondary">
         <li>The chart scale represents your Rank progress.</li>
         <li>Outer edge (100%) = Max Rank. Center (0%) = Unranked.</li>
         <li>Group by Category (e.g. Tracking, Clicking), Subcategory, or individual Scenario.</li>
@@ -296,7 +296,7 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
               { label: 'Scenario', value: 'scenario' },
             ]}
           />
-          <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+          <div className="flex items-center gap-2 text-xs text-secondary">
             <span>View</span>
             <SegmentedControl
               size="sm"
@@ -313,7 +313,7 @@ export function BenchmarkStrengths({ bench, progress, difficultyIndex, height = 
       height={height}
     >
       {labels.length === 0 ? (
-        <div className="h-full flex items-center justify-center text-sm text-[var(--text-secondary)]">No data.</div>
+        <div className="h-full flex items-center justify-center text-sm text-secondary">No data.</div>
       ) : mode === 'bar' ? (
         <Bar data={barData as any} options={barOptions as any} />
       ) : (

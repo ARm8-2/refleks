@@ -41,7 +41,7 @@ export function ProgressAllTab() {
   const infoContent = (
     <div>
       <div className="mb-2">Metrics for the selected scenario across all your recorded runs. In Sessions view, values are averaged per session. Latest point is the most recent.</div>
-      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+      <ul className="list-disc pl-5 text-secondary">
         <li>Score uses the left axis.</li>
         <li>Accuracy (%) and Real Avg TTK (s) use their own right axes.</li>
       </ul>
@@ -50,7 +50,7 @@ export function ProgressAllTab() {
 
   return (
     <div className="space-y-3">
-      <div className="text-xs text-[var(--text-secondary)]">
+      <div className="text-xs text-secondary">
         This tab shows your overall progress across all recorded runs. It’s the same for every session and updates live as you play.
       </div>
 

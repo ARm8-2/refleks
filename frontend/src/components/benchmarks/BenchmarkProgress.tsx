@@ -27,7 +27,7 @@ function EnergyCell({ s, g, si, hasEnergy }: { s: any, g: any, si: number, hasEn
   if (s.energy == null && g.energy != null) {
     if (si === 0) {
       return (
-        <div className="text-[12px] text-[var(--text-primary)] flex items-center justify-center" style={{ gridRow: `span ${g.scenarios.length}` }}>
+        <div className="text-[12px] text-primary flex items-center justify-center" style={{ gridRow: `span ${g.scenarios.length}` }}>
           {numberFmt(Number(g.energy))}
         </div>
       )
@@ -37,7 +37,7 @@ function EnergyCell({ s, g, si, hasEnergy }: { s: any, g: any, si: number, hasEn
 
   // Scenario Energy (ra-s5 style)
   return (
-    <div className="text-[12px] text-[var(--text-primary)] flex items-center justify-center">
+    <div className="text-[12px] text-primary flex items-center justify-center">
       {s.energy != null ? numberFmt(Number(s.energy)) : MISSING_STR}
     </div>
   )
@@ -211,7 +211,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between text-sm text-[var(--text-primary)]">
+      <div className="flex items-center justify-between text-sm text-primary">
         <div>
           Overall Rank: <span className="font-medium">{overallRankName}</span> · Benchmark Progress: <span className="font-medium">{numberFmt(progress?.benchmarkProgress)}</span>
         </div>
@@ -226,14 +226,14 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
           <div className="min-w-max">
             {/* Single sticky header aligned with all categories */}
             <div className="sticky top-0">
-              <div className="border border-[var(--border-primary)] rounded bg-[var(--bg-tertiary)] overflow-hidden">
+              <div className="border border-primary rounded bg-surface-3 overflow-hidden">
                 <div className="flex gap-2 px-2 py-2">
                   {/* Placeholders for category and subcategory label columns */}
                   <div className="w-8 flex-shrink-0" />
                   <div className="w-8 flex-shrink-0" />
                   <div className="flex-1">
                     <div className="grid gap-1" style={{ gridTemplateColumns: dynamicColumns }}>
-                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide relative select-none" style={{ width: scenarioWidth }}>
+                      <div className="text-[11px] text-secondary uppercase tracking-wide relative select-none" style={{ width: scenarioWidth }}>
                         <span>Scenario</span>
                         {/* Drag handle */}
                         <div
@@ -243,19 +243,25 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                           aria-orientation="vertical"
                           aria-label="Resize scenario column"
                         >
-                          <div className="h-full w-px bg-[var(--border-secondary)] group-hover:bg-[var(--accent-primary)]" />
+                          <div className="h-full w-px bg-border-secondary group-hover:bg-accent" />
                         </div>
                       </div>
-                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center"></div>
-                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center"></div>
-                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center" title="Recommendation score"></div>
-                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center"></div>
-                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center"></div>
-                      <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide">Score</div>
+                      <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
+                      <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
+                      <div className="text-[11px] text-secondary uppercase tracking-wide text-center" title="Recommendation score"></div>
+                      <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
+                      <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
+                      <div className="text-[11px] text-secondary uppercase tracking-wide">Score</div>
                       {visibleRanks.map(r => (
-                        <div key={r.name} className="text-[11px] uppercase tracking-wide text-center" style={{ color: r.color || 'var(--text-secondary)' }}>{r.name}</div>
+                        <div
+                          key={r.name}
+                          className={`text-[11px] uppercase tracking-wide text-center ${r.color ? '' : 'text-secondary'}`}
+                          style={r.color ? { color: r.color } : undefined}
+                        >
+                          {r.name}
+                        </div>
                       ))}
-                      {hasEnergy && <div className="text-[11px] text-[var(--text-secondary)] uppercase tracking-wide text-center">Energy</div>}
+                      {hasEnergy && <div className="text-[11px] text-secondary uppercase tracking-wide text-center">Energy</div>}
                     </div>
                   </div>
                 </div>
@@ -269,7 +275,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
               const displayCatColor = catColor ? `color-mix(in srgb, ${catColor} 85%, white)` : 'var(--text-primary)'
 
               return (
-                <div key={catName} className={`border border-[var(--border-primary)] rounded bg-[var(--bg-tertiary)] overflow-hidden ${compactMode ? 'mt-1' : 'mt-3'}`}>
+                <div key={catName} className={`border border-primary rounded bg-surface-3 overflow-hidden ${compactMode ? 'mt-1' : 'mt-3'}`}>
                   <div className="flex">
                     {/* Category vertical label with fixed width for alignment */}
                     <div className="w-8 px-1 py-2 flex items-center justify-center">
@@ -305,7 +311,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                   {g.name}
                                 </span>
                               ) : (
-                                <span className={`text-[var(--text-secondary)] ${compactMode ? 'text-[9px]' : 'text-[10px]'}`} style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{MISSING_STR}</span>
+                                <span className={`text-secondary ${compactMode ? 'text-[9px]' : 'text-[10px]'}`} style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>{MISSING_STR}</span>
                               )}
                             </div>
                             <div className="flex-1 min-w-max content-center">
@@ -322,14 +328,14 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
 
                                   return (
                                     <Fragment key={sName}>
-                                      <div className={`${compactMode ? 'text-[11px]' : 'text-[13px]'} text-[var(--text-primary)] truncate flex items-center`}>
+                                      <div className={`${compactMode ? 'text-[11px]' : 'text-[13px]'} text-primary truncate flex items-center`}>
                                         <div className="w-1 h-3 rounded-full mr-2 flex-shrink-0" style={{ backgroundColor: rankColor }} />
                                         {sName}
                                       </div>
                                       <div />
                                       <div className="flex items-center justify-center">
                                         <button
-                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-primary)] ${settings?.scenarioNotes?.[sName]?.notes ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}
+                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-surface-3 border border-transparent hover:border-primary ${settings?.scenarioNotes?.[sName]?.notes ? 'text-accent' : 'text-secondary'}`}
                                           title="Notes & Sensitivity"
                                           onClick={() => openNotes(sName)}
                                           aria-label={`Notes for ${sName}`}
@@ -342,7 +348,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                       </div>
                                       <div className="flex items-center justify-center">
                                         <button
-                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-primary)]`}
+                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-surface-3 border border-transparent hover:border-primary`}
                                           title="Play in Kovaak's"
                                           onClick={() => launchScenario(sName, 'challenge').catch(() => { /* ignore */ })}
                                           aria-label={`Play ${sName} in Kovaak's`}
@@ -351,7 +357,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                         </button>
                                       </div>
                                       <div />
-                                      <div className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} text-[var(--text-primary)] flex items-center`}>{numberFmt(score)}</div>
+                                      <div className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} text-primary flex items-center`}>{numberFmt(score)}</div>
                                       {visibleRankIndices.map((ri) => {
                                         const r = ranks[ri]
                                         const fill = cellFill(ri, score, maxes)
@@ -359,7 +365,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                         const fillColor = computeFillColor(achieved, ranks)
                                         const value = maxes?.[ri + 1]
                                         return (
-                                          <div key={r.name + ri} className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} text-center px-4 rounded relative overflow-hidden flex items-center justify-center bg-[var(--bg-secondary)]`}>
+                                          <div key={r.name + ri} className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} text-center px-4 rounded relative overflow-hidden flex items-center justify-center bg-surface-2`}>
                                             <div className="absolute inset-y-0 left-0 rounded-l transition-all duration-150" style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }} />
                                             <span className={`relative z-10 w-full h-full ${compactMode ? 'py-0' : 'py-1'} flex items-center justify-center`} style={{ background: "radial-gradient(circle, var(--shadow-secondary), rgba(0, 0, 0, 0))" }}>{value != null ? numberFmt(value) : MISSING_STR}</span>
                                           </div>

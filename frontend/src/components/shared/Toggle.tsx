@@ -16,7 +16,7 @@ export function Toggle({
   className = '',
 }: ToggleProps) {
   return (
-    <div className={`inline-flex items-center gap-2 text-[var(--text-secondary)] ${size === 'md' ? 'text-sm' : 'text-xs'} ${className}`}>
+    <div className={`inline-flex items-center gap-2 text-secondary ${size === 'md' ? 'text-sm' : 'text-xs'} ${className}`}>
       {label && <span className="select-none">{label}</span>}
       <SegmentedControl
         size={size}

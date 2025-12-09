@@ -25,7 +25,7 @@ export function Findings({ strongest, weakest }: FindingsProps) {
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openItem(rec) } }}
-      className="relative group cursor-pointer p-2 pr-10 rounded border border-primary bg-surface-3 transform transition-all duration-150 ease-out hover:bg-hover hover:translate-x-1 hover:shadow-sm"
+      className="relative group cursor-pointer p-2 pr-10 rounded border border-primary bg-surface-3 hover:bg-hover"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-col">

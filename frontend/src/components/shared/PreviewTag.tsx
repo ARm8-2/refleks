@@ -6,7 +6,7 @@ type PreviewTagProps = { label?: string; title?: string }
 export function PreviewTag({ label = 'Preview', title }: PreviewTagProps) {
   return (
     <span
-      className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] leading-none bg-[var(--preview-bg)] text-[var(--preview-text)] border-[var(--preview-border)]"
+      className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] leading-none bg-preview text-preview border-preview"
       title={title ?? DEFAULT_TOOLTIP}
     >
       {label}

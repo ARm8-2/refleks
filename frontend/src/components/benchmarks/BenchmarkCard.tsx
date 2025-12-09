@@ -20,7 +20,7 @@ export function BenchmarkCard({ id, title, abbreviation, color, isFavorite, onOp
   return (
     <div
       onClick={() => onOpen(id)}
-      className="relative group cursor-pointer pl-2 pr-10 py-2 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)] transform transition-all duration-150 ease-out hover:bg-[var(--bg-tertiary)] hover:translate-x-1 hover:shadow-md"
+      className="relative group cursor-pointer pl-2 pr-10 py-2 rounded border border-primary bg-surface-2 hover:bg-surface-3"
     >
       <div className="flex items-center gap-3">
         <button
@@ -29,20 +29,24 @@ export function BenchmarkCard({ id, title, abbreviation, color, isFavorite, onOp
           aria-label={isFavorite ? 'Unfavorite' : 'Favorite'}
           title={isFavorite ? 'Unfavorite' : 'Favorite'}
           onClick={handleToggle}
-          className="inline-flex items-center justify-center rounded w-8 h-8 text-[var(--text-primary)] hover:text-[var(--accent-primary)] focus:outline-none"
+          className={`inline-flex items-center justify-center rounded w-8 h-8 focus:outline-none transition-colors hover:bg-hover ${isFavorite ? 'text-accent' : 'text-primary hover:text-accent'}`}
         >
-          <Star size={20} strokeWidth={1.5} style={{ color: isFavorite ? 'var(--accent-primary)' : undefined, fill: isFavorite ? 'var(--accent-primary)' : 'none' }} />
+          <Star
+            size={20}
+            strokeWidth={1.5}
+            fill={isFavorite ? 'currentColor' : 'none'}
+          />
         </button>
-        <div className="font-medium text-[var(--text-primary)] truncate flex-1">{title}</div>
+        <div className="font-medium text-primary truncate flex-1">{title}</div>
         <span
-          className="px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0"
-          style={{ borderColor: color || 'var(--border-primary)', color: color || 'var(--text-secondary)' }}
+          className="px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 border-primary text-secondary"
+          style={color ? { borderColor: color, color } : undefined}
           title={abbreviation}
         >
           {abbreviation}
         </span>
         {/* Right arrow hint (non-interactive) */}
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] transition-colors duration-150 group-hover:text-[var(--text-primary)] pointer-events-none">
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary transition-colors duration-150 group-hover:text-primary pointer-events-none">
           <ChevronRight size={16} />
         </div>
       </div>

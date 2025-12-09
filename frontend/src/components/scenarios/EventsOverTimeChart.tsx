@@ -162,7 +162,7 @@ export function EventsOverTimeChart({
   const infoContent = (
     <div>
       <div className="mb-2">Shows cumulative accuracy, kills, and real TTK over the duration of the run.</div>
-      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+      <ul className="list-disc pl-5 text-secondary">
         <li>X-axis is time in minutes:seconds.</li>
         <li>Cumulative Accuracy (blue) shows how your accuracy evolved throughout the run.</li>
         <li>Cumulative Kills (green) shows the pace of kills.</li>

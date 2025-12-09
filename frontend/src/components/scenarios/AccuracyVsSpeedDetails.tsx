@@ -21,7 +21,7 @@ export function AccuracyVsSpeedDetails({
   const infoContent = (
     <div>
       <div className="mb-2">How to read these metrics:</div>
-      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+      <ul className="list-disc pl-5 text-secondary">
         <li>Pearson r measures linear correlation between speed (KPM) and per-kill accuracy.</li>
         <li>Within-speed-bin std is the average variability of accuracy at similar speeds (lower is tighter control).</li>
         <li>Median nearest-neighbor distance reflects clustering tightness of individual kills in normalized space.</li>
@@ -33,11 +33,11 @@ export function AccuracyVsSpeedDetails({
     <div className="mt-2">
       <InfoBox id="scenarios:accuracy-vs-speed-metrics" title="Accuracy vs speed - metrics" info={infoContent}>
         <ul className="space-y-1">
-          <li>Pearson r (KPM vs accuracy): <b className="text-[var(--text-primary)]">{fmt(scatter.corrKpmAcc)}</b></li>
-          <li>Within-speed-bin accuracy std (avg across {scatter.binsUsed} bins): <b className="text-[var(--text-primary)]">{fmt(scatter.meanBinStdAcc)}</b></li>
-          <li>Median nearest-neighbor distance (normalized): <b className="text-[var(--text-primary)]">{fmt(scatter.medianNNDist)}</b></li>
-          <li>Centroid: KPM <b className="text-[var(--text-primary)]">{fmt(scatter.centroidKPM)}</b> • Acc <b className="text-[var(--text-primary)]">{fmtPct(scatter.centroidAcc)}</b></li>
-          <li>Cluster compactness (avg distance to centroid, normalized): <b className="text-[var(--text-primary)]">{fmt(scatter.clusterCompactness)}</b></li>
+          <li>Pearson r (KPM vs accuracy): <b className="text-primary">{fmt(scatter.corrKpmAcc)}</b></li>
+          <li>Within-speed-bin accuracy std (avg across {scatter.binsUsed} bins): <b className="text-primary">{fmt(scatter.meanBinStdAcc)}</b></li>
+          <li>Median nearest-neighbor distance (normalized): <b className="text-primary">{fmt(scatter.medianNNDist)}</b></li>
+          <li>Centroid: KPM <b className="text-primary">{fmt(scatter.centroidKPM)}</b> • Acc <b className="text-primary">{fmtPct(scatter.centroidAcc)}</b></li>
+          <li>Cluster compactness (avg distance to centroid, normalized): <b className="text-primary">{fmt(scatter.clusterCompactness)}</b></li>
         </ul>
       </InfoBox>
     </div>

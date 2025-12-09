@@ -102,7 +102,7 @@ export function TTKMovingAverageChart({ labels, realTTK, ma5, movingAvg }: TTKMo
     <div className="text-sm">
       <div className="mb-2">Shows raw TTK per kill, a trailing 5-sample moving average (MA(5)), and a dotted linear trend line of the moving average.</div>
       <div className="mb-2 font-medium">How to interpret</div>
-      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+      <ul className="list-disc pl-5 text-secondary">
         <li>MA(5) smooths short-term noise; use it to track persistent changes rather than per-kill variability.</li>
         <li>A downward slope in the trend signifies faster average TTK over time (improvement).</li>
         <li>Stable segments (low rolling std) indicate periods of consistent play - use them as baselines.</li>

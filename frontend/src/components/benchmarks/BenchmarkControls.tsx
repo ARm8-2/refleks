@@ -23,9 +23,9 @@ export function BenchmarkControls({
   autoHidden
 }: BenchmarkControlsProps) {
   return (
-    <div className="bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)] mt-4">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-primary)]">
-        <div className="text-sm font-medium text-[var(--text-primary)]">Rank columns</div>
+    <div className="bg-surface-2 rounded border border-primary mt-4">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-primary">
+        <div className="text-sm font-medium text-primary">Rank columns</div>
         <div className="flex items-center gap-3">
           <Toggle
             size="sm"
@@ -45,7 +45,7 @@ export function BenchmarkControls({
         </div>
       </div>
       <div className="p-3">
-        <div className="text-xs text-[var(--text-secondary)] mb-2">Toggle columns to show/hide. Auto-hidden columns are disabled.</div>
+        <div className="text-xs text-secondary mb-2">Toggle columns to show/hide. Auto-hidden columns are disabled.</div>
         <div className="flex flex-wrap gap-1">
           {rankDefs.map((r, i) => {
             const auto = autoHidden.has(i)
@@ -58,9 +58,9 @@ export function BenchmarkControls({
                 variant={visible ? 'secondary' : 'ghost'}
                 onClick={() => toggleManualRank(i)}
                 disabled={auto}
-                className={auto ? 'opacity-60 cursor-not-allowed' : ''}
+                className={`${auto ? 'opacity-60 cursor-not-allowed' : ''} ${r.color ? '' : 'text-secondary'}`}
                 title={auto ? 'Hidden automatically (all scenarios are past this rank)' : (visible ? 'Click to hide this column' : 'Click to show this column')}
-                style={{ color: r.color || 'var(--text-secondary)' }}
+                style={r.color ? { color: r.color } : undefined}
               >
                 {r.name}
               </Button>

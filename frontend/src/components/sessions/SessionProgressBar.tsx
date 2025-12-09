@@ -101,7 +101,7 @@ export function SessionProgressBar({
             <input
               ref={inputRef}
               type="number"
-              className="w-12 px-1 py-0.5 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)] text-[var(--text-primary)] text-xs text-center outline-none focus:border-[var(--accent-primary)]"
+              className="w-12 px-1 py-0.5 rounded bg-surface-3 border border-primary text-primary text-xs text-center outline-none focus:border-accent"
               value={targetRuns}
               onChange={handleInputChange}
               onBlur={() => setIsEditing(false)}

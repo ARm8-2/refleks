@@ -72,20 +72,20 @@ export function ScenariosPage() {
           getKey={(it) => it.filePath}
           renderItem={(it) => (
             <button key={it.filePath} onClick={() => { setActiveId(it.filePath); const p = new URLSearchParams(sp); p.set('file', it.filePath); setSp(p) }}
-              className={`w-full text-left p-2 rounded border ${active?.filePath === it.filePath ? 'bg-[var(--bg-tertiary)] border-[var(--border-primary)]' : 'border-[var(--border-primary)] hover:bg-[var(--bg-tertiary)]'}`}>
-              <div className="font-medium text-[var(--text-primary)]">{getScenarioName(it)}</div>
-              <div className="text-xs text-[var(--text-secondary)]">{getDatePlayed(it.stats)}</div>
-              <div className="text-xs text-[var(--text-secondary)]">Score: {it.stats['Score'] ?? '?'} • Acc: {formatPct01(it.stats['Accuracy'])}</div>
+              className={`w-full text-left p-2 rounded border ${active?.filePath === it.filePath ? 'bg-surface-3 border-primary' : 'border-primary hover:bg-surface-3'}`}>
+              <div className="font-medium text-primary">{getScenarioName(it)}</div>
+              <div className="text-xs text-secondary">{getDatePlayed(it.stats)}</div>
+              <div className="text-xs text-secondary">Score: {it.stats['Score'] ?? '?'} • Acc: {formatPct01(it.stats['Accuracy'])}</div>
             </button>
           )}
-          emptyPlaceholder={<div className="p-3 text-sm text-[var(--text-secondary)]">Play a scenario in KovaaK's to see its stats here. Make sure your stats are being saved to the <code className="font-mono">{prettyPath}</code> folder.</div>}
+          emptyPlaceholder={<div className="p-3 text-sm text-secondary">Play a scenario in KovaaK's to see its stats here. Make sure your stats are being saved to the <code className="font-mono">{prettyPath}</code> folder.</div>}
           detailHeader={active ? (
             <div className="flex items-center gap-2 min-w-0">
-              <div className="text-base font-medium text-[var(--text-primary)] truncate" title={String(active.stats['Scenario'] ?? getScenarioName(active))}>
+              <div className="text-base font-medium text-primary truncate" title={String(active.stats['Scenario'] ?? getScenarioName(active))}>
                 {active.stats['Scenario'] ?? getScenarioName(active)}
               </div>
               <button
-                className="ml-auto inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-[var(--border-primary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
+                className="ml-auto inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-primary text-primary hover:bg-surface-3"
                 title="Play in Kovaak's"
                 onClick={() => {
                   const name = String(active.stats['Scenario'] ?? getScenarioName(active))
@@ -114,7 +114,7 @@ function ScenarioDetail({ item }: { item: ScenarioRecord | null }) {
       setTab(t as any)
     }
   }, [sp])
-  if (!item) return <div className="text-sm text-[var(--text-secondary)]">No scenario selected.</div>
+  if (!item) return <div className="text-sm text-secondary">No scenario selected.</div>
   const tabs = [
     { id: 'raw', label: 'Raw Stats', content: <RawTab item={item} /> },
     { id: 'analysis', label: 'Analysis', content: <AnalysisTab item={item} /> },

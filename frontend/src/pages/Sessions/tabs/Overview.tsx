@@ -65,7 +65,7 @@ export function OverviewTab({ session }: OverviewTabProps) {
   const infoContent = (
     <div>
       <div className="mb-2">Metrics for the selected scenario within this session. Latest point is the most recent run.</div>
-      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+      <ul className="list-disc pl-5 text-secondary">
         <li>Score uses the left axis.</li>
         <li>Accuracy (%) and Real Avg TTK (s) use their own right axes.</li>
       </ul>

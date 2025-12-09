@@ -83,7 +83,7 @@ export function AccuracyVsSpeedChart({ points, scatter }: AccuracyVsSpeedChartPr
     <div className="text-sm">
       <div className="mb-2">Each point is a kill: X is speed (kills per minute - KPM), Y is per-kill accuracy (hits/shots). Tooltips show exact KPM and accuracy percentages for each point.</div>
       <div className="mb-2 font-medium">How to interpret</div>
-      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+      <ul className="list-disc pl-5 text-secondary">
         <li>Clusters at high KPM and high accuracy indicate effective play at both speed and accuracy.</li>
         <li>A descending trend (accuracy drops as KPM increases) reveals a speed/accuracy trade-off - consider practicing at lower speeds for accuracy, and vice versa.</li>
         <li>Tight, compact clusters indicate consistent performance; scattered points indicate variability.</li>

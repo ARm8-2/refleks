@@ -160,7 +160,7 @@ export function AiTab({ sessionId, records }: { sessionId?: string; records?: Sc
   return (
     <div className="flex flex-col h-full gap-3">
       {!hasKey && (
-        <div className="text-sm text-[var(--text-secondary)]">Set your Gemini API key in RefleK's settings to enable AI insights.</div>
+        <div className="text-sm text-secondary">Set your Gemini API key in RefleK's settings to enable AI insights.</div>
       )}
       <div className="flex items-center justify-between">
         <div className="text-sm font-medium opacity-70">Session AI Insights</div>
@@ -173,9 +173,9 @@ export function AiTab({ sessionId, records }: { sessionId?: string; records?: Sc
           )}
         </div>
       </div>
-      <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)] text-sm space-y-4">
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-auto p-3 rounded border border-primary bg-surface-2 text-sm space-y-4">
         {history.length === 0 ? (
-          <div className="text-[var(--text-secondary)]">Ask a question about this session, or try: “Give a concise analysis with key observations, strengths/weaknesses, and 3–5 scenario suggestions with brief rationales.”</div>
+          <div className="text-secondary">Ask a question about this session, or try: “Give a concise analysis with key observations, strengths/weaknesses, and 3–5 scenario suggestions with brief rationales.”</div>
         ) : (
           history.map((m, i) => (
             <div key={i}>
@@ -185,14 +185,14 @@ export function AiTab({ sessionId, records }: { sessionId?: string; records?: Sc
           ))
         )}
       </div>
-      <div className="flex items-center gap-2 sticky bottom-0 bg-[var(--bg-primary)]/80 backdrop-blur supports-[backdrop-filter]:bg-[var(--bg-primary)]/60 py-2">
+      <div className="flex items-center gap-2 sticky bottom-0 bg-primary/80 backdrop-blur supports-[backdrop-filter]:bg-primary/60 py-2">
         <div className="relative flex-1">
           <input
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send() } }}
             placeholder="Ask a follow-up..."
-            className="w-full pr-10 pl-3 py-2 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+            className="w-full pr-10 pl-3 py-2 rounded bg-surface-3 border border-primary"
           />
           {!isStreaming && (
             <button
@@ -200,7 +200,7 @@ export function AiTab({ sessionId, records }: { sessionId?: string; records?: Sc
               title="Send"
               onClick={() => void send()}
               disabled={disabled}
-              className={`absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[var(--bg-secondary)]'} text-[var(--text-primary)]`}
+              className={`absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-surface-2'} text-primary`}
             >
               <Send size={18} />
             </button>

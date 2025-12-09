@@ -61,7 +61,7 @@ function formatValue(key: string, raw: unknown): ReactNode {
     const color = hexToRgb(raw)
     return (
       <span className="inline-flex items-center gap-2">
-        <span className="inline-block w-3 h-3 rounded-sm border border-[var(--border-primary)]" style={{ backgroundColor: color }} />
+        <span className="inline-block w-3 h-3 rounded-sm border border-primary" style={{ backgroundColor: color }} />
         <span className="tabular-nums">{raw}</span>
       </span>
     )
@@ -97,8 +97,8 @@ function StatList({
         const v = stats[k]
         return (
           <div key={k} className="flex items-start justify-between gap-3">
-            <dt className="text-[var(--text-secondary)] flex-shrink-0">{k}</dt>
-            <dd className="text-[var(--text-primary)] flex-1 text-right break-words min-w-0 tabular-nums">{formatValue(k, v)}</dd>
+            <dt className="text-secondary flex-shrink-0">{k}</dt>
+            <dd className="text-primary flex-1 text-right break-words min-w-0 tabular-nums">{formatValue(k, v)}</dd>
           </div>
         )
       })}
@@ -110,9 +110,9 @@ type RawBoxProps = { title: string; children: ReactNode }
 
 function RawBox({ title, children }: RawBoxProps) {
   return (
-    <div className="bg-[var(--bg-secondary)] rounded border border-[var(--border-primary)]">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-primary)]">
-        <div className="text-sm font-medium text-[var(--text-primary)] truncate" title={title}>{title}</div>
+    <div className="bg-surface-2 rounded border border-primary">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-primary">
+        <div className="text-sm font-medium text-primary truncate" title={title}>{title}</div>
       </div>
       <div className="p-3">
         {children}
@@ -131,9 +131,9 @@ function OverviewCards({ stats }: OverviewCardsProps) {
         if (!(k in stats)) return null
         const v = stats[k]
         return (
-          <div key={k} className="bg-[var(--bg-tertiary)] rounded border border-[var(--border-primary)] p-3">
-            <div className="text-[var(--text-secondary)] text-xs mb-1">{k}</div>
-            <div className="text-[var(--accent-primary)] text-xl font-semibold tabular-nums">{formatValue(k, v)}</div>
+          <div key={k} className="bg-surface-3 rounded border border-primary p-3">
+            <div className="text-secondary text-xs mb-1">{k}</div>
+            <div className="text-accent text-xl font-semibold tabular-nums">{formatValue(k, v)}</div>
           </div>
         )
       })}

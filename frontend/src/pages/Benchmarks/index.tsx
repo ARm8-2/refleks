@@ -119,22 +119,26 @@ function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, que
         <div className="text-lg font-medium">Benchmark - Explore</div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search size={16} className="text-[var(--text-secondary)] absolute left-2 top-1/2 -translate-y-1/2" strokeWidth={1.5} />
+            <Search size={16} className="text-secondary absolute left-2 top-1/2 -translate-y-1/2" strokeWidth={1.5} />
             <input
               value={query}
               onChange={e => onQuery(e.target.value)}
               placeholder="Search benchmarks..."
               aria-label="Search benchmarks"
-              className="pl-8 pr-2 py-1.5 rounded bg-[var(--bg-secondary)] border border-[var(--border-primary)] text-sm placeholder:text-[var(--text-secondary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)] hover:bg-[var(--bg-tertiary)]"
+              className="pl-8 pr-2 py-1.5 rounded bg-surface-2 border border-primary text-sm placeholder:text-secondary focus:outline-none focus:ring-1 focus:ring-accent hover:bg-surface-3"
             />
           </div>
-          <button onClick={onRandom} className="px-2 py-1.5 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)] text-sm hover:bg-[var(--bg-secondary)]">Random</button>
+          <button onClick={onRandom} className="px-2 py-1.5 rounded bg-surface-3 border border-primary text-sm hover:bg-surface-2">Random</button>
           <button
             onClick={onToggleFavOnly}
-            className={`px-2 py-1.5 rounded border text-sm flex items-center gap-2 focus:outline-none focus:ring-1 focus:ring-[var(--border-primary)] ${showFavOnly ? 'bg-[var(--accent-primary)]/20 border-[var(--accent-primary)] text-[var(--text-primary)] hover:bg-[var(--accent-primary)]/30' : 'bg-[var(--bg-tertiary)] border-[var(--border-primary)] hover:bg-[var(--bg-secondary)]'}`}
+            className={`px-2 py-1.5 rounded border text-sm flex items-center gap-2 focus:outline-none focus:ring-1 focus:ring-primary transition-colors ${showFavOnly ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30' : 'bg-surface-3 border-primary text-primary hover:bg-surface-2 hover:text-accent'}`}
             title={showFavOnly ? 'Showing favorites' : 'Show all'}
           >
-            <Star size={16} strokeWidth={1.5} style={{ color: showFavOnly ? 'var(--accent-primary)' : undefined, fill: showFavOnly ? 'var(--accent-primary)' : 'none' }} />
+            <Star
+              size={16}
+              strokeWidth={1.5}
+              fill={showFavOnly ? 'currentColor' : 'none'}
+            />
             {showFavOnly ? 'Favorites' : 'All'}
           </button>
         </div>
@@ -153,7 +157,7 @@ function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, que
           />
         ))}
         {items.length === 0 && (
-          <div className="text-sm text-[var(--text-secondary)]">
+          <div className="text-sm text-secondary">
             {loading ? 'Loading benchmarks…' : (
               showFavOnly ? (favorites.length ? 'No favorites match your filters.' : 'No favorites yet.') : (query ? 'No results.' : 'No benchmarks found.')
             )}
@@ -214,7 +218,7 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: Benchma
       <div className="flex items-center gap-2">
         <button
           onClick={onBack}
-          className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
+          className="p-1 rounded hover:bg-surface-3 text-primary"
           aria-label="Back"
           title="Back"
         >
@@ -226,7 +230,7 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: Benchma
           <button
             onClick={() => { if (bench) launchPlaylist(bench.difficulties[difficultyIndex].sharecode) }}
             disabled={!bench}
-            className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] mb-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1 rounded hover:bg-surface-3 text-primary mb-1 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Play benchmark playlist"
             title="Play benchmark playlist in Kovaak's"
           >
@@ -236,7 +240,7 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: Benchma
           <button
             onClick={() => { if (bench && progress) setRenderShare(true) }}
             disabled={!bench || !progress}
-            className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] mb-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-1 rounded hover:bg-surface-3 text-primary mb-1 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Copy share image"
             title="Copy share image to clipboard"
           >
@@ -244,14 +248,14 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: Benchma
           </button>
           <button
             onClick={() => onToggleFav(id)}
-            className="p-1 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] mb-1"
+            className={`p-1 rounded hover:bg-surface-3 mb-1 transition-colors ${favorites.includes(id) ? 'text-accent' : 'text-primary hover:text-accent'}`}
             aria-label={favorites.includes(id) ? 'Unfavorite' : 'Favorite'}
             title={favorites.includes(id) ? 'Unfavorite' : 'Favorite'}
           >
             <Star
               size={20}
               strokeWidth={1.5}
-              style={{ color: favorites.includes(id) ? 'var(--accent-primary)' : undefined, fill: favorites.includes(id) ? 'var(--accent-primary)' : 'none' }}
+              fill={favorites.includes(id) ? 'currentColor' : 'none'}
             />
           </button>
         </div>
@@ -266,7 +270,7 @@ function BenchmarksDetail({ id, bench, favorites, onToggleFav, onBack }: Benchma
             options={bench.difficulties.map((d, i) => ({ label: d.difficultyName, value: i }))}
           />
         </div>
-      ) : <div className="text-sm text-[var(--text-secondary)]">No difficulties info.</div>}
+      ) : <div className="text-sm text-secondary">No difficulties info.</div>}
       <Tabs tabs={[
         { id: 'overview', label: 'Overview', content: <OverviewTab bench={bench} difficultyIndex={difficultyIndex} loading={loading} error={error} progress={progress} /> },
         { id: 'analysis', label: 'Analysis', content: <AnalysisTab bench={bench} difficultyIndex={difficultyIndex} loading={loading} error={error} progress={progress} /> },

@@ -26,7 +26,7 @@ export function EventsOverTimeDetails({ summary }: EventsOverTimeDetailsProps) {
   const infoContent = (
     <div>
       <div className="mb-2">How to read these metrics:</div>
-      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+      <ul className="list-disc pl-5 text-secondary">
         <li>TTK average/median/std describe the central tendency and spread of time-to-kill between kills.</li>
         <li>p10/p90 show the 10th and 90th percentile TTK, giving a robust range excluding extremes.</li>
         <li>Gaps indicate pauses between kills; unusually long gaps may reflect downtime or missed targets.</li>
@@ -39,14 +39,14 @@ export function EventsOverTimeDetails({ summary }: EventsOverTimeDetailsProps) {
     <div className="mt-2">
       <InfoBox id="scenarios:kills-over-time-metrics" title="Kills over time - metrics" info={infoContent}>
         <ul className="space-y-1">
-          <li>Kills: <b className="text-[var(--text-primary)]">{summary.kills}</b> • Shots: <b className="text-[var(--text-primary)]">{summary.shots}</b> • Hits: <b className="text-[var(--text-primary)]">{summary.hits}</b> • Final accuracy: <b className="text-[var(--text-primary)]">{fmtPct(summary.finalAcc)}</b></li>
-          <li>TTK avg/median/std: <b className="text-[var(--text-primary)]">{fmt(summary.avgTTK)}</b>s / <b className="text-[var(--text-primary)]">{fmt(summary.medianTTK)}</b>s / <b className="text-[var(--text-primary)]">{fmt(summary.stdTTK)}</b>s</li>
+          <li>Kills: <b className="text-primary">{summary.kills}</b> • Shots: <b className="text-primary">{summary.shots}</b> • Hits: <b className="text-primary">{summary.hits}</b> • Final accuracy: <b className="text-primary">{fmtPct(summary.finalAcc)}</b></li>
+          <li>TTK avg/median/std: <b className="text-primary">{fmt(summary.avgTTK)}</b>s / <b className="text-primary">{fmt(summary.medianTTK)}</b>s / <b className="text-primary">{fmt(summary.stdTTK)}</b>s</li>
           {(summary.p10TTK !== undefined || summary.p90TTK !== undefined) && (
-            <li>TTK p10 / p90: <b className="text-[var(--text-primary)]">{fmt(summary.p10TTK!)}</b>s / <b className="text-[var(--text-primary)]">{fmt(summary.p90TTK!)}</b>s</li>
+            <li>TTK p10 / p90: <b className="text-primary">{fmt(summary.p10TTK!)}</b>s / <b className="text-primary">{fmt(summary.p90TTK!)}</b>s</li>
           )}
           <li>Gaps: longest {fmtS(summary.longestGap)} • average {fmtS(summary.avgGap)}</li>
           {summary.meanKPM !== undefined && (
-            <li>Average speed: <b className="text-[var(--text-primary)]">{fmt(summary.meanKPM!)}</b> KPM</li>
+            <li>Average speed: <b className="text-primary">{fmt(summary.meanKPM!)}</b> KPM</li>
           )}
         </ul>
       </InfoBox>

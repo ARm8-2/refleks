@@ -102,7 +102,7 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
   const infoContent = (
     <div>
       <div className="mb-2">Distribution of achieved ranks across the selected scope.</div>
-      <ul className="list-disc pl-5 text-[var(--text-secondary)]">
+      <ul className="list-disc pl-5 text-secondary">
         <li>Colors match rank colors for the opened difficulty.</li>
         <li>“Below R1” indicates scenarios not yet at the first rank.</li>
       </ul>
@@ -135,7 +135,7 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
           {level !== 'all' && (
             <>
               <select
-                className="px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                className="px-2 py-1 rounded bg-surface-3 border border-primary"
                 value={String(catIdx)}
                 onChange={e => setCatIdx(Number(e.target.value))}
               >
@@ -143,7 +143,7 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
               </select>
               {level === 'subcategory' && (
                 <select
-                  className="px-2 py-1 rounded bg-[var(--bg-tertiary)] border border-[var(--border-primary)]"
+                  className="px-2 py-1 rounded bg-surface-3 border border-primary"
                   value={String(subIdx)}
                   onChange={e => setSubIdx(Number(e.target.value))}
                 >
@@ -155,7 +155,7 @@ export function RankDistributionDonut({ bench, progress, difficultyIndex, height
         </div>
         <div className="flex-1 min-h-0">
           {labels.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-sm text-[var(--text-secondary)]">No data.</div>
+            <div className="h-full flex items-center justify-center text-sm text-secondary">No data.</div>
           ) : (
             <div className="h-full pb-4">
               <Doughnut data={data as any} options={options as any} />

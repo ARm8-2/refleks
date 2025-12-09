@@ -11,15 +11,14 @@ export function RecommendationIcon({ score, compact, isTopPick, isCompleted }: R
   const s = compact ? 12 : 14
   const space = compact ? '-space-y-1' : '-space-y-1.5'
 
-  if (isCompleted) return <Check size={s} className="text-[var(--text-tertiary)]" />
+  if (isCompleted) return <Check size={s} className="text-tertiary" />
 
-  const colorStyle = isTopPick ? { color: 'var(--accent-primary)' } : undefined
-  const successClass = isTopPick ? '' : 'text-[var(--success)]'
+  const successOrAccent = isTopPick ? 'text-accent-light' : 'text-success'
 
-  if (score >= 5) return <div className={`flex flex-col items-center ${space} ${successClass}`} style={colorStyle}><ChevronUp size={s} /><ChevronUp size={s} /></div>
-  if (score >= 3) return <div className={`flex flex-col items-center ${space} ${successClass}`} style={colorStyle}><ChevronUp size={s} /></div>
-  if (score >= 1) return <div className={`flex flex-col items-center ${space} text-[var(--warning)]`}><ChevronUp size={s} /></div>
-  if (score <= -3) return <div className={`flex flex-col items-center ${space} text-[var(--error)]`}><ChevronDown size={s} /><ChevronDown size={s} /></div>
-  if (score <= -1) return <div className={`flex flex-col items-center ${space} text-[var(--warning)]`}><ChevronDown size={s} /></div>
-  return <Minus size={s} className="text-[var(--text-tertiary)]" />
+  if (score >= 5) return <div className={`flex flex-col items-center ${space} ${successOrAccent}`}><ChevronUp size={s} /><ChevronUp size={s} /></div>
+  if (score >= 3) return <div className={`flex flex-col items-center ${space} ${successOrAccent}`}><ChevronUp size={s} /></div>
+  if (score >= 1) return <div className={`flex flex-col items-center ${space} text-warning`}><ChevronUp size={s} /></div>
+  if (score <= -3) return <div className={`flex flex-col items-center ${space} text-danger`}><ChevronDown size={s} /><ChevronDown size={s} /></div>
+  if (score <= -1) return <div className={`flex flex-col items-center ${space} text-warning`}><ChevronDown size={s} /></div>
+  return <Minus size={s} className="text-tertiary" />
 }
