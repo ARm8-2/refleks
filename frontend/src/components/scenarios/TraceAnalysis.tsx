@@ -50,12 +50,16 @@ type TraceAnalysisProps = {
   item: ScenarioRecord
   analysis?: MouseTraceAnalysis | null
   onSelect?: (sel: { startMs: number; endMs: number; killMs: number; classification: 'optimal' | 'overshoot' | 'undershoot' }) => void
+  height?: number | string
+  isSidebar?: boolean
 }
 
 export function TraceAnalysis({
   item,
   analysis: propAnalysis,
-  onSelect
+  onSelect,
+  height = 420,
+  isSidebar = false
 }: TraceAnalysisProps) {
   const analysis: MouseTraceAnalysis | null = propAnalysis ?? null
   if (!analysis) return null
@@ -179,12 +183,16 @@ export function TraceAnalysis({
     return parts.length > 0 ? ` (${parts.join(', ')})` : ''
   }
 
+  const gridClass = isSidebar
+    ? 'grid-cols-1'
+    : 'grid-cols-[repeat(auto-fill,minmax(240px,1fr))]'
+
   return (
     <InfoBox
       title={<span className="inline-flex items-center gap-1">Mouse path analysis <PreviewTag /></span>}
       id="scenarios:mouse-path-analysis"
       info={infoContent}
-      height={420}
+      height={height}
     >
       <div className="flex flex-col md:flex-row gap-3 justify-between">
         <div className="flex items-center gap-3 flex-wrap">
@@ -234,7 +242,7 @@ export function TraceAnalysis({
           </p>
         </div>
       )}
-      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+      <div className={`mt-2 grid gap-2 ${gridClass}`}>
         {shown.map((k, i) => (
           <button key={`${k.killIdx}-${i}`} onClick={() => onSelect?.({ startMs: k.startMs, endMs: k.endMs, killMs: k.endMs, classification: k.classification })} className="text-left bg-surface-3 hover:bg-surface-3/80 border border-primary rounded p-2">
             <div className="flex items-center justify-between gap-2">

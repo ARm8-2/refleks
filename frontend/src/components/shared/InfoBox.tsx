@@ -7,7 +7,7 @@ type InfoBoxProps = {
   title: ReactNode
   info?: ReactNode
   children: ReactNode
-  height?: number
+  height?: number | string
   id?: string
   collapsible?: boolean
   headerControls?: ReactNode
@@ -41,8 +41,17 @@ export function InfoBox({
   useEffect(() => { savedCollapsedRef.current = collapsed }, [collapsed])
 
   const HEADER_H = 44
-  const containerStyle: CSSProperties = useMemo(() => ({ height: collapsed ? HEADER_H : height }), [height, collapsed])
-  const bodyStyle: CSSProperties = useMemo(() => ({ height: collapsed ? 0 : height - HEADER_H }), [height, collapsed]) // 44px header
+  const containerStyle: CSSProperties = useMemo(() => {
+    if (collapsed) return { height: HEADER_H }
+    if (typeof height === 'string') return { height }
+    return { height }
+  }, [height, collapsed])
+
+  const bodyStyle: CSSProperties = useMemo(() => {
+    if (collapsed) return { height: 0 }
+    if (typeof height === 'string') return { height: `calc(${height} - ${HEADER_H}px)` }
+    return { height: height - HEADER_H }
+  }, [height, collapsed]) // 44px header
   const leftBodyClass = 'h-full overflow-y-auto text-xs text-secondary '
   const leftBodyClassDefault = leftBodyClass + 'p-3'
   const rightBodyClass = 'h-full overflow-y-auto text-sm text-primary '

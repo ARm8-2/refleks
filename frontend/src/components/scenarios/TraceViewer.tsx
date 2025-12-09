@@ -1,4 +1,4 @@
-import { Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
+import { Maximize2, Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useChartTheme } from '../../hooks/useChartTheme';
 import { usePageState } from '../../hooks/usePageState';
@@ -20,9 +20,11 @@ type TraceViewerProps = {
   seekToTs?: any
   centerOnTs?: any
   onReset?: () => void
+  canvasHeight?: string
+  onFullscreen?: () => void
 }
 
-export function TraceViewer({ points, stats, highlight, markers, seekToTs, centerOnTs, onReset }: TraceViewerProps) {
+export function TraceViewer({ points, stats, highlight, markers, seekToTs, centerOnTs, onReset, canvasHeight = "h-[360px]", onFullscreen }: TraceViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const rafRef = useRef<number | null>(null)
@@ -203,7 +205,13 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
     if (!canvas || !wrap || normalizedPoints.length === 0) return
     const dpr = window.devicePixelRatio || 1
     const cssW = Math.max(320, wrap.clientWidth)
-    const cssH = Math.max(240, Math.min(450, Math.round(cssW * 9 / 16)))
+    let cssH = 0
+    if (canvasHeight === 'h-full') {
+      cssH = wrap.clientHeight
+    } else {
+      cssH = Math.max(240, Math.min(450, Math.round(cssW * 9 / 16)))
+    }
+
     canvas.style.width = cssW + 'px'
     canvas.style.height = cssH + 'px'
     canvas.width = Math.round(cssW * dpr)
@@ -275,6 +283,7 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
     markerBorder,
     trailFill,
     trailStroke,
+    canvasHeight
   ])
 
   // Events: resize
@@ -421,16 +430,25 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
   const nudge = (deltaMs: number) => seekTo(progressMs + deltaMs)
 
   return (
-    <div className="space-y-2">
-      <div ref={wrapRef} className="w-full">
+    <div className={`space-y-2 ${canvasHeight === 'h-full' ? 'h-full flex flex-col space-y-0 gap-2' : ''}`}>
+      <div ref={wrapRef} className={`w-full relative ${canvasHeight === 'h-full' ? 'flex-1 min-h-0' : ''}`}>
         <canvas
           ref={canvasRef}
-          className="w-full h-[360px] block rounded border border-primary bg-surface-3"
+          className={`w-full ${canvasHeight} block rounded border border-primary bg-surface-3`}
         />
+        {onFullscreen && (
+          <button
+            onClick={onFullscreen}
+            className="absolute top-2 right-2 p-1.5 rounded bg-surface-1/80 hover:bg-surface-1 text-primary transition-colors"
+            title="Fullscreen"
+          >
+            <Maximize2 size={16} />
+          </button>
+        )}
       </div>
 
       {/* Controls under the panel */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 shrink-0">
         {/* Scrub bar */}
         <div className="flex items-center gap-2">
           <input
