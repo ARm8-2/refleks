@@ -440,7 +440,7 @@ export function recommendSessionLength(
   }
 
   // Analyze each session's performance curve
-  const sessionCurves: { percentiles: number[]; length: number }[] = []
+  const sessionCurves: { percentiles: number[]; length: number; weight: number }[] = []
 
   for (const sess of sessions) {
     if (sess.items.length < minLengthThreshold) {
@@ -469,7 +469,18 @@ export function recommendSessionLength(
     }
 
     if (percentiles.length >= 3) {
-      sessionCurves.push({ percentiles, length: ordered.length })
+      // Calculate variance for this session to determine weight
+      // "Long sessions are more likely to have bigger variations" -> weigh them less
+      const mean = percentiles.reduce((a, b) => a + b, 0) / percentiles.length
+      const variance = percentiles.reduce((s, p) => s + (p - mean) ** 2, 0) / percentiles.length
+      const std = Math.sqrt(variance)
+
+      // Weight = 1 / (std + K).
+      // Adding a constant (e.g. 10 percentile points) prevents over-weighting extremely stable sessions
+      // and ensures the weight doesn't explode.
+      const weight = 100 / (std + 10)
+
+      sessionCurves.push({ percentiles, length: ordered.length, weight })
     }
   }
 
@@ -483,19 +494,36 @@ export function recommendSessionLength(
 
   // Calculate statistics by run index
   const maxLen = Math.max(...sessionCurves.map(s => s.percentiles.length))
-  const byIndex: { values: number[]; mean: number; std: number }[] = []
+  const byIndex: { mean: number; std: number }[] = []
+
+  // Require a minimum percentage of sessions to support a run index
+  // This prevents the "tail" of the curve from being determined by 1-2 long sessions
+  const minDataPoints = Math.max(2, Math.floor(sessionCurves.length * 0.15))
 
   for (let i = 0; i < maxLen; i++) {
     const values: number[] = []
+    let sumWeighted = 0
+    let sumWeights = 0
+
     for (const curve of sessionCurves) {
       if (i < curve.percentiles.length) {
         values.push(curve.percentiles[i])
+        sumWeighted += curve.percentiles[i] * curve.weight
+        sumWeights += curve.weight
       }
     }
-    if (values.length >= 2) {
-      const mean = values.reduce((a, b) => a + b, 0) / values.length
-      const std = Math.sqrt(values.reduce((s, v) => s + (v - mean) ** 2, 0) / values.length)
-      byIndex.push({ values, mean, std })
+
+    if (values.length >= minDataPoints) {
+      const weightedMean = sumWeighted / sumWeights
+
+      // Calculate standard deviation (unweighted for simplicity of "spread" metric)
+      const unweightedMean = values.reduce((a, b) => a + b, 0) / values.length
+      const std = Math.sqrt(values.reduce((s, v) => s + (v - unweightedMean) ** 2, 0) / values.length)
+
+      byIndex.push({ mean: weightedMean, std })
+    } else {
+      // Stop analysis where data becomes too sparse
+      break
     }
   }
 
@@ -506,11 +534,18 @@ export function recommendSessionLength(
     }
   }
 
+  // Smooth the curve to reduce noise
+  // Simple 3-point moving average
+  const smoothedMeans = byIndex.map((b, i) => {
+    if (i === 0 || i === byIndex.length - 1) return b.mean
+    return (byIndex[i - 1].mean + b.mean + byIndex[i + 1].mean) / 3
+  })
+
   // Find warm-up period (where mean crosses overall median)
-  const overallMean = byIndex.reduce((s, b) => s + b.mean, 0) / byIndex.length
+  const overallMean = smoothedMeans.reduce((a, b) => a + b, 0) / smoothedMeans.length
   let warmupRuns = 1
-  for (let i = 0; i < byIndex.length; i++) {
-    if (byIndex[i].mean >= overallMean * 0.95) {
+  for (let i = 0; i < smoothedMeans.length; i++) {
+    if (smoothedMeans[i] >= overallMean * 0.95) {
       warmupRuns = i + 1
       break
     }
@@ -519,13 +554,13 @@ export function recommendSessionLength(
 
   // Find peak performance window
   let peakStart = warmupRuns
-  let peakEnd = byIndex.length
+  let peakEnd = smoothedMeans.length
   let bestWindow = { start: peakStart, end: peakEnd, avgPerf: 0 }
 
   // Sliding window to find best 5-run segment
-  const windowSize = Math.min(5, byIndex.length - warmupRuns)
-  for (let start = warmupRuns - 1; start <= byIndex.length - windowSize; start++) {
-    const windowMeans = byIndex.slice(start, start + windowSize).map(b => b.mean)
+  const windowSize = Math.min(5, smoothedMeans.length - warmupRuns)
+  for (let start = warmupRuns - 1; start <= smoothedMeans.length - windowSize; start++) {
+    const windowMeans = smoothedMeans.slice(start, start + windowSize)
     const avgPerf = windowMeans.reduce((a, b) => a + b, 0) / windowMeans.length
     if (avgPerf > bestWindow.avgPerf) {
       bestWindow = { start: start + 1, end: start + windowSize, avgPerf }
@@ -535,14 +570,14 @@ export function recommendSessionLength(
   peakEnd = bestWindow.end
 
   // Find diminishing returns point (where improvement per run drops below threshold)
-  let diminishingAt = byIndex.length
-  for (let i = warmupRuns; i < byIndex.length - 1; i++) {
-    const current = byIndex[i].mean
-    const next = byIndex[i + 1].mean
+  let diminishingAt = smoothedMeans.length
+  for (let i = warmupRuns; i < smoothedMeans.length - 1; i++) {
+    const current = smoothedMeans[i]
+    const next = smoothedMeans[i + 1]
     const improvement = next - current
 
-    // Less than 1 percentile point improvement
-    if (improvement < 1 && i >= peakEnd) {
+    // Less than 0.5 percentile point improvement (smoothed is more stable, so we can be stricter)
+    if (improvement < 0.5 && i >= peakEnd) {
       diminishingAt = i + 1
       break
     }
