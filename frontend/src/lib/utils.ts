@@ -98,10 +98,16 @@ export function formatNumber(v: any, decimals = 2, trimTrailingZeros = true): st
   return s
 }
 
+// Format a value that may be either a fraction (0..1) or an already-multiplied
+// percentage (0..100). Produces a single-decimal percentage string like "83.4%",
+// avoiding floating-point artifacts like 83.40000000000001%.
 export function formatPct(v: any, decimals = 1): string {
   const n = typeof v === 'number' ? v : Number(v)
   if (!isFinite(n)) return MISSING_STR
-  return (n * 100).toFixed(decimals) + '%'
+  // Detect fraction vs percentage: treat numbers in range [-1, 1] as fractions
+  const value = Math.abs(n) <= 1 ? n * 100 : n
+  // For percentages keep the specified decimal places even when they are zeros
+  return `${formatNumber(value, decimals, false)}%`
 }
 
 export function formatSeconds(v: any, decimals = 2): string {
