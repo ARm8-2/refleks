@@ -6,3 +6,12 @@ export interface Session {
   end: string   // ISO timestamp of last scenario
   items: ScenarioRecord[]
 }
+
+export type BenchmarkListItem = {
+  id: string
+  title: string
+  abbreviation: string
+  subtitle?: string
+  color?: string
+  dateAdded?: string
+}
