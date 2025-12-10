@@ -1,13 +1,13 @@
-import { Play } from 'lucide-react'
+import { ListFilter, Play, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { EventsOn } from '../../../wailsjs/runtime'
-import { ListDetail, Tabs } from '../../components'
+import { Dropdown, Input, ListDetail, Tabs } from '../../components'
 import { usePageState } from '../../hooks/usePageState'
 import { useStore } from '../../hooks/useStore'
 import { useUIState } from '../../hooks/useUIState'
 import { getSettings, launchScenario } from '../../lib/internal'
-import { formatPct01, getDatePlayed, getScenarioName } from '../../lib/utils'
+import { formatPct01, getBestRuns, getDatePlayed, getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 import { AiTab, AnalysisTab, MouseTraceTab, RawTab } from './tabs'
 
@@ -18,6 +18,11 @@ export function ScenariosPage() {
   const [activeId, setActiveId] = usePageState<string | null>('activeFile', scenarios[0]?.filePath ?? null)
   const active = useMemo(() => scenarios.find(s => s.filePath === activeId) ?? scenarios[0] ?? null, [scenarios, activeId])
   const [watchPath, setWatchPath] = useState<string>('stats')
+
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState('all')
+  const [sort, setSort] = useState('date')
+  const [showFilters, setShowFilters] = useState(false)
 
   // Sync selection with URL: /scenario?file=...
   useEffect(() => {
@@ -54,6 +59,27 @@ export function ScenariosPage() {
     }
   }, [])
 
+  const filteredScenarios = useMemo(() => {
+    let out = [...scenarios]
+    if (filter === 'highscore') {
+      out = getBestRuns(out)
+    } else if (filter === 'acc90') {
+      out = out.filter(s => (Number(s.stats['Accuracy'] ?? 0) >= 0.9))
+    } else if (filter === 'acc80') {
+      out = out.filter(s => (Number(s.stats['Accuracy'] ?? 0) >= 0.8))
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      out = out.filter(s => getScenarioName(s).toLowerCase().includes(q))
+    }
+    if (sort === 'score') {
+      out.sort((a, b) => (Number(b.stats['Score'] ?? 0) - Number(a.stats['Score'] ?? 0)))
+    } else if (sort === 'acc') {
+      out.sort((a, b) => (Number(b.stats['Accuracy'] ?? 0) - Number(a.stats['Accuracy'] ?? 0)))
+    }
+    return out
+  }, [scenarios, search, filter, sort])
+
   const prettyPath = useMemo(() => {
     const p = (watchPath || '').trim()
     if (!p) return 'stats/'
@@ -61,14 +87,64 @@ export function ScenariosPage() {
     return p.endsWith('/') ? p : p + '/'
   }, [watchPath])
 
+  const hasFilters = search.trim().length > 0 || filter !== 'all' || sort !== 'date'
+
   return (
     <div className="space-y-4 h-full flex flex-col p-4">
-      {/* <div className="text-lg font-medium">Scenario</div> */}
       <div className="flex-1 min-h-0">
         <ListDetail
           id="scenarios:recent"
-          title={`Recent Scenarios (${newCount})`}
-          items={scenarios}
+          title={`Recent Scenarios (${filteredScenarios.length})`}
+          actions={
+            <button
+              className={`p-1 rounded hover:bg-surface-3 ${hasFilters ? 'text-accent' : showFilters ? 'text-primary' : 'text-secondary'}`}
+              title="Filter"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <ListFilter size={14} />
+            </button>
+          }
+          listHeader={showFilters ? (
+            <div className="p-2 space-y-2">
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search scenarios..."
+                icon={<Search size={14} />}
+                autoFocus
+                fullWidth
+                size="sm"
+              />
+              <div>
+                <div className="text-xs text-secondary mb-1">Filter By</div>
+                <Dropdown
+                  value={filter}
+                  onChange={setFilter}
+                  fullWidth
+                  options={[
+                    { label: 'All', value: 'all' },
+                    { label: 'High Scores Only', value: 'highscore' },
+                    { label: 'Acc > 90%', value: 'acc90' },
+                    { label: 'Acc > 80%', value: 'acc80' },
+                  ]}
+                />
+              </div>
+              <div>
+                <div className="text-xs text-secondary mb-1">Sort By</div>
+                <Dropdown
+                  value={sort}
+                  onChange={setSort}
+                  fullWidth
+                  options={[
+                    { label: 'Date', value: 'date' },
+                    { label: 'Score', value: 'score' },
+                    { label: 'Accuracy', value: 'acc' },
+                  ]}
+                />
+              </div>
+            </div>
+          ) : null}
+          items={filteredScenarios}
           getKey={(it) => it.filePath}
           renderItem={(it) => (
             <button key={it.filePath} onClick={() => { setActiveId(it.filePath); const p = new URLSearchParams(sp); p.set('file', it.filePath); setSp(p) }}
@@ -78,7 +154,13 @@ export function ScenariosPage() {
               <div className="text-xs text-secondary">Score: {it.stats['Score'] ?? '?'} • Acc: {formatPct01(it.stats['Accuracy'])}</div>
             </button>
           )}
-          emptyPlaceholder={<div className="p-3 text-sm text-secondary">Play a scenario in KovaaK's to see its stats here. Make sure your stats are being saved to the <code className="font-mono">{prettyPath}</code> folder.</div>}
+          emptyPlaceholder={
+            scenarios.length === 0 ? (
+              <div className="p-3 text-sm text-secondary">Play a scenario in KovaaK's to see its stats here. Make sure your stats are being saved to the <code className="font-mono">{prettyPath}</code> folder.</div>
+            ) : (
+              <div className="p-3 text-sm text-secondary">No scenarios match your filters.</div>
+            )
+          }
           detailHeader={active ? (
             <div className="flex items-center gap-2 min-w-0">
               <div className="text-base font-medium text-primary truncate" title={String(active.stats['Scenario'] ?? getScenarioName(active))}>

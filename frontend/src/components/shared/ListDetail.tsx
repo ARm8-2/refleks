@@ -22,6 +22,10 @@ type BaseProps = {
   maxWidth?: number // px
   // Optional header rendered above the detail content (right pane)
   detailHeader?: ReactNode
+  // Optional actions rendered in the sidebar header (e.g. filter button)
+  actions?: ReactNode
+  // Optional content rendered at the top of the list (e.g. search/filter inputs)
+  listHeader?: ReactNode
 }
 
 type Props<T = any> = BaseProps & VirtualizedProps<T>
@@ -43,6 +47,8 @@ export function ListDetail<T = any>({
   minWidth = 240,
   maxWidth = 640,
   detailHeader,
+  actions,
+  listHeader,
 }: Props<T>) {
   const key = id ?? title
   const [width, setWidth] = useUIState<number>(`ListDetail:${key}:width`, initialWidth)
@@ -187,7 +193,10 @@ export function ListDetail<T = any>({
           {/* Header */}
           <div ref={headerRef} className={`flex items-center ${isExpanded ? 'justify-between px-3' : 'justify-center px-1'} py-2 border-b border-primary shrink-0`}>
             {isExpanded && (
-              <div className="text-xs font-medium text-secondary uppercase tracking-wide">{title}</div>
+              <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
+                <div className="text-xs font-medium text-secondary uppercase tracking-wide truncate">{title}</div>
+                {actions && <div className="ml-auto flex items-center gap-1">{actions}</div>}
+              </div>
             )}
             <button
               className="p-1 rounded hover:bg-surface-3 text-primary"
@@ -201,8 +210,9 @@ export function ListDetail<T = any>({
 
           {/* List content */}
           {isExpanded ? (
-            <div className="min-h-0 flex-1">
-              <div className="h-full">
+            <div className="min-h-0 flex-1 flex flex-col">
+              {listHeader && <div className="shrink-0 border-b border-primary bg-surface-2">{listHeader}</div>}
+              <div className="flex-1 min-h-0 relative">
                 {items.length === 0 ? (
                   emptyPlaceholder ?? <div className="p-3 text-sm text-secondary">No items.</div>
                 ) : (

@@ -83,7 +83,7 @@ export function Dropdown({
           }}
         >
           <span className="truncate">{prefix}{selectedLabel || 'Select...'}</span>
-          <ChevronDown className="ml-2 h-4 w-4 text-muted" aria-hidden />
+          <ChevronDown className="ml-2 h-4 w-4 text-secondary" aria-hidden />
         </button>
 
         {isOpen && (

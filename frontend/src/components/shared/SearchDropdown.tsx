@@ -125,7 +125,7 @@ export function SearchDropdown({
           type="button"
           aria-label={ariaLabel || label}
           aria-expanded={isOpen}
-          className={`flex items-center justify-between ${pad} rounded-md bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-2 focus:ring-accent/60 hover:bg-surface-3 w-full ${className}`}
+          className={`flex items-center justify-between ${pad} rounded bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-2 focus:ring-accent/60 hover:bg-surface-3 w-full ${className}`}
           onClick={() => setIsOpen(v => !v)}
           onKeyDown={e => {
             if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
@@ -140,12 +140,12 @@ export function SearchDropdown({
 
         {isOpen && (
           <div
-            className={`absolute left-0 z-10 mt-1 ${fullWidth ? 'w-full' : 'min-w-[16rem]'} rounded-md bg-surface-2 border border-primary shadow-lg`}
+            className={`absolute left-0 z-10 mt-1 ${fullWidth ? 'w-full' : 'min-w-[16rem]'} rounded bg-surface-2 border border-primary shadow-lg`}
           >
             <input
               ref={inputRef}
               type="text"
-              className={`mb-1 w-full rounded-md border border-primary bg-surface-2 ${pad} text-primary focus:outline-none focus:ring-2 focus:ring-accent/50`}
+              className={`mb-1 w-full rounded border border-primary bg-surface-2 ${pad} text-primary focus:outline-none focus:ring-2 focus:ring-accent/50`}
               placeholder="Search..."
               aria-label={`Search ${label || ''}`}
               value={search}

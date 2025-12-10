@@ -98,22 +98,40 @@ export function formatNumber(v: any, decimals = 2, trimTrailingZeros = true): st
   return s
 }
 
-// Format a value that may be either a fraction (0..1) or an already-multiplied
-// percentage (0..100). Produces a single-decimal percentage string like "83.4%",
-// avoiding floating-point artifacts like 83.40000000000001%.
 export function formatPct(v: any, decimals = 1): string {
   const n = typeof v === 'number' ? v : Number(v)
   if (!isFinite(n)) return MISSING_STR
-  // Detect fraction vs percentage: treat numbers in range [-1, 1] as fractions
-  const value = Math.abs(n) <= 1 ? n * 100 : n
-  // For percentages keep the specified decimal places even when they are zeros
-  return `${formatNumber(value, decimals, false)}%`
+  return (n * 100).toFixed(decimals) + '%'
 }
 
 export function formatSeconds(v: any, decimals = 2): string {
   const n = typeof v === 'number' ? v : Number(v)
   if (!isFinite(n)) return MISSING_STR
-  return `${formatNumber(n, decimals)}s`
+  return n.toFixed(decimals) + 's'
+}
+
+export function getHighScores(scenarios: ScenarioRecord[]): Map<string, number> {
+  const best = new Map<string, number>()
+  for (const s of scenarios) {
+    const name = getScenarioName(s)
+    const score = Number(s.stats['Score'] ?? 0)
+    if (!best.has(name) || best.get(name)! < score) {
+      best.set(name, score)
+    }
+  }
+  return best
+}
+
+export function getBestRuns(scenarios: ScenarioRecord[]): ScenarioRecord[] {
+  const best = new Map<string, ScenarioRecord>()
+  for (const s of scenarios) {
+    const name = getScenarioName(s)
+    const score = Number(s.stats['Score'] ?? 0)
+    if (!best.has(name) || Number(best.get(name)!.stats['Score'] ?? 0) < score) {
+      best.set(name, s)
+    }
+  }
+  return Array.from(best.values())
 }
 
 // Helper for formatting tooltip values based on a label hint. This centralizes

@@ -1,6 +1,6 @@
 import { ChevronDown, Search, Star } from 'lucide-react'
 import { useMemo } from 'react'
-import { BenchmarkCard, Dropdown } from '../../components'
+import { BenchmarkCard, Dropdown, Input } from '../../components'
 import { usePageState } from '../../hooks/usePageState'
 import { useUIState } from '../../hooks/useUIState'
 import { DEFAULT_BENCHMARK_CATEGORY, getBenchmarkCategory } from '../../lib/utils'
@@ -111,16 +111,13 @@ export function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOp
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="text-lg font-medium">Benchmark - Explore</div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative">
-            <Search size={16} className="text-secondary absolute left-2 top-1/2 -translate-y-1/2" strokeWidth={1.5} />
-            <input
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Search..."
-              aria-label="Search benchmarks"
-              className="pl-8 pr-2 py-2 rounded bg-surface-2 border border-primary text-sm placeholder:text-secondary focus:outline-none focus:ring-1 focus:ring-accent hover:bg-surface-3 w-32 sm:w-48 transition-all focus:w-64"
-            />
-          </div>
+          <Input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search..."
+            icon={<Search size={16} strokeWidth={1.5} />}
+            className="w-32 sm:w-48 transition-all focus:w-64"
+          />
 
           <div className="flex items-center gap-1">
             <Dropdown

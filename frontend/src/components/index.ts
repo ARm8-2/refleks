@@ -26,6 +26,7 @@ export { Button } from './shared/Button';
 export { ChartBox } from './shared/ChartBox';
 export { Dropdown } from './shared/Dropdown';
 export { InfoBox } from './shared/InfoBox';
+export { Input } from './shared/Input';
 export { ListDetail } from './shared/ListDetail';
 export { Modal } from './shared/Modal';
 export { PreviewTag } from './shared/PreviewTag';
