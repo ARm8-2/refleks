@@ -2,6 +2,29 @@ import type { ScenarioRecord } from '../types/ipc';
 
 export const MISSING_STR = 'N/A'
 
+// Benchmark category constants and helper
+export const DEFAULT_BENCHMARK_CATEGORY = 'Other'
+
+export const BENCHMARK_CATEGORY_ABBREVIATIONS: Record<string, string[]> = {
+  'Aim Groups': ['VT', 'rA', 'xyz', 'A+', 'cAt', 'CB', 'MIR', 'STR', 'JP', 'cA', 'STK', 'TSK'],
+  'Community Benchmarks': ['AOI', 'e', 'roa', 'AS', 'ATB', 'ATF', 'cR', 'DM', 'ETB', 'GM', 'HEW', 'mHb', 'pA', 'PG', 'sA', 'R&G', 'RBE', 'rxn', 'Ssb', 'TNT', 'TZY', 'VR'],
+  'Notable Creator Benchmarks': ['A', 'w', 'TPT', 'm', 'M', 'WH', 'V', 'D&R', 'MH']
+}
+
+export function getBenchmarkCategory(abbreviation: string): string {
+  const abbr = (abbreviation ?? '').toString().trim()
+  let category = DEFAULT_BENCHMARK_CATEGORY
+  if (abbr) {
+    for (const [cat, aliases] of Object.entries(BENCHMARK_CATEGORY_ABBREVIATIONS)) {
+      if (aliases.some(a => a === abbr)) {
+        category = cat
+        break
+      }
+    }
+  }
+  return category
+}
+
 export function getScenarioName(it: ScenarioRecord | { fileName?: string; stats?: Record<string, any> }): string {
   const stats = (it as any).stats as Record<string, any> | undefined
   const direct = stats?.['Scenario']

@@ -8,6 +8,7 @@ import { usePageState } from '../../hooks/usePageState'
 import { useUIState } from '../../hooks/useUIState'
 import { copyNodeToClipboard } from '../../lib/copyNodeToClipboard'
 import { getBenchmarks, getFavoriteBenchmarks, launchPlaylist, setFavoriteBenchmarks } from '../../lib/internal'
+import { DEFAULT_BENCHMARK_CATEGORY, getBenchmarkCategory } from '../../lib/utils'
 import type { Benchmark } from '../../types/ipc'
 import { AiTab, AnalysisTab, OverviewTab } from './tabs'
 
@@ -118,20 +119,11 @@ function useBenchmarkData() {
   return { items, byId, loading, favorites, toggleFavorite }
 }
 
-function getBenchmarkCategory(abbreviation: string): string {
-  const abbr = abbreviation.toUpperCase()
-  if (abbr === 'VT' || abbr.includes('VOLTAIC')) return 'Voltaic'
-  if (abbr === 'RA' || abbr.includes('REVOSECT')) return 'Revosect'
-  if (abbr === 'A7' || abbr.includes('AIMER7')) return 'Aimer7'
-  if (abbr === 'PURE' || abbr.includes('PUREG')) return 'PureG'
-  return 'Community / Other'
-}
-
 function useBenchmarkList(items: BenchItem[], favorites: string[]) {
   const [query, setQuery] = usePageState<string>('explore:query', '')
   const [showFavOnly, setShowFavOnly] = usePageState<boolean>('explore:showFavOnly', false)
-  const [sortBy, setSortBy] = usePageState<'name' | 'abbr' | 'date'>('explore:sortBy', 'name')
-  const [groupBy, setGroupBy] = usePageState<'none' | 'abbr' | 'category'>('explore:groupBy', 'none')
+  const [sortBy, setSortBy] = usePageState<'name' | 'abbr' | 'date'>('explore:sortBy', 'abbr')
+  const [groupBy, setGroupBy] = usePageState<'none' | 'abbr' | 'category'>('explore:groupBy', 'category')
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -178,8 +170,8 @@ function useBenchmarkList(items: BenchItem[], favorites: string[]) {
   const groupKeys = useMemo(() => Object.keys(groups).sort((a, b) => {
     if (a === 'All') return -1
     if (b === 'All') return 1
-    if (a === 'Community / Other') return 1
-    if (b === 'Community / Other') return -1
+    if (a === DEFAULT_BENCHMARK_CATEGORY) return 1
+    if (b === DEFAULT_BENCHMARK_CATEGORY) return -1
     return a.localeCompare(b)
   }), [groups])
 
