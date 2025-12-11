@@ -69,6 +69,7 @@ type Ctx = State & {
   setSessionGap: (minutes: number) => void
   setSessionNotes: (notes: Record<string, { name: string; notes: string }>) => void
   saveSessionNote: (id: string, name: string, notes: string) => Promise<void>
+  isInSession: boolean
 }
 
 const StoreCtx = createContext<Ctx | null>(null)
@@ -90,6 +91,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'updateSessionNote', id, name, notes })
   }, [dispatch])
 
+  const isInSession = useMemo(() => {
+    if (state.sessions.length === 0) return false
+    // sessions are sorted newest first
+    const lastSession = state.sessions[0]
+    const lastEnd = new Date(lastSession.end).getTime()
+    const now = Date.now()
+    return (now - lastEnd) < (state.sessionGapMinutes * 60 * 1000)
+  }, [state.sessions, state.sessionGapMinutes])
+
   const value = useMemo<Ctx>(() => ({
     ...state,
     setScenarios,
@@ -100,7 +110,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setSessionGap,
     setSessionNotes,
     saveSessionNote: saveSessionNoteAction,
-  }), [state, setScenarios, addScenario, updateScenario, incNew, resetNew, setSessionGap, setSessionNotes, saveSessionNoteAction])
+    isInSession,
+  }), [state, setScenarios, addScenario, updateScenario, incNew, resetNew, setSessionGap, setSessionNotes, saveSessionNoteAction, isInSession])
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>
 }
 

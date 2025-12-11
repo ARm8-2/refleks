@@ -1,5 +1,6 @@
 import { Coffee, TrendingDown, X } from 'lucide-react'
 import { useState } from 'react'
+import { useStore } from '../../hooks/useStore'
 import { SessionAnalysis, SessionHealthLevel } from '../../lib/analysis'
 import { formatDuration } from '../../lib/utils'
 import type { Session } from '../../types/domain'
@@ -10,6 +11,7 @@ type FatigueAlertProps = {
 }
 
 export function FatigueAlert({ currentSession, analysis }: FatigueAlertProps) {
+  const isInSession = useStore(s => s.isInSession)
   const [dismissedAtRun, setDismissedAtRun] = useState<number | null>(null)
 
   // Reset dismissal if session changes
@@ -21,7 +23,7 @@ export function FatigueAlert({ currentSession, analysis }: FatigueAlertProps) {
   const isSnoozed = dismissedAtRun !== null && analysis.totalRuns < dismissedAtRun + 2
 
   // Only show for declining or fatigued states
-  if (analysis.healthLevel === 'optimal' || analysis.healthLevel === 'good' || isSnoozed) {
+  if (!isInSession || analysis.healthLevel === 'optimal' || analysis.healthLevel === 'good' || isSnoozed) {
     return null
   }
 
