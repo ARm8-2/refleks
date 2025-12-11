@@ -30,7 +30,7 @@ export function BenchmarkInfoModal({ isOpen, onClose }: BenchmarkInfoModalProps)
             Recommendations
           </h3>
           <p>
-            RefleK analyzes your recent sessions, performance trends, and fatigue to suggest scenarios.
+            RefleK's analyzes your recent sessions, performance trends, and fatigue to suggest scenarios.
           </p>
 
           <div className="bg-surface-3/50 p-4 rounded border border-primary/50">

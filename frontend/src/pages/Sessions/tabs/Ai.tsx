@@ -160,7 +160,7 @@ export function AiTab({ sessionId, records }: { sessionId?: string; records?: Sc
   return (
     <div className="flex flex-col h-full gap-3">
       {!hasKey && (
-        <div className="text-sm text-secondary">Set your Gemini API key in RefleK's settings to enable AI insights.</div>
+        <div className="text-sm text-secondary">Set your Gemini API key in the RefleK's settings to enable AI insights.</div>
       )}
       <div className="flex items-center justify-between">
         <div className="text-sm font-medium opacity-70">Session AI Insights</div>
