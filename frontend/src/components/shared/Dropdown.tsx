@@ -1,5 +1,6 @@
 import { ChevronDown } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export type DropdownOption = { label: string; value: string | number }
 
@@ -30,6 +31,8 @@ export function Dropdown({
 
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement | null>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+  const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null)
 
   const selectedLabel = useMemo(
     () => options.find(opt => String(opt.value) === String(value))?.label ?? '',
@@ -40,7 +43,11 @@ export function Dropdown({
   useEffect(() => {
     if (!isOpen) return
     const onDocClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      // Check if click is inside dropdown button OR inside the portal list
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+        listRef.current && !listRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false)
       }
     }
@@ -48,11 +55,36 @@ export function Dropdown({
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [isOpen])
 
+  // Update position
+  useLayoutEffect(() => {
+    if (isOpen && dropdownRef.current) {
+      const updatePosition = () => {
+        const rect = dropdownRef.current?.getBoundingClientRect()
+        if (rect) {
+          setCoords({
+            top: rect.bottom,
+            left: rect.left,
+            width: rect.width
+          })
+        }
+      }
+      updatePosition()
+      window.addEventListener('resize', updatePosition)
+      window.addEventListener('scroll', updatePosition, true)
+      return () => {
+        window.removeEventListener('resize', updatePosition)
+        window.removeEventListener('scroll', updatePosition, true)
+      }
+    } else {
+      setCoords(null)
+    }
+  }, [isOpen])
+
   const openAndFocusFirst = () => {
     setIsOpen(true)
     // Focus first option after menu renders
     setTimeout(() => {
-      const first = dropdownRef.current?.querySelector<HTMLLIElement>('li[role="option"]')
+      const first = listRef.current?.querySelector<HTMLLIElement>('li[role="option"]')
       first?.focus()
     }, 0)
   }
@@ -86,11 +118,17 @@ export function Dropdown({
           <ChevronDown className="ml-2 h-4 w-4 text-secondary" aria-hidden />
         </button>
 
-        {isOpen && (
+        {isOpen && coords && createPortal(
           <div
-            className={`absolute left-0 z-10 mt-1 ${fullWidth ? 'w-full' : 'min-w-[12rem]'} rounded bg-surface-2 border border-primary shadow-lg`}
+            className={`fixed z-[60] mt-1 rounded bg-surface-2 border border-primary shadow-lg`}
+            style={{
+              top: coords.top,
+              left: coords.left,
+              width: fullWidth ? coords.width : 'auto',
+              minWidth: fullWidth ? undefined : '12rem'
+            }}
           >
-            <ul role="listbox" className="max-h-72 overflow-auto text-xs">
+            <ul ref={listRef} role="listbox" className="max-h-72 overflow-auto text-xs">
               {options.length === 0 && (
                 <li className="px-2 py-1 text-secondary select-none">No options</li>
               )}
@@ -131,7 +169,8 @@ export function Dropdown({
                 )
               })}
             </ul>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>

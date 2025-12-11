@@ -1,5 +1,6 @@
 import { ChevronDown } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export type SearchDropdownOption = { label: string; value: string | number }
 
@@ -68,9 +69,11 @@ export function SearchDropdown({
 
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null)
 
   const dropdownRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
   const selectedLabel = useMemo(
     () => options.find(opt => String(opt.value) === String(value))?.label ?? '',
@@ -96,12 +99,40 @@ export function SearchDropdown({
   useEffect(() => {
     if (!isOpen) return
     const onDocClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+        menuRef.current && !menuRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false)
       }
     }
     document.addEventListener('mousedown', onDocClick)
     return () => document.removeEventListener('mousedown', onDocClick)
+  }, [isOpen])
+
+  // Update position
+  useLayoutEffect(() => {
+    if (isOpen && dropdownRef.current) {
+      const updatePosition = () => {
+        const rect = dropdownRef.current?.getBoundingClientRect()
+        if (rect) {
+          setCoords({
+            top: rect.bottom,
+            left: rect.left,
+            width: rect.width
+          })
+        }
+      }
+      updatePosition()
+      window.addEventListener('resize', updatePosition)
+      window.addEventListener('scroll', updatePosition, true)
+      return () => {
+        window.removeEventListener('resize', updatePosition)
+        window.removeEventListener('scroll', updatePosition, true)
+      }
+    } else {
+      setCoords(null)
+    }
   }, [isOpen])
 
   const openAndFocusSearch = () => {
@@ -138,9 +169,16 @@ export function SearchDropdown({
           <ChevronDown className="ml-2 h-4 w-4 text-secondary" aria-hidden />
         </button>
 
-        {isOpen && (
+        {isOpen && coords && createPortal(
           <div
-            className={`absolute left-0 z-10 mt-1 ${fullWidth ? 'w-full' : 'min-w-[16rem]'} rounded bg-surface-2 border border-primary shadow-lg`}
+            ref={menuRef}
+            className={`fixed z-[60] mt-1 rounded bg-surface-2 border border-primary shadow-lg`}
+            style={{
+              top: coords.top,
+              left: coords.left,
+              width: fullWidth ? coords.width : 'auto',
+              minWidth: fullWidth ? undefined : '16rem'
+            }}
           >
             <input
               ref={inputRef}
@@ -153,7 +191,7 @@ export function SearchDropdown({
               onKeyDown={e => {
                 if ((e.key === 'ArrowDown' || e.key === 'Tab') && filteredOptions.length > 0) {
                   e.preventDefault()
-                  const first = dropdownRef.current?.querySelector<HTMLLIElement>('li[role="option"]')
+                  const first = menuRef.current?.querySelector<HTMLLIElement>('li[role="option"]')
                   first?.focus()
                 } else if (e.key === 'Escape') {
                   e.preventDefault()
@@ -203,7 +241,8 @@ export function SearchDropdown({
                 )
               })}
             </ul>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>
