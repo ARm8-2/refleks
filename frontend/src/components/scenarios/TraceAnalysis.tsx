@@ -8,7 +8,6 @@ import { colorWithAlpha } from '../../lib/theme'
 import { CHART_DECIMALS, formatNumber, formatPct, formatSeconds } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 import { InfoBox } from '../shared/InfoBox'
-import { PreviewTag } from '../shared/PreviewTag'
 
 function SuggestedHeader({ suggestion, severityColors }: { suggestion: NonNullable<SensSuggestion>, severityColors: Record<'severe' | 'moderate' | 'slight', string> }) {
   const text = formatNumber(suggestion.recommended, CHART_DECIMALS.sensTooltip)
@@ -189,7 +188,7 @@ export function TraceAnalysis({
 
   return (
     <InfoBox
-      title={<span className="inline-flex items-center gap-1">Mouse path analysis <PreviewTag /></span>}
+      title={<span className="inline-flex items-center gap-1">Mouse path analysis</span>}
       id="scenarios:mouse-path-analysis"
       info={infoContent}
       height={height}
