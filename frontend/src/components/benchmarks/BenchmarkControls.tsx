@@ -70,13 +70,38 @@ export function BenchmarkControls({
 
   if (embedded) {
     return (
-      <div className="space-y-4">
-        <div className="flex flex-wrap gap-4 pb-4 border-b border-primary/20">
-          {controls}
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-primary">Visibility Settings</h3>
+          <div className="flex flex-wrap items-center gap-4">
+            <Toggle
+              size="sm"
+              label="Auto-hide earlier ranks"
+              checked={autoHideCleared}
+              onChange={setAutoHideCleared}
+            />
+            <div className="h-4 w-px bg-border-primary mx-2 hidden sm:block" />
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-secondary">Keep visible:</span>
+              <Dropdown
+                size="sm"
+                ariaLabel="Target number of visible rank columns"
+                value={String(visibleRankCount)}
+                onChange={v => setVisibleRankCount(Math.max(1, parseInt(v || '1', 10) || 1))}
+                options={Array.from({ length: Math.max(9, rankDefs.length) }, (_, i) => i + 1).map(n => ({ label: String(n), value: String(n) }))}
+              />
+            </div>
+            <div className="flex-1" />
+            <Button size="sm" variant="ghost" onClick={resetManual} title="Reset manual visibility">Reset All</Button>
+          </div>
         </div>
-        <div>
-          <div className="text-xs text-secondary mb-2">Toggle columns to show/hide. Auto-hidden columns are disabled.</div>
-          {ranks}
+
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-primary">Rank Columns</h3>
+          <p className="text-xs text-secondary">Click to manually show/hide columns. Auto-hidden columns are disabled.</p>
+          <div>
+            {ranks}
+          </div>
         </div>
       </div>
     )
