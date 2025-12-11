@@ -14,7 +14,7 @@ EXE="${OUTDIR}/refleks.exe"
 # Ensure binary exists
 if [[ ! -f "${EXE}" ]]; then
 	echo "Building portable binary..."
-	wails build -platform windows/amd64
+	wails build -trimpath -platform windows/amd64
 fi
 
 STAGE="build/portable"
@@ -42,10 +42,21 @@ Notes:
 License: see LICENSE in this archive.
 EOF
 
+# Normalize timestamps for reproducibility
+# We set the file dates to the last git commit time (or a fixed date if not in git).
+# This ensures that the zip file checksum remains the same regardless of when the build runs,
+# as long as the source code (commit) hasn't changed.
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    TIMESTAMP=$(git log -1 --format=%cd --date=format:%Y%m%d%H%M)
+else
+    TIMESTAMP="202001010000"
+fi
+find "${STAGE}" -exec touch -t "${TIMESTAMP}" {} +
+
 # Zip portable package
 mkdir -p "${OUTDIR}"
 (
-	cd "${STAGE}" && zip -9 -r ../bin/refleks-"${V}"-windows-amd64-portable.zip . >/dev/null
+	cd "${STAGE}" && zip -9 -r -X ../bin/refleks-"${V}"-windows-amd64-portable.zip . >/dev/null
 )
 
 ZIP="${OUTDIR}/refleks-${V}-windows-amd64-portable.zip"
