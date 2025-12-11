@@ -9,8 +9,8 @@ import type { BenchmarkListItem } from '../../types/domain'
 function useBenchmarkList(items: BenchmarkListItem[], favorites: string[]) {
   const [query, setQuery] = usePageState<string>('explore:query', '')
   const [showFavOnly, setShowFavOnly] = usePageState<boolean>('explore:showFavOnly', false)
-  const [sortBy, setSortBy] = usePageState<'name' | 'abbr' | 'date'>('explore:sortBy', 'name')
-  const [groupBy, setGroupBy] = usePageState<'none' | 'abbr' | 'category'>('explore:groupBy', 'none')
+  const [sortBy, setSortBy] = usePageState<'name' | 'abbr' | 'date'>('explore:sortBy', 'abbr')
+  const [groupBy, setGroupBy] = usePageState<'none' | 'abbr' | 'category'>('explore:groupBy', 'category')
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
