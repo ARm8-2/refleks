@@ -78,11 +78,17 @@ export interface Settings {
   maxExistingOnStart?: number
   geminiApiKey?: string
   scenarioNotes?: Record<string, ScenarioNote>
+  sessionNotes?: Record<string, SessionNote>
 }
 
 export interface ScenarioNote {
   notes: string
   sens: string
+}
+
+export interface SessionNote {
+  name: string
+  notes: string
 }
 
 export interface UpdateInfo {

@@ -14,6 +14,7 @@ import {
   LaunchKovaaksScenario as _LaunchKovaaksScenario,
   ResetSettings as _ResetSettings,
   SaveScenarioNote as _SaveScenarioNote,
+  SaveSessionNote as _SaveSessionNote,
   SetFavoriteBenchmarks as _SetFavoriteBenchmarks,
   StartWatcher as _StartWatcher,
   StopWatcher as _StopWatcher,
@@ -62,8 +63,8 @@ export async function updateSettings(payload: Settings): Promise<void> {
   }
 }
 
-export async function resetSettings(): Promise<void> {
-  const res = await _ResetSettings()
+export async function resetSettings(config: boolean, favorites: boolean, scenarioNotes: boolean, sessionNotes: boolean): Promise<void> {
+  const res = await _ResetSettings(config, favorites, scenarioNotes, sessionNotes)
   if (res !== true) {
     throw new Error(typeof res === 'string' ? res : 'ResetSettings failed')
   }
@@ -73,6 +74,13 @@ export async function saveScenarioNote(scenario: string, notes: string, sens: st
   const res = await _SaveScenarioNote(scenario, notes, sens)
   if (res !== true) {
     throw new Error(typeof res === 'string' ? res : 'SaveScenarioNote failed')
+  }
+}
+
+export async function saveSessionNote(sessionID: string, name: string, notes: string): Promise<void> {
+  const res = await _SaveSessionNote(sessionID, name, notes)
+  if (res !== true) {
+    throw new Error(typeof res === 'string' ? res : 'SaveSessionNote failed')
   }
 }
 

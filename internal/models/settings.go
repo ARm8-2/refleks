@@ -15,10 +15,17 @@ type Settings struct {
 	MaxExistingOnStart   int                     `json:"maxExistingOnStart"`
 	GeminiAPIKey         string                  `json:"geminiApiKey,omitempty"`
 	ScenarioNotes        map[string]ScenarioNote `json:"scenarioNotes,omitempty"`
+	SessionNotes         map[string]SessionNote  `json:"sessionNotes,omitempty"`
 }
 
 // ScenarioNote holds user notes and sensitivity for a scenario.
 type ScenarioNote struct {
 	Notes string `json:"notes"`
 	Sens  string `json:"sens"`
+}
+
+// SessionNote holds user notes and name for a session.
+type SessionNote struct {
+	Name  string `json:"name"`
+	Notes string `json:"notes"`
 }

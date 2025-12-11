@@ -28,9 +28,11 @@ export function LaunchKovaaksPlaylist(arg1:string):Promise<boolean|string>;
 
 export function LaunchKovaaksScenario(arg1:string,arg2:string):Promise<boolean|string>;
 
-export function ResetSettings():Promise<boolean|string>;
+export function ResetSettings(arg1:boolean,arg2:boolean,arg3:boolean,arg4:boolean):Promise<boolean|string>;
 
 export function SaveScenarioNote(arg1:string,arg2:string,arg3:string):Promise<boolean|string>;
+
+export function SaveSessionNote(arg1:string,arg2:string,arg3:string):Promise<boolean|string>;
 
 export function SetFavoriteBenchmarks(arg1:Array<string>):Promise<boolean|string>;
 

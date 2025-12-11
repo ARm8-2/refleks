@@ -96,6 +96,10 @@ func (s *AppService) UpdateSettings(newS models.Settings) (bool, string) {
 		if len(newS.ScenarioNotes) == 0 && len(s.settings.ScenarioNotes) > 0 {
 			newS.ScenarioNotes = s.settings.ScenarioNotes
 		}
+		// carry over session notes if omitted
+		if len(newS.SessionNotes) == 0 && len(s.settings.SessionNotes) > 0 {
+			newS.SessionNotes = s.settings.SessionNotes
+		}
 	}
 
 	// replace in-place so callers holding the pointer observe the change
@@ -204,6 +208,25 @@ func (s *AppService) SaveScenarioNote(scenario, notes, sens string) (bool, strin
 	s.settings.ScenarioNotes[scenario] = models.ScenarioNote{
 		Notes: notes,
 		Sens:  sens,
+	}
+	if err := appsettings.Save(*s.settings); err != nil {
+		return false, err.Error()
+	}
+	return true, ""
+}
+
+// SaveSessionNote updates the name and notes for a specific session.
+// This triggers a rebuild of bindings.
+func (s *AppService) SaveSessionNote(sessionID, name, notes string) (bool, string) {
+	if s.settings == nil {
+		return false, "settings not loaded"
+	}
+	if s.settings.SessionNotes == nil {
+		s.settings.SessionNotes = make(map[string]models.SessionNote)
+	}
+	s.settings.SessionNotes[sessionID] = models.SessionNote{
+		Name:  name,
+		Notes: notes,
 	}
 	if err := appsettings.Save(*s.settings); err != nil {
 		return false, err.Error()

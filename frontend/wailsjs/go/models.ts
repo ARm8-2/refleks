@@ -378,6 +378,20 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class SessionNote {
+	    name: string;
+	    notes: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SessionNote(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.notes = source["notes"];
+	    }
+	}
 	export class Settings {
 	    steamInstallDir: string;
 	    steamIdOverride?: string;
@@ -392,6 +406,7 @@ export namespace models {
 	    maxExistingOnStart: number;
 	    geminiApiKey?: string;
 	    scenarioNotes?: Record<string, ScenarioNote>;
+	    sessionNotes?: Record<string, SessionNote>;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -412,6 +427,7 @@ export namespace models {
 	        this.maxExistingOnStart = source["maxExistingOnStart"];
 	        this.geminiApiKey = source["geminiApiKey"];
 	        this.scenarioNotes = this.convertValues(source["scenarioNotes"], ScenarioNote, true);
+	        this.sessionNotes = this.convertValues(source["sessionNotes"], SessionNote, true);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -13,9 +13,9 @@ import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
 import { Modal } from '../shared/Modal'
 import { Toggle } from '../shared/Toggle'
 import { BenchmarkControls } from './BenchmarkControls'
-import { NotesModal } from './NotesModal'
 import { RecommendationIcon } from './RecommendationIcon'
 import { RecommendationLegend } from './RecommendationLegend'
+import { ScenarioNotesModal } from './ScenarioNotesModal'
 
 type BenchmarkProgressProps = {
   progress: ProgressModel
@@ -405,9 +405,6 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
           </div>
         </div>
       )}
-      {/* Controls panel: placed under the progress content */}
-      {/* Moved to modals */}
-
       <Modal isOpen={showLegend} onClose={() => setShowLegend(false)} title="Recommendation Legend" width="600px" height="auto">
         <div className="p-4">
           <RecommendationLegend embedded />
@@ -432,7 +429,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
       </Modal>
 
       {modalState.open && (
-        <NotesModal
+        <ScenarioNotesModal
           isOpen={modalState.open}
           scenarioName={modalState.scenario}
           initialNotes={modalState.notes}

@@ -3,6 +3,7 @@ import { ReactNode, forwardRef } from 'react'
 type InputProps = {
   value: string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
   placeholder?: string
   size?: 'sm' | 'md'
   fullWidth?: boolean
@@ -15,6 +16,7 @@ type InputProps = {
 export const Input = forwardRef<HTMLInputElement, InputProps>(({
   value,
   onChange,
+  onKeyDown,
   placeholder,
   size = 'md',
   fullWidth = false,
@@ -38,6 +40,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
         type={type}
         value={value}
         onChange={onChange}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         autoFocus={autoFocus}
         className={`

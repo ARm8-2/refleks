@@ -185,6 +185,7 @@ function AppLayout() {
   const resetNew = useStore(s => s.resetNew)
   const setScenarios = useStore(s => s.setScenarios)
   const setSessionGap = useStore(s => s.setSessionGap)
+  const setSessionNotes = useStore(s => s.setSessionNotes)
   const startedRef = useRef(false)
 
   // Startup effect: run once to start watcher and load initial data
@@ -199,11 +200,16 @@ function AppLayout() {
       .then((arr) => { setScenarios(arr) })
       .catch((err: unknown) => console.warn('GetRecentScenarios failed:', err))
 
-    // Initialize session gap for session grouping
+    // Initialize session gap and notes
     getSettings()
-      .then((s) => { if (s && typeof s.sessionGapMinutes === 'number') setSessionGap(s.sessionGapMinutes) })
+      .then((s) => {
+        if (s) {
+          if (typeof s.sessionGapMinutes === 'number') setSessionGap(s.sessionGapMinutes)
+          if (s.sessionNotes) setSessionNotes(s.sessionNotes)
+        }
+      })
       .catch(() => { })
-  }, [setScenarios, setSessionGap])
+  }, [setScenarios, setSessionGap, setSessionNotes])
 
   // Subscriptions effect: keep separate so it can cleanup/re-subscribe if handlers change
   useEffect(() => {

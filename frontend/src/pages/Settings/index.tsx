@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { BrowserOpenURL } from '../../../wailsjs/runtime'
 import { Button, Dropdown } from '../../components'
+import { ResetSettingsModal } from '../../components/settings/ResetSettingsModal'
 import { useStore } from '../../hooks/useStore'
 import { checkForUpdates, downloadAndInstallUpdate, getSettings, getVersion, resetSettings, updateSettings } from '../../lib/internal'
 import { FONTS, getSavedFont, getSavedTheme, setFont, setTheme, THEMES, type Font, type Theme } from '../../lib/theme'
@@ -28,6 +29,7 @@ export function SettingsPage() {
   const [checking, setChecking] = useState<boolean>(false)
   const [checkError, setCheckError] = useState<string>("")
   const [saving, setSaving] = useState(false)
+  const [isResetOpen, setIsResetOpen] = useState(false)
 
   useEffect(() => {
     // Load settings from backend and trust backend-sanitized values.
@@ -69,9 +71,9 @@ export function SettingsPage() {
       setSaving(false)
     }
   }
-  const onReset = async () => {
+  const handleReset = async (config: boolean, favorites: boolean, scenarioNotes: boolean, sessionNotes: boolean) => {
     try {
-      await resetSettings()
+      await resetSettings(config, favorites, scenarioNotes, sessionNotes)
       const s = await getSettings()
       setSteamDir((s as any).steamInstallDir || '')
       setSteamIdOverride((s as any).steamIdOverride || '')
@@ -294,10 +296,11 @@ export function SettingsPage() {
         <section>
           <div className="flex items-center gap-2">
             <Button variant="accent" size="md" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
-            <Button variant="secondary" size="md" onClick={onReset} disabled={saving}>Reset to defaults</Button>
+            <Button variant="secondary" size="md" onClick={() => setIsResetOpen(true)} disabled={saving}>Reset to defaults</Button>
           </div>
         </section>
       </div>
+      <ResetSettingsModal isOpen={isResetOpen} onClose={() => setIsResetOpen(false)} onConfirm={handleReset} />
     </div>
   )
 }

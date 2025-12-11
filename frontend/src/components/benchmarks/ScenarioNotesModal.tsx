@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '../shared/Button'
 import { Modal } from '../shared/Modal'
 
-type NotesModalProps = {
+type ScenarioNotesModalProps = {
   isOpen: boolean
   onClose: () => void
   scenarioName: string
@@ -12,7 +12,7 @@ type NotesModalProps = {
   onSave: (notes: string, sens: string) => Promise<void>
 }
 
-export function NotesModal({ isOpen, onClose, scenarioName, initialNotes, initialSens, onSave }: NotesModalProps) {
+export function ScenarioNotesModal({ isOpen, onClose, scenarioName, initialNotes, initialSens, onSave }: ScenarioNotesModalProps) {
   const [notes, setNotes] = useState(initialNotes)
   const [sens, setSens] = useState(initialSens)
   const [saving, setSaving] = useState(false)
@@ -43,9 +43,9 @@ export function NotesModal({ isOpen, onClose, scenarioName, initialNotes, initia
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={scenarioName} width={520}>
-      <div className="flex flex-col h-full">
-        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+    <Modal isOpen={isOpen} onClose={onClose} title={scenarioName} width={520} height="auto">
+      <div className="flex flex-col">
+        <div className="p-6 space-y-6">
           <div className="space-y-2">
             <label htmlFor="sensitivity" className="block text-xs font-semibold text-secondary uppercase tracking-wide">
               Training Sensitivity
@@ -71,7 +71,7 @@ export function NotesModal({ isOpen, onClose, scenarioName, initialNotes, initia
             </div>
           </div>
 
-          <div className="space-y-2 flex-1 flex flex-col">
+          <div className="space-y-2 flex flex-col">
             <label htmlFor="notes" className="block text-xs font-semibold text-secondary uppercase tracking-wide">
               Notes
             </label>
@@ -80,7 +80,7 @@ export function NotesModal({ isOpen, onClose, scenarioName, initialNotes, initia
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Track your strategy, weaknesses, and what to focus on..."
-              className="flex-1 min-h-[160px] bg-primary border border-primary rounded px-3 py-2.5 text-sm text-primary placeholder:text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all resize-none"
+              className="min-h-[160px] bg-primary border border-primary rounded px-3 py-2.5 text-sm text-primary placeholder:text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all resize-none"
             />
           </div>
         </div>

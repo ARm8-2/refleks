@@ -69,6 +69,9 @@ func Sanitize(s models.Settings) models.Settings {
 	if s.ScenarioNotes == nil {
 		s.ScenarioNotes = make(map[string]models.ScenarioNote)
 	}
+	if s.SessionNotes == nil {
+		s.SessionNotes = make(map[string]models.SessionNote)
+	}
 	return s
 }
 

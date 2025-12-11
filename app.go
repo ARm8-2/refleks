@@ -136,9 +136,37 @@ func (a *App) SetFavoriteBenchmarks(ids []string) (bool, string) {
 }
 
 // ResetSettings resets settings to application defaults and applies them immediately.
-func (a *App) ResetSettings() (bool, string) {
+func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, resetSessionNotes bool) (bool, string) {
+	newSettings := a.settings
+
+	if resetConfig {
+		defaults := appsettings.Default()
+		newSettings.SteamInstallDir = defaults.SteamInstallDir
+		newSettings.StatsDir = defaults.StatsDir
+		newSettings.TracesDir = defaults.TracesDir
+		newSettings.SessionGapMinutes = defaults.SessionGapMinutes
+		newSettings.Theme = defaults.Theme
+		newSettings.Font = defaults.Font
+		newSettings.MouseTrackingEnabled = defaults.MouseTrackingEnabled
+		newSettings.MouseBufferMinutes = defaults.MouseBufferMinutes
+		newSettings.MaxExistingOnStart = defaults.MaxExistingOnStart
+		newSettings.GeminiAPIKey = defaults.GeminiAPIKey
+	}
+
+	if resetFavorites {
+		newSettings.FavoriteBenchmarks = nil
+	}
+
+	if resetScenarioNotes {
+		newSettings.ScenarioNotes = nil
+	}
+
+	if resetSessionNotes {
+		newSettings.SessionNotes = nil
+	}
+
 	// Delegate to UpdateSettings to reuse application logic (save, mouse, watcher, traces)
-	return a.UpdateSettings(appsettings.Default())
+	return a.UpdateSettings(newSettings)
 }
 
 // --- App metadata ---
@@ -241,4 +269,12 @@ func (a *App) SaveScenarioNote(scenario, notes, sens string) (bool, string) {
 		return false, "app service not initialized"
 	}
 	return a.appSvc.SaveScenarioNote(scenario, notes, sens)
+}
+
+// SaveSessionNote persists a user name and notes for a session.
+func (a *App) SaveSessionNote(sessionID, name, notes string) (bool, string) {
+	if a.appSvc == nil {
+		return false, "app service not initialized"
+	}
+	return a.appSvc.SaveSessionNote(sessionID, name, notes)
 }

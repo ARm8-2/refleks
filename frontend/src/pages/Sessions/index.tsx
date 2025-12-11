@@ -1,6 +1,6 @@
-import { ListFilter, Search } from 'lucide-react'
+import { Edit, ListFilter, NotebookPen, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Dropdown, Input, ListDetail, Tabs } from '../../components'
+import { Dropdown, Input, ListDetail, SessionNotesModal, Tabs } from '../../components'
 import { usePageState } from '../../hooks/usePageState'
 import { useStore } from '../../hooks/useStore'
 import { useUIState } from '../../hooks/useUIState'
@@ -15,6 +15,36 @@ export function SessionsPage() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [showFilters, setShowFilters] = useState(false)
+
+  const [isNotesOpen, setIsNotesOpen] = useState(false)
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [newName, setNewName] = useState('')
+  const saveSessionNote = useStore(s => s.saveSessionNote)
+
+  const activeSession = sessions.find(s => s.id === active) ?? null
+
+  useEffect(() => {
+    if (activeSession) {
+      setNewName(activeSession.name || '')
+    }
+  }, [activeSession])
+
+  const handleRename = async () => {
+    if (!activeSession) return
+    await saveSessionNote(activeSession.id, newName, activeSession.notes || '')
+    setIsRenaming(false)
+  }
+
+  const handleSaveNotes = async (notes: string) => {
+    if (!activeSession) return
+    await saveSessionNote(activeSession.id, activeSession.name || '', notes)
+  }
+
+  const displayName = activeSession ? (activeSession.name || (() => {
+    const ts = Number.isFinite(Number(activeSession.start)) ? Number(activeSession.start) : Date.parse(String(activeSession.start))
+    if (!Number.isFinite(ts)) return 'Unknown Session'
+    return new Date(ts).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' })
+  })()) : ''
 
   // Auto-select most recent session when sessions list updates
   useEffect(() => {
@@ -41,7 +71,22 @@ export function SessionsPage() {
     }
     if (search.trim()) {
       const q = search.toLowerCase()
-      out = out.filter(s => s.items.some(i => String(i.stats['Scenario'] ?? '').toLowerCase().includes(q)))
+      out = out.filter(s => {
+        // Search in session name
+        if (s.name && s.name.toLowerCase().includes(q)) return true
+
+        // Search in session date
+        const ts = Number.isFinite(Number(s.start)) ? Number(s.start) : Date.parse(String(s.start))
+        if (Number.isFinite(ts)) {
+          const d = new Date(ts)
+          if (d.toLocaleDateString().toLowerCase().includes(q)) return true
+          // Also check full string for flexibility
+          if (d.toLocaleString().toLowerCase().includes(q)) return true
+        }
+
+        // Search in scenarios
+        return s.items.some(i => String(i.stats['Scenario'] ?? '').toLowerCase().includes(q))
+      })
     }
     return out
   }, [sessions, search, filter, highScores])
@@ -68,7 +113,7 @@ export function SessionsPage() {
               <Input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search scenarios..."
+                placeholder="Search sessions..."
                 icon={<Search size={14} />}
                 autoFocus
                 fullWidth
@@ -97,8 +142,10 @@ export function SessionsPage() {
             <button key={sess.id} onClick={() => setActive(sess.id)} className={`w-full text-left p-2 rounded border ${active === sess.id ? 'bg-surface-3 border-primary' : 'border-primary hover:bg-surface-3'}`}>
               <div className="w-full">
                 <div className="flex justify-between items-center">
-                  <div className="font-medium text-primary">
-                    {(() => {
+                  <div className="font-medium text-primary flex items-center gap-2">
+                    {sess.name ? (
+                      <span>{sess.name}</span>
+                    ) : (() => {
                       const ts = Number.isFinite(Number(sess.start)) ? Number(sess.start) : Date.parse(String(sess.start))
                       if (!Number.isFinite(ts)) {
                         const raw = String(sess.start ?? '')
@@ -108,6 +155,7 @@ export function SessionsPage() {
                       const dateOnly = d.toLocaleDateString()
                       return <span title={d.toLocaleString()}>{dateOnly}</span>
                     })()}
+                    {sess.notes && <NotebookPen size={12} className="text-accent" />}
                   </div>
                   <div className="text-xs text-secondary ml-2 whitespace-nowrap text-right">
                     {(() => {
@@ -144,8 +192,58 @@ export function SessionsPage() {
             </button>
           )}
           emptyPlaceholder={<div className="p-3 text-sm text-secondary">No sessions match your filters.</div>}
-          detail={<SessionDetail session={sessions.find(s => s.id === active) ?? null} />}
+          detailHeader={activeSession ? (
+            <div className="flex items-center gap-2 min-w-0 w-full">
+              {isRenaming ? (
+                <div className="flex-1 min-w-0">
+                  <input
+                    value={newName}
+                    onChange={e => setNewName(e.target.value)}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.currentTarget.blur()
+                      }
+                      if (e.key === 'Escape') {
+                        setNewName(activeSession.name || '')
+                        setIsRenaming(false)
+                      }
+                    }}
+                    onBlur={handleRename}
+                    className="w-full bg-transparent border-none outline-none text-base font-medium text-primary p-0 focus:ring-0"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 group min-w-0 flex-1">
+                  <div className="text-base font-medium text-primary truncate" title={displayName}>
+                    {displayName}
+                  </div>
+                  <button onClick={() => setIsRenaming(true)} className="opacity-0 group-hover:opacity-100 transition-opacity text-secondary hover:text-primary">
+                    <Edit size={14} />
+                  </button>
+                </div>
+              )}
+
+              <button
+                className={`ml-auto inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-transparent hover:border-primary hover:bg-surface-3 ${activeSession.notes ? 'text-accent' : 'text-secondary'}`}
+                title="Session Notes"
+                onClick={() => setIsNotesOpen(true)}
+              >
+                <NotebookPen size={16} />
+              </button>
+            </div>
+          ) : null}
+          detail={<SessionDetail session={activeSession} />}
         />
+        {activeSession && (
+          <SessionNotesModal
+            isOpen={isNotesOpen}
+            onClose={() => setIsNotesOpen(false)}
+            sessionName={displayName}
+            initialNotes={activeSession.notes || ''}
+            onSave={handleSaveNotes}
+          />
+        )}
       </div>
     </div>
   )
@@ -153,12 +251,16 @@ export function SessionsPage() {
 
 function SessionDetail({ session }: { session: Session | null }) {
   const [tab, setTab] = useUIState<'overview' | 'progress' | 'ai'>('tabs:session', 'overview')
+
+  if (!session) return <div className="p-8 text-center text-secondary">Select a session to view details</div>
+
   const tabs = [
     { id: 'overview', label: 'Overview', content: <OverviewTab session={session} /> },
     { id: 'progress', label: 'Progress (all)', content: <ProgressAllTab /> },
     // Key AiTab by session id so it remounts on session change, while history persists via localStorage
     { id: 'ai', label: 'AI Insights', content: <AiTab key={session?.id ?? 'none'} sessionId={session?.id} records={session?.items} /> },
   ]
+
   return <Tabs tabs={tabs} active={tab} onChange={(id) => setTab(id as any)} />
 }
 

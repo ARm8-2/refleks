@@ -54,12 +54,16 @@ export function LaunchKovaaksScenario(arg1, arg2) {
   return window['go']['main']['App']['LaunchKovaaksScenario'](arg1, arg2);
 }
 
-export function ResetSettings() {
-  return window['go']['main']['App']['ResetSettings']();
+export function ResetSettings(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['ResetSettings'](arg1, arg2, arg3, arg4);
 }
 
 export function SaveScenarioNote(arg1, arg2, arg3) {
   return window['go']['main']['App']['SaveScenarioNote'](arg1, arg2, arg3);
+}
+
+export function SaveSessionNote(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SaveSessionNote'](arg1, arg2, arg3);
 }
 
 export function SetFavoriteBenchmarks(arg1) {

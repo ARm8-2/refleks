@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { createContext, useCallback, useContext, useMemo, useReducer } from 'react'
+import { saveSessionNote } from '../lib/internal'
 import type { Session } from '../types/domain'
 import type { ScenarioRecord } from '../types/ipc'
 
@@ -8,6 +9,7 @@ type State = {
   newScenarios: number
   sessions: Session[]
   sessionGapMinutes: number
+  sessionNotes: Record<string, { name: string; notes: string }>
 }
 
 type Action =
@@ -17,32 +19,42 @@ type Action =
   | { type: 'incNew' }
   | { type: 'resetNew' }
   | { type: 'setGap'; minutes: number }
+  | { type: 'setSessionNotes'; notes: Record<string, { name: string; notes: string }> }
+  | { type: 'updateSessionNote'; id: string; name: string; notes: string }
 
-const initial: State = { scenarios: [], newScenarios: 0, sessions: [], sessionGapMinutes: 30 }
+const initial: State = { scenarios: [], newScenarios: 0, sessions: [], sessionGapMinutes: 30, sessionNotes: {} }
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'set':
-      return { ...state, scenarios: action.items ?? [], sessions: groupSessions(action.items ?? [], state.sessionGapMinutes) }
-    case 'add':
-      return { ...state, scenarios: [action.item, ...state.scenarios], sessions: groupSessions([action.item, ...state.scenarios], state.sessionGapMinutes) }
+      return { ...state, scenarios: action.items ?? [], sessions: groupSessions(action.items ?? [], state.sessionGapMinutes, state.sessionNotes) }
+    case 'add': {
+      const next = [action.item, ...state.scenarios]
+      return { ...state, scenarios: next, sessions: groupSessions(next, state.sessionGapMinutes, state.sessionNotes) }
+    }
     case 'update': {
       const idx = state.scenarios.findIndex(s => s.filePath === action.item.filePath)
       if (idx === -1) {
         // if unknown, append without incrementing newScenarios
         const next = [action.item, ...state.scenarios]
-        return { ...state, scenarios: next, sessions: groupSessions(next, state.sessionGapMinutes) }
+        return { ...state, scenarios: next, sessions: groupSessions(next, state.sessionGapMinutes, state.sessionNotes) }
       }
       const next = [...state.scenarios]
       next[idx] = action.item
-      return { ...state, scenarios: next, sessions: groupSessions(next, state.sessionGapMinutes) }
+      return { ...state, scenarios: next, sessions: groupSessions(next, state.sessionGapMinutes, state.sessionNotes) }
     }
     case 'incNew':
       return { ...state, newScenarios: state.newScenarios + 1 }
     case 'resetNew':
       return { ...state, newScenarios: 0 }
     case 'setGap':
-      return { ...state, sessionGapMinutes: Math.max(1, Math.floor(action.minutes)), sessions: groupSessions(state.scenarios, Math.max(1, Math.floor(action.minutes))) }
+      return { ...state, sessionGapMinutes: Math.max(1, Math.floor(action.minutes)), sessions: groupSessions(state.scenarios, Math.max(1, Math.floor(action.minutes)), state.sessionNotes) }
+    case 'setSessionNotes':
+      return { ...state, sessionNotes: action.notes, sessions: groupSessions(state.scenarios, state.sessionGapMinutes, action.notes) }
+    case 'updateSessionNote': {
+      const nextNotes = { ...state.sessionNotes, [action.id]: { name: action.name, notes: action.notes } }
+      return { ...state, sessionNotes: nextNotes, sessions: groupSessions(state.scenarios, state.sessionGapMinutes, nextNotes) }
+    }
     default:
       return state
   }
@@ -55,6 +67,8 @@ type Ctx = State & {
   incNew: () => void
   resetNew: () => void
   setSessionGap: (minutes: number) => void
+  setSessionNotes: (notes: Record<string, { name: string; notes: string }>) => void
+  saveSessionNote: (id: string, name: string, notes: string) => Promise<void>
 }
 
 const StoreCtx = createContext<Ctx | null>(null)
@@ -69,6 +83,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const incNew = useCallback(() => dispatch({ type: 'incNew' }), [dispatch])
   const resetNew = useCallback(() => dispatch({ type: 'resetNew' }), [dispatch])
   const setSessionGap = useCallback((minutes: number) => dispatch({ type: 'setGap', minutes }), [dispatch])
+  const setSessionNotes = useCallback((notes: Record<string, { name: string; notes: string }>) => dispatch({ type: 'setSessionNotes', notes }), [dispatch])
+
+  const saveSessionNoteAction = useCallback(async (id: string, name: string, notes: string) => {
+    await saveSessionNote(id, name, notes)
+    dispatch({ type: 'updateSessionNote', id, name, notes })
+  }, [dispatch])
 
   const value = useMemo<Ctx>(() => ({
     ...state,
@@ -78,7 +98,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     incNew,
     resetNew,
     setSessionGap,
-  }), [state, setScenarios, addScenario, updateScenario, incNew, resetNew, setSessionGap])
+    setSessionNotes,
+    saveSessionNote: saveSessionNoteAction,
+  }), [state, setScenarios, addScenario, updateScenario, incNew, resetNew, setSessionGap, setSessionNotes, saveSessionNoteAction])
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>
 }
 
@@ -89,36 +111,54 @@ export function useStore<T>(selector: (s: Ctx) => T): T {
 }
 
 // --- Helpers ---
-function groupSessions(items: ScenarioRecord[], gapMinutes = 30): Session[] {
+function groupSessions(items: ScenarioRecord[], gapMinutes = 30, notes: Record<string, { name: string; notes: string }> = {}): Session[] {
   if (!Array.isArray(items) || items.length === 0) return []
   // Ensure newest first
   const sorted = [...items].sort((a, b) => endTs(b) - endTs(a))
-  const sessions: Session[] = []
-  let current: Session | null = null
+
+  const groups: ScenarioRecord[][] = []
+  let currentGroup: ScenarioRecord[] = []
+
   for (const it of sorted) {
-    const t = endTs(it)
-    if (!current) {
-      current = { id: `sess-${t}`, start: startIso(it), end: endIso(it), items: [it] }
-      sessions.push(current)
+    if (currentGroup.length === 0) {
+      currentGroup.push(it)
       continue
     }
-    const last = current.items[current.items.length - 1]
+
+    const last = currentGroup[currentGroup.length - 1]
+    const t = endTs(it)
     const dt = Math.abs(endTs(last) - t)
+
     if (dt <= gapMinutes * 60 * 1000) {
-      current.items.push(it)
-      // Maintain session bounds: start = earliest scenario start, end = latest scenario end
-      const curStartMs = Date.parse(current.start)
-      const curEndMs = Date.parse(current.end)
-      const itStartMs = startTs(it)
-      const itEndMs = endTs(it)
-      current.start = curStartMs <= itStartMs ? current.start : startIso(it)
-      current.end = curEndMs >= itEndMs ? current.end : endIso(it)
+      currentGroup.push(it)
     } else {
-      current = { id: `sess-${t}`, start: startIso(it), end: endIso(it), items: [it] }
-      sessions.push(current)
+      groups.push(currentGroup)
+      currentGroup = [it]
     }
   }
-  return sessions
+  if (currentGroup.length > 0) {
+    groups.push(currentGroup)
+  }
+
+  return groups.map(group => {
+    // group is sorted newest first
+    const newest = group[0]
+    const oldest = group[group.length - 1]
+
+    // ID based on oldest run (start of session)
+    const id = `sess-${startTs(oldest)}`
+
+    const note = notes[id]
+
+    return {
+      id,
+      start: startIso(oldest),
+      end: endIso(newest),
+      items: group,
+      name: note?.name,
+      notes: note?.notes
+    }
+  })
 }
 
 // --- Timestamp helpers (simplified: fixed keys, no fallbacks) ---

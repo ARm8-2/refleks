@@ -1,6 +1,7 @@
 export { useChartTheme } from '../hooks/useChartTheme';
 export { BenchmarkCard } from './benchmarks/BenchmarkCard';
 export { BenchmarkProgress } from './benchmarks/BenchmarkProgress';
+export { ScenarioNotesModal } from './benchmarks/ScenarioNotesModal';
 export { AccuracyVsSpeedChart } from './scenarios/AccuracyVsSpeedChart';
 export { AccuracyVsSpeedDetails } from './scenarios/AccuracyVsSpeedDetails';
 export { EventsOverTimeChart } from './scenarios/EventsOverTimeChart';
@@ -19,6 +20,7 @@ export { ScenarioMixRadarChart } from './sessions/ScenarioMixRadarChart';
 export { SessionLengthRecommendation } from './sessions/SessionLengthRecommendation';
 export { SessionMetricsChart } from './sessions/SessionMetricsChart';
 export { SessionMixChart } from './sessions/SessionMixChart';
+export { SessionNotesModal } from './sessions/SessionNotesModal';
 export { SessionStatus } from './sessions/SessionStatus';
 export { SummaryStats } from './sessions/SummaryStats';
 export { TimeOfDayAreaChart } from './sessions/TimeOfDayAreaChart';
