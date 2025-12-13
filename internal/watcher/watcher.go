@@ -31,6 +31,8 @@ type Watcher struct {
 
 	recent []models.ScenarioRecord
 	mouse  MouseProvider
+
+	OnScenarioParsed func(models.ScenarioRecord)
 }
 
 // New returns a new Watcher with the given config.
@@ -97,6 +99,13 @@ func (w *Watcher) Stop() error {
 	w.running = false
 	w.stopCh = make(chan struct{})
 	return nil
+}
+
+// SetOnScenarioParsed sets the callback for when a scenario is parsed.
+func (w *Watcher) SetOnScenarioParsed(fn func(models.ScenarioRecord)) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.OnScenarioParsed = fn
 }
 
 func (w *Watcher) Clear() {
@@ -186,6 +195,10 @@ func (w *Watcher) scanOnce(includeAll bool) error {
 
 		// Emit a flat ScenarioRecord to simplify the IPC contract.
 		runtime.EventsEmit(w.ctx, "ScenarioAdded", rec)
+
+		if w.OnScenarioParsed != nil {
+			w.OnScenarioParsed(rec)
+		}
 	}
 	return nil
 }

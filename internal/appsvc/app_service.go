@@ -6,6 +6,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"refleks/internal/benchmarks"
 	"refleks/internal/constants"
 	"refleks/internal/models"
 	"refleks/internal/mouse"
@@ -40,6 +41,9 @@ func NewAppService(ctx context.Context, settings *models.Settings) *AppService {
 	}
 	svc.watcher = NewWatcherService(ctx)
 	svc.watcher.SetMouseProvider(svc.mouse)
+	svc.watcher.SetOnScenarioParsed(func(rec models.ScenarioRecord) {
+		benchmarks.CheckAndRefreshIfNeeded(rec)
+	})
 	svc.updater = NewUpdaterService(constants.GitHubOwner, constants.GitHubRepo, constants.AppVersion)
 	return svc
 }

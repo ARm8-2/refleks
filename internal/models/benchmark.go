@@ -40,6 +40,7 @@ type ScenarioProgress struct {
 	ScenarioRank int       `json:"scenarioRank"`
 	Thresholds   []float64 `json:"thresholds"`
 	Energy       *float64  `json:"energy,omitempty"`
+	Progress     float64   `json:"progress"`
 }
 
 type ProgressGroup struct {

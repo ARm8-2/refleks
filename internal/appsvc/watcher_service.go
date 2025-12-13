@@ -101,6 +101,13 @@ func (s *WatcherService) UpdateConfig(cfg models.WatcherConfig) error {
 	return s.w.UpdateConfig(cfg)
 }
 
+// SetOnScenarioParsed sets the callback for when a scenario is parsed.
+func (s *WatcherService) SetOnScenarioParsed(fn func(models.ScenarioRecord)) {
+	if s.w != nil {
+		s.w.SetOnScenarioParsed(fn)
+	}
+}
+
 // Clear clears in-memory state to avoid duplicates on restart.
 func (s *WatcherService) Clear() {
 	if s.w == nil {

@@ -9,9 +9,11 @@ import (
 	"math"
 	"net/http"
 	"refleks/internal/benchmarks/rankcalc"
+	"refleks/internal/cache"
 	"refleks/internal/constants"
 	"refleks/internal/models"
 	"refleks/internal/steam"
+	"refleks/internal/util"
 	"strings"
 	"sync"
 	"time"
@@ -21,10 +23,24 @@ import (
 var embeddedBenchmarks []byte
 
 var (
-	loadOnce sync.Once
-	loadErr  error
-	cache    []models.Benchmark
+	loadOnce            sync.Once
+	loadErr             error
+	benchmarksListCache []models.Benchmark
+	progressCacheMu     sync.Mutex
+	memProgressCache    map[int]models.BenchmarkProgress
+	memScenarioIndex    map[string][]int
 )
+
+const cacheFileName = "benchmarks.json"
+
+func init() {
+	cache.RegisterOnClear(func() {
+		progressCacheMu.Lock()
+		defer progressCacheMu.Unlock()
+		memProgressCache = nil
+		memScenarioIndex = nil
+	})
+}
 
 func GetBenchmarks() ([]models.Benchmark, error) {
 	loadOnce.Do(func() {
@@ -32,12 +48,12 @@ func GetBenchmarks() ([]models.Benchmark, error) {
 			loadErr = errors.New("embedded benchmarks data is empty")
 			return
 		}
-		if err := json.Unmarshal(embeddedBenchmarks, &cache); err != nil {
+		if err := json.Unmarshal(embeddedBenchmarks, &benchmarksListCache); err != nil {
 			loadErr = fmt.Errorf("failed to parse embedded benchmarks: %w", err)
 			return
 		}
 	})
-	return cache, loadErr
+	return benchmarksListCache, loadErr
 }
 
 // GetPlayerProgressRaw fetches the player progress JSON for a given benchmarkId.
@@ -73,6 +89,252 @@ func GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, error) {
 		return models.BenchmarkProgress{}, err
 	}
 	return buildStructuredProgress(raw, benchmarkId)
+}
+
+// GetAllBenchmarkProgresses returns progress for all benchmarks, using cache if available.
+// It also checks for missing benchmarks in the cache and fetches them.
+func GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
+	progressCacheMu.Lock()
+	cacheData, err := LoadBenchmarkProgressCache()
+	progressCacheMu.Unlock()
+
+	if err != nil {
+		cacheData = make(map[int]models.BenchmarkProgress)
+	}
+
+	list, err := GetBenchmarks()
+	if err != nil {
+		return cacheData, err
+	}
+
+	missingIDs := []int{}
+	for _, b := range list {
+		for _, d := range b.Difficulties {
+			if _, ok := cacheData[d.KovaaksBenchmarkID]; !ok {
+				missingIDs = append(missingIDs, d.KovaaksBenchmarkID)
+			}
+		}
+	}
+
+	if len(missingIDs) > 0 {
+		var mu sync.Mutex
+		var wg sync.WaitGroup
+		sem := make(chan struct{}, 3)
+
+		for _, id := range missingIDs {
+			wg.Add(1)
+			go func(bid int) {
+				defer wg.Done()
+				sem <- struct{}{}
+				defer func() { <-sem }()
+
+				p, err := GetBenchmarkProgress(bid)
+				if err == nil {
+					mu.Lock()
+					cacheData[bid] = p
+					mu.Unlock()
+				}
+			}(id)
+		}
+		wg.Wait()
+
+		progressCacheMu.Lock()
+		// Reload to merge with any concurrent updates
+		if current, err := LoadBenchmarkProgressCache(); err == nil {
+			for k, v := range cacheData {
+				current[k] = v
+			}
+			cacheData = current
+		}
+		SaveBenchmarkProgressCache(cacheData)
+		progressCacheMu.Unlock()
+	}
+
+	return cacheData, nil
+}
+
+// RefreshAllBenchmarkProgresses fetches fresh data for all benchmarks and updates the cache.
+func RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
+	list, err := GetBenchmarks()
+	if err != nil {
+		return nil, err
+	}
+
+	// Use a map to track unique KovaaksBenchmarkIDs to avoid duplicate fetches
+	uniqueIDs := make(map[int]struct{})
+	for _, b := range list {
+		for _, d := range b.Difficulties {
+			uniqueIDs[d.KovaaksBenchmarkID] = struct{}{}
+		}
+	}
+
+	results := make(map[int]models.BenchmarkProgress)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	// Limit concurrency to avoid rate limits or overwhelming the client
+	sem := make(chan struct{}, 3)
+
+	for id := range uniqueIDs {
+		wg.Add(1)
+		go func(bid int) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			prog, err := GetBenchmarkProgress(bid)
+			if err == nil {
+				mu.Lock()
+				results[bid] = prog
+				mu.Unlock()
+			}
+		}(id)
+	}
+	wg.Wait()
+
+	if len(results) > 0 {
+		progressCacheMu.Lock()
+		if err := SaveBenchmarkProgressCache(results); err != nil {
+			// Log error but return results
+			fmt.Printf("failed to save cache: %v\n", err)
+		}
+		progressCacheMu.Unlock()
+	}
+	return results, nil
+}
+
+func rebuildScenarioIndex() {
+	memScenarioIndex = make(map[string][]int)
+	for bid, prog := range memProgressCache {
+		for _, cat := range prog.Categories {
+			for _, group := range cat.Groups {
+				for _, scen := range group.Scenarios {
+					name := strings.ToLower(scen.Name)
+					// Avoid duplicates
+					found := false
+					for _, existingID := range memScenarioIndex[name] {
+						if existingID == bid {
+							found = true
+							break
+						}
+					}
+					if !found {
+						memScenarioIndex[name] = append(memScenarioIndex[name], bid)
+					}
+				}
+			}
+		}
+	}
+}
+
+// SaveBenchmarkProgressCache persists the progress map to disk.
+func SaveBenchmarkProgressCache(data map[int]models.BenchmarkProgress) error {
+	memProgressCache = data
+	rebuildScenarioIndex()
+	return cache.Save(cacheFileName, data)
+}
+
+// LoadBenchmarkProgressCache loads the progress map from disk.
+func LoadBenchmarkProgressCache() (map[int]models.BenchmarkProgress, error) {
+	if memProgressCache != nil {
+		return memProgressCache, nil
+	}
+	if !cache.Exists(cacheFileName) {
+		return make(map[int]models.BenchmarkProgress), nil
+	}
+	var data map[int]models.BenchmarkProgress
+	if err := cache.Load(cacheFileName, &data); err != nil {
+		return nil, err
+	}
+	memProgressCache = data
+	rebuildScenarioIndex()
+	return data, nil
+}
+
+// CheckAndRefreshIfNeeded checks if the given scenario score is a new highscore for any benchmark
+// and refreshes that benchmark if so.
+func CheckAndRefreshIfNeeded(rec models.ScenarioRecord) {
+	scenarioName, ok := rec.Stats["Scenario Name"].(string)
+	if !ok {
+		return
+	}
+	scoreVal, ok := rec.Stats["Score"]
+	if !ok {
+		return
+	}
+	score := util.ToFloat(scoreVal)
+
+	progressCacheMu.Lock()
+	// Ensure cache is loaded
+	if memProgressCache == nil {
+		_, _ = LoadBenchmarkProgressCache()
+	}
+
+	// Use index to find relevant benchmarks
+	nameLower := strings.ToLower(scenarioName)
+	bids := memScenarioIndex[nameLower]
+
+	benchmarksToRefresh := make(map[int]struct{})
+
+	for _, bid := range bids {
+		progress, ok := memProgressCache[bid]
+		if !ok {
+			continue
+		}
+
+		needsRefresh := false
+		for _, cat := range progress.Categories {
+			for _, group := range cat.Groups {
+				for _, scen := range group.Scenarios {
+					if strings.EqualFold(scen.Name, scenarioName) {
+						if score > scen.Score {
+							needsRefresh = true
+							break
+						}
+					}
+				}
+				if needsRefresh {
+					break
+				}
+			}
+			if needsRefresh {
+				break
+			}
+		}
+		if needsRefresh {
+			benchmarksToRefresh[bid] = struct{}{}
+		}
+	}
+	progressCacheMu.Unlock()
+
+	if len(benchmarksToRefresh) > 0 {
+		go func() {
+			for bid := range benchmarksToRefresh {
+				if p, err := GetBenchmarkProgress(bid); err == nil {
+					progressCacheMu.Lock()
+					// Reload cache to avoid overwriting other updates
+					if currentCache, err := LoadBenchmarkProgressCache(); err == nil {
+						currentCache[bid] = p
+						_ = SaveBenchmarkProgressCache(currentCache)
+					}
+					progressCacheMu.Unlock()
+				}
+			}
+		}()
+	}
+}
+
+// GetCachedBenchmarkProgress returns the cached progress for a benchmark, or false if not found.
+func GetCachedBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, bool) {
+	progressCacheMu.Lock()
+	defer progressCacheMu.Unlock()
+
+	cacheData, err := LoadBenchmarkProgressCache()
+	if err != nil {
+		return models.BenchmarkProgress{}, false
+	}
+	p, ok := cacheData[benchmarkId]
+	return p, ok
 }
 
 // We intentionally parse directly into models.ScenarioProgress to keep our
@@ -389,6 +651,12 @@ func parseScenarios(dec *json.Decoder, scenarios *[]models.ScenarioProgress) err
 		if len(s.Thresholds) > 0 {
 			base := initialThresholdBaselineGo(s.Thresholds)
 			s.Thresholds = append([]float64{base}, s.Thresholds...)
+
+			// Calculate progress percentage relative to the highest threshold
+			maxThreshold := s.Thresholds[len(s.Thresholds)-1]
+			if maxThreshold > 0 {
+				s.Progress = (s.Score / maxThreshold) * 100.0
+			}
 		}
 		*scenarios = append(*scenarios, s)
 	}
