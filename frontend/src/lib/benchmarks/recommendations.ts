@@ -334,61 +334,22 @@ function calculateDifficultyProgress(prog: BenchmarkProgress): number {
   return count > 0 ? (totalProgress / count) * 100 : 0
 }
 
-function calculateRecencyScores(
-  items: BenchmarkListItem[],
-  benchmarksById: Record<string, Benchmark>,
-  progressMap: Record<number, BenchmarkProgress>,
-  sessions: Session[]
-): Map<string, number> {
-  const recencyScores = new Map<string, number>()
-  if (sessions.length === 0) return recencyScores
-
-  // Map scenario names to benchmark IDs
-  const scenarioToBench = new Map<string, string>()
-
-  for (const item of items) {
-    const bench = benchmarksById[item.id]
-    if (!bench || !bench.difficulties) continue
-
-    for (const diff of bench.difficulties) {
-      // Map the difficulty name itself (just in case)
-      scenarioToBench.set(diff.difficultyName, item.id)
-
-      // Map all scenarios within this difficulty
-      const prog = progressMap[diff.kovaaksBenchmarkId]
-      if (prog && prog.categories) {
-        for (const cat of prog.categories) {
-          for (const group of cat.groups) {
-            for (const scen of group.scenarios) {
-              scenarioToBench.set(scen.name, item.id)
-            }
-          }
-        }
-      }
-    }
+function getDailyJitter(id: string): number {
+  const today = new Date().toISOString().split('T')[0]
+  const str = id + today
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i)
+    hash |= 0
   }
+  return (Math.abs(hash) % 100) / 20 // 0 to 5 points
+}
 
-  // Analyze last 20 sessions
-  const recentSessions = sessions.slice(0, 20)
-  const now = Date.now()
-
-  for (const session of recentSessions) {
-    const ageHours = (now - new Date(session.start).getTime()) / (1000 * 60 * 60)
-    // Decay factor: 1.0 at 0 hours, 0.5 at 48 hours
-    const decay = Math.max(0, 1 - (ageHours / 48))
-
-    if (decay <= 0) continue
-
-    for (const item of session.items) {
-      const name = getScenarioName(item)
-      const benchId = scenarioToBench.get(name)
-      if (benchId) {
-        const current = recencyScores.get(benchId) || 0
-        recencyScores.set(benchId, current + (10 * decay)) // Boost for recent plays
-      }
-    }
-  }
-  return recencyScores
+// Beginner boost configuration
+const BEGINNER_SESSION_THRESHOLD = 10
+const BEGINNER_BOOSTS: Record<string, number> = {
+  'VT-Voltaic S5': 20,
+  'V-Viscose Benchmarks': 19,
 }
 
 export function getBenchmarkRecommendations(
@@ -397,89 +358,111 @@ export function getBenchmarkRecommendations(
   progressMap: Record<number, BenchmarkProgress>,
   sessions: Session[] = []
 ): BenchmarkListItem[] {
-  const candidates: BenchmarkRecommendation[] = []
-  const recencyScores = calculateRecencyScores(items, benchmarksById, progressMap, sessions)
+  let candidates: BenchmarkRecommendation[] = []
 
   for (const item of items) {
     const bench = benchmarksById[item.id]
-    if (!bench || !bench.difficulties) continue
+    if (!bench?.difficulties?.length) continue
 
-    let bestScore = 0
-    let prevMaxed = false
+    // Find Active Difficulty
+    let activeDiffIndex = -1
+    let isMaxed = false
+    let progressVal = 0
 
     for (let i = 0; i < bench.difficulties.length; i++) {
       const diff = bench.difficulties[i]
       const prog = progressMap[diff.kovaaksBenchmarkId]
 
-      // Check if this difficulty is maxed (all ranks achieved)
+      // Check if maxed
       const rankCount = prog?.ranks?.length || 0
       const currentRankIndex = (prog?.overallRank || 0) - 1
-      const isMaxed = prog && currentRankIndex >= rankCount - 1
+      const diffMaxed = prog && currentRankIndex >= rankCount - 1
 
-      // Use calculated progress instead of raw benchmarkProgress
-      const progressVal = prog ? calculateDifficultyProgress(prog) : 0
-      let currentScore = 0
-
-      if (isMaxed) {
-        prevMaxed = true
-        currentScore = 0 // Already completed
-      } else {
-        if (progressVal > 0) {
-          // In progress: Score is the progress % (0-100)
-          // Higher progress = closer to next rank = higher priority
-          currentScore = Math.max(20, progressVal)
-          prevMaxed = false
-        } else {
-          // Not started or 0 progress
-          if (i === 0) {
-            // First difficulty, never played
-            currentScore = 10
-          } else if (prevMaxed) {
-            // Previous difficulty was maxed, this is the logical next step
-            currentScore = 35
-          } else {
-            // Random unplayed difficulty in the middle
-            currentScore = 5
-          }
-          prevMaxed = false
-        }
+      if (!diffMaxed) {
+        activeDiffIndex = i
+        progressVal = prog ? calculateDifficultyProgress(prog) : 0
+        break
       }
-
-      bestScore = Math.max(bestScore, currentScore)
     }
 
-    // Add recency bonus
-    const recency = recencyScores.get(item.id) || 0
-    bestScore += recency
-
-    if (bestScore > 0) {
-      candidates.push({ item, score: bestScore })
+    // If all maxed, set to last one
+    if (activeDiffIndex === -1) {
+      activeDiffIndex = bench.difficulties.length - 1
+      isMaxed = true
     }
+
+    // --- SCORING (0 - 100) ---
+    let rawScore = 0
+
+    // 1. State & Progress Score
+    // Determines the value based on current progress and completion status
+    if (isMaxed) {
+      rawScore = 5 // Maintenance only
+    } else if (activeDiffIndex === 0 && progressVal === 0) {
+      rawScore = 50 // New Benchmark (Good to start)
+    } else if (progressVal > 0) {
+      // In Progress: 60 base + up to 30 based on progress
+      // "Finish what you started" - Higher progress = Higher priority
+      rawScore = 60 + (Math.min(progressVal, 100) / 100) * 30
+    } else {
+      // Next Logical Step (Previous was maxed, this is 0%)
+      // High priority to continue the ladder
+      rawScore = 70
+    }
+    // Jitter (0-5) to break ties
+    rawScore += getDailyJitter(item.id)
+
+    // 2. Beginner Boost - boost configured benchmarks for new users
+    if (sessions.length < BEGINNER_SESSION_THRESHOLD) {
+      const boost = BEGINNER_BOOSTS[item.id]
+      if (boost) rawScore += boost
+    }
+
+    candidates.push({ item, score: rawScore })
   }
-
-  candidates.sort((a, b) => b.score - a.score)
 
   if (candidates.length === 0) return []
 
-  // Dynamic selection logic:
-  // 1. Always take the top score
-  // 2. Take others that are within a reasonable range of the top score (e.g. 60%)
-  // 3. Ensure at least 2 (if available) and at most 6
+  // --- NORMALIZATION (Scale to 0-100) ---
+  // This ensures the "best" option always looks like a 100% match relative to others
+  const maxRaw = Math.max(...candidates.map(c => c.score))
+  const minRaw = Math.min(...candidates.map(c => c.score))
+  const range = maxRaw - minRaw
 
-  const topScore = candidates[0].score
-  const threshold = topScore * 0.5
+  candidates = candidates.map(c => ({
+    ...c,
+    score: range > 0 ? ((c.score - minRaw) / range) * 100 : 100
+  }))
 
-  let selected = candidates.filter(c => c.score >= threshold)
+  // Sort by normalized score
+  candidates.sort((a, b) => b.score - a.score)
 
-  // Ensure min 2 if we have them
-  if (selected.length < 2 && candidates.length >= 2) {
-    selected = candidates.slice(0, 2)
+  // Filter: Only show high quality recommendations
+  // Since we normalized, we can just take the top N or those above a certain %
+  // But we should be careful if the "best" raw score was actually very low (e.g. everything maxed)
+  // So we check maxRaw too.
+
+  let selected: BenchmarkRecommendation[] = []
+
+  if (maxRaw < 20) {
+    // Everything is maxed or terrible, just show top 3
+    selected = candidates.slice(0, 3)
+  } else {
+    // Take top 5, but only if they are within 70% of the best (which is 100)
+    // So score >= 30 (since 100-70=30? No, relative to 100)
+    // Let's say we want scores >= 60
+    selected = candidates.filter(c => c.score >= 45)
+
+    // Ensure at least 3 if available
+    if (selected.length < 2) {
+      selected = candidates.slice(0, 2)
+    }
+    // Cap at 5
+    if (selected.length > 5) {
+      selected = selected.slice(0, 5)
+    }
   }
 
-  // Cap at 6
-  if (selected.length > 6) {
-    selected = selected.slice(0, 6)
-  }
-
+  console.log(candidates.map(c => ({ item: c.item, score: c.score })))
   return selected.map(c => c.item)
 }
