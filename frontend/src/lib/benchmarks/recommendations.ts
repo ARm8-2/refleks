@@ -61,18 +61,18 @@ function calculateProgress(rank: number, score: number, thresholds: number[]): n
 
   let prev = 0
   let next = 0
-  let baseRank = 0
+  let baseRank = -1
 
   if (rank < 0) {
     // Unranked -> working towards first threshold
     prev = 0
     next = thresholds[0] || 0
-    baseRank = 0
+    baseRank = -1
   } else {
     // Achieved rank i -> working towards i+1
     prev = thresholds[rank]
     next = thresholds[rank + 1] || prev
-    baseRank = rank + 1
+    baseRank = rank
   }
 
   const range = next - prev
@@ -96,21 +96,23 @@ export function computeRecommendationScores(input: RecommendationInputs): Map<st
     const data = benchmarkData.get(name)
     if (!data) continue
     const { rank, score, thresholds } = data
-    const maxRank = Math.max(1, thresholds.length - 1)
-    const r = Math.max(0, Math.min(rank, maxRank))
 
-    let p = 0
-    if (r >= maxRank) {
-      p = 1
-    } else {
-      const prev = thresholds[r] ?? 0
-      const next = thresholds[r + 1] ?? prev
-      const range = next - prev
-      const frac = range > 0 ? (score - prev) / range : 0
-      p = (r + Math.max(0, Math.min(1, frac))) / maxRank
-    }
+    // Old progress calculation (replaced by calculateProgress function)
+    // const maxRank = Math.max(1, thresholds.length - 1)
+    // const r = Math.max(0, Math.min(rank, maxRank))
 
-    // const p = calculateProgress(rank, score, thresholds)
+    // let p = 0
+    // if (r >= maxRank) {
+    //   p = 1
+    // } else {
+    //   const prev = thresholds[r] ?? 0
+    //   const next = thresholds[r + 1] ?? prev
+    //   const range = next - prev
+    //   const frac = range > 0 ? (score - prev) / range : 0
+    //   p = (r + Math.max(0, Math.min(1, frac))) / maxRank
+    // }
+
+    const p = calculateProgress(rank, score, thresholds)
 
     progressMap.set(name, p)
     progressArr.push(p)
@@ -465,7 +467,7 @@ export function getBenchmarkRecommendations(
   // 3. Ensure at least 2 (if available) and at most 6
 
   const topScore = candidates[0].score
-  const threshold = topScore * 0.6
+  const threshold = topScore * 0.5
 
   let selected = candidates.filter(c => c.score >= threshold)
 
