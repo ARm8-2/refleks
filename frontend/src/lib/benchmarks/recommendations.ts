@@ -463,6 +463,6 @@ export function getBenchmarkRecommendations(
     }
   }
 
-  console.log(candidates.map(c => ({ item: c.item, score: c.score })))
+  // console.log(candidates.map(c => ({ item: c.item, score: c.score })))
   return selected.map(c => c.item)
 }

@@ -196,7 +196,7 @@ function ScenarioDetail({ item }: { item: ScenarioRecord | null }) {
       setTab(t as any)
     }
   }, [sp])
-  if (!item) return <div className="text-sm text-secondary">No scenario selected.</div>
+  if (!item) return <div className="p-8 text-center text-secondary">Select a scenario to view details</div>
   const tabs = [
     { id: 'raw', label: 'Raw Stats', content: <RawTab item={item} /> },
     { id: 'analysis', label: 'Analysis', content: <AnalysisTab item={item} /> },
