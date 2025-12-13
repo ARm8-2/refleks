@@ -1,10 +1,12 @@
 import {
   CancelSessionInsights as _CancelSessionInsights,
   CheckForUpdates as _CheckForUpdates,
+  ClearCache as _ClearCache,
   DownloadAndInstallUpdate as _DownloadAndInstallUpdate,
   GenerateSessionInsights as _GenerateSessionInsights,
   GetBenchmarkProgress as _GetBenchmarkProgress,
   GetBenchmarks as _GetBenchmarks,
+  GetCachedBenchmarkProgress as _GetCachedBenchmarkProgress,
   GetDefaultSettings as _GetDefaultSettings,
   GetFavoriteBenchmarks as _GetFavoriteBenchmarks,
   GetRecentScenarios as _GetRecentScenarios,
@@ -122,6 +124,11 @@ export async function getBenchmarkProgress(benchmarkId: number): Promise<Benchma
   return data as unknown as BenchmarkProgress
 }
 
+export async function getCachedBenchmarkProgress(benchmarkId: number): Promise<BenchmarkProgress | null> {
+  const data = await _GetCachedBenchmarkProgress(benchmarkId)
+  return data as unknown as BenchmarkProgress | null
+}
+
 // Launch a Kovaak's scenario via Steam deeplink
 export async function launchScenario(name: string, mode: string = 'challenge'): Promise<void> {
   const res = await _LaunchKovaaksScenario(String(name || ''), String(mode || 'challenge'))
@@ -147,5 +154,12 @@ export async function cancelSessionInsights(requestId: string): Promise<void> {
   const res = await _CancelSessionInsights(String(requestId || ''))
   if (res !== true) {
     throw new Error(typeof res === 'string' ? res : 'CancelSessionInsights failed')
+  }
+}
+
+export async function clearCache(): Promise<void> {
+  const res = await _ClearCache()
+  if (res !== true) {
+    throw new Error(typeof res === 'string' ? res : 'ClearCache failed')
   }
 }

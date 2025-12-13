@@ -150,6 +150,7 @@ export namespace models {
 	    scenarioRank: number;
 	    thresholds: number[];
 	    energy?: number;
+	    progress: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new ScenarioProgress(source);
@@ -162,6 +163,7 @@ export namespace models {
 	        this.scenarioRank = source["scenarioRank"];
 	        this.thresholds = source["thresholds"];
 	        this.energy = source["energy"];
+	        this.progress = source["progress"];
 	    }
 	}
 	export class ProgressGroup {

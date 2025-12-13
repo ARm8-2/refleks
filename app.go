@@ -10,6 +10,7 @@ import (
 
 	appsvc "refleks/internal/appsvc"
 	"refleks/internal/benchmarks"
+	"refleks/internal/cache"
 	"refleks/internal/constants"
 	"refleks/internal/models"
 	appsettings "refleks/internal/settings"
@@ -106,6 +107,25 @@ func (a *App) GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, e
 		return models.BenchmarkProgress{}, err
 	}
 	return data, nil
+}
+
+// GetAllBenchmarkProgresses returns progress for all benchmarks, using cache if available.
+func (a *App) GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
+	return benchmarks.GetAllBenchmarkProgresses()
+}
+
+// RefreshAllBenchmarkProgresses fetches fresh data for all benchmarks and updates the cache.
+func (a *App) RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
+	return benchmarks.RefreshAllBenchmarkProgresses()
+}
+
+// GetCachedBenchmarkProgress returns the cached progress for a benchmark, or nil if not found.
+func (a *App) GetCachedBenchmarkProgress(benchmarkId int) (*models.BenchmarkProgress, error) {
+	p, ok := benchmarks.GetCachedBenchmarkProgress(benchmarkId)
+	if !ok {
+		return nil, nil
+	}
+	return &p, nil
 }
 
 // --- Settings IPC ---
@@ -277,4 +297,12 @@ func (a *App) SaveSessionNote(sessionID, name, notes string) (bool, string) {
 		return false, "app service not initialized"
 	}
 	return a.appSvc.SaveSessionNote(sessionID, name, notes)
+}
+
+// ClearCache clears the application cache.
+func (a *App) ClearCache() (bool, string) {
+	if err := cache.ClearAll(); err != nil {
+		return false, err.Error()
+	}
+	return true, "ok"
 }

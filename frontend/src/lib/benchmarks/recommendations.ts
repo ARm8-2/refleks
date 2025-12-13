@@ -1,5 +1,8 @@
-import type { Session } from '../../types/domain'
+import type { BenchmarkListItem, Session } from '../../types/domain'
+import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 import { getScenarioName } from '../utils'
+
+// --- Scenario Recommendations ---
 
 export type ScenarioBenchmarkData = {
   rank: number
@@ -43,7 +46,40 @@ const weightedSlope = (arr: number[], alpha = 0.25): number => {
   }
   return den === 0 ? 0 : num / den
 }
-const recentStd = (arr: number[], k = 6) => stddev(arr.slice(0, Math.min(k, arr.length)))
+
+/**
+ * Calculates normalized progress (0-1) for a scenario based on rank and score.
+ */
+function calculateProgress(rank: number, score: number, thresholds: number[]): number {
+  const totalRanks = thresholds.length
+  if (totalRanks === 0) return 0
+
+  // Check if maxed (rank index is last index)
+  if (rank >= totalRanks - 1) {
+    return 1
+  }
+
+  let prev = 0
+  let next = 0
+  let baseRank = 0
+
+  if (rank < 0) {
+    // Unranked -> working towards first threshold
+    prev = 0
+    next = thresholds[0] || 0
+    baseRank = 0
+  } else {
+    // Achieved rank i -> working towards i+1
+    prev = thresholds[rank]
+    next = thresholds[rank + 1] || prev
+    baseRank = rank + 1
+  }
+
+  const range = next - prev
+  const frac = range > 0 ? (score - prev) / range : 0
+  // Progress is (ranks achieved + partial progress) / total ranks
+  return (baseRank + Math.max(0, Math.min(1, frac))) / totalRanks
+}
 
 // Compute recommendation score per scenario name
 // Returns a score roughly -15 to +15, where higher means "Focus on this".
@@ -73,6 +109,9 @@ export function computeRecommendationScores(input: RecommendationInputs): Map<st
       const frac = range > 0 ? (score - prev) / range : 0
       p = (r + Math.max(0, Math.min(1, frac))) / maxRank
     }
+
+    // const p = calculateProgress(rank, score, thresholds)
+
     progressMap.set(name, p)
     progressArr.push(p)
   }
@@ -250,4 +289,195 @@ export function selectTopPicks(
   }
 
   return selected
+}
+
+// --- Benchmark Recommendations ---
+
+export type BenchmarkRecommendation = {
+  item: BenchmarkListItem
+  score: number
+}
+
+/**
+ * Calculates a recommendation score for a specific benchmark based on its progress.
+ * Higher score means more recommended.
+ */
+export function calculateBenchmarkScore(
+  bench: Benchmark,
+  progress: BenchmarkProgress | null
+): number {
+  if (!bench.difficulties || bench.difficulties.length === 0) return 0
+  if (!progress) return 1 // Not started -> recommend (score 1)
+
+  // This function is a placeholder for more granular scoring if needed.
+  // Currently getBenchmarkRecommendations handles the logic.
+  return 0
+}
+
+
+function calculateDifficultyProgress(prog: BenchmarkProgress): number {
+  let totalProgress = 0
+  let count = 0
+
+  for (const cat of prog.categories) {
+    for (const group of cat.groups) {
+      for (const scen of group.scenarios) {
+        const { scenarioRank, score, thresholds } = scen
+        totalProgress += calculateProgress(scenarioRank, score, thresholds)
+        count++
+      }
+    }
+  }
+
+  return count > 0 ? (totalProgress / count) * 100 : 0
+}
+
+function calculateRecencyScores(
+  items: BenchmarkListItem[],
+  benchmarksById: Record<string, Benchmark>,
+  progressMap: Record<number, BenchmarkProgress>,
+  sessions: Session[]
+): Map<string, number> {
+  const recencyScores = new Map<string, number>()
+  if (sessions.length === 0) return recencyScores
+
+  // Map scenario names to benchmark IDs
+  const scenarioToBench = new Map<string, string>()
+
+  for (const item of items) {
+    const bench = benchmarksById[item.id]
+    if (!bench || !bench.difficulties) continue
+
+    for (const diff of bench.difficulties) {
+      // Map the difficulty name itself (just in case)
+      scenarioToBench.set(diff.difficultyName, item.id)
+
+      // Map all scenarios within this difficulty
+      const prog = progressMap[diff.kovaaksBenchmarkId]
+      if (prog && prog.categories) {
+        for (const cat of prog.categories) {
+          for (const group of cat.groups) {
+            for (const scen of group.scenarios) {
+              scenarioToBench.set(scen.name, item.id)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Analyze last 20 sessions
+  const recentSessions = sessions.slice(0, 20)
+  const now = Date.now()
+
+  for (const session of recentSessions) {
+    const ageHours = (now - new Date(session.start).getTime()) / (1000 * 60 * 60)
+    // Decay factor: 1.0 at 0 hours, 0.5 at 48 hours
+    const decay = Math.max(0, 1 - (ageHours / 48))
+
+    if (decay <= 0) continue
+
+    for (const item of session.items) {
+      const name = getScenarioName(item)
+      const benchId = scenarioToBench.get(name)
+      if (benchId) {
+        const current = recencyScores.get(benchId) || 0
+        recencyScores.set(benchId, current + (10 * decay)) // Boost for recent plays
+      }
+    }
+  }
+  return recencyScores
+}
+
+export function getBenchmarkRecommendations(
+  items: BenchmarkListItem[],
+  benchmarksById: Record<string, Benchmark>,
+  progressMap: Record<number, BenchmarkProgress>,
+  sessions: Session[] = []
+): BenchmarkListItem[] {
+  const candidates: BenchmarkRecommendation[] = []
+  const recencyScores = calculateRecencyScores(items, benchmarksById, progressMap, sessions)
+
+  for (const item of items) {
+    const bench = benchmarksById[item.id]
+    if (!bench || !bench.difficulties) continue
+
+    let bestScore = 0
+    let prevMaxed = false
+
+    for (let i = 0; i < bench.difficulties.length; i++) {
+      const diff = bench.difficulties[i]
+      const prog = progressMap[diff.kovaaksBenchmarkId]
+
+      // Check if this difficulty is maxed (all ranks achieved)
+      const rankCount = prog?.ranks?.length || 0
+      const currentRankIndex = (prog?.overallRank || 0) - 1
+      const isMaxed = prog && currentRankIndex >= rankCount - 1
+
+      // Use calculated progress instead of raw benchmarkProgress
+      const progressVal = prog ? calculateDifficultyProgress(prog) : 0
+      let currentScore = 0
+
+      if (isMaxed) {
+        prevMaxed = true
+        currentScore = 0 // Already completed
+      } else {
+        if (progressVal > 0) {
+          // In progress: Score is the progress % (0-100)
+          // Higher progress = closer to next rank = higher priority
+          currentScore = Math.max(20, progressVal)
+          prevMaxed = false
+        } else {
+          // Not started or 0 progress
+          if (i === 0) {
+            // First difficulty, never played
+            currentScore = 10
+          } else if (prevMaxed) {
+            // Previous difficulty was maxed, this is the logical next step
+            currentScore = 35
+          } else {
+            // Random unplayed difficulty in the middle
+            currentScore = 5
+          }
+          prevMaxed = false
+        }
+      }
+
+      bestScore = Math.max(bestScore, currentScore)
+    }
+
+    // Add recency bonus
+    const recency = recencyScores.get(item.id) || 0
+    bestScore += recency
+
+    if (bestScore > 0) {
+      candidates.push({ item, score: bestScore })
+    }
+  }
+
+  candidates.sort((a, b) => b.score - a.score)
+
+  if (candidates.length === 0) return []
+
+  // Dynamic selection logic:
+  // 1. Always take the top score
+  // 2. Take others that are within a reasonable range of the top score (e.g. 60%)
+  // 3. Ensure at least 2 (if available) and at most 6
+
+  const topScore = candidates[0].score
+  const threshold = topScore * 0.6
+
+  let selected = candidates.filter(c => c.score >= threshold)
+
+  // Ensure min 2 if we have them
+  if (selected.length < 2 && candidates.length >= 2) {
+    selected = candidates.slice(0, 2)
+  }
+
+  // Cap at 6
+  if (selected.length > 6) {
+    selected = selected.slice(0, 6)
+  }
+
+  return selected.map(c => c.item)
 }

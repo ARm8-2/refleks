@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { EventsOn } from '../../wailsjs/runtime'
-import { getBenchmarkProgress, getBenchmarks } from '../lib/internal'
+import { getBenchmarkProgress, getBenchmarks, getCachedBenchmarkProgress } from '../lib/internal'
 import type { Benchmark, BenchmarkProgress } from '../types/ipc'
 import { useUIState } from './useUIState'
 
@@ -38,17 +38,47 @@ export function useOpenedBenchmarkProgress(input?: { id?: string | null; bench?:
   // Load progress for the resolved benchmark + difficulty index
   useEffect(() => {
     let cancelled = false
+    const isCancelled = () => cancelled
+
     setProgress(null)
     setError(null)
     if (!bench || !bench.difficulties?.length) return
+
     const idx = Math.min(Math.max(0, benchDifficultyIdx), bench.difficulties.length - 1)
     const did = bench.difficulties[idx]?.kovaaksBenchmarkId
     if (!did) return
+
     setLoading(true)
-    getBenchmarkProgress(did)
-      .then((data) => { if (!cancelled) setProgress(data) })
-      .catch((e) => { if (!cancelled) setError(String(e?.message || e)) })
-      .finally(() => { if (!cancelled) setLoading(false) })
+
+    const load = async () => {
+      try {
+        // 1. Try cache for instant feedback
+        const cached = await getCachedBenchmarkProgress(did)
+        if (isCancelled()) return
+        if (cached) {
+          setProgress(cached)
+          setLoading(false)
+        }
+
+        // 2. Fetch fresh data
+        const fresh = await getBenchmarkProgress(did)
+        if (isCancelled()) return
+        setProgress(fresh)
+        setLoading(false)
+      } catch (e) {
+        if (isCancelled()) return
+        // If we have cached data, keep it and don't show error
+        // If no cached data, show error
+        setProgress(prev => {
+          if (!prev) setError(e instanceof Error ? e.message : String(e))
+          return prev
+        })
+        setLoading(false)
+      }
+    }
+
+    load()
+
     return () => { cancelled = true }
   }, [bench, benchDifficultyIdx])
 

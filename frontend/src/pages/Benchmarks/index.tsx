@@ -58,6 +58,7 @@ export function BenchmarksPage() {
       loading={loading}
       onToggleFav={toggleFavorite}
       onOpen={handleOpen}
+      benchmarksById={byId}
     />
   )
 }

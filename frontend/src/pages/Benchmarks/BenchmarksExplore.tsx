@@ -1,10 +1,14 @@
-import { ChevronDown, Search, Star } from 'lucide-react'
-import { useMemo } from 'react'
+import { ChevronDown, RefreshCw, Search, Sparkles, Star } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { GetAllBenchmarkProgresses, RefreshAllBenchmarkProgresses } from '../../../wailsjs/go/main/App'
+import { models } from '../../../wailsjs/go/models'
 import { BenchmarkCard, Dropdown, Input } from '../../components'
+import { useBenchmarkRecommendations } from '../../hooks/useBenchmarkRecommendations'
 import { usePageState } from '../../hooks/usePageState'
 import { useUIState } from '../../hooks/useUIState'
 import { DEFAULT_BENCHMARK_CATEGORY, getBenchmarkCategory } from '../../lib/utils'
 import type { BenchmarkListItem } from '../../types/domain'
+import type { Benchmark } from '../../types/ipc'
 
 function useBenchmarkList(items: BenchmarkListItem[], favorites: string[]) {
   const [query, setQuery] = usePageState<string>('explore:query', '')
@@ -81,12 +85,13 @@ function useBenchmarkList(items: BenchmarkListItem[], favorites: string[]) {
   }
 }
 
-export function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen }: {
+export function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOpen, benchmarksById }: {
   items: BenchmarkListItem[];
   favorites: string[];
   loading: boolean;
   onToggleFav: (id: string) => void;
   onOpen: (id: string) => void;
+  benchmarksById: Record<string, Benchmark>;
 }) {
   const {
     query, setQuery,
@@ -100,6 +105,32 @@ export function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOp
 
   const [collapsedGroups, setCollapsedGroups] = useUIState<Record<string, boolean>>('explore:collapsedGroups', {})
   const toggleGroup = (group: string) => setCollapsedGroups(prev => ({ ...prev, [group]: !prev[group] }))
+
+  const [showRecs, setShowRecs] = usePageState<boolean>('explore:showRecs', false)
+  const [progressMap, setProgressMap] = useState<Record<number, models.BenchmarkProgress>>({})
+  const [loadingRecs, setLoadingRecs] = useState(false)
+
+  useEffect(() => {
+    if (showRecs) {
+      setLoadingRecs(true)
+      GetAllBenchmarkProgresses().then(data => {
+        setProgressMap(data || {})
+        setLoadingRecs(false)
+      }).catch(() => setLoadingRecs(false))
+    }
+  }, [showRecs])
+
+  const handleRefreshRecs = async () => {
+    setLoadingRecs(true)
+    try {
+      const data = await RefreshAllBenchmarkProgresses()
+      setProgressMap(data || {})
+    } finally {
+      setLoadingRecs(false)
+    }
+  }
+
+  const recommendedItems = useBenchmarkRecommendations(items, benchmarksById, progressMap, showRecs)
 
   const handleRandom = () => {
     const id = getRandomId()
@@ -160,10 +191,53 @@ export function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOp
             />
             {showFavOnly ? 'Favorites' : 'All'}
           </button>
+
+          <button
+            onClick={() => setShowRecs(!showRecs)}
+            className={`px-3 py-2 rounded border text-sm flex items-center gap-2 focus:outline-none focus:ring-1 focus:ring-primary transition-colors ${showRecs ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30' : 'bg-surface-2 border-primary text-primary hover:bg-surface-3 hover:text-accent'}`}
+            title={showRecs ? 'Hide Recommendations' : 'Show Recommendations'}
+          >
+            <Sparkles
+              size={16}
+              strokeWidth={1.5}
+              fill={showRecs ? 'currentColor' : 'none'}
+            />
+            {showRecs ? 'Recs' : 'Recs'}
+          </button>
+
+          {showRecs && (
+            <button onClick={handleRefreshRecs} disabled={loadingRecs} className="p-2 rounded bg-surface-2 border border-primary text-primary hover:bg-surface-3 disabled:opacity-50" title="Refresh Recommendations">
+              <RefreshCw size={16} className={loadingRecs ? 'animate-spin' : ''} />
+            </button>
+          )}
         </div>
       </div>
 
       <div className="space-y-6">
+        {showRecs && recommendedItems.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-secondary mt-2 mb-2 w-full">
+              <Sparkles size={16} className="text-accent" />
+              <span>Recommended <span className="text-xs opacity-50">({recommendedItems.length})</span></span>
+              <div className="h-px bg-accent/20 flex-1" />
+            </div>
+            <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+              {recommendedItems.map(b => (
+                <BenchmarkCard
+                  key={`rec-${b.id}`}
+                  id={b.id}
+                  title={b.title}
+                  abbreviation={b.abbreviation}
+                  color={b.color}
+                  isFavorite={favorites.includes(b.id)}
+                  onOpen={onOpen}
+                  onToggleFavorite={onToggleFav}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {groupKeys.map(group => {
           const isCollapsed = collapsedGroups[group] || false
           return (

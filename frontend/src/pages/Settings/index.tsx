@@ -2,9 +2,10 @@ import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { BrowserOpenURL } from '../../../wailsjs/runtime'
 import { Button, Dropdown } from '../../components'
+import { ClearCacheModal } from '../../components/settings/ClearCacheModal'
 import { ResetSettingsModal } from '../../components/settings/ResetSettingsModal'
 import { useStore } from '../../hooks/useStore'
-import { checkForUpdates, downloadAndInstallUpdate, getSettings, getVersion, resetSettings, updateSettings } from '../../lib/internal'
+import { checkForUpdates, clearCache, downloadAndInstallUpdate, getSettings, getVersion, resetSettings, updateSettings } from '../../lib/internal'
 import { FONTS, getSavedFont, getSavedTheme, setFont, setTheme, THEMES, type Font, type Theme } from '../../lib/theme'
 import { MISSING_STR } from '../../lib/utils'
 import type { Settings, UpdateInfo } from '../../types/ipc'
@@ -30,6 +31,7 @@ export function SettingsPage() {
   const [checkError, setCheckError] = useState<string>("")
   const [saving, setSaving] = useState(false)
   const [isResetOpen, setIsResetOpen] = useState(false)
+  const [isClearCacheOpen, setIsClearCacheOpen] = useState(false)
 
   useEffect(() => {
     // Load settings from backend and trust backend-sanitized values.
@@ -93,6 +95,16 @@ export function SettingsPage() {
       console.error('ResetSettings error:', e)
     }
   }
+
+  const handleClearCache = async () => {
+    try {
+      await clearCache()
+    } catch (e) {
+      console.error('ClearCache error:', e)
+      alert('Failed to clear cache: ' + (e as Error)?.message)
+    }
+  }
+
   return (
     <div className="space-y-4 h-full overflow-auto p-4">
       <div className="text-lg font-medium">Settings</div>
@@ -297,10 +309,12 @@ export function SettingsPage() {
           <div className="flex items-center gap-2">
             <Button variant="accent" size="md" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
             <Button variant="secondary" size="md" onClick={() => setIsResetOpen(true)} disabled={saving}>Reset to defaults</Button>
+            <Button variant="secondary" size="md" onClick={() => setIsClearCacheOpen(true)} disabled={saving}>Clear Cache</Button>
           </div>
         </section>
       </div>
       <ResetSettingsModal isOpen={isResetOpen} onClose={() => setIsResetOpen(false)} onConfirm={handleReset} />
+      <ClearCacheModal isOpen={isClearCacheOpen} onClose={() => setIsClearCacheOpen(false)} onConfirm={handleClearCache} />
     </div>
   )
 }

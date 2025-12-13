@@ -10,6 +10,10 @@ export function CheckForUpdates() {
   return window['go']['main']['App']['CheckForUpdates']();
 }
 
+export function ClearCache() {
+  return window['go']['main']['App']['ClearCache']();
+}
+
 export function DownloadAndInstallUpdate(arg1) {
   return window['go']['main']['App']['DownloadAndInstallUpdate'](arg1);
 }
@@ -18,12 +22,20 @@ export function GenerateSessionInsights(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['GenerateSessionInsights'](arg1, arg2, arg3, arg4);
 }
 
+export function GetAllBenchmarkProgresses() {
+  return window['go']['main']['App']['GetAllBenchmarkProgresses']();
+}
+
 export function GetBenchmarkProgress(arg1) {
   return window['go']['main']['App']['GetBenchmarkProgress'](arg1);
 }
 
 export function GetBenchmarks() {
   return window['go']['main']['App']['GetBenchmarks']();
+}
+
+export function GetCachedBenchmarkProgress(arg1) {
+  return window['go']['main']['App']['GetCachedBenchmarkProgress'](arg1);
 }
 
 export function GetDefaultSettings() {
@@ -52,6 +64,10 @@ export function LaunchKovaaksPlaylist(arg1) {
 
 export function LaunchKovaaksScenario(arg1, arg2) {
   return window['go']['main']['App']['LaunchKovaaksScenario'](arg1, arg2);
+}
+
+export function RefreshAllBenchmarkProgresses() {
+  return window['go']['main']['App']['RefreshAllBenchmarkProgresses']();
 }
 
 export function ResetSettings(arg1, arg2, arg3, arg4) {

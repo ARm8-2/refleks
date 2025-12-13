@@ -6,13 +6,19 @@ export function CancelSessionInsights(arg1:string):Promise<boolean|string>;
 
 export function CheckForUpdates():Promise<models.UpdateInfo>;
 
+export function ClearCache():Promise<boolean|string>;
+
 export function DownloadAndInstallUpdate(arg1:string):Promise<boolean|string>;
 
 export function GenerateSessionInsights(arg1:string,arg2:Array<models.ScenarioRecord>,arg3:string,arg4:models.AIOptions):Promise<string|string>;
 
+export function GetAllBenchmarkProgresses():Promise<Record<number, models.BenchmarkProgress>>;
+
 export function GetBenchmarkProgress(arg1:number):Promise<models.BenchmarkProgress>;
 
 export function GetBenchmarks():Promise<Array<models.Benchmark>>;
+
+export function GetCachedBenchmarkProgress(arg1:number):Promise<models.BenchmarkProgress>;
 
 export function GetDefaultSettings():Promise<models.Settings>;
 
@@ -27,6 +33,8 @@ export function GetVersion():Promise<string>;
 export function LaunchKovaaksPlaylist(arg1:string):Promise<boolean|string>;
 
 export function LaunchKovaaksScenario(arg1:string,arg2:string):Promise<boolean|string>;
+
+export function RefreshAllBenchmarkProgresses():Promise<Record<number, models.BenchmarkProgress>>;
 
 export function ResetSettings(arg1:boolean,arg2:boolean,arg3:boolean,arg4:boolean):Promise<boolean|string>;
 

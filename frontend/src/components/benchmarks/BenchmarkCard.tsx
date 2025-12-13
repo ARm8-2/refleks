@@ -37,7 +37,9 @@ export function BenchmarkCard({ id, title, abbreviation, color, isFavorite, onOp
             fill={isFavorite ? 'currentColor' : 'none'}
           />
         </button>
-        <div className="font-medium text-primary truncate flex-1">{title}</div>
+        <div className="font-medium text-primary truncate flex-1">
+          {title}
+        </div>
         <span
           className="px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 border-primary text-secondary"
           style={color ? { borderColor: color, color } : undefined}
