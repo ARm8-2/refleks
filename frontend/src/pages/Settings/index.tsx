@@ -6,24 +6,17 @@ import { ClearCacheModal } from '../../components/settings/ClearCacheModal'
 import { ResetSettingsModal } from '../../components/settings/ResetSettingsModal'
 import { useStore } from '../../hooks/useStore'
 import { checkForUpdates, clearCache, downloadAndInstallUpdate, getSettings, getVersion, resetSettings, updateSettings } from '../../lib/internal'
-import { FONTS, getSavedFont, getSavedTheme, setFont, setTheme, THEMES, type Font, type Theme } from '../../lib/theme'
+import { FONTS, setFont, setTheme, THEMES, type Font, type Theme } from '../../lib/theme'
 import { MISSING_STR } from '../../lib/utils'
 import type { Settings, UpdateInfo } from '../../types/ipc'
 
 export function SettingsPage() {
   const setSessionGap = useStore(s => s.setSessionGap)
-  const [steamDir, setSteamDir] = useState('')
-  const [steamIdOverride, setSteamIdOverride] = useState('')
-  const [statsPath, setStatsPath] = useState('')
-  const [tracesPath, setTracesPath] = useState('')
-  const [gap, setGap] = useState(1)
-  const [theme, setThemeState] = useState<Theme>(getSavedTheme())
-  const [font, setFontState] = useState<Font>(getSavedFont())
-  const [mouseEnabled, setMouseEnabled] = useState(false)
-  const [mouseBuffer, setMouseBuffer] = useState(1)
-  const [maxExisting, setMaxExisting] = useState(1)
+  const setSessionNotes = useStore(s => s.setSessionNotes)
+
+  const [settings, setSettings] = useState<Settings | null>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
-  const [geminiKey, setGeminiKey] = useState('')
+
   // Updates state
   const [currentVersion, setCurrentVersion] = useState<string>("")
   const [update, setUpdate] = useState<UpdateInfo | null>(null)
@@ -34,63 +27,48 @@ export function SettingsPage() {
   const [isClearCacheOpen, setIsClearCacheOpen] = useState(false)
 
   useEffect(() => {
-    // Load settings from backend and trust backend-sanitized values.
-    getSettings()
-      .then((s: Settings) => {
-        if (!s) return
-        setSteamDir((s as any).steamInstallDir || '')
-        setSteamIdOverride((s as any).steamIdOverride || '')
-        setStatsPath(s.statsDir || '')
-        setTracesPath((s as any).tracesDir || '')
-        setGap(s.sessionGapMinutes)
-        setThemeState(s.theme)
-        setTheme(s.theme)
-        const incomingFont = (s as any).font || getSavedFont()
-        setFontState(incomingFont)
-        setFont(incomingFont)
-        setMouseEnabled(Boolean(s.mouseTrackingEnabled))
-        setMouseBuffer(Number(s.mouseBufferMinutes))
-        setMaxExisting(Number((s as any).maxExistingOnStart))
-        setGeminiKey((s as any).geminiApiKey || '')
-      })
-      .catch(() => { })
-    // Load current version for display
+    getSettings().then(setSettings).catch(() => { })
     getVersion().then(v => setCurrentVersion(String(v || ''))).catch(() => setCurrentVersion(''))
   }, [])
 
+  const updateField = <K extends keyof Settings>(key: K, value: Settings[K]) => {
+    setSettings(prev => {
+      if (!prev) return null
+      const next = { ...prev, [key]: value }
+      if (key === 'theme') setTheme(value as Theme)
+      if (key === 'font') setFont(value as Font)
+      return next
+    })
+  }
+
   const save = async () => {
-    if (saving) return
+    if (!settings || saving) return
     setSaving(true)
-    const payload: Settings = { steamInstallDir: steamDir, steamIdOverride, statsDir: statsPath, tracesDir: tracesPath, sessionGapMinutes: gap, theme, font, mouseTrackingEnabled: mouseEnabled, mouseBufferMinutes: mouseBuffer, maxExistingOnStart: maxExisting, geminiApiKey: geminiKey }
     try {
-      await updateSettings(payload)
-      setTheme(theme)
-      setFont(font)
-      setSessionGap(gap)
+      await updateSettings(settings)
+      setTheme(settings.theme)
+      setFont(settings.font)
+      setSessionGap(settings.sessionGapMinutes)
     } catch (e) {
       console.error('UpdateSettings error:', e)
     } finally {
       setSaving(false)
     }
   }
+
   const handleReset = async (config: boolean, favorites: boolean, scenarioNotes: boolean, sessionNotes: boolean) => {
     try {
       await resetSettings(config, favorites, scenarioNotes, sessionNotes)
       const s = await getSettings()
-      setSteamDir((s as any).steamInstallDir || '')
-      setSteamIdOverride((s as any).steamIdOverride || '')
-      setStatsPath(s.statsDir || '')
-      setTracesPath((s as any).tracesDir || '')
-      setGap(s.sessionGapMinutes)
-      setThemeState(s.theme)
+      setSettings(s)
+
       setTheme(s.theme)
-      const incomingFont = (s as any).font || getSavedFont()
-      setFontState(incomingFont)
-      setFont(incomingFont)
-      setMouseEnabled(Boolean(s.mouseTrackingEnabled))
-      setMouseBuffer(Number(s.mouseBufferMinutes))
-      setMaxExisting(Number((s as any).maxExistingOnStart))
-      setGeminiKey((s as any).geminiApiKey || '')
+      setFont(s.font)
+      setSessionGap(s.sessionGapMinutes)
+
+      if (sessionNotes) {
+        setSessionNotes(s.sessionNotes || {})
+      }
     } catch (e) {
       console.error('ResetSettings error:', e)
     }
@@ -104,6 +82,8 @@ export function SettingsPage() {
       alert('Failed to clear cache: ' + (e as Error)?.message)
     }
   }
+
+  if (!settings) return <div className="p-4">Loading settings...</div>
 
   return (
     <div className="space-y-4 h-full overflow-auto p-4">
@@ -188,15 +168,15 @@ export function SettingsPage() {
           <div className="space-y-3 p-3 rounded border border-primary bg-surface-2">
             <Field label="Stats directory">
               <input
-                value={statsPath}
-                onChange={e => setStatsPath(e.target.value)}
+                value={settings.statsDir}
+                onChange={e => updateField('statsDir', e.target.value)}
                 className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
               />
             </Field>
             <Field label="Enable mouse tracking (Windows)">
               <Dropdown
-                value={mouseEnabled ? 'on' : 'off'}
-                onChange={(v: string) => setMouseEnabled(v === 'on')}
+                value={settings.mouseTrackingEnabled ? 'on' : 'off'}
+                onChange={(v: string) => updateField('mouseTrackingEnabled', v === 'on')}
                 options={[{ label: 'On', value: 'on' }, { label: 'Off', value: 'off' }]}
                 size="md"
               />
@@ -204,8 +184,8 @@ export function SettingsPage() {
             <Field label="Session gap (minutes)">
               <input
                 type="number"
-                value={gap}
-                onChange={e => setGap(Number(e.target.value))}
+                value={settings.sessionGapMinutes}
+                onChange={e => updateField('sessionGapMinutes', Number(e.target.value))}
                 className="w-24 px-2 py-1 rounded bg-surface-3 border border-primary"
               />
             </Field>
@@ -218,8 +198,8 @@ export function SettingsPage() {
           <div className="space-y-3 p-3 rounded border border-primary bg-surface-2">
             <Field label="Theme">
               <Dropdown
-                value={theme}
-                onChange={(v: string) => setThemeState(v as Theme)}
+                value={settings.theme}
+                onChange={(v: string) => updateField('theme', v as Theme)}
                 options={THEMES.map(t => ({
                   label: t.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
                   value: t,
@@ -229,8 +209,8 @@ export function SettingsPage() {
             </Field>
             <Field label="Font">
               <Dropdown
-                value={font}
-                onChange={(v: string) => setFontState(v as Font)}
+                value={settings.font}
+                onChange={(v: string) => updateField('font', v as Font)}
                 options={FONTS.map(f => ({ label: f.label, value: f.id }))}
                 size="md"
               />
@@ -253,46 +233,46 @@ export function SettingsPage() {
             <div className="space-y-3 p-3 rounded border border-primary bg-surface-2">
               <Field label="Steam install directory">
                 <input
-                  value={steamDir}
-                  onChange={e => setSteamDir(e.target.value)}
+                  value={settings.steamInstallDir || ''}
+                  onChange={e => updateField('steamInstallDir', e.target.value)}
                   className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
               </Field>
               <Field label="SteamID override (optional)">
                 <input
-                  value={steamIdOverride}
-                  onChange={e => setSteamIdOverride(e.target.value)}
+                  value={settings.steamIdOverride || ''}
+                  onChange={e => updateField('steamIdOverride', e.target.value)}
                   placeholder="7656119..."
                   className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
               </Field>
               <Field label="Traces directory">
                 <input
-                  value={tracesPath}
-                  onChange={e => setTracesPath(e.target.value)}
+                  value={settings.tracesDir}
+                  onChange={e => updateField('tracesDir', e.target.value)}
                   className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
               </Field>
               <Field label="Mouse buffer (minutes)">
                 <input
                   type="number"
-                  value={mouseBuffer}
-                  onChange={e => setMouseBuffer(Math.max(1, Number(e.target.value)))}
+                  value={settings.mouseBufferMinutes}
+                  onChange={e => updateField('mouseBufferMinutes', Math.max(1, Number(e.target.value)))}
                   className="w-24 px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
               </Field>
               <Field label="Parse existing on start (max)">
                 <input
                   type="number"
-                  value={maxExisting}
-                  onChange={e => setMaxExisting(Math.max(0, Number(e.target.value)))}
+                  value={settings.maxExistingOnStart}
+                  onChange={e => updateField('maxExistingOnStart', Math.max(0, Number(e.target.value)))}
                   className="w-24 px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
               </Field>
               <Field label="Gemini API key">
                 <input
-                  value={geminiKey}
-                  onChange={e => setGeminiKey(e.target.value)}
+                  value={settings.geminiApiKey || ''}
+                  onChange={e => updateField('geminiApiKey', e.target.value)}
                   placeholder="AIza..."
                   className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
                 />

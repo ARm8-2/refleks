@@ -201,8 +201,11 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		newSettings.SessionNotes = nil
 	}
 
-	// Delegate to UpdateSettings to reuse application logic (save, mouse, watcher, traces)
-	return a.UpdateSettings(newSettings)
+	if a.appSvc == nil {
+		a.appSvc = appsvc.NewAppService(a.ctx, &a.settings)
+	}
+	// Use OverwriteSettings to ensure empty fields are actually cleared (skipping merge logic)
+	return a.appSvc.OverwriteSettings(newSettings)
 }
 
 // --- App metadata ---

@@ -84,6 +84,12 @@ func (s *AppService) IsWatcherRunning() bool {
 // UpdateSettings applies the given settings object, persists it, and updates
 // sub-services (mouse, watcher, traces) to reflect the change.
 func (s *AppService) UpdateSettings(newS models.Settings) (bool, string) {
+	return s.OverwriteSettings(newS)
+}
+
+// OverwriteSettings applies the given settings object exactly as provided (after sanitization),
+// persists it, and updates sub-services. It does NOT merge with previous settings.
+func (s *AppService) OverwriteSettings(newS models.Settings) (bool, string) {
 	newS = appsettings.Sanitize(newS)
 
 	var prevSettings models.Settings
@@ -91,19 +97,6 @@ func (s *AppService) UpdateSettings(newS models.Settings) (bool, string) {
 	if s.settings != nil {
 		prevSettings = *s.settings
 		hasPrev = true
-
-		// carry over favorites if omitted
-		if len(newS.FavoriteBenchmarks) == 0 && len(s.settings.FavoriteBenchmarks) > 0 {
-			newS.FavoriteBenchmarks = s.settings.FavoriteBenchmarks
-		}
-		// carry over notes if omitted
-		if len(newS.ScenarioNotes) == 0 && len(s.settings.ScenarioNotes) > 0 {
-			newS.ScenarioNotes = s.settings.ScenarioNotes
-		}
-		// carry over session notes if omitted
-		if len(newS.SessionNotes) == 0 && len(s.settings.SessionNotes) > 0 {
-			newS.SessionNotes = s.settings.SessionNotes
-		}
 	}
 
 	// replace in-place so callers holding the pointer observe the change
