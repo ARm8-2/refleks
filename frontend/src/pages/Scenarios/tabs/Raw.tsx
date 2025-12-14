@@ -9,7 +9,7 @@ type StatKey = string
 const CATEGORY_DEFS: Record<string, StatKey[]> = {
   'Overview': ['Score', 'Kills', 'Hit Count', 'Accuracy'],
   'Accuracy Details': ['Hit Count', 'Miss Count', 'Total Overshots', 'Damage Done', 'Damage Taken'],
-  'Timing': ['Fight Time', 'Time Remaining', 'Avg TTK', 'Real Avg TTK', 'Pause Count', 'Pause Duration', 'Challenge Start'],
+  'Timing': ['Fight Time', 'Time Remaining', 'Avg TTK', 'Real Avg TTK', 'Pause Count', 'Pause Duration', 'Challenge Start', 'Duration'],
   'Controls': ['Sens Scale', 'Sens Increment', 'Horiz Sens', 'Vert Sens', 'DPI', 'cm/360'],
   'Display': ['FOV', 'FOVScale', 'Resolution', 'Hide Gun', 'Crosshair', 'Crosshair Scale', 'Crosshair Color'],
   'Technical': ['Input Lag', 'Max FPS (config)', 'Avg FPS', 'Resolution Scale'],
@@ -131,7 +131,7 @@ function OverviewCards({ stats }: OverviewCardsProps) {
         if (!(k in stats)) return null
         const v = stats[k]
         return (
-          <div key={k} className="bg-surface-3 rounded border border-primary p-3">
+          <div key={k} className="bg-surface-3 rounded border border-primary p-4">
             <div className="text-secondary text-xs mb-1">{k}</div>
             <div className="text-accent text-xl font-semibold tabular-nums">{formatValue(k, v)}</div>
           </div>

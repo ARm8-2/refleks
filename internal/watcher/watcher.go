@@ -261,6 +261,13 @@ func (w *Watcher) parseFile(fullPath string) (models.ScenarioRecord, error) {
 		stats["cm/360"] = cm
 	}
 
+	// Calculate duration
+	start, end := deriveScenarioWindow(info.DatePlayed, stats, events)
+	if !start.IsZero() && !end.IsZero() {
+		duration := end.Sub(start).Seconds()
+		stats["Duration"] = duration
+	}
+
 	rec := models.ScenarioRecord{
 		FilePath: fullPath,
 		FileName: filepath.Base(fullPath),

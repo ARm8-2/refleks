@@ -24,6 +24,7 @@ export interface SessionAnalysis {
   // Session metrics
   totalRuns: number
   durationMinutes: number
+  playtimeMinutes: number
   uniqueScenarios: number
 
   // Performance signals (all normalized 0-1 or -1 to 1)
@@ -207,6 +208,7 @@ export function analyzeSessionHealth(
     shouldTakeBreak: false,
     totalRuns: 0,
     durationMinutes: 0,
+    playtimeMinutes: 0,
     uniqueScenarios: 0,
     performanceTrend: 0,
     consistencyScore: 1,
@@ -228,6 +230,15 @@ export function analyzeSessionHealth(
   const endTs = Date.parse(currentSession.end)
   const durationMinutes = Math.abs(endTs - startTs) / 60000
   const totalRuns = currentSession.items.length
+
+  let totalPlaytimeSeconds = 0
+  for (const item of currentSession.items) {
+    const d = Number(item.stats['Duration'])
+    if (Number.isFinite(d)) {
+      totalPlaytimeSeconds += d
+    }
+  }
+  const playtimeMinutes = totalPlaytimeSeconds / 60
 
   // Group items by scenario (items come newest-first)
   const byScenario = new Map<string, ScenarioRecord[]>()
@@ -383,6 +394,7 @@ export function analyzeSessionHealth(
     hasLearningCurveEffect: hasLearningCurve,
     hasInsufficientData,
     scenarioBreakdown,
+    playtimeMinutes,
   }
 }
 

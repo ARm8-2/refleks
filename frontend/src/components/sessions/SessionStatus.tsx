@@ -1,4 +1,4 @@
-import { Activity, Clock } from 'lucide-react'
+import { Activity, Clock, Gamepad2 } from 'lucide-react'
 import { useUIState } from '../../hooks/useUIState'
 import { SessionAnalysis, SessionHealthLevel, SessionLengthRecommendation } from '../../lib/analysis'
 import { formatDuration } from '../../lib/utils'
@@ -37,9 +37,15 @@ export function SessionStatus({ currentSession, analysis, recommendation }: Sess
       <div className="h-4 border-l border-primary" />
 
       {/* Duration */}
-      <div className="flex items-center gap-1.5 text-secondary">
+      <div className="flex items-center gap-1.5 text-secondary" title="Session Duration">
         <Clock size={14} />
         <span>{formatDuration(analysis.durationMinutes * 60000) || '<1m'}</span>
+      </div>
+
+      {/* Playtime */}
+      <div className="flex items-center gap-1.5 text-secondary" title="Actual Playtime">
+        <Gamepad2 size={14} />
+        <span>{formatDuration(analysis.playtimeMinutes * 60000) || '<1m'}</span>
       </div>
 
       {/* Scenarios */}
