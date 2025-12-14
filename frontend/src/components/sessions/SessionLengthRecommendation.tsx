@@ -65,7 +65,7 @@ export function SessionLengthRecommendation({ sessions }: SessionLengthRecommend
       title="Session length insights"
       info={infoContent}
       id="sessions:length-recommendation"
-      height={165}
+      height={168}
     >
       <div className="space-y-3">
         {/* Main recommendation */}
