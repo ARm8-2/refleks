@@ -50,7 +50,7 @@ export function SessionLengthRecommendation({ sessions }: SessionLengthRecommend
         title="Session length insights"
         info={<p>Play at least 3 sessions with 3+ runs each to get personalized recommendations based on your performance patterns.</p>}
         id="sessions:length-recommendation"
-        height={100}
+        height={88}
       >
         <div className="text-secondary">
           Play at least 3 sessions with 3+ runs each to get personalized recommendations.
