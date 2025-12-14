@@ -34,10 +34,6 @@ export function GetBenchmarks() {
   return window['go']['main']['App']['GetBenchmarks']();
 }
 
-export function GetCachedBenchmarkProgress(arg1) {
-  return window['go']['main']['App']['GetCachedBenchmarkProgress'](arg1);
-}
-
 export function GetDefaultSettings() {
   return window['go']['main']['App']['GetDefaultSettings']();
 }

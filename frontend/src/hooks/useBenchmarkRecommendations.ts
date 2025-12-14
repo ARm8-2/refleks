@@ -1,14 +1,13 @@
 import { useMemo } from 'react'
-import { models } from '../../wailsjs/go/models'
 import { getBenchmarkRecommendations } from '../lib/benchmarks/recommendations'
 import type { BenchmarkListItem } from '../types/domain'
-import type { Benchmark } from '../types/ipc'
+import type { Benchmark, BenchmarkProgress } from '../types/ipc'
 import { useStore } from './useStore'
 
 export function useBenchmarkRecommendations(
   items: BenchmarkListItem[],
   benchmarksById: Record<string, Benchmark>,
-  progressMap: Record<number, models.BenchmarkProgress>,
+  progressMap: Record<number, BenchmarkProgress>,
   enabled: boolean
 ) {
   const sessions = useStore(s => s.sessions)

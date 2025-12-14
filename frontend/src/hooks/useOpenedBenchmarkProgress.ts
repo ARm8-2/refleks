@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { EventsOn } from '../../wailsjs/runtime'
-import { getBenchmarkProgress, getBenchmarks, getCachedBenchmarkProgress } from '../lib/internal'
+import { getBenchmarkProgress, getBenchmarks } from '../lib/internal'
 import type { Benchmark, BenchmarkProgress } from '../types/ipc'
 import { useUIState } from './useUIState'
 
@@ -50,25 +50,22 @@ export function useOpenedBenchmarkProgress(input?: { id?: string | null; bench?:
 
     setLoading(true)
 
+    // Listen for background updates from backend
+    const offProgress = EventsOn(`benchmark:progress:${did}`, (data: BenchmarkProgress) => {
+      if (!isCancelled()) {
+        setProgress(data)
+      }
+    })
+
     const load = async () => {
       try {
-        // 1. Try cache for instant feedback
-        const cached = await getCachedBenchmarkProgress(did)
+        // Fetch data (returns cached immediately if available, or waits for fresh)
+        const data = await getBenchmarkProgress(did)
         if (isCancelled()) return
-        if (cached) {
-          setProgress(cached)
-          setLoading(false)
-        }
-
-        // 2. Fetch fresh data
-        const fresh = await getBenchmarkProgress(did)
-        if (isCancelled()) return
-        setProgress(fresh)
+        setProgress(data)
         setLoading(false)
       } catch (e) {
         if (isCancelled()) return
-        // If we have cached data, keep it and don't show error
-        // If no cached data, show error
         setProgress(prev => {
           if (!prev) setError(e instanceof Error ? e.message : String(e))
           return prev
@@ -79,7 +76,10 @@ export function useOpenedBenchmarkProgress(input?: { id?: string | null; bench?:
 
     load()
 
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+      try { offProgress() } catch { /* ignore */ }
+    }
   }, [bench, benchDifficultyIdx])
 
   // Live refresh: when scenarios are added/updated, re-fetch the current difficulty's progress

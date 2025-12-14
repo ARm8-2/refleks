@@ -53,6 +53,18 @@ func (a *App) startup(ctx context.Context) {
 	// Initialize AI service
 	a.aiSvc = appsvc.NewAIService(a.ctx, &a.settings)
 
+	// Fire-and-forget benchmark cache warmup/sync
+	go func() {
+		// Small delay to avoid competing with startup I/O
+		time.Sleep(1 * time.Second)
+		_, err := benchmarks.GetAllBenchmarkProgresses()
+		if err != nil {
+			runtime.LogErrorf(a.ctx, "benchmark cache sync failed: %v", err)
+		} else {
+			runtime.LogInfo(a.ctx, "benchmark cache synced")
+		}
+	}()
+
 	// Fire-and-forget check for app updates; emit event if available
 	go func() {
 		// Small delay to avoid competing with startup I/O
@@ -99,13 +111,26 @@ func (a *App) GetBenchmarks() ([]models.Benchmark, error) {
 }
 
 // GetBenchmarkProgress returns a structured benchmark progress model for the given benchmarkId.
-// The server merges upstream player progress with local benchmark metadata (categories/ranks),
-// producing a stable, UI-friendly shape.
+// It attempts to return cached data immediately while triggering a background refresh.
+// If no cache is available, it waits for the fresh data.
 func (a *App) GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, error) {
-	data, err := benchmarks.GetBenchmarkProgress(benchmarkId)
+	// 1. Try to get from cache (or fetch if missing)
+	data, cached, err := benchmarks.GetBenchmarkProgress(benchmarkId, true)
 	if err != nil {
 		return models.BenchmarkProgress{}, err
 	}
+
+	// 2. Trigger background refresh (if it was cached)
+	if cached {
+		go func() {
+			fresh, _, err := benchmarks.GetBenchmarkProgress(benchmarkId, false)
+			if err == nil {
+				// Emit event with fresh data so frontend can update
+				runtime.EventsEmit(a.ctx, fmt.Sprintf("benchmark:progress:%d", benchmarkId), fresh)
+			}
+		}()
+	}
+
 	return data, nil
 }
 
@@ -117,15 +142,6 @@ func (a *App) GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, err
 // RefreshAllBenchmarkProgresses fetches fresh data for all benchmarks and updates the cache.
 func (a *App) RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
 	return benchmarks.RefreshAllBenchmarkProgresses()
-}
-
-// GetCachedBenchmarkProgress returns the cached progress for a benchmark, or nil if not found.
-func (a *App) GetCachedBenchmarkProgress(benchmarkId int) (*models.BenchmarkProgress, error) {
-	p, ok := benchmarks.GetCachedBenchmarkProgress(benchmarkId)
-	if !ok {
-		return nil, nil
-	}
-	return &p, nil
 }
 
 // --- Settings IPC ---

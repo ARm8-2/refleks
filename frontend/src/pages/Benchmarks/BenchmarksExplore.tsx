@@ -1,14 +1,13 @@
 import { ChevronDown, RefreshCw, Search, Sparkles, Star } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { GetAllBenchmarkProgresses, RefreshAllBenchmarkProgresses } from '../../../wailsjs/go/main/App'
-import { models } from '../../../wailsjs/go/models'
 import { BenchmarkCard, Dropdown, Input } from '../../components'
 import { useBenchmarkRecommendations } from '../../hooks/useBenchmarkRecommendations'
 import { usePageState } from '../../hooks/usePageState'
 import { useUIState } from '../../hooks/useUIState'
+import { getAllBenchmarkProgresses, refreshAllBenchmarkProgresses } from '../../lib/internal'
 import { DEFAULT_BENCHMARK_CATEGORY, getBenchmarkCategory } from '../../lib/utils'
 import type { BenchmarkListItem } from '../../types/domain'
-import type { Benchmark } from '../../types/ipc'
+import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 
 function useBenchmarkList(items: BenchmarkListItem[], favorites: string[]) {
   const [query, setQuery] = usePageState<string>('explore:query', '')
@@ -107,13 +106,13 @@ export function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOp
   const toggleGroup = (group: string) => setCollapsedGroups(prev => ({ ...prev, [group]: !prev[group] }))
 
   const [showRecs, setShowRecs] = usePageState<boolean>('explore:showRecs', false)
-  const [progressMap, setProgressMap] = useState<Record<number, models.BenchmarkProgress>>({})
+  const [progressMap, setProgressMap] = useState<Record<number, BenchmarkProgress>>({})
   const [loadingRecs, setLoadingRecs] = useState(false)
 
   useEffect(() => {
     if (showRecs) {
       setLoadingRecs(true)
-      GetAllBenchmarkProgresses().then(data => {
+      getAllBenchmarkProgresses().then(data => {
         setProgressMap(data || {})
         setLoadingRecs(false)
       }).catch(() => setLoadingRecs(false))
@@ -123,7 +122,7 @@ export function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOp
   const handleRefreshRecs = async () => {
     setLoadingRecs(true)
     try {
-      const data = await RefreshAllBenchmarkProgresses()
+      const data = await refreshAllBenchmarkProgresses()
       setProgressMap(data || {})
     } finally {
       setLoadingRecs(false)

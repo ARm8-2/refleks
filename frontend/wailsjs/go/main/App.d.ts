@@ -18,8 +18,6 @@ export function GetBenchmarkProgress(arg1:number):Promise<models.BenchmarkProgre
 
 export function GetBenchmarks():Promise<Array<models.Benchmark>>;
 
-export function GetCachedBenchmarkProgress(arg1:number):Promise<models.BenchmarkProgress>;
-
 export function GetDefaultSettings():Promise<models.Settings>;
 
 export function GetFavoriteBenchmarks():Promise<Array<string>>;

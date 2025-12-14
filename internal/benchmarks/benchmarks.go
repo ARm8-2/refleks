@@ -83,38 +83,92 @@ func GetPlayerProgressRaw(benchmarkId int) (string, error) {
 	return string(b), nil
 }
 
-func GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, error) {
+func GetBenchmarkProgress(benchmarkId int, useCache bool) (models.BenchmarkProgress, bool, error) {
+	if useCache {
+		if p, ok := GetCachedBenchmarkProgress(benchmarkId); ok {
+			return p, true, nil
+		}
+	}
+
 	raw, err := GetPlayerProgressRaw(benchmarkId)
 	if err != nil {
-		return models.BenchmarkProgress{}, err
+		return models.BenchmarkProgress{}, false, err
 	}
-	return buildStructuredProgress(raw, benchmarkId)
+	prog, err := buildStructuredProgress(raw, benchmarkId)
+	if err != nil {
+		return models.BenchmarkProgress{}, false, err
+	}
+
+	// Update cache asynchronously
+	go func(bid int, p models.BenchmarkProgress) {
+		progressCacheMu.Lock()
+		defer progressCacheMu.Unlock()
+
+		// Ensure cache is loaded
+		if memProgressCache == nil {
+			// Try to load, if fails, make new map
+			if _, err := LoadBenchmarkProgressCache(); err != nil {
+				memProgressCache = make(map[int]models.BenchmarkProgress)
+			}
+		}
+
+		memProgressCache[bid] = p
+		_ = SaveBenchmarkProgressCache(memProgressCache)
+	}(benchmarkId, prog)
+
+	return prog, false, nil
 }
 
 // GetAllBenchmarkProgresses returns progress for all benchmarks, using cache if available.
 // It also checks for missing benchmarks in the cache and fetches them.
+// It also prunes benchmarks from the cache that are no longer in the benchmarks list.
 func GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
-	progressCacheMu.Lock()
-	cacheData, err := LoadBenchmarkProgressCache()
-	progressCacheMu.Unlock()
-
-	if err != nil {
-		cacheData = make(map[int]models.BenchmarkProgress)
-	}
-
 	list, err := GetBenchmarks()
 	if err != nil {
-		return cacheData, err
+		return nil, err
 	}
 
-	missingIDs := []int{}
+	progressCacheMu.Lock()
+	// Ensure cache is loaded
+	if memProgressCache == nil {
+		_, _ = LoadBenchmarkProgressCache()
+	}
+	if memProgressCache == nil {
+		memProgressCache = make(map[int]models.BenchmarkProgress)
+	}
+
+	// Build set of valid IDs
+	validIDs := make(map[int]struct{})
 	for _, b := range list {
 		for _, d := range b.Difficulties {
-			if _, ok := cacheData[d.KovaaksBenchmarkID]; !ok {
-				missingIDs = append(missingIDs, d.KovaaksBenchmarkID)
-			}
+			validIDs[d.KovaaksBenchmarkID] = struct{}{}
 		}
 	}
+
+	// Prune obsolete entries from cache
+	pruned := false
+	for id := range memProgressCache {
+		if _, ok := validIDs[id]; !ok {
+			delete(memProgressCache, id)
+			pruned = true
+		}
+	}
+	if pruned {
+		_ = SaveBenchmarkProgressCache(memProgressCache)
+	}
+
+	// Create a copy to return and identify missing IDs
+	result := make(map[int]models.BenchmarkProgress, len(memProgressCache))
+	missingIDs := []int{}
+
+	for id := range validIDs {
+		if p, ok := memProgressCache[id]; ok {
+			result[id] = p
+		} else {
+			missingIDs = append(missingIDs, id)
+		}
+	}
+	progressCacheMu.Unlock()
 
 	if len(missingIDs) > 0 {
 		var mu sync.Mutex
@@ -128,29 +182,18 @@ func GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
 				sem <- struct{}{}
 				defer func() { <-sem }()
 
-				p, err := GetBenchmarkProgress(bid)
+				p, _, err := GetBenchmarkProgress(bid, false)
 				if err == nil {
 					mu.Lock()
-					cacheData[bid] = p
+					result[bid] = p
 					mu.Unlock()
 				}
 			}(id)
 		}
 		wg.Wait()
-
-		progressCacheMu.Lock()
-		// Reload to merge with any concurrent updates
-		if current, err := LoadBenchmarkProgressCache(); err == nil {
-			for k, v := range cacheData {
-				current[k] = v
-			}
-			cacheData = current
-		}
-		SaveBenchmarkProgressCache(cacheData)
-		progressCacheMu.Unlock()
 	}
 
-	return cacheData, nil
+	return result, nil
 }
 
 // RefreshAllBenchmarkProgresses fetches fresh data for all benchmarks and updates the cache.
@@ -182,7 +225,7 @@ func RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			prog, err := GetBenchmarkProgress(bid)
+			prog, _, err := GetBenchmarkProgress(bid, false)
 			if err == nil {
 				mu.Lock()
 				results[bid] = prog
@@ -192,14 +235,6 @@ func RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
 	}
 	wg.Wait()
 
-	if len(results) > 0 {
-		progressCacheMu.Lock()
-		if err := SaveBenchmarkProgressCache(results); err != nil {
-			// Log error but return results
-			fmt.Printf("failed to save cache: %v\n", err)
-		}
-		progressCacheMu.Unlock()
-	}
 	return results, nil
 }
 
@@ -254,7 +289,7 @@ func LoadBenchmarkProgressCache() (map[int]models.BenchmarkProgress, error) {
 // CheckAndRefreshIfNeeded checks if the given scenario score is a new highscore for any benchmark
 // and refreshes that benchmark if so.
 func CheckAndRefreshIfNeeded(rec models.ScenarioRecord) {
-	scenarioName, ok := rec.Stats["Scenario Name"].(string)
+	scenarioName, ok := rec.Stats["Scenario"].(string)
 	if !ok {
 		return
 	}
@@ -310,15 +345,8 @@ func CheckAndRefreshIfNeeded(rec models.ScenarioRecord) {
 	if len(benchmarksToRefresh) > 0 {
 		go func() {
 			for bid := range benchmarksToRefresh {
-				if p, err := GetBenchmarkProgress(bid); err == nil {
-					progressCacheMu.Lock()
-					// Reload cache to avoid overwriting other updates
-					if currentCache, err := LoadBenchmarkProgressCache(); err == nil {
-						currentCache[bid] = p
-						_ = SaveBenchmarkProgressCache(currentCache)
-					}
-					progressCacheMu.Unlock()
-				}
+				// GetBenchmarkProgress now updates the cache internally
+				_, _, _ = GetBenchmarkProgress(bid, false)
 			}
 		}()
 	}

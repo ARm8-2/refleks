@@ -15,8 +15,9 @@ import (
 
 // WatcherService wraps the watcher.Watcher and provides a smaller surface for app.go.
 type WatcherService struct {
-	ctx context.Context
-	w   *watcher.Watcher
+	ctx              context.Context
+	w                *watcher.Watcher
+	onScenarioParsed func(models.ScenarioRecord)
 }
 
 // NewWatcherService creates a new service bound to the provided context.
@@ -51,6 +52,9 @@ func (s *WatcherService) Start(path string, cfgSettings *models.Settings, mouseP
 		s.w = watcher.New(s.ctx, cfg)
 		if mouseProv != nil {
 			s.w.SetMouseProvider(mouseProv)
+		}
+		if s.onScenarioParsed != nil {
+			s.w.SetOnScenarioParsed(s.onScenarioParsed)
 		}
 	} else {
 		if err := s.w.UpdateConfig(cfg); err != nil {
@@ -103,6 +107,7 @@ func (s *WatcherService) UpdateConfig(cfg models.WatcherConfig) error {
 
 // SetOnScenarioParsed sets the callback for when a scenario is parsed.
 func (s *WatcherService) SetOnScenarioParsed(fn func(models.ScenarioRecord)) {
+	s.onScenarioParsed = fn
 	if s.w != nil {
 		s.w.SetOnScenarioParsed(fn)
 	}

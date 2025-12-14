@@ -193,12 +193,12 @@ func (w *Watcher) scanOnce(includeAll bool) error {
 		}
 		w.mu.Unlock()
 
-		// Emit a flat ScenarioRecord to simplify the IPC contract.
-		runtime.EventsEmit(w.ctx, "ScenarioAdded", rec)
-
 		if w.OnScenarioParsed != nil {
 			w.OnScenarioParsed(rec)
 		}
+
+		// Emit a flat ScenarioRecord to simplify the IPC contract.
+		runtime.EventsEmit(w.ctx, "ScenarioAdded", rec)
 	}
 	return nil
 }

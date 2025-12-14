@@ -4,9 +4,9 @@ import {
   ClearCache as _ClearCache,
   DownloadAndInstallUpdate as _DownloadAndInstallUpdate,
   GenerateSessionInsights as _GenerateSessionInsights,
+  GetAllBenchmarkProgresses as _GetAllBenchmarkProgresses,
   GetBenchmarkProgress as _GetBenchmarkProgress,
   GetBenchmarks as _GetBenchmarks,
-  GetCachedBenchmarkProgress as _GetCachedBenchmarkProgress,
   GetDefaultSettings as _GetDefaultSettings,
   GetFavoriteBenchmarks as _GetFavoriteBenchmarks,
   GetRecentScenarios as _GetRecentScenarios,
@@ -14,6 +14,7 @@ import {
   GetVersion as _GetVersion,
   LaunchKovaaksPlaylist as _LaunchKovaaksPlaylist,
   LaunchKovaaksScenario as _LaunchKovaaksScenario,
+  RefreshAllBenchmarkProgresses as _RefreshAllBenchmarkProgresses,
   ResetSettings as _ResetSettings,
   SaveScenarioNote as _SaveScenarioNote,
   SaveSessionNote as _SaveSessionNote,
@@ -124,9 +125,14 @@ export async function getBenchmarkProgress(benchmarkId: number): Promise<Benchma
   return data as unknown as BenchmarkProgress
 }
 
-export async function getCachedBenchmarkProgress(benchmarkId: number): Promise<BenchmarkProgress | null> {
-  const data = await _GetCachedBenchmarkProgress(benchmarkId)
-  return data as unknown as BenchmarkProgress | null
+export async function getAllBenchmarkProgresses(): Promise<Record<number, BenchmarkProgress>> {
+  const data = await _GetAllBenchmarkProgresses()
+  return data as unknown as Record<number, BenchmarkProgress>
+}
+
+export async function refreshAllBenchmarkProgresses(): Promise<Record<number, BenchmarkProgress>> {
+  const data = await _RefreshAllBenchmarkProgresses()
+  return data as unknown as Record<number, BenchmarkProgress>
 }
 
 // Launch a Kovaak's scenario via Steam deeplink
