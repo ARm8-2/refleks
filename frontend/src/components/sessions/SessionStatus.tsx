@@ -43,7 +43,7 @@ export function SessionStatus({ currentSession, analysis, recommendation }: Sess
       </div>
 
       {/* Playtime */}
-      <div className="flex items-center gap-1.5 text-secondary" title="Actual Playtime">
+      <div className="flex items-center gap-1.5 text-secondary" title="Playtime">
         <Gamepad2 size={14} />
         <span>{formatDuration(analysis.playtimeMinutes * 60000) || '<1m'}</span>
       </div>
