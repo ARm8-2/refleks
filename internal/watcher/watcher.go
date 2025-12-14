@@ -77,7 +77,7 @@ func (w *Watcher) Start() error {
 		}
 	}
 
-	runtime.EventsEmit(w.ctx, "WatcherStarted", map[string]string{"path": w.cfg.Path})
+	runtime.EventsEmit(w.ctx, "watcher:started", map[string]string{"path": w.cfg.Path})
 
 	// Optionally parse existing files once
 	if w.cfg.ParseExistingOnStart {
@@ -198,7 +198,7 @@ func (w *Watcher) scanOnce(includeAll bool) error {
 		}
 
 		// Emit a flat ScenarioRecord to simplify the IPC contract.
-		runtime.EventsEmit(w.ctx, "ScenarioAdded", rec)
+		runtime.EventsEmit(w.ctx, "scenario:added", rec)
 	}
 	return nil
 }
@@ -416,7 +416,7 @@ func (w *Watcher) ReloadTraces() int {
 	w.mu.Unlock()
 
 	for _, rec := range toEmit {
-		runtime.EventsEmit(w.ctx, "ScenarioUpdated", rec)
+		runtime.EventsEmit(w.ctx, "scenario:updated", rec)
 	}
 	return len(toEmit)
 }

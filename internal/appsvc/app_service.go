@@ -2,6 +2,7 @@ package appsvc
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -44,6 +45,15 @@ func NewAppService(ctx context.Context, settings *models.Settings) *AppService {
 	svc.watcher.SetOnScenarioParsed(func(rec models.ScenarioRecord) {
 		benchmarks.CheckAndRefreshIfNeeded(rec)
 	})
+
+	benchmarks.SetOnProgressUpdated(func(id int, p models.BenchmarkProgress) {
+		runtime.EventsEmit(ctx, fmt.Sprintf("benchmark:progress:%d", id), p)
+		runtime.EventsEmit(ctx, "benchmark:progress:updated", map[string]interface{}{
+			"id":       id,
+			"progress": p,
+		})
+	})
+
 	svc.updater = NewUpdaterService(constants.GitHubOwner, constants.GitHubRepo, constants.AppVersion)
 	return svc
 }

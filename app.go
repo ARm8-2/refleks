@@ -76,7 +76,7 @@ func (a *App) startup(ctx context.Context) {
 		}
 		if info.HasUpdate {
 			runtime.LogInfof(a.ctx, "update available: %s -> %s", info.CurrentVersion, info.LatestVersion)
-			runtime.EventsEmit(a.ctx, "UpdateAvailable", info)
+			runtime.EventsEmit(a.ctx, "update:available", info)
 		}
 	}()
 }

@@ -47,7 +47,7 @@ export function ScenariosPage() {
       }
     }).catch(() => { /* ignore */ })
     try {
-      off = EventsOn('WatcherStarted', (data: any) => {
+      off = EventsOn('watcher:started', (data: any) => {
         const p = data && (data.path || data.Path)
         if (typeof p === 'string' && p.length > 0) {
           setWatchPath(p)

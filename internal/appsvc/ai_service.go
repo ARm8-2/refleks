@@ -38,17 +38,17 @@ func (s *AIService) GenerateSessionInsights(reqID string, sessionID string, reco
 		key = s.settings.GeminiAPIKey
 	}
 	if key == "" {
-		runtime.EventsEmit(s.ctx, "AI:Session:Error", map[string]any{"requestId": reqID, "error": "Missing Gemini API key. Set it in Settings or REFLEKS_GEMINI_API_KEY."})
+		runtime.EventsEmit(s.ctx, "ai:session:error", map[string]any{"requestId": reqID, "error": "Missing Gemini API key. Set it in Settings or REFLEKS_GEMINI_API_KEY."})
 		return
 	}
 	input := ai.SessionInsightsInput{SessionID: sessionID, Records: records, Options: options, Prompt: prompt}
 	system, user := ai.BuildSessionPrompt(input)
 	client, err := ai.NewGeminiClient(s.ctx, key, "")
 	if err != nil {
-		runtime.EventsEmit(s.ctx, "AI:Session:Error", map[string]any{"requestId": reqID, "error": err.Error()})
+		runtime.EventsEmit(s.ctx, "ai:session:error", map[string]any{"requestId": reqID, "error": err.Error()})
 		return
 	}
-	runtime.EventsEmit(s.ctx, "AI:Session:Start", map[string]any{"requestId": reqID, "sessionId": sessionID})
+	runtime.EventsEmit(s.ctx, "ai:session:start", map[string]any{"requestId": reqID, "sessionId": sessionID})
 	ctx, cancel := context.WithCancel(s.ctx)
 	s.mu.Lock()
 	s.cancels[reqID] = cancel
@@ -59,17 +59,17 @@ func (s *AIService) GenerateSessionInsights(reqID string, sessionID string, reco
 			s.mu.Lock()
 			delete(s.cancels, reqID)
 			s.mu.Unlock()
-			runtime.EventsEmit(s.ctx, "AI:Session:Done", map[string]any{"requestId": reqID, "cached": false})
+			runtime.EventsEmit(s.ctx, "ai:session:done", map[string]any{"requestId": reqID, "cached": false})
 		}()
 		err := client.StreamSessionInsights(ctx, system, user, func(text string) {
-			runtime.EventsEmit(s.ctx, "AI:Session:Delta", map[string]any{"requestId": reqID, "text": text})
+			runtime.EventsEmit(s.ctx, "ai:session:delta", map[string]any{"requestId": reqID, "text": text})
 		})
 		if err != nil && err != context.Canceled {
 			msg := err.Error()
 			if strings.Contains(msg, "API key") || strings.Contains(msg, "400") || strings.Contains(msg, "403") {
 				msg = "Failed to connect to Gemini. Please check your API key."
 			}
-			runtime.EventsEmit(s.ctx, "AI:Session:Error", map[string]any{"requestId": reqID, "error": msg})
+			runtime.EventsEmit(s.ctx, "ai:session:error", map[string]any{"requestId": reqID, "error": msg})
 		}
 	}()
 }

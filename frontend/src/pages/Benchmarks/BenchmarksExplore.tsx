@@ -1,10 +1,11 @@
-import { ChevronDown, RefreshCw, Search, Sparkles, Star } from 'lucide-react'
+import { ChevronDown, Search, Sparkles, Star } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { EventsOn } from '../../../wailsjs/runtime'
 import { BenchmarkCard, Dropdown, Input } from '../../components'
 import { useBenchmarkRecommendations } from '../../hooks/useBenchmarkRecommendations'
 import { usePageState } from '../../hooks/usePageState'
 import { useUIState } from '../../hooks/useUIState'
-import { getAllBenchmarkProgresses, refreshAllBenchmarkProgresses } from '../../lib/internal'
+import { getAllBenchmarkProgresses } from '../../lib/internal'
 import { DEFAULT_BENCHMARK_CATEGORY, getBenchmarkCategory } from '../../lib/utils'
 import type { BenchmarkListItem } from '../../types/domain'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
@@ -116,18 +117,18 @@ export function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOp
         setProgressMap(data || {})
         setLoadingRecs(false)
       }).catch(() => setLoadingRecs(false))
+
+      const cancel = EventsOn("benchmark:progress:updated", (data: any) => {
+        if (data && data.id && data.progress) {
+          setProgressMap(prev => ({ ...prev, [data.id]: data.progress }))
+        }
+      })
+
+      return () => {
+        if (typeof cancel === 'function') cancel()
+      }
     }
   }, [showRecs])
-
-  const handleRefreshRecs = async () => {
-    setLoadingRecs(true)
-    try {
-      const data = await refreshAllBenchmarkProgresses()
-      setProgressMap(data || {})
-    } finally {
-      setLoadingRecs(false)
-    }
-  }
 
   const recommendedItems = useBenchmarkRecommendations(items, benchmarksById, progressMap, showRecs)
 
@@ -204,11 +205,7 @@ export function BenchmarksExplore({ items, favorites, loading, onToggleFav, onOp
             {showRecs ? 'Recs' : 'Recs'}
           </button>
 
-          {showRecs && (
-            <button onClick={handleRefreshRecs} disabled={loadingRecs} className="p-2 rounded bg-surface-2 border border-primary text-primary hover:bg-surface-3 disabled:opacity-50" title="Refresh Recommendations">
-              <RefreshCw size={16} className={loadingRecs ? 'animate-spin' : ''} />
-            </button>
-          )}
+
         </div>
       </div>
 

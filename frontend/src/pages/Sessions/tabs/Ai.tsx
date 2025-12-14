@@ -28,12 +28,12 @@ export function AiTab({ sessionId, records }: { sessionId?: string; records?: Sc
 
   // Stream wiring
   useEffect(() => {
-    const offStart = EventsOn('AI:Session:Start', (e: StreamEvent) => {
+    const offStart = EventsOn('ai:session:start', (e: StreamEvent) => {
       if (!e?.requestId || e.requestId !== currentReqRef.current) return
       bufferRef.current = ''
       setHistory(prev => [...prev, { role: 'assistant', content: '' }])
     })
-    const offDelta = EventsOn('AI:Session:Delta', (e: StreamEvent) => {
+    const offDelta = EventsOn('ai:session:delta', (e: StreamEvent) => {
       if (!e?.requestId || e.requestId !== currentReqRef.current) return
       const t = e.text ?? ''
       if (!t) return
@@ -48,11 +48,11 @@ export function AiTab({ sessionId, records }: { sessionId?: string; records?: Sc
         return next
       })
     })
-    const offError = EventsOn('AI:Session:Error', (e: StreamEvent) => {
+    const offError = EventsOn('ai:session:error', (e: StreamEvent) => {
       if (!e?.requestId || e.requestId !== currentReqRef.current) return
       setHistory(prev => [...prev, { role: 'assistant', content: `\n\n[Error] ${e?.error || 'Unknown error'}` }])
     })
-    const offDone = EventsOn('AI:Session:Done', (e: StreamEvent) => {
+    const offDone = EventsOn('ai:session:done', (e: StreamEvent) => {
       if (!e?.requestId || e.requestId !== currentReqRef.current) return
       setTimeout(() => setRequestId(null), 0)
       currentReqRef.current = null

@@ -104,8 +104,8 @@ export function useOpenedBenchmarkProgress(input?: { id?: string | null; bench?:
       t = setTimeout(refresh, 700)
     }
 
-    const offAdd = EventsOn('ScenarioAdded', () => trigger())
-    const offUpd = EventsOn('ScenarioUpdated', () => trigger())
+    const offAdd = EventsOn('scenario:added', () => trigger())
+    const offUpd = EventsOn('scenario:updated', () => trigger())
 
     return () => {
       cancelled = true

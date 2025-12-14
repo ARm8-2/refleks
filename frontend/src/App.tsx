@@ -87,7 +87,7 @@ function TopNav() {
     // Proactive check (also handled by backend event)
     checkForUpdates().then((info) => { if (info?.hasUpdate) setUpdate(info) }).catch(() => { })
     // Listen for backend event
-    const off = EventsOn('UpdateAvailable', (data: any) => {
+    const off = EventsOn('update:available', (data: any) => {
       if (data && typeof data === 'object' && data.latestVersion) setUpdate(data as UpdateInfo)
     })
     return () => { try { off() } catch { /* noop */ } }
@@ -213,7 +213,7 @@ function AppLayout() {
 
   // Subscriptions effect: keep separate so it can cleanup/re-subscribe if handlers change
   useEffect(() => {
-    const off = EventsOn('ScenarioAdded', (data: any) => {
+    const off = EventsOn('scenario:added', (data: any) => {
       const rec = data && data.filePath && data.stats ? data : null
       if (rec) {
         addScenario(rec)
@@ -221,14 +221,14 @@ function AppLayout() {
       }
     })
 
-    const offUpd = EventsOn('ScenarioUpdated', (data: any) => {
+    const offUpd = EventsOn('scenario:updated', (data: any) => {
       const rec = data && data.filePath && data.stats ? data : null
       if (rec) {
         updateScenario(rec)
       }
     })
 
-    const offWatcher = EventsOn('WatcherStarted', (_data: any) => {
+    const offWatcher = EventsOn('watcher:started', (_data: any) => {
       // Clear current scenarios so re-parsed existing files don't duplicate entries
       setScenarios([])
       resetNew()

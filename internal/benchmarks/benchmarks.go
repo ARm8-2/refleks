@@ -29,7 +29,12 @@ var (
 	progressCacheMu     sync.Mutex
 	memProgressCache    map[int]models.BenchmarkProgress
 	memScenarioIndex    map[string][]int
+	onProgressUpdated   func(int, models.BenchmarkProgress)
 )
+
+func SetOnProgressUpdated(cb func(int, models.BenchmarkProgress)) {
+	onProgressUpdated = cb
+}
 
 const cacheFileName = "benchmarks.json"
 
@@ -114,6 +119,10 @@ func GetBenchmarkProgress(benchmarkId int, useCache bool) (models.BenchmarkProgr
 
 		memProgressCache[bid] = p
 		_ = SaveBenchmarkProgressCache(memProgressCache)
+
+		if onProgressUpdated != nil {
+			onProgressUpdated(bid, p)
+		}
 	}(benchmarkId, prog)
 
 	return prog, false, nil
