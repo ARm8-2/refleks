@@ -10,6 +10,7 @@ export { TraceAnalysis } from './scenarios/TraceAnalysis';
 export { TraceViewer } from './scenarios/TraceViewer';
 export { TTKMovingAverageChart } from './scenarios/TTKMovingAverageChart';
 export { TTKMovingAverageDetails } from './scenarios/TTKMovingAverageDetails';
+export { DailyActivity } from './sessions/DailyActivity';
 export { FatigueAlert } from './sessions/FatigueAlert';
 export { Findings } from './sessions/Findings';
 export { MetricsControls } from './sessions/MetricsControls';

@@ -22,7 +22,7 @@ export function SessionStatus({ currentSession, analysis, recommendation }: Sess
   const statusConfig = getStatusConfig(analysis.healthLevel, analysis.performanceTrend)
 
   return (
-    <div className="flex flex-wrap items-center gap-4 p-3 rounded border border-primary bg-surface-2 text-sm">
+    <div className="flex flex-wrap items-center gap-4 p-3 rounded border border-primary bg-surface-2 text-sm flex-1 min-w-[300px]">
       {/* Session health indicator */}
       <div className="flex items-center gap-2">
         <div
@@ -44,7 +44,7 @@ export function SessionStatus({ currentSession, analysis, recommendation }: Sess
 
       {/* Playtime */}
       <div className="flex items-center gap-1.5 text-secondary" title="Playtime">
-        <Gamepad2 size={14} />
+        <Gamepad2 size={18} />
         <span>{formatDuration(analysis.playtimeMinutes * 60000) || '<1m'}</span>
       </div>
 

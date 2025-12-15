@@ -37,6 +37,7 @@
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
+  --streak: #f97316;
   --gradient-bg: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
   --gradient-card: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%);
   --gradient-accent: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
@@ -91,6 +92,7 @@
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
+  --streak: #f97316;
   --gradient-bg: linear-gradient(135deg, #ffffff 0%, #f6f7f9 50%, #ebeff5 100%);
   --gradient-card: linear-gradient(135deg, #ffffff 0%, #f5f7fb 100%);
   --gradient-accent: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
@@ -145,6 +147,7 @@
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
+  --streak: #ffb86c;
   --gradient-bg: linear-gradient(135deg, #1f2030 0%, #2b2d3a 50%, #242638 100%);
   --gradient-card: linear-gradient(135deg, #2b2d3a 0%, #343746 100%);
   --gradient-accent: linear-gradient(135deg, #bd93f9 0%, #8a63d2 100%);
@@ -199,6 +202,7 @@
   --success: #b8bb26;
   --warning: #fabd2f;
   --error: #fb4934;
+  --streak: #fe8019;
   --gradient-bg: linear-gradient(135deg, #282828 0%, #3c3836 50%, #282828 100%);
   --gradient-card: linear-gradient(135deg, #3c3836 0%, #504945 100%);
   --gradient-accent: linear-gradient(135deg, #fabd2f 0%, #d79921 100%);
@@ -253,6 +257,7 @@
   --success: #b8bb26;
   --warning: #fabd2f;
   --error: #fb4934;
+  --streak: #d65d0e;
   --gradient-bg: linear-gradient(135deg, #fbf1c7 0%, #ebdbb2 50%, #f0e4c8 100%);
   --gradient-card: linear-gradient(135deg, #ebdbb2 0%, #d5c4a1 100%);
   --gradient-accent: linear-gradient(135deg, #fabd2f 0%, #d79921 100%);
@@ -307,6 +312,7 @@
   --success: #a3be8c;
   --warning: #ebcb8b;
   --error: #bf616a;
+  --streak: #d08770;
   --gradient-bg: linear-gradient(135deg, #2e3440 0%, #3b4252 50%, #2e3440 100%);
   --gradient-card: linear-gradient(135deg, #3b4252 0%, #434c5e 100%);
   --gradient-accent: linear-gradient(135deg, #88c0d0 0%, #5e81ac 100%);
@@ -361,6 +367,7 @@
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
+  --streak: #f97316;
   --gradient-bg: linear-gradient(135deg, #ffffff 0%, #eaf2fb 50%, #dae6f8 100%);
   --gradient-card: linear-gradient(135deg, #ffffff 0%, #ecf2f9 100%);
   --gradient-accent: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
@@ -415,6 +422,7 @@
   --success: #2aa198;
   --warning: #b58900;
   --error: #dc322f;
+  --streak: #cb4b16;
   --gradient-bg: linear-gradient(135deg, #002b36 0%, #073642 50%, #003845 100%);
   --gradient-card: linear-gradient(135deg, #073642 0%, #0a3a46 100%);
   --gradient-accent: linear-gradient(135deg, #268bd2 0%, #2aa198 100%);
@@ -469,6 +477,7 @@
   --success: #2aa198;
   --warning: #b58900;
   --error: #dc322f;
+  --streak: #cb4b16;
   --gradient-bg: linear-gradient(135deg, #fdf6e3 0%, #eee8d5 50%, #f0e4c8 100%);
   --gradient-card: linear-gradient(135deg, #eee8d5 0%, #f5efd8 100%);
   --gradient-accent: linear-gradient(135deg, #268bd2 0%, #2aa198 100%);
@@ -523,6 +532,7 @@
   --success: #22c55e;
   --warning: #eab308;
   --error: #f87171;
+  --streak: #f97316;
 
   --scrollbar-size: 10px;
   --scrollbar-track: transparent;

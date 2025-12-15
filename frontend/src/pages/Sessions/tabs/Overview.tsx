@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { FatigueAlert, Findings, MetricsControls, PerformanceVsSensChart, ScenarioBenchmarkProgress, SessionMetricsChart, SessionMixChart, SessionStatus, SummaryStats } from '../../../components'
+import { DailyActivity, FatigueAlert, Findings, MetricsControls, PerformanceVsSensChart, ScenarioBenchmarkProgress, SessionMetricsChart, SessionMixChart, SessionStatus, SummaryStats } from '../../../components'
 import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkProgress'
 import { usePageState } from '../../../hooks/usePageState'
 import { useStore } from '../../../hooks/useStore'
@@ -78,7 +78,10 @@ export function OverviewTab({ session }: OverviewTabProps) {
       <FatigueAlert currentSession={session} analysis={analysis} />
 
       {/* Quick session status bar */}
-      <SessionStatus currentSession={session} analysis={analysis} recommendation={recommendation} />
+      <div className="flex flex-wrap gap-3 w-full">
+        <SessionStatus currentSession={session} analysis={analysis} recommendation={recommendation} />
+        <DailyActivity currentSession={session} allSessions={allSessions} />
+      </div>
 
       {/* Global controls for this tab */}
       <MetricsControls

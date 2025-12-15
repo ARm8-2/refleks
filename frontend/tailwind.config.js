@@ -16,6 +16,7 @@ export default {
         success: 'var(--success)',
         warning: 'var(--warning)',
         danger: 'var(--error)',
+        streak: 'var(--streak)',
         contrast: 'var(--chart-contrast)',
         'on-accent': 'var(--text-on-accent)',
         preview: 'var(--preview-text)',
@@ -32,6 +33,7 @@ export default {
         success: 'var(--success)',
         warning: 'var(--warning)',
         danger: 'var(--error)',
+        streak: 'var(--streak)',
         input: 'var(--input-bg)',
         'input-muted': 'var(--input-muted-bg)',
         preview: 'var(--preview-bg)',
@@ -46,6 +48,7 @@ export default {
         success: 'var(--success)',
         warning: 'var(--warning)',
         danger: 'var(--error)',
+        streak: 'var(--streak)',
         preview: 'var(--preview-border)',
       },
       ringColor: {
@@ -58,6 +61,7 @@ export default {
         success: 'var(--success)',
         warning: 'var(--warning)',
         danger: 'var(--error)',
+        streak: 'var(--streak)',
       },
       divideColor: {
         primary: 'var(--border-primary)',
