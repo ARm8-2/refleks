@@ -109,25 +109,6 @@
 		},
 		{
 			"type": "shell",
-			"label": "Run Frontend Tests",
-			"command": "npm",
-			"args": [
-				"test",
-				"--prefix",
-				"frontend"
-			],
-			"options": {
-				"cwd": "${workspaceFolder}"
-			},
-			"problemMatcher": [],
-			"group": {
-				"kind": "test",
-				"isDefault": true
-			},
-			"detail": "Run tests for the frontend"
-		},
-		{
-			"type": "shell",
 			"label": "Serve Docs (static)",
 			"command": "python3",
 			"args": [
