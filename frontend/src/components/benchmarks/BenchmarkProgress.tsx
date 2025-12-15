@@ -49,29 +49,16 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
 
   const categories = progress?.categories || []
 
-  // Global data: recent scenarios and sessions to inform recommendations
-  const scenarios = useStore(s => s.scenarios)
   const sessions = useStore(s => s.sessions)
 
   // Ref to horizontal scroll container
   const containerRef = useRef<HTMLDivElement | null>(null)
 
-  // Helper: small triangle glyph like SummaryStats
-  const triangle = (dir: 'up' | 'down', colorVar: string) => (
-    <span
-      className="inline-block align-[-2px] text-[10px] leading-none"
-      style={{ color: `var(${colorVar})` }}
-      aria-hidden
-    >
-      {dir === 'up' ? '▲' : '▼'}
-    </span>
-  )
-
   // Resizable scenario column state (effects & dynamic columns defined after rank visibility calc)
   const { scenarioWidth, onHandleMouseDown } = useResizableScenarioColumn({ initialWidth: 220, min: 140, max: 600 })
 
   const overallRankName = rankDefs[(progress?.overallRank ?? 0) - 1]?.name || MISSING_STR
-  const [hScrollEnabled, setHScrollEnabled] = usePageState<boolean>('bench:progress:horizontalScroll', true)
+  const [hScrollEnabled, setHScrollEnabled] = usePageState<boolean>('bench:progress:horizontalScroll', false)
   const [compactMode, setCompactMode] = usePageState<boolean>('bench:progress:compactMode', false)
   const [showLegend, setShowLegend] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
