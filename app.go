@@ -60,8 +60,6 @@ func (a *App) startup(ctx context.Context) {
 		_, err := benchmarks.GetAllBenchmarkProgresses()
 		if err != nil {
 			runtime.LogErrorf(a.ctx, "benchmark cache sync failed: %v", err)
-		} else {
-			runtime.LogInfo(a.ctx, "benchmark cache synced")
 		}
 	}()
 
