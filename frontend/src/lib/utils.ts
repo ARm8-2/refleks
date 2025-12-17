@@ -1,15 +1,7 @@
 import type { ScenarioRecord } from '../types/ipc';
+import { BENCHMARK_CATEGORY_ABBREVIATIONS, DEFAULT_BENCHMARK_CATEGORY, MISSING_STR } from './constants';
 
-export const MISSING_STR = 'N/A'
-
-// Benchmark category constants and helper
-export const DEFAULT_BENCHMARK_CATEGORY = 'Other'
-
-export const BENCHMARK_CATEGORY_ABBREVIATIONS: Record<string, string[]> = {
-  'Aim Groups': ['VT', 'rA', 'xyz', 'A+', 'cAt', 'CB', 'MIR', 'STR', 'JP', 'cA', 'STK', 'TSK'],
-  'Community Benchmarks': ['AOI', 'e', 'roa', 'AS', 'ATB', 'ATF', 'cR', 'DM', 'ETB', 'GM', 'HEW', 'mHb', 'pA', 'PG', 'sA', 'R&G', 'RBE', 'rxn', 'Ssb', 'TNT', 'TZY', 'VR'],
-  'Notable Creator Benchmarks': ['A', 'w', 'TPT', 'm', 'M', 'WH', 'V', 'D&R', 'MH']
-}
+export { BENCHMARK_CATEGORY_ABBREVIATIONS, DEFAULT_BENCHMARK_CATEGORY, MISSING_STR };
 
 export function getBenchmarkCategory(abbreviation: string): string {
   const abbr = (abbreviation ?? '').toString().trim()

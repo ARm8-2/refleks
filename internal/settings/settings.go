@@ -75,13 +75,22 @@ func Sanitize(s models.Settings) models.Settings {
 	return s
 }
 
-// ConfigBaseDir returns the application config directory under the user's home dir: $HOME/.refleks
-func ConfigBaseDir() (string, error) {
+// GetConfigDir returns the application config directory under the user's home dir: $HOME/.refleks
+// It does not ensure the directory exists.
+func GetConfigDir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	base := filepath.Join(home, constants.ConfigDirName)
+	return filepath.Join(home, constants.ConfigDirName), nil
+}
+
+// EnsureConfigDir returns the application config directory, creating it if necessary.
+func EnsureConfigDir() (string, error) {
+	base, err := GetConfigDir()
+	if err != nil {
+		return "", err
+	}
 	if err := os.MkdirAll(base, 0o755); err != nil {
 		return "", err
 	}
@@ -90,7 +99,7 @@ func ConfigBaseDir() (string, error) {
 
 // DefaultTracesDirString returns the default traces directory as a concrete path string.
 func DefaultTracesDirString() string {
-	base, err := ConfigBaseDir()
+	base, err := GetConfigDir()
 	if err != nil {
 		// Fallback to relative subdir if home/config cannot be determined
 		return filepath.ToSlash(constants.TracesSubdirName)
@@ -100,7 +109,7 @@ func DefaultTracesDirString() string {
 
 // DefaultTracesDir returns the resolved default traces directory ($HOME/.refleks/traces).
 func DefaultTracesDir() (string, error) {
-	base, err := ConfigBaseDir()
+	base, err := GetConfigDir()
 	if err != nil {
 		return "", err
 	}
@@ -118,7 +127,7 @@ func ExpandPathPlaceholders(p string) string {
 
 // Path returns the settings file path under the user home config directory ($HOME/.refleks).
 func Path() (string, error) {
-	base, err := ConfigBaseDir()
+	base, err := GetConfigDir()
 	if err != nil {
 		return "", err
 	}
@@ -147,6 +156,10 @@ func Load() (models.Settings, error) {
 
 // Save writes settings to disk.
 func Save(s models.Settings) error {
+	// Ensure config dir exists
+	if _, err := EnsureConfigDir(); err != nil {
+		return err
+	}
 	path, err := Path()
 	if err != nil {
 		return err

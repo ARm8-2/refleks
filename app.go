@@ -51,6 +51,11 @@ func (a *App) startup(ctx context.Context) {
 
 	// Initialize coordinated AppService (wires mouse, watcher, updater)
 	a.appSvc = appsvc.NewAppService(a.ctx, &a.settings)
+	// Auto-start watcher with default/configured path
+	if err := a.appSvc.StartWatcher(""); err != nil {
+		runtime.LogWarningf(a.ctx, "Auto-start watcher failed: %v", err)
+	}
+
 	// Initialize AI service
 	a.aiSvc = appsvc.NewAIService(a.ctx, &a.settings)
 
@@ -81,7 +86,7 @@ func (a *App) startup(ctx context.Context) {
 }
 
 // StartWatcher begins monitoring the given directory for new Kovaak's CSV files.
-func (a *App) StartWatcher(path string) (bool, string) {
+func (a *App) StartWatcher(path string) error {
 	if a.appSvc == nil {
 		a.appSvc = appsvc.NewAppService(a.ctx, &a.settings)
 	}
@@ -89,9 +94,9 @@ func (a *App) StartWatcher(path string) (bool, string) {
 }
 
 // StopWatcher stops the watcher if running.
-func (a *App) StopWatcher() (bool, string) {
+func (a *App) StopWatcher() error {
 	if a.appSvc == nil {
-		return true, "not running"
+		return nil
 	}
 	return a.appSvc.StopWatcher()
 }
@@ -156,7 +161,7 @@ func (a *App) GetSettings() models.Settings {
 }
 
 // UpdateSettings updates settings and persists them; applies to watcher if needed.
-func (a *App) UpdateSettings(s models.Settings) (bool, string) {
+func (a *App) UpdateSettings(s models.Settings) error {
 	if a.appSvc == nil {
 		a.appSvc = appsvc.NewAppService(a.ctx, &a.settings)
 	}
@@ -168,15 +173,15 @@ func (a *App) GetFavoriteBenchmarks() []string {
 	return appsettings.GetFavoriteBenchmarks(a.settings)
 }
 
-func (a *App) SetFavoriteBenchmarks(ids []string) (bool, string) {
+func (a *App) SetFavoriteBenchmarks(ids []string) error {
 	if err := appsettings.SetFavoriteBenchmarks(&a.settings, ids); err != nil {
-		return false, err.Error()
+		return err
 	}
-	return true, "ok"
+	return nil
 }
 
 // ResetSettings resets settings to application defaults and applies them immediately.
-func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, resetSessionNotes bool) (bool, string) {
+func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, resetSessionNotes bool) error {
 	newSettings := a.settings
 
 	if resetConfig {
@@ -226,11 +231,11 @@ func (a *App) GetDefaultSettings() models.Settings {
 }
 
 // LaunchKovaaksScenario opens the Steam deep-link to launch a given scenario in Kovaak's.
-// The "mode" parameter is optional; default is "challenge". Returns (true, "ok") on success.
-func (a *App) LaunchKovaaksScenario(name string, mode string) (bool, string) {
+// The "mode" parameter is optional; default is "challenge". Returns error on failure.
+func (a *App) LaunchKovaaksScenario(name string, mode string) error {
 	n := url.PathEscape(name)
 	if n == "" {
-		return false, "missing scenario name"
+		return fmt.Errorf("missing scenario name")
 	}
 	if mode == "" {
 		mode = "challenge"
@@ -238,19 +243,19 @@ func (a *App) LaunchKovaaksScenario(name string, mode string) (bool, string) {
 	m := url.PathEscape(mode)
 	deeplink := fmt.Sprintf("steam://run/%d/?action=jump-to-scenario;name=%s;mode=%s", constants.KovaaksSteamAppID, n, m)
 	runtime.BrowserOpenURL(a.ctx, deeplink)
-	return true, "ok"
+	return nil
 }
 
 // LaunchKovaaksPlaylist opens a Steam deep-link that jumps directly to a shared playlist by sharecode.
-// Returns (true, "ok") on success or (false, reason) on failure.
-func (a *App) LaunchKovaaksPlaylist(sharecode string) (bool, string) {
+// Returns error on failure.
+func (a *App) LaunchKovaaksPlaylist(sharecode string) error {
 	sc := url.PathEscape(sharecode)
 	if sc == "" {
-		return false, "missing sharecode"
+		return fmt.Errorf("missing sharecode")
 	}
 	deeplink := fmt.Sprintf("steam://run/%d/?action=jump-to-playlist;sharecode=%s", constants.KovaaksSteamAppID, sc)
 	runtime.BrowserOpenURL(a.ctx, deeplink)
-	return true, "ok"
+	return nil
 }
 
 // --- Updater IPC ---
@@ -265,26 +270,26 @@ func (a *App) CheckForUpdates() (models.UpdateInfo, error) {
 
 // DownloadAndInstallUpdate downloads the specified (or latest) installer and starts it, then quits the app.
 // version may be empty to auto-detect latest.
-func (a *App) DownloadAndInstallUpdate(version string) (bool, string) {
+func (a *App) DownloadAndInstallUpdate(version string) error {
 	if a.appSvc == nil {
 		a.appSvc = appsvc.NewAppService(a.ctx, &a.settings)
 	}
 	if err := a.appSvc.DownloadAndInstallUpdate(a.ctx, version); err != nil {
-		return false, err.Error()
+		return err
 	}
 	// Gracefully quit current app so installer can proceed
 	go func() {
 		time.Sleep(1 * time.Second)
 		runtime.Quit(a.ctx)
 	}()
-	return true, "ok"
+	return nil
 }
 
 // --- AI Insights (Sessions) ---
 
 // GenerateSessionInsights starts a streaming AI analysis for the provided session records.
-// Returns a requestId used to correlate streaming events or an error message on failure.
-func (a *App) GenerateSessionInsights(sessionId string, records []models.ScenarioRecord, prompt string, options models.AIOptions) (string, string) {
+// Returns a requestId used to correlate streaming events or an error on failure.
+func (a *App) GenerateSessionInsights(sessionId string, records []models.ScenarioRecord, prompt string, options models.AIOptions) (string, error) {
 	if a.aiSvc == nil {
 		a.aiSvc = appsvc.NewAIService(a.ctx, &a.settings)
 	}
@@ -294,38 +299,38 @@ func (a *App) GenerateSessionInsights(sessionId string, records []models.Scenari
 	reqID := a.aiSvc.NewRequestID()
 	// Pass options directly (models.AIOptions) into the AI service.
 	a.aiSvc.GenerateSessionInsights(reqID, sessionId, records, prompt, options)
-	return reqID, "ok"
+	return reqID, nil
 }
 
 // CancelSessionInsights cancels a running AI stream by requestId.
-func (a *App) CancelSessionInsights(requestId string) (bool, string) {
+func (a *App) CancelSessionInsights(requestId string) error {
 	if a.aiSvc == nil {
-		return false, "ai service not initialized"
+		return fmt.Errorf("ai service not initialized")
 	}
 	a.aiSvc.Cancel(requestId)
-	return true, "ok"
+	return nil
 }
 
 // SaveScenarioNote persists a user note and sensitivity for a scenario.
-func (a *App) SaveScenarioNote(scenario, notes, sens string) (bool, string) {
+func (a *App) SaveScenarioNote(scenario, notes, sens string) error {
 	if a.appSvc == nil {
-		return false, "app service not initialized"
+		return fmt.Errorf("app service not initialized")
 	}
 	return a.appSvc.SaveScenarioNote(scenario, notes, sens)
 }
 
 // SaveSessionNote persists a user name and notes for a session.
-func (a *App) SaveSessionNote(sessionID, name, notes string) (bool, string) {
+func (a *App) SaveSessionNote(sessionID, name, notes string) error {
 	if a.appSvc == nil {
-		return false, "app service not initialized"
+		return fmt.Errorf("app service not initialized")
 	}
 	return a.appSvc.SaveSessionNote(sessionID, name, notes)
 }
 
 // ClearCache clears the application cache.
-func (a *App) ClearCache() (bool, string) {
+func (a *App) ClearCache() error {
 	if err := cache.ClearAll(); err != nil {
-		return false, err.Error()
+		return err
 	}
-	return true, "ok"
+	return nil
 }

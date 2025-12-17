@@ -20,7 +20,7 @@ func GetEnv(key string) string {
 	}
 	envLoadOnce.Do(func() {
 		// Try $HOME/.refleks/.env
-		if base, err := ConfigBaseDir(); err == nil {
+		if base, err := GetConfigDir(); err == nil {
 			_ = loadDotEnv(filepath.Join(base, ".env"))
 		}
 		// Fallback: try CWD/.env for developer convenience

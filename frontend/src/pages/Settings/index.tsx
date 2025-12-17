@@ -35,8 +35,6 @@ export function SettingsPage() {
     setSettings(prev => {
       if (!prev) return null
       const next = { ...prev, [key]: value }
-      if (key === 'theme') setTheme(value as Theme)
-      if (key === 'font') setFont(value as Font)
       return next
     })
   }

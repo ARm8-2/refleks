@@ -28,7 +28,7 @@ func Save(filename string, data any) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	dir, err := settings.ConfigBaseDir()
+	dir, err := settings.GetConfigDir()
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func Load(filename string, dest any) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	dir, err := settings.ConfigBaseDir()
+	dir, err := settings.GetConfigDir()
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func Exists(filename string) bool {
 	mu.Lock()
 	defer mu.Unlock()
 
-	dir, err := settings.ConfigBaseDir()
+	dir, err := settings.GetConfigDir()
 	if err != nil {
 		return false
 	}
@@ -85,7 +85,7 @@ func Delete(filename string) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	dir, err := settings.ConfigBaseDir()
+	dir, err := settings.GetConfigDir()
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func ClearAll() error {
 		fn()
 	}
 
-	dir, err := settings.ConfigBaseDir()
+	dir, err := settings.GetConfigDir()
 	if err != nil {
 		return err
 	}

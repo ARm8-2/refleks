@@ -2,6 +2,7 @@ package appsvc
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -27,9 +28,9 @@ func NewWatcherService(ctx context.Context) *WatcherService {
 
 // Start begins monitoring the given path. If path is empty, the settings' StatsDir or default is used.
 // The provided settings pointer will be mutated/persisted when the path is explicitly provided.
-func (s *WatcherService) Start(path string, cfgSettings *models.Settings, mouseProv mouse.Provider) (bool, string) {
+func (s *WatcherService) Start(path string, cfgSettings *models.Settings, mouseProv mouse.Provider) error {
 	if cfgSettings == nil {
-		return false, "missing settings"
+		return errors.New("missing settings")
 	}
 	if path == "" {
 		if cfgSettings.StatsDir != "" {
@@ -58,26 +59,23 @@ func (s *WatcherService) Start(path string, cfgSettings *models.Settings, mouseP
 		}
 	} else {
 		if err := s.w.UpdateConfig(cfg); err != nil {
-			return false, err.Error()
+			return err
 		}
 		s.w.Clear()
 	}
 	if err := s.w.Start(); err != nil {
 		runtime.LogErrorf(s.ctx, "Watcher start error: %v", err)
-		return false, err.Error()
+		return err
 	}
-	return true, "ok"
+	return nil
 }
 
 // Stop stops the watcher if running.
-func (s *WatcherService) Stop() (bool, string) {
+func (s *WatcherService) Stop() error {
 	if s.w == nil {
-		return true, "not running"
+		return nil
 	}
-	if err := s.w.Stop(); err != nil {
-		return false, err.Error()
-	}
-	return true, "stopped"
+	return s.w.Stop()
 }
 
 // GetRecent returns most recent parsed scenarios, up to optional limit.

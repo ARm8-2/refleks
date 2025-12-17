@@ -24,28 +24,19 @@ import {
   StopWatcher as _StopWatcher,
   UpdateSettings as _UpdateSettings
 } from '../../wailsjs/go/main/App'
-import type { models } from '../../wailsjs/go/models'
 import type { Benchmark, BenchmarkProgress, KovaaksLastScore, ScenarioRecord, Settings, UpdateInfo } from '../types/ipc'
-
-export type { models }
 
 // Typed wrappers around Wails-generated bindings with normalized results
 
 export async function startWatcher(path = ''): Promise<void> {
-  const res = await _StartWatcher(path)
-  if (res !== true) {
-    throw new Error(typeof res === 'string' ? res : 'StartWatcher failed')
-  }
+  await _StartWatcher(path)
 }
 
 export async function stopWatcher(): Promise<void> {
-  const res = await _StopWatcher()
-  if (res !== true) {
-    throw new Error(typeof res === 'string' ? res : 'StopWatcher failed')
-  }
+  await _StopWatcher()
 }
 
-export async function getRecentScenarios(limit: number): Promise<ScenarioRecord[]> {
+export async function getRecentScenarios(limit = 0): Promise<ScenarioRecord[]> {
   const res = await _GetRecentScenarios(limit)
   return (Array.isArray(res) ? res : []) as unknown as ScenarioRecord[]
 }
@@ -66,31 +57,19 @@ export async function getDefaultSettings(): Promise<Settings> {
 }
 
 export async function updateSettings(payload: Settings): Promise<void> {
-  const res = await _UpdateSettings(payload as unknown as models.Settings)
-  if (res !== true) {
-    throw new Error(typeof res === 'string' ? res : 'UpdateSettings failed')
-  }
+  await _UpdateSettings(payload as any)
 }
 
 export async function resetSettings(config: boolean, favorites: boolean, scenarioNotes: boolean, sessionNotes: boolean): Promise<void> {
-  const res = await _ResetSettings(config, favorites, scenarioNotes, sessionNotes)
-  if (res !== true) {
-    throw new Error(typeof res === 'string' ? res : 'ResetSettings failed')
-  }
+  await _ResetSettings(config, favorites, scenarioNotes, sessionNotes)
 }
 
 export async function saveScenarioNote(scenario: string, notes: string, sens: string): Promise<void> {
-  const res = await _SaveScenarioNote(scenario, notes, sens)
-  if (res !== true) {
-    throw new Error(typeof res === 'string' ? res : 'SaveScenarioNote failed')
-  }
+  await _SaveScenarioNote(scenario, notes, sens)
 }
 
 export async function saveSessionNote(sessionID: string, name: string, notes: string): Promise<void> {
-  const res = await _SaveSessionNote(sessionID, name, notes)
-  if (res !== true) {
-    throw new Error(typeof res === 'string' ? res : 'SaveSessionNote failed')
-  }
+  await _SaveSessionNote(sessionID, name, notes)
 }
 
 export async function getVersion(): Promise<string> {
@@ -104,10 +83,7 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
 }
 
 export async function downloadAndInstallUpdate(version = ''): Promise<void> {
-  const res = await _DownloadAndInstallUpdate(version)
-  if (res !== true) {
-    throw new Error(typeof res === 'string' ? res : 'DownloadAndInstallUpdate failed')
-  }
+  await _DownloadAndInstallUpdate(version)
 }
 
 export async function getBenchmarks(): Promise<Benchmark[]> {
@@ -122,8 +98,7 @@ export async function getFavoriteBenchmarks(): Promise<string[]> {
 }
 
 export async function setFavoriteBenchmarks(ids: string[]): Promise<void> {
-  const res = await _SetFavoriteBenchmarks(ids)
-  if (res !== true) throw new Error(typeof res === 'string' ? res : 'SetFavoriteBenchmarks failed')
+  await _SetFavoriteBenchmarks(ids)
 }
 
 export async function getBenchmarkProgress(benchmarkId: number): Promise<BenchmarkProgress> {
@@ -143,18 +118,12 @@ export async function refreshAllBenchmarkProgresses(): Promise<Record<number, Be
 
 // Launch a Kovaak's scenario via Steam deeplink
 export async function launchScenario(name: string, mode: string = 'challenge'): Promise<void> {
-  const res = await _LaunchKovaaksScenario(String(name || ''), String(mode || 'challenge'))
-  if (res !== true) {
-    throw new Error(typeof res === 'string' ? res : 'LaunchKovaaksScenario failed')
-  }
+  await _LaunchKovaaksScenario(String(name || ''), String(mode || 'challenge'))
 }
 
 // Launch a Kovaak's playlist via Steam deeplink using a sharecode
 export async function launchPlaylist(sharecode: string): Promise<void> {
-  const res = await _LaunchKovaaksPlaylist(String(sharecode || ''))
-  if (res !== true) {
-    throw new Error(typeof res === 'string' ? res : 'LaunchKovaaksPlaylist failed')
-  }
+  await _LaunchKovaaksPlaylist(String(sharecode || ''))
 }
 
 export async function generateSessionInsights(sessionId: string, records: ScenarioRecord[], prompt: string, options: any): Promise<string> {
@@ -163,15 +132,9 @@ export async function generateSessionInsights(sessionId: string, records: Scenar
 }
 
 export async function cancelSessionInsights(requestId: string): Promise<void> {
-  const res = await _CancelSessionInsights(String(requestId || ''))
-  if (res !== true) {
-    throw new Error(typeof res === 'string' ? res : 'CancelSessionInsights failed')
-  }
+  await _CancelSessionInsights(String(requestId || ''))
 }
 
 export async function clearCache(): Promise<void> {
-  const res = await _ClearCache()
-  if (res !== true) {
-    throw new Error(typeof res === 'string' ? res : 'ClearCache failed')
-  }
+  await _ClearCache()
 }

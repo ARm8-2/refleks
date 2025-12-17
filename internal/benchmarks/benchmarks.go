@@ -36,8 +36,6 @@ func SetOnProgressUpdated(cb func(int, models.BenchmarkProgress)) {
 	onProgressUpdated = cb
 }
 
-const cacheFileName = "benchmarks.json"
-
 func init() {
 	cache.RegisterOnClear(func() {
 		progressCacheMu.Lock()
@@ -275,7 +273,7 @@ func rebuildScenarioIndex() {
 func SaveBenchmarkProgressCache(data map[int]models.BenchmarkProgress) error {
 	memProgressCache = data
 	rebuildScenarioIndex()
-	return cache.Save(cacheFileName, data)
+	return cache.Save(constants.BenchmarksCacheFileName, data)
 }
 
 // LoadBenchmarkProgressCache loads the progress map from disk.
@@ -283,11 +281,11 @@ func LoadBenchmarkProgressCache() (map[int]models.BenchmarkProgress, error) {
 	if memProgressCache != nil {
 		return memProgressCache, nil
 	}
-	if !cache.Exists(cacheFileName) {
+	if !cache.Exists(constants.BenchmarksCacheFileName) {
 		return make(map[int]models.BenchmarkProgress), nil
 	}
 	var data map[int]models.BenchmarkProgress
-	if err := cache.Load(cacheFileName, &data); err != nil {
+	if err := cache.Load(constants.BenchmarksCacheFileName, &data); err != nil {
 		return nil, err
 	}
 	memProgressCache = data

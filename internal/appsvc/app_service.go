@@ -69,15 +69,15 @@ func (s *AppService) DownloadAndInstallUpdate(ctx context.Context, version strin
 }
 
 // StartWatcher starts the watcher using the stored settings and mouse provider.
-func (s *AppService) StartWatcher(path string) (bool, string) {
+func (s *AppService) StartWatcher(path string) error {
 	if s.settings == nil {
-		return false, "missing settings"
+		return fmt.Errorf("missing settings")
 	}
 	return s.watcher.Start(path, s.settings, s.mouse)
 }
 
 // StopWatcher stops the watcher.
-func (s *AppService) StopWatcher() (bool, string) {
+func (s *AppService) StopWatcher() error {
 	return s.watcher.Stop()
 }
 
@@ -93,13 +93,13 @@ func (s *AppService) IsWatcherRunning() bool {
 
 // UpdateSettings applies the given settings object, persists it, and updates
 // sub-services (mouse, watcher, traces) to reflect the change.
-func (s *AppService) UpdateSettings(newS models.Settings) (bool, string) {
+func (s *AppService) UpdateSettings(newS models.Settings) error {
 	return s.OverwriteSettings(newS)
 }
 
 // OverwriteSettings applies the given settings object exactly as provided (after sanitization),
 // persists it, and updates sub-services. It does NOT merge with previous settings.
-func (s *AppService) OverwriteSettings(newS models.Settings) (bool, string) {
+func (s *AppService) OverwriteSettings(newS models.Settings) error {
 	newS = appsettings.Sanitize(newS)
 
 	var prevSettings models.Settings
@@ -117,7 +117,7 @@ func (s *AppService) OverwriteSettings(newS models.Settings) (bool, string) {
 	}
 
 	if err := appsettings.Save(newS); err != nil {
-		return false, err.Error()
+		return err
 	}
 	// Apply to mouse provider
 	if s.mouse == nil {
@@ -148,46 +148,8 @@ func (s *AppService) OverwriteSettings(newS models.Settings) (bool, string) {
 	}
 
 	// Ensure watcher reflects latest settings. If running, restart with new config; if stopped, just update config.
-	if s.watcher != nil {
-		cfg := models.WatcherConfig{
-			Path:                 newS.StatsDir,
-			SessionGap:           time.Duration(newS.SessionGapMinutes) * time.Minute,
-			PollInterval:         time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
-			ParseExistingOnStart: true,
-			ParseExistingLimit:   newS.MaxExistingOnStart,
-		}
-
-		if needsWatcherRestart {
-			if s.watcher.IsRunning() {
-				_, _ = s.watcher.Stop()
-				if err := s.watcher.UpdateConfig(cfg); err != nil {
-					return false, err.Error()
-				}
-				s.watcher.Clear()
-				if s.mouse != nil {
-					s.watcher.SetMouseProvider(s.mouse)
-				}
-				if ok, msg := s.watcher.Start(newS.StatsDir, s.settings, s.mouse); !ok {
-					runtime.LogErrorf(s.ctx, "Watcher restart error: %s", msg)
-					return false, msg
-				}
-			} else {
-				if err := s.watcher.UpdateConfig(cfg); err != nil {
-					return false, err.Error()
-				}
-				s.watcher.Clear()
-				if s.mouse != nil {
-					s.watcher.SetMouseProvider(s.mouse)
-				}
-			}
-		} else {
-			// If not restarting, try to update config if stopped (safe).
-			// If running, we can't update config, but since we determined needsWatcherRestart=false,
-			// the relevant config parts haven't changed anyway.
-			if !s.watcher.IsRunning() {
-				_ = s.watcher.UpdateConfig(cfg)
-			}
-		}
+	if err := s.updateWatcher(newS, needsWatcherRestart); err != nil {
+		return err
 	}
 
 	// Apply traces directory override for persistence and reload if changed
@@ -201,13 +163,60 @@ func (s *AppService) OverwriteSettings(newS models.Settings) (bool, string) {
 		n := s.watcher.ReloadTraces()
 		runtime.LogInfof(s.ctx, "reloaded traces for %d scenarios after tracesDir change", n)
 	}
-	return true, "ok"
+	return nil
+}
+
+// updateWatcher handles restarting or reconfiguring the watcher based on settings changes.
+func (s *AppService) updateWatcher(newS models.Settings, needsRestart bool) error {
+	if s.watcher == nil {
+		return nil
+	}
+	cfg := models.WatcherConfig{
+		Path:                 newS.StatsDir,
+		SessionGap:           time.Duration(newS.SessionGapMinutes) * time.Minute,
+		PollInterval:         time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
+		ParseExistingOnStart: true,
+		ParseExistingLimit:   newS.MaxExistingOnStart,
+	}
+
+	if needsRestart {
+		if s.watcher.IsRunning() {
+			_ = s.watcher.Stop()
+			if err := s.watcher.UpdateConfig(cfg); err != nil {
+				return err
+			}
+			s.watcher.Clear()
+			if s.mouse != nil {
+				s.watcher.SetMouseProvider(s.mouse)
+			}
+			if err := s.watcher.Start(newS.StatsDir, s.settings, s.mouse); err != nil {
+				runtime.LogErrorf(s.ctx, "Watcher restart error: %v", err)
+				return err
+			}
+		} else {
+			if err := s.watcher.UpdateConfig(cfg); err != nil {
+				return err
+			}
+			s.watcher.Clear()
+			if s.mouse != nil {
+				s.watcher.SetMouseProvider(s.mouse)
+			}
+		}
+	} else {
+		// If not restarting, try to update config if stopped (safe).
+		// If running, we can't update config, but since we determined needsWatcherRestart=false,
+		// the relevant config parts haven't changed anyway.
+		if !s.watcher.IsRunning() {
+			_ = s.watcher.UpdateConfig(cfg)
+		}
+	}
+	return nil
 }
 
 // SaveScenarioNote updates the note and sensitivity for a specific scenario.
-func (s *AppService) SaveScenarioNote(scenario, notes, sens string) (bool, string) {
+func (s *AppService) SaveScenarioNote(scenario, notes, sens string) error {
 	if s.settings == nil {
-		return false, "settings not loaded"
+		return fmt.Errorf("settings not loaded")
 	}
 	if s.settings.ScenarioNotes == nil {
 		s.settings.ScenarioNotes = make(map[string]models.ScenarioNote)
@@ -217,16 +226,16 @@ func (s *AppService) SaveScenarioNote(scenario, notes, sens string) (bool, strin
 		Sens:  sens,
 	}
 	if err := appsettings.Save(*s.settings); err != nil {
-		return false, err.Error()
+		return err
 	}
-	return true, ""
+	return nil
 }
 
 // SaveSessionNote updates the name and notes for a specific session.
 // This triggers a rebuild of bindings.
-func (s *AppService) SaveSessionNote(sessionID, name, notes string) (bool, string) {
+func (s *AppService) SaveSessionNote(sessionID, name, notes string) error {
 	if s.settings == nil {
-		return false, "settings not loaded"
+		return fmt.Errorf("settings not loaded")
 	}
 	if s.settings.SessionNotes == nil {
 		s.settings.SessionNotes = make(map[string]models.SessionNote)
@@ -236,7 +245,7 @@ func (s *AppService) SaveSessionNote(sessionID, name, notes string) (bool, strin
 		Notes: notes,
 	}
 	if err := appsettings.Save(*s.settings); err != nil {
-		return false, err.Error()
+		return err
 	}
-	return true, ""
+	return nil
 }
