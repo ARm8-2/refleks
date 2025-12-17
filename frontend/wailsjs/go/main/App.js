@@ -42,6 +42,10 @@ export function GetFavoriteBenchmarks() {
   return window['go']['main']['App']['GetFavoriteBenchmarks']();
 }
 
+export function GetLastScenarioScores(arg1) {
+  return window['go']['main']['App']['GetLastScenarioScores'](arg1);
+}
+
 export function GetRecentScenarios(arg1) {
   return window['go']['main']['App']['GetRecentScenarios'](arg1);
 }

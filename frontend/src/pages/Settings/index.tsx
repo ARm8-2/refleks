@@ -246,6 +246,14 @@ export function SettingsPage() {
                   className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
               </Field>
+              <Field label="Persona Name override (optional)">
+                <input
+                  value={settings.personaNameOverride || ''}
+                  onChange={e => updateField('personaNameOverride', e.target.value)}
+                  placeholder="Steam Persona Name"
+                  className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
+                />
+              </Field>
               <Field label="Traces directory">
                 <input
                   value={settings.tracesDir}

@@ -9,6 +9,7 @@ import {
   GetBenchmarks as _GetBenchmarks,
   GetDefaultSettings as _GetDefaultSettings,
   GetFavoriteBenchmarks as _GetFavoriteBenchmarks,
+  GetLastScenarioScores as _GetLastScenarioScores,
   GetRecentScenarios as _GetRecentScenarios,
   GetSettings as _GetSettings,
   GetVersion as _GetVersion,
@@ -24,7 +25,7 @@ import {
   UpdateSettings as _UpdateSettings
 } from '../../wailsjs/go/main/App'
 import type { models } from '../../wailsjs/go/models'
-import type { Benchmark, BenchmarkProgress, ScenarioRecord, Settings, UpdateInfo } from '../types/ipc'
+import type { Benchmark, BenchmarkProgress, KovaaksLastScore, ScenarioRecord, Settings, UpdateInfo } from '../types/ipc'
 
 export type { models }
 
@@ -47,6 +48,11 @@ export async function stopWatcher(): Promise<void> {
 export async function getRecentScenarios(limit: number): Promise<ScenarioRecord[]> {
   const res = await _GetRecentScenarios(limit)
   return (Array.isArray(res) ? res : []) as unknown as ScenarioRecord[]
+}
+
+export async function getLastScenarioScores(scenarioName: string): Promise<KovaaksLastScore[]> {
+  const res = await _GetLastScenarioScores(scenarioName)
+  return (Array.isArray(res) ? res : []) as unknown as KovaaksLastScore[]
 }
 
 export async function getSettings(): Promise<Settings> {

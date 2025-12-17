@@ -67,6 +67,7 @@ import type { Font, Theme } from '../lib/theme'
 export interface Settings {
   steamInstallDir?: string
   steamIdOverride?: string
+  personaNameOverride?: string
   statsDir: string
   tracesDir: string
   sessionGapMinutes: number
@@ -97,4 +98,15 @@ export interface UpdateInfo {
   hasUpdate: boolean
   downloadUrl?: string
   releaseNotes?: string
+}
+
+export interface KovaaksScoreAttributes {
+  score: number
+  challengeStart: string
+}
+
+export interface KovaaksLastScore {
+  id: string
+  type: string
+  attributes: KovaaksScoreAttributes
 }

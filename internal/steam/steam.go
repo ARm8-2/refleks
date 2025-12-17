@@ -31,11 +31,39 @@ func GetSteamID() string {
 
 	// Priority 3: parse Steam's loginusers.vdf to find MostRecent user
 	loginUsersPath := steamLoginUsersPath()
-	id, err := parseMostRecentSteamID(loginUsersPath)
+	id, _, err := parseMostRecentUser(loginUsersPath)
 	if err != nil {
 		return ""
 	}
 	return id
+}
+
+// GetPersonaName returns the PersonaName of the currently logged-in (MostRecent) Steam user.
+// Priority order:
+// 1) settings override (Advanced)
+// 2) environment variable override
+// 3) loginusers.vdf MostRecent user
+func GetPersonaName() string {
+	// Priority 1: explicit override in settings (Advanced)
+	if s, err := settings.Load(); err == nil {
+		s = settings.Sanitize(s)
+		if v := strings.TrimSpace(s.PersonaNameOverride); v != "" {
+			return v
+		}
+	}
+
+	// Priority 2: environment variable override
+	if env := settings.GetEnv(constants.EnvPersonaNameVar); strings.TrimSpace(env) != "" {
+		return strings.TrimSpace(env)
+	}
+
+	// Priority 3: parse Steam's loginusers.vdf to find MostRecent user
+	loginUsersPath := steamLoginUsersPath()
+	_, name, err := parseMostRecentUser(loginUsersPath)
+	if err != nil {
+		return ""
+	}
+	return name
 }
 
 // steamLoginUsersPath builds the expected path to Steam's loginusers.vdf using settings.
@@ -51,12 +79,12 @@ func steamLoginUsersPath() string {
 	return filepath.Join(steamDir, "config", "loginusers.vdf")
 }
 
-// parseMostRecentSteamID parses the Valve KeyValues (VDF) loginusers file and returns
-// the SteamID64 for the entry marked with MostRecent = 1.
-func parseMostRecentSteamID(path string) (string, error) {
+// parseMostRecentUser parses the Valve KeyValues (VDF) loginusers file and returns
+// the SteamID64 and PersonaName for the entry marked with MostRecent = 1.
+func parseMostRecentUser(path string) (string, string, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// Remove // comments to simplify tokenization
@@ -135,7 +163,7 @@ func parseMostRecentSteamID(path string) (string, error) {
 	for {
 		t, ok := next()
 		if !ok {
-			return "", fmt.Errorf("'users' section not found")
+			return "", "", fmt.Errorf("'users' section not found")
 		}
 		if t.kind == "str" && equalFoldTrim(t.val, "users") {
 			break
@@ -143,7 +171,7 @@ func parseMostRecentSteamID(path string) (string, error) {
 	}
 	t, ok := next()
 	if !ok || t.kind != "brace" || t.val != "{" {
-		return "", fmt.Errorf("missing '{' after users")
+		return "", "", fmt.Errorf("missing '{' after users")
 	}
 
 	// iterate over entries: "<steamid>" { kv }
@@ -170,6 +198,7 @@ func parseMostRecentSteamID(path string) (string, error) {
 		// parse block until matching '}'
 		foundMostRecent := false
 		mostRecentVal := "0"
+		personaName := ""
 		depth := 1
 		for depth > 0 {
 			t2, ok := next()
@@ -205,14 +234,17 @@ func parseMostRecentSteamID(path string) (string, error) {
 				foundMostRecent = true
 				mostRecentVal = trimWS(vtok.val)
 			}
+			if equalFoldTrim(keyName, "PersonaName") {
+				personaName = trimWS(vtok.val)
+			}
 		}
 		if foundMostRecent && (mostRecentVal == "1" || mostRecentVal == "true") {
-			return steamID, nil
+			return steamID, personaName, nil
 		}
 		// else continue to next entry
 	}
 
-	return "", fmt.Errorf("no user with MostRecent = 1 found")
+	return "", "", fmt.Errorf("no user with MostRecent = 1 found")
 }
 
 func stripVDFComments(s string) string {

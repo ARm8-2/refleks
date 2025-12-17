@@ -22,6 +22,8 @@ export function GetDefaultSettings():Promise<models.Settings>;
 
 export function GetFavoriteBenchmarks():Promise<Array<string>>;
 
+export function GetLastScenarioScores(arg1:string):Promise<Array<models.KovaaksLastScore>>;
+
 export function GetRecentScenarios(arg1:number):Promise<Array<models.ScenarioRecord>>;
 
 export function GetSettings():Promise<models.Settings>;

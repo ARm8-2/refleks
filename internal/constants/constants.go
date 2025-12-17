@@ -10,6 +10,10 @@ const (
 
 	// Kovaaks player progress endpoint. Use fmt.Sprintf with benchmarkId and steamId.
 	KovaaksPlayerProgressURL = "https://kovaaks.com/webapp-backend/benchmarks/player-progress-rank-benchmark?benchmarkId=%d&steamId=%s"
+
+	// Kovaaks last scores endpoint. Use fmt.Sprintf with username and scenarioName.
+	KovaaksLastScoresURL = "https://kovaaks.com/webapp-backend/user/scenario/last-scores/by-name?username=%s&scenarioName=%s"
+
 	// DefaultRecentCap bounds how many recent scenarios we retain in memory when
 	// no explicit limit is set in configuration.
 	DefaultRecentCap = 500
@@ -44,6 +48,8 @@ const (
 	// Environment variable names
 	// If set, this overrides SteamID detection from loginusers.vdf
 	EnvSteamIDVar = "REFLEKS_STEAM_ID"
+	// If set, this overrides PersonaName detection from loginusers.vdf
+	EnvPersonaNameVar = "REFLEKS_PERSONA_NAME"
 	// If set, this overrides the default stats directory (useful in dev containers)
 	EnvStatsDirVar = "REFLEKS_STATS_DIR"
 	// If set, this overrides the stored Gemini API key for AI insights

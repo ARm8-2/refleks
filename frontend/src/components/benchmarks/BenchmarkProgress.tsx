@@ -1,4 +1,4 @@
-import { Info, NotebookPen, Play, Settings2 } from 'lucide-react'
+import { ChartLine, Info, NotebookPen, Play, Settings2 } from 'lucide-react'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useBenchmarkVisibility } from '../../hooks/useBenchmarkVisibility'
 import { useDragScroll } from '../../hooks/useDragScroll'
@@ -15,6 +15,7 @@ import { Toggle } from '../shared/Toggle'
 import { BenchmarkControls } from './BenchmarkControls'
 import { BenchmarkInfoModal } from './BenchmarkInfoModal'
 import { RecommendationIcon } from './RecommendationIcon'
+import { ScenarioHistoryModal } from './ScenarioHistoryModal'
 import { ScenarioNotesModal } from './ScenarioNotesModal'
 
 type BenchmarkProgressProps = {
@@ -90,6 +91,11 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
         [modalState.scenario]: { notes, sens }
       }
     }))
+  }
+
+  const [historyModalState, setHistoryModalState] = useState<{ open: boolean, scenario: string, thresholds?: number[] }>({ open: false, scenario: '' })
+  const openHistory = (scenario: string, thresholds: number[]) => {
+    setHistoryModalState({ open: true, scenario, thresholds })
   }
 
   // Build name sets and historical metrics used for recommendations
@@ -186,10 +192,10 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
 
   // Constants for non-rank columns
   const REC_W = RECOMMEND_COL_WIDTH, PLAY_W = PLAY_COL_WIDTH, SCORE_W = SCORE_COL_WIDTH, NOTES_W = NOTES_COL_WIDTH, ENERGY_W = ENERGY_COL_WIDTH, PAD_W = PADDING_COL_WIDTH
-  // Dynamic grid columns (flex growth for ranks): Scenario | Pad | Notes | Recom | Play | Pad | Score | Rank1..N
+  // Dynamic grid columns (flex growth for ranks): Scenario | Pad | Notes | Recom | Play | History | Pad | Score | Rank1..N
   const dynamicColumns = useMemo(() => {
     const rankTracks = visibleRankIndices.map(() => `minmax(${RANK_MIN_WIDTH}px,1fr)`).join(' ')
-    return `${Math.round(scenarioWidth)}px ${PAD_W}px ${NOTES_W}px ${REC_W}px ${PLAY_W}px ${PAD_W}px ${SCORE_W}px ${rankTracks}${hasEnergy ? ` ${ENERGY_W}px` : ''}`
+    return `${Math.round(scenarioWidth)}px ${PAD_W}px ${NOTES_W}px ${REC_W}px ${PLAY_W}px ${PLAY_W}px ${PAD_W}px ${SCORE_W}px ${rankTracks}${hasEnergy ? ` ${ENERGY_W}px` : ''}`
   }, [scenarioWidth, visibleRankIndices.length, hasEnergy])
 
   // Attach refined wheel scroll: only enable horizontal wheel mapping when
@@ -253,6 +259,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                       <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
                       <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
                       <div className="text-[11px] text-secondary uppercase tracking-wide text-center" title="Recommendation score"></div>
+                      <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
                       <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
                       <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
                       <div className="text-[11px] text-secondary uppercase tracking-wide">Score</div>
@@ -360,6 +367,16 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                           <Play size={compactMode ? 14 : 16} />
                                         </button>
                                       </div>
+                                      <div className="flex items-center justify-center">
+                                        <button
+                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-surface-3 border border-transparent hover:border-primary`}
+                                          title="Last 10 Scores"
+                                          onClick={() => openHistory(sName, s.thresholds)}
+                                          aria-label={`History for ${sName}`}
+                                        >
+                                          <ChartLine size={compactMode ? 14 : 16} />
+                                        </button>
+                                      </div>
                                       <div />
                                       <div className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} text-primary flex items-center`}>{numberFmt(score)}</div>
                                       {visibleRankIndices.map((ri) => {
@@ -419,6 +436,16 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
           initialSens={modalState.sens}
           onClose={() => setModalState(s => ({ ...s, open: false }))}
           onSave={saveNotes}
+        />
+      )}
+
+      {historyModalState.open && (
+        <ScenarioHistoryModal
+          isOpen={historyModalState.open}
+          scenarioName={historyModalState.scenario}
+          onClose={() => setHistoryModalState(s => ({ ...s, open: false }))}
+          ranks={progress.ranks}
+          thresholds={historyModalState.thresholds}
         />
       )}
     </div>

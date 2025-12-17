@@ -13,6 +13,7 @@ import (
 	"refleks/internal/cache"
 	"refleks/internal/constants"
 	"refleks/internal/models"
+	"refleks/internal/scenarios"
 	appsettings "refleks/internal/settings"
 	"refleks/internal/traces"
 )
@@ -101,6 +102,11 @@ func (a *App) GetRecentScenarios(limit int) []models.ScenarioRecord {
 		return nil
 	}
 	return a.appSvc.GetRecent(limit)
+}
+
+// GetLastScenarioScores fetches the last 10 scores for a given scenario from KovaaK's API.
+func (a *App) GetLastScenarioScores(scenarioName string) ([]models.KovaaksLastScore, error) {
+	return scenarios.GetLastScores(scenarioName)
 }
 
 // GetBenchmarks returns the embedded benchmarks list for the Explore UI.
