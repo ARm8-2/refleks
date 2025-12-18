@@ -31,7 +31,7 @@ type KovaaksScoreAttributes struct {
 	Hash           string  `json:"hash"`
 	Cm360          float64 `json:"cm360"`
 	Kills          int     `json:"kills"`
-	Score          int     `json:"score"`
+	Score          float64 `json:"score"`
 	AvgFps         float64 `json:"avgFps"`
 	AvgTtk         float64 `json:"avgTtk"`
 	FovScale       string  `json:"fovScale"`
