@@ -8,6 +8,10 @@
 			"args": [
 				"build",
 				"-trimpath",
+				"-webview2",
+				"embed",
+				"-ldflags",
+				"-s -w",
 				"-platform",
 				"windows/amd64"
 			],
@@ -64,6 +68,10 @@
 				"build",
 				"-trimpath",
 				"-nsis",
+				"-webview2",
+				"embed",
+				"-ldflags",
+				"-s -w",
 				"-platform",
 				"windows/amd64"
 			],

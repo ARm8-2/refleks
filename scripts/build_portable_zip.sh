@@ -14,7 +14,7 @@ EXE="${OUTDIR}/refleks.exe"
 # Ensure binary exists
 if [[ ! -f "${EXE}" ]]; then
 	echo "Building portable binary..."
-	wails build -trimpath -platform windows/amd64
+	wails build -trimpath -webview2 embed -ldflags "-s -w" -platform windows/amd64
 fi
 
 STAGE="build/portable"
