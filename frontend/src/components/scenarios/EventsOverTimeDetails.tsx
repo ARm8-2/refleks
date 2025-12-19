@@ -1,5 +1,6 @@
 import { InfoBox } from '..'
-import { CHART_DECIMALS, formatNumber, formatPct, formatSeconds } from '../../lib/utils'
+import { CHART_DECIMALS } from '../../lib/constants'
+import { formatNumber, formatPct, formatSeconds } from '../../lib/utils'
 
 type EventsOverTimeDetailsProps = {
   summary: {

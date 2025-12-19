@@ -3,7 +3,8 @@ import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
-import { CHART_DECIMALS, extractChartValue, formatNumber, formatSeconds, MISSING_STR } from '../../lib/utils'
+import { CHART_DECIMALS, MISSING_STR } from '../../lib/constants'
+import { extractChartValue, formatNumber, formatSeconds } from '../../lib/utils'
 
 type TTKMovingAverageChartProps = {
   labels: string[]

@@ -1,8 +1,6 @@
 import type { ScenarioRecord } from '../types/ipc';
 import { BENCHMARK_CATEGORY_ABBREVIATIONS, DEFAULT_BENCHMARK_CATEGORY, MISSING_STR } from './constants';
 
-export { BENCHMARK_CATEGORY_ABBREVIATIONS, DEFAULT_BENCHMARK_CATEGORY, MISSING_STR };
-
 export function getBenchmarkCategory(abbreviation: string): string {
   const abbr = (abbreviation ?? '').toString().trim()
   let category = DEFAULT_BENCHMARK_CATEGORY
@@ -83,11 +81,15 @@ export function formatPct01(v: any): string {
 // Generic numeric formatter used across the UI. Trims trailing zeros for
 // readability (e.g., 1.00 -> 1, 1.50 -> 1.5).
 export function formatNumber(v: any, decimals = 2, trimTrailingZeros = true): string {
+  if (v == null || v === '') return MISSING_STR
   const n = typeof v === 'number' ? v : Number(v)
-  if (!isFinite(n)) return MISSING_STR
-  let s = n.toFixed(decimals)
-  if (trimTrailingZeros && decimals > 0) s = s.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')
-  return s
+  if (!Number.isFinite(n)) return MISSING_STR
+
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: trimTrailingZeros ? 0 : decimals,
+    maximumFractionDigits: decimals,
+    useGrouping: true
+  }).format(n)
 }
 
 // Format a value that may be either a fraction (0..1) or an already-multiplied
@@ -160,23 +162,6 @@ export function extractChartValue(ctx: any): number | undefined {
   if (val == null) return undefined
   const n = typeof val === 'number' ? val : Number(val)
   return Number.isFinite(n) ? n : undefined
-}
-
-// Common chart formatting decimal defaults
-export const CHART_DECIMALS = {
-  pctTick: 0 as const,
-  pctTooltip: 1 as const,
-  numTick: 0 as const,
-  numTooltip: 0 as const,
-  ttkTick: 1 as const,
-  ttkTooltip: 3 as const,
-  sensTick: 2 as const,
-  sensTooltip: 2 as const,
-  kpmTick: 0 as const,
-  kpmTooltip: 1 as const,
-  detailNum: 3 as const,
-  timeTick: 0 as const,
-  timeTooltip: 2 as const,
 }
 
 // Format seconds for mm:ss with optional fractional seconds (e.g., 3.45 -> "0:03.45")

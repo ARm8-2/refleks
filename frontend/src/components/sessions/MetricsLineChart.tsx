@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import { useChartTheme } from '../../hooks/useChartTheme';
-import { CHART_DECIMALS, extractChartValue, formatNumber, formatPct, formatSeconds, formatUiValueForLabel } from '../../lib/utils';
+import { CHART_DECIMALS } from '../../lib/constants';
+import { extractChartValue, formatNumber, formatPct, formatSeconds, formatUiValueForLabel } from '../../lib/utils';
 import { useChartBoxContext } from '../shared/ChartBox';
 
 type MetricsLineChartProps = {

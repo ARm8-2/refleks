@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { Radar } from 'react-chartjs-2';
 import { useChartTheme } from '../../hooks/useChartTheme';
-import { CHART_DECIMALS, formatNumber } from '../../lib/utils';
+import { CHART_DECIMALS } from '../../lib/constants';
+import { formatNumber } from '../../lib/utils';
 
 type ScenarioMixRadarChartProps = { labels: string[]; counts: number[] }
 

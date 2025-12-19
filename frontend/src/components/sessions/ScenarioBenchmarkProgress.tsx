@@ -3,8 +3,9 @@ import { useDragScroll } from '../../hooks/useDragScroll'
 import { useHorizontalWheelScroll } from '../../hooks/useHorizontalWheelScroll'
 import { usePageState } from '../../hooks/usePageState'
 import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
-import { cellFill, computeFillColor, numberFmt, RANK_MIN_WIDTH, SCORE_COL_WIDTH } from '../../lib/benchmarks'
-import { MISSING_STR } from '../../lib/utils'
+import { cellFill, computeFillColor, PADDING_COL_WIDTH, RANK_MIN_WIDTH, SCORE_COL_WIDTH } from '../../lib/benchmarks'
+import { MISSING_STR } from '../../lib/constants'
+import { formatNumber } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 import { InfoBox } from '../shared/InfoBox'
 import { Toggle } from '../shared/Toggle'
@@ -49,17 +50,17 @@ export function ScenarioBenchmarkProgress({
 
   // Resizable scenario column + dynamic grid columns
   const { scenarioWidth, onHandleMouseDown } = useResizableScenarioColumn({ initialWidth: 220, min: 140, max: 600 })
-  // Columns: Scenario | Score | Rank1..N (each rank flexible)
+  // Columns: Scenario | Pad | Score | Rank1..N (each rank flexible)
   const dynamicColumns = useMemo(() => {
     const rankTracks = ranks.map(() => `minmax(${RANK_MIN_WIDTH}px,1fr)`).join(' ')
-    return `${Math.round(scenarioWidth)}px ${SCORE_COL_WIDTH}px ${rankTracks}`
+    return `${Math.round(scenarioWidth)}px ${PADDING_COL_WIDTH}px ${SCORE_COL_WIDTH}px ${rankTracks}`
   }, [scenarioWidth, ranks.length])
 
   // Wheel -> horizontal scroll only when hovering over the rank columns
-  // The ranks are placed after the scenario + score columns, so only start mapping
+  // The ranks are placed after the scenario + pad + score columns, so only start mapping
   // when cursor is to the right of those columns.
   const [hScrollEnabled, setHScrollEnabled] = usePageState<boolean>('sessions:scenario-progress:horizontalScroll', true)
-  useHorizontalWheelScroll(containerRef, { excludeLeftWidth: scenarioWidth + SCORE_COL_WIDTH, enabled: hScrollEnabled })
+  useHorizontalWheelScroll(containerRef, { excludeLeftWidth: scenarioWidth + PADDING_COL_WIDTH + SCORE_COL_WIDTH, enabled: hScrollEnabled })
   // Drag -> allow grabbing and dragging to scroll horizontally for all columns (except interactive elements / resize handle)
   // Always enable drag-to-scroll regardless of the wheel mapping toggle
   useDragScroll(containerRef, { axis: 'x' })
@@ -113,6 +114,7 @@ export function ScenarioBenchmarkProgress({
                     <div className="h-full border-l border-secondary group-hover:border-accent" />
                   </div>
                 </div>
+                <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
                 <div className="text-[11px] text-secondary uppercase tracking-wide">Score</div>
                 {ranks.map((r: { name: string; color: string }) => (
                   <div key={r.name} className="text-[11px] uppercase tracking-wide text-center" style={{ color: r.color || 'var(--text-secondary)' }}>{r.name}</div>
@@ -123,7 +125,8 @@ export function ScenarioBenchmarkProgress({
                   return (
                     <>
                       <div className="text-[13px] text-primary truncate flex items-center">{scenarioName}</div>
-                      <div className="text-[12px] text-primary flex items-center">{numberFmt(score)}</div>
+                      <div />
+                      <div className="text-[12px] text-primary flex items-center">{formatNumber(score)}</div>
                       {ranks.map((r: { name: string; color: string }, i: number) => {
                         const fill = cellFill(i, score, maxes)
                         const fillColor = computeFillColor(scenario.scenarioRank, ranks)
@@ -131,7 +134,7 @@ export function ScenarioBenchmarkProgress({
                         return (
                           <div key={r.name + i} className="text-[12px] text-center px-4 rounded relative overflow-hidden flex items-center justify-center bg-surface-2">
                             <div className="absolute inset-y-0 left-0 rounded-l transition-all duration-150" style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }} />
-                            <span className="relative z-10 w-full h-full py-1 flex items-center justify-center" style={{ background: "radial-gradient(circle, var(--shadow-secondary), rgba(0, 0, 0, 0))" }}>{value != null ? numberFmt(value) : MISSING_STR}</span>
+                            <span className="relative z-10 w-full h-full py-1 flex items-center justify-center" style={{ background: "radial-gradient(circle, var(--shadow-secondary), rgba(0, 0, 0, 0))" }}>{value != null ? formatNumber(value) : MISSING_STR}</span>
                           </div>
                         )
                       })}

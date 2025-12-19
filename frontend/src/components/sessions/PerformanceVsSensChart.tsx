@@ -3,8 +3,9 @@ import { Scatter } from 'react-chartjs-2'
 import { ChartBox, Dropdown } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
+import { CHART_DECIMALS } from '../../lib/constants'
 import { colorWithAlpha, cssColorToRGB } from '../../lib/theme'
-import { CHART_DECIMALS, formatNumber, formatPct, formatUiValueForLabel, getScenarioName } from '../../lib/utils'
+import { formatNumber, formatPct, formatUiValueForLabel, getScenarioName } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 
 type PerformanceVsSensChartProps = {

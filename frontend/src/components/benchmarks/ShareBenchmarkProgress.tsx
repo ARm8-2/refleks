@@ -1,7 +1,8 @@
 import { Fragment } from 'react'
 import { REFLEKS_SYMBOL } from '../../assets'
-import { cellFill, computeFillColor, gridColsShare, numberFmt } from '../../lib/benchmarks'
-import { MISSING_STR } from '../../lib/utils'
+import { cellFill, computeFillColor, gridColsShare } from '../../lib/benchmarks'
+import { MISSING_STR } from '../../lib/constants'
+import { formatNumber } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 
 export type ShareBenchmarkProgressProps = {
@@ -49,7 +50,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
           Benchmark: <span className="font-medium text-primary">{bench.abbreviation} {bench.benchmarkName}</span> · Difficulty: <span className="font-medium text-primary">{bench.difficulties?.[difficultyIndex]?.difficultyName}</span>
         </div>
         <div className="mt-1 text-sm text-primary">
-          Overall Rank: <span className="font-medium">{overallRankName}</span> · Benchmark Progress: <span className="font-medium">{numberFmt(progress?.benchmarkProgress)}</span>
+          Overall Rank: <span className="font-medium">{overallRankName}</span> · Benchmark Progress: <span className="font-medium">{formatNumber(progress?.benchmarkProgress)}</span>
         </div>
       </div>
 
@@ -124,7 +125,7 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                               return (
                                 <Fragment key={sName}>
                                   <div className="text-[13px] text-primary truncate flex items-center">{sName}</div>
-                                  <div className="text-[12px] text-primary flex items-center">{numberFmt(score)}</div>
+                                  <div className="text-[12px] text-primary flex items-center">{formatNumber(score)}</div>
                                   {rankDefs.map((r, i) => {
                                     const fill = cellFill(i, score, maxes)
                                     const fillColor = computeFillColor(s?.scenarioRank, rankDefs)
@@ -132,19 +133,19 @@ export function ShareBenchmarkProgress({ bench, difficultyIndex, progress }: Sha
                                     return (
                                       <div key={r.name + i} className="text-[12px] text-center px-4 rounded relative overflow-hidden flex items-center justify-center bg-surface-2">
                                         <div className="absolute inset-y-0 left-0 rounded-l transition-all duration-150" style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }} />
-                                        <span className="relative z-10 w-full h-full py-1 flex items-center justify-center" style={{ background: "radial-gradient(circle, var(--shadow-secondary), rgba(0, 0, 0, 0))" }}>{value != null ? numberFmt(value) : MISSING_STR}</span>
+                                        <span className="relative z-10 w-full h-full py-1 flex items-center justify-center" style={{ background: "radial-gradient(circle, var(--shadow-secondary), rgba(0, 0, 0, 0))" }}>{value != null ? formatNumber(value) : MISSING_STR}</span>
                                       </div>
                                     )
                                   })}
                                   {hasEnergy && (s.energy == null && g.energy != null ? (
                                     si === 0 ? (
                                       <div className="text-[12px] text-primary flex items-center justify-center" style={{ gridRow: `span ${g.scenarios.length}` }}>
-                                        {numberFmt(Number(g.energy))}
+                                        {formatNumber(Number(g.energy))}
                                       </div>
                                     ) : null
                                   ) : (
                                     <div className="text-[12px] text-primary flex items-center justify-center">
-                                      {s.energy != null ? numberFmt(Number(s.energy)) : MISSING_STR}
+                                      {s.energy != null ? formatNumber(Number(s.energy)) : MISSING_STR}
                                     </div>
                                   ))}
                                 </Fragment>

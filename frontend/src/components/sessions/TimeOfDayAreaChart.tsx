@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import { useChartTheme } from '../../hooks/useChartTheme'
-import { CHART_DECIMALS, formatNumber } from '../../lib/utils'
+import { CHART_DECIMALS } from '../../lib/constants'
+import { formatNumber } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
 

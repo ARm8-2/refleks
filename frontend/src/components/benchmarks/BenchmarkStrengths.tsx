@@ -4,7 +4,8 @@ import { ChartBox, Dropdown, SegmentedControl } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
 import { normalizedRankProgress } from '../../lib/benchmarks'
-import { CHART_DECIMALS, formatNumber, formatPct } from '../../lib/utils'
+import { CHART_DECIMALS } from '../../lib/constants'
+import { formatNumber, formatPct } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress, ProgressScenario, RankDef } from '../../types/ipc'
 
 type BenchmarkStrengthsProps = {

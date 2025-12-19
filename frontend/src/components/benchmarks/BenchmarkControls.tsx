@@ -13,7 +13,14 @@ type BenchmarkControlsProps = {
   toggleManualRank: (idx: number) => void
   resetManual: () => void
   autoHidden: Set<number>
-  embedded?: boolean
+  showNotesCol: boolean
+  setShowNotesCol: (v: boolean) => void
+  showRecCol: boolean
+  setShowRecCol: (v: boolean) => void
+  showPlayCol: boolean
+  setShowPlayCol: (v: boolean) => void
+  showHistoryCol: boolean
+  setShowHistoryCol: (v: boolean) => void
 }
 
 export function BenchmarkControls({
@@ -22,28 +29,11 @@ export function BenchmarkControls({
   visibleRankCount, setVisibleRankCount,
   manuallyHidden, toggleManualRank, resetManual,
   autoHidden,
-  embedded
+  showNotesCol, setShowNotesCol,
+  showRecCol, setShowRecCol,
+  showPlayCol, setShowPlayCol,
+  showHistoryCol, setShowHistoryCol
 }: BenchmarkControlsProps) {
-  const controls = (
-    <div className="flex items-center gap-3">
-      <Toggle
-        size="sm"
-        label="Auto-hide earlier ranks"
-        checked={autoHideCleared}
-        onChange={setAutoHideCleared}
-      />
-      <Dropdown
-        size="sm"
-        label="Keep columns visible"
-        ariaLabel="Target number of visible rank columns"
-        value={String(visibleRankCount)}
-        onChange={v => setVisibleRankCount(Math.max(1, parseInt(v || '1', 10) || 1))}
-        options={Array.from({ length: Math.max(9, rankDefs.length) }, (_, i) => i + 1).map(n => ({ label: String(n), value: String(n) }))}
-      />
-      <Button size="sm" variant="ghost" onClick={resetManual} title="Reset manual visibility">Reset</Button>
-    </div>
-  )
-
   const ranks = (
     <div className="flex flex-wrap gap-1">
       {rankDefs.map((r, i) => {
@@ -68,54 +58,51 @@ export function BenchmarkControls({
     </div>
   )
 
-  if (embedded) {
-    return (
-      <div className="space-y-6">
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-primary">Visibility Settings</h3>
-          <div className="flex flex-wrap items-center gap-4">
-            <Toggle
-              size="sm"
-              label="Auto-hide earlier ranks"
-              checked={autoHideCleared}
-              onChange={setAutoHideCleared}
-            />
-            <div className="h-4 w-px bg-border-primary mx-2 hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-secondary">Keep visible:</span>
-              <Dropdown
-                size="sm"
-                ariaLabel="Target number of visible rank columns"
-                value={String(visibleRankCount)}
-                onChange={v => setVisibleRankCount(Math.max(1, parseInt(v || '1', 10) || 1))}
-                options={Array.from({ length: Math.max(9, rankDefs.length) }, (_, i) => i + 1).map(n => ({ label: String(n), value: String(n) }))}
-              />
-            </div>
-            <div className="flex-1" />
-            <Button size="sm" variant="ghost" onClick={resetManual} title="Reset manual visibility">Reset All</Button>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-primary">Rank Columns</h3>
-          <p className="text-xs text-secondary">Click to manually show/hide columns. Auto-hidden columns are disabled.</p>
-          <div>
-            {ranks}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="bg-surface-2 rounded border border-primary mt-4">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-primary">
-        <div className="text-sm font-medium text-primary">Rank columns</div>
-        {controls}
+    <div className="space-y-6">
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-primary">Feature Columns</h3>
+        <div className="flex flex-wrap gap-4">
+          <Toggle size="sm" label="Notes" checked={showNotesCol} onChange={setShowNotesCol} />
+          <Toggle size="sm" label="Recommendations" checked={showRecCol} onChange={setShowRecCol} />
+          <Toggle size="sm" label="Play Button" checked={showPlayCol} onChange={setShowPlayCol} />
+          <Toggle size="sm" label="History" checked={showHistoryCol} onChange={setShowHistoryCol} />
+        </div>
       </div>
-      <div className="p-3">
-        <div className="text-xs text-secondary mb-2">Toggle columns to show/hide. Auto-hidden columns are disabled.</div>
-        {ranks}
+
+      <div className="h-px bg-border-secondary" />
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-primary">Visibility Settings</h3>
+        <div className="flex flex-wrap items-center gap-4">
+          <Toggle
+            size="sm"
+            label="Auto-hide earlier ranks"
+            checked={autoHideCleared}
+            onChange={setAutoHideCleared}
+          />
+          <div className="h-4 w-px bg-border-primary mx-2 hidden sm:block" />
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-secondary">Keep visible:</span>
+            <Dropdown
+              size="sm"
+              ariaLabel="Target number of visible rank columns"
+              value={String(visibleRankCount)}
+              onChange={v => setVisibleRankCount(Math.max(1, parseInt(v || '1', 10) || 1))}
+              options={Array.from({ length: Math.max(9, rankDefs.length) }, (_, i) => i + 1).map(n => ({ label: String(n), value: String(n) }))}
+            />
+          </div>
+          <div className="flex-1" />
+          <Button size="sm" variant="ghost" onClick={resetManual} title="Reset manual visibility">Reset All</Button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-primary">Rank Columns</h3>
+        <p className="text-xs text-secondary">Click to manually show/hide columns. Auto-hidden columns are disabled.</p>
+        <div>
+          {ranks}
+        </div>
       </div>
     </div>
   )

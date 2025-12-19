@@ -5,9 +5,9 @@ import { Button, Dropdown } from '../../components'
 import { ClearCacheModal } from '../../components/settings/ClearCacheModal'
 import { ResetSettingsModal } from '../../components/settings/ResetSettingsModal'
 import { useStore } from '../../hooks/useStore'
+import { MISSING_STR } from '../../lib/constants'
 import { checkForUpdates, clearCache, downloadAndInstallUpdate, getSettings, getVersion, resetSettings, updateSettings } from '../../lib/internal'
 import { FONTS, setFont, setTheme, THEMES, type Font, type Theme } from '../../lib/theme'
-import { MISSING_STR } from '../../lib/utils'
 import type { Settings, UpdateInfo } from '../../types/ipc'
 
 export function SettingsPage() {

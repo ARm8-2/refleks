@@ -3,7 +3,8 @@ import { Line } from 'react-chartjs-2'
 import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
-import { CHART_DECIMALS, extractChartValue, formatMmSs, formatNumber, formatPct, formatSeconds, formatUiValueForLabel } from '../../lib/utils'
+import { CHART_DECIMALS } from '../../lib/constants'
+import { extractChartValue, formatMmSs, formatNumber, formatPct, formatSeconds, formatUiValueForLabel } from '../../lib/utils'
 
 type EventsOverTimeChartProps = {
   timeSec: number[]

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
-import { CHART_DECIMALS, formatNumber, formatPct, formatSeconds } from '../../../lib/utils'
+import { CHART_DECIMALS } from '../../../lib/constants'
+import { formatNumber, formatPct, formatSeconds } from '../../../lib/utils'
 import type { ScenarioRecord } from '../../../types/ipc'
 
 type StatKey = string

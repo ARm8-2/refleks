@@ -1,48 +1,27 @@
 import { ChartLine, Info, NotebookPen, Play, Settings2 } from 'lucide-react'
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBenchmarkVisibility } from '../../hooks/useBenchmarkVisibility'
 import { useDragScroll } from '../../hooks/useDragScroll'
 import { useHorizontalWheelScroll } from '../../hooks/useHorizontalWheelScroll'
 import { usePageState } from '../../hooks/usePageState'
 import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
 import { useStore } from '../../hooks/useStore'
-import { cellFill, computeFillColor, computeRecommendationScores, ENERGY_COL_WIDTH, NOTES_COL_WIDTH, numberFmt, PADDING_COL_WIDTH, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH, selectTopPicks, type ScenarioBenchmarkData } from '../../lib/benchmarks'
+import { computeRecommendationScores, ENERGY_COL_WIDTH, NOTES_COL_WIDTH, PADDING_COL_WIDTH, PLAY_COL_WIDTH, RANK_MIN_WIDTH, RECOMMEND_COL_WIDTH, SCORE_COL_WIDTH, selectTopPicks, type ScenarioBenchmarkData } from '../../lib/benchmarks'
+import { MISSING_STR } from '../../lib/constants'
 import { getSettings, launchScenario, saveScenarioNote } from '../../lib/internal'
-import { getScenarioName, MISSING_STR } from '../../lib/utils'
+import { formatNumber, getScenarioName } from '../../lib/utils'
 import type { BenchmarkProgress as ProgressModel } from '../../types/ipc'
+import { ContextMenu } from '../shared/ContextMenu'
 import { Modal } from '../shared/Modal'
 import { Toggle } from '../shared/Toggle'
 import { BenchmarkControls } from './BenchmarkControls'
 import { BenchmarkInfoModal } from './BenchmarkInfoModal'
-import { RecommendationIcon } from './RecommendationIcon'
+import { BenchmarkScenarioRow } from './BenchmarkScenarioRow'
 import { ScenarioHistoryModal } from './ScenarioHistoryModal'
 import { ScenarioNotesModal } from './ScenarioNotesModal'
 
 type BenchmarkProgressProps = {
   progress: ProgressModel
-}
-
-function EnergyCell({ s, g, si, hasEnergy }: { s: any, g: any, si: number, hasEnergy: boolean }) {
-  if (!hasEnergy) return null
-
-  // Group Energy (vt-energy style)
-  if (s.energy == null && g.energy != null) {
-    if (si === 0) {
-      return (
-        <div className="text-[12px] text-primary flex items-center justify-center" style={{ gridRow: `span ${g.scenarios.length}` }}>
-          {numberFmt(Number(g.energy))}
-        </div>
-      )
-    }
-    return null
-  }
-
-  // Scenario Energy (ra-s5 style)
-  return (
-    <div className="text-[12px] text-primary flex items-center justify-center">
-      {s.energy != null ? numberFmt(Number(s.energy)) : MISSING_STR}
-    </div>
-  )
 }
 
 export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
@@ -63,6 +42,14 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
   const [compactMode, setCompactMode] = usePageState<boolean>('bench:progress:compactMode', false)
   const [showLegend, setShowLegend] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+
+  // Column visibility state
+  const [showNotesCol, setShowNotesCol] = usePageState<boolean>('bench:progress:showNotesCol', true)
+  const [showRecCol, setShowRecCol] = usePageState<boolean>('bench:progress:showRecCol', true)
+  const [showPlayCol, setShowPlayCol] = usePageState<boolean>('bench:progress:showPlayCol', true)
+  const [showHistoryCol, setShowHistoryCol] = usePageState<boolean>('bench:progress:showHistoryCol', true)
+
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, scenario: string, thresholds: number[] } | null>(null)
 
   // Notes modal state
   const [settings, setSettings] = useState<any>(null)
@@ -190,26 +177,41 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
     return false
   }, [categories])
 
-  // Constants for non-rank columns
-  const REC_W = RECOMMEND_COL_WIDTH, PLAY_W = PLAY_COL_WIDTH, SCORE_W = SCORE_COL_WIDTH, NOTES_W = NOTES_COL_WIDTH, ENERGY_W = ENERGY_COL_WIDTH, PAD_W = PADDING_COL_WIDTH
   // Dynamic grid columns (flex growth for ranks): Scenario | Pad | Notes | Recom | Play | History | Pad | Score | Rank1..N
   const dynamicColumns = useMemo(() => {
     const rankTracks = visibleRankIndices.map(() => `minmax(${RANK_MIN_WIDTH}px,1fr)`).join(' ')
-    return `${Math.round(scenarioWidth)}px ${PAD_W}px ${NOTES_W}px ${REC_W}px ${PLAY_W}px ${PLAY_W}px ${PAD_W}px ${SCORE_W}px ${rankTracks}${hasEnergy ? ` ${ENERGY_W}px` : ''}`
-  }, [scenarioWidth, visibleRankIndices.length, hasEnergy])
+    const parts = [
+      `${Math.round(scenarioWidth)}px`,
+      `${PADDING_COL_WIDTH}px`,
+      showNotesCol ? `${NOTES_COL_WIDTH}px` : null,
+      showRecCol ? `${RECOMMEND_COL_WIDTH}px` : null,
+      showPlayCol ? `${PLAY_COL_WIDTH}px` : null,
+      showHistoryCol ? `${PLAY_COL_WIDTH}px` : null,
+      `${PADDING_COL_WIDTH}px`,
+      `${SCORE_COL_WIDTH}px`,
+      rankTracks,
+      hasEnergy ? `${ENERGY_COL_WIDTH}px` : null
+    ].filter(Boolean).join(' ')
+    return parts
+  }, [scenarioWidth, visibleRankIndices.length, hasEnergy, showNotesCol, showRecCol, showPlayCol, showHistoryCol])
 
   // Attach refined wheel scroll: only enable horizontal wheel mapping when
   // the cursor is over the rank columns. We compute the left-offset where ranks begin.
-  useHorizontalWheelScroll(containerRef, { excludeLeftWidth: scenarioWidth + PAD_W + REC_W + NOTES_W + PLAY_W + PAD_W + SCORE_W, enabled: hScrollEnabled })
+  useHorizontalWheelScroll(containerRef, { excludeLeftWidth: scenarioWidth + PADDING_COL_WIDTH + (showNotesCol ? NOTES_COL_WIDTH : 0) + (showRecCol ? RECOMMEND_COL_WIDTH : 0) + (showPlayCol ? PLAY_COL_WIDTH : 0) + (showHistoryCol ? PLAY_COL_WIDTH : 0) + PADDING_COL_WIDTH + SCORE_COL_WIDTH, enabled: hScrollEnabled })
   // Drag-> allow grabbing container to scroll horizontally (skip interactive elements / resize handles)
   // Always enable drag-to-scroll regardless of the wheel mapping toggle
   useDragScroll(containerRef, { axis: 'x', skipSelector: 'button, a, input, textarea, select, [role="button"]' })
+
+  const handleContextMenu = (e: React.MouseEvent, scenario: string, thresholds: number[]) => {
+    e.preventDefault()
+    setContextMenu({ x: e.clientX, y: e.clientY, scenario, thresholds })
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm text-primary">
         <div>
-          Overall Rank: <span className="font-medium">{overallRankName}</span> · Benchmark Progress: <span className="font-medium">{numberFmt(progress?.benchmarkProgress)}</span>
+          Overall Rank: <span className="font-medium">{overallRankName}</span> · Benchmark Progress: <span className="font-medium">{formatNumber(progress?.benchmarkProgress)}</span>
         </div>
         <div className="flex items-center gap-3">
           <Toggle size="sm" label="Compact mode" checked={compactMode} onChange={setCompactMode} />
@@ -257,10 +259,10 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                         </div>
                       </div>
                       <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
-                      <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
-                      <div className="text-[11px] text-secondary uppercase tracking-wide text-center" title="Recommendation score"></div>
-                      <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
-                      <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
+                      {showNotesCol && <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>}
+                      {showRecCol && <div className="text-[11px] text-secondary uppercase tracking-wide text-center" title="Recommendation score"></div>}
+                      {showPlayCol && <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>}
+                      {showHistoryCol && <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>}
                       <div className="text-[11px] text-secondary uppercase tracking-wide text-center"></div>
                       <div className="text-[11px] text-secondary uppercase tracking-wide">Score</div>
                       {visibleRanks.map(r => (
@@ -327,75 +329,28 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                             </div>
                             <div className="flex-1 min-w-max content-center">
                               <div className="grid gap-1" style={{ gridTemplateColumns: dynamicColumns }}>
-                                {g.scenarios.map((s, si) => {
-                                  const sName = s.name
-                                  const achieved = s.scenarioRank
-                                  const maxes: number[] = s.thresholds
-                                  const score = s.score
-                                  const totalRec = recScore.get(sName) ?? 0
-                                  const isTopPick = topPicks.has(sName)
-                                  const isCompleted = achieved != null && maxes && achieved >= (maxes.length - 1)
-                                  const rankColor = computeFillColor(achieved, ranks)
-
-                                  return (
-                                    <Fragment key={sName}>
-                                      <div className={`${compactMode ? 'text-[11px]' : 'text-[13px]'} text-primary truncate flex items-center`}>
-                                        <div className="w-1 h-3 rounded-full mr-2 flex-shrink-0" style={{ backgroundColor: rankColor }} />
-                                        {sName}
-                                      </div>
-                                      <div />
-                                      <div className="flex items-center justify-center">
-                                        <button
-                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-surface-3 border border-transparent hover:border-primary ${settings?.scenarioNotes?.[sName]?.notes ? 'text-accent' : 'text-secondary'}`}
-                                          title="Notes & Sensitivity"
-                                          onClick={() => openNotes(sName)}
-                                          aria-label={`Notes for ${sName}`}
-                                        >
-                                          <NotebookPen size={compactMode ? 14 : 16} />
-                                        </button>
-                                      </div>
-                                      <div className="text-[12px] flex items-center justify-center" title={`Recommendation score: ${totalRec}`}>
-                                        <RecommendationIcon score={totalRec} compact={compactMode} isTopPick={isTopPick} isCompleted={isCompleted} />
-                                      </div>
-                                      <div className="flex items-center justify-center">
-                                        <button
-                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-surface-3 border border-transparent hover:border-primary`}
-                                          title="Play in Kovaak's"
-                                          onClick={() => launchScenario(sName, 'challenge').catch(() => { /* ignore */ })}
-                                          aria-label={`Play ${sName} in Kovaak's`}
-                                        >
-                                          <Play size={compactMode ? 14 : 16} />
-                                        </button>
-                                      </div>
-                                      <div className="flex items-center justify-center">
-                                        <button
-                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded hover:bg-surface-3 border border-transparent hover:border-primary`}
-                                          title="Last 10 Scores"
-                                          onClick={() => openHistory(sName, s.thresholds)}
-                                          aria-label={`History for ${sName}`}
-                                        >
-                                          <ChartLine size={compactMode ? 14 : 16} />
-                                        </button>
-                                      </div>
-                                      <div />
-                                      <div className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} text-primary flex items-center`}>{numberFmt(score)}</div>
-                                      {visibleRankIndices.map((ri) => {
-                                        const r = ranks[ri]
-                                        const fill = cellFill(ri, score, maxes)
-                                        // Use the last achieved rank's color for the fill. When no rank achieved, fallback to gray.
-                                        const fillColor = computeFillColor(achieved, ranks)
-                                        const value = maxes?.[ri + 1]
-                                        return (
-                                          <div key={r.name + ri} className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} text-center px-4 rounded relative overflow-hidden flex items-center justify-center bg-surface-2`}>
-                                            <div className="absolute inset-y-0 left-0 rounded-l transition-all duration-150" style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }} />
-                                            <span className={`relative z-10 w-full h-full ${compactMode ? 'py-0' : 'py-1'} flex items-center justify-center`} style={{ background: "radial-gradient(circle, var(--shadow-secondary), rgba(0, 0, 0, 0))" }}>{value != null ? numberFmt(value) : MISSING_STR}</span>
-                                          </div>
-                                        )
-                                      })}
-                                      <EnergyCell s={s} g={g} si={si} hasEnergy={hasEnergy} />
-                                    </Fragment>
-                                  )
-                                })}
+                                {g.scenarios.map((s, si) => (
+                                  <BenchmarkScenarioRow
+                                    key={s.name}
+                                    s={s}
+                                    g={g}
+                                    si={si}
+                                    compactMode={compactMode}
+                                    showNotesCol={showNotesCol}
+                                    showRecCol={showRecCol}
+                                    showPlayCol={showPlayCol}
+                                    showHistoryCol={showHistoryCol}
+                                    settings={settings}
+                                    recScore={recScore}
+                                    topPicks={topPicks}
+                                    ranks={ranks}
+                                    visibleRankIndices={visibleRankIndices}
+                                    hasEnergy={hasEnergy}
+                                    handleContextMenu={handleContextMenu}
+                                    openNotes={openNotes}
+                                    openHistory={openHistory}
+                                  />
+                                ))}
                               </div>
                             </div>
                           </div>
@@ -411,7 +366,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
       )}
       <BenchmarkInfoModal isOpen={showLegend} onClose={() => setShowLegend(false)} />
 
-      <Modal isOpen={showSettings} onClose={() => setShowSettings(false)} title="Rank Column Settings" width="600px" height="auto">
+      <Modal isOpen={showSettings} onClose={() => setShowSettings(false)} title="View Settings" width="600px" height="auto">
         <div className="p-4">
           <BenchmarkControls
             rankDefs={rankDefs}
@@ -423,10 +378,42 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
             toggleManualRank={toggleManualRank}
             resetManual={resetManual}
             autoHidden={autoHidden}
-            embedded
+            showNotesCol={showNotesCol}
+            setShowNotesCol={setShowNotesCol}
+            showRecCol={showRecCol}
+            setShowRecCol={setShowRecCol}
+            showPlayCol={showPlayCol}
+            setShowPlayCol={setShowPlayCol}
+            showHistoryCol={showHistoryCol}
+            setShowHistoryCol={setShowHistoryCol}
           />
         </div>
       </Modal>
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          items={[
+            {
+              label: 'Play in Kovaak\'s',
+              icon: <Play size={14} />,
+              onClick: () => launchScenario(contextMenu.scenario, 'challenge').catch(() => { })
+            },
+            {
+              label: 'Notes & Sensitivity',
+              icon: <NotebookPen size={14} />,
+              onClick: () => openNotes(contextMenu.scenario)
+            },
+            {
+              label: 'View History',
+              icon: <ChartLine size={14} />,
+              onClick: () => openHistory(contextMenu.scenario, contextMenu.thresholds)
+            }
+          ]}
+        />
+      )}
 
       {modalState.open && (
         <ScenarioNotesModal

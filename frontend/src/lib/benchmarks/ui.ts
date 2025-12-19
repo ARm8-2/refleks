@@ -18,17 +18,6 @@ export function benchmarkGridTemplate(scenarioWidth: number, rankCount: number, 
   return `${Math.round(scenarioWidth)}px ${RECOMMEND_COL_WIDTH}px ${PLAY_COL_WIDTH}px ${SCORE_COL_WIDTH}px ${ranks} ${ENERGY_COL_WIDTH}px`
 }
 
-import { MISSING_STR } from '../utils'
-
-export function numberFmt(n: number | null | undefined): string {
-  if (n == null || isNaN(+n)) return MISSING_STR
-  try {
-    return new Intl.NumberFormat().format(+n)
-  } catch {
-    return String(n)
-  }
-}
-
 // Compute fill fraction for rank cell index of a scenario
 export function cellFill(index: number, score: number, thresholds: number[]): number {
   const m = thresholds?.length ?? 0

@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react'
 import { InfoBox } from '..'
-import { CHART_DECIMALS, formatNumber, formatSeconds } from '../../lib/utils'
+import { CHART_DECIMALS } from '../../lib/constants'
+import { formatNumber, formatSeconds } from '../../lib/utils'
 
 type TTKMovingAverageDetailsProps = {
   movingAvg: {
