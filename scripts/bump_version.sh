@@ -12,7 +12,7 @@ if ! [[ "${V}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 # Update Go constant
-sed -i -E "s/(AppVersion[[:space:]]*=[[:space:]]*\")([^\"]+)(\")/\1${V}\3/" internal/constants/constants.go
+sed -i -E "s/(AppVersion[[:space:]]*=[[:space:]]*\")([^\"]+)(\")/\1${V}\3/" internal/constants/version.go
 
 # Update Wails productVersion
 sed -i -E "s/(\"productVersion\"[[:space:]]*:[[:space:]]*\")([^\"]+)(\")/\1${V}\3/" wails.json
