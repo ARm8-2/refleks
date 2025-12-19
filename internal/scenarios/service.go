@@ -9,12 +9,23 @@ import (
 
 	"refleks/internal/constants"
 	"refleks/internal/models"
+	"refleks/internal/settings"
 	"refleks/internal/steam"
 )
 
+// Service manages scenario data fetching.
+type Service struct {
+	settingsSvc *settings.Service
+}
+
+// NewService creates a new scenario service.
+func NewService(settingsSvc *settings.Service) *Service {
+	return &Service{settingsSvc: settingsSvc}
+}
+
 // GetLastScores fetches the last 10 scores for a given scenario from KovaaK's API.
-func GetLastScores(scenarioName string) ([]models.KovaaksLastScore, error) {
-	personaName := steam.GetPersonaName()
+func (s *Service) GetLastScores(scenarioName string) ([]models.KovaaksLastScore, error) {
+	personaName := steam.GetPersonaName(s.settingsSvc.Get())
 	if personaName == "" {
 		return nil, fmt.Errorf("could not determine Steam PersonaName")
 	}

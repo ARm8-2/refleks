@@ -8,140 +8,127 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"strings"
+	"sync"
+	"time"
+
 	"refleks/internal/benchmarks/rankcalc"
 	"refleks/internal/cache"
 	"refleks/internal/constants"
 	"refleks/internal/models"
+	"refleks/internal/settings"
 	"refleks/internal/steam"
 	"refleks/internal/util"
-	"strings"
-	"sync"
-	"time"
 )
 
 //go:embed benchmarks_data.json
 var embeddedBenchmarks []byte
 
-var (
-	loadOnce            sync.Once
-	loadErr             error
-	benchmarksListCache []models.Benchmark
-	progressCacheMu     sync.Mutex
-	memProgressCache    map[int]models.BenchmarkProgress
-	memScenarioIndex    map[string][]int
-	onProgressUpdated   func(int, models.BenchmarkProgress)
-)
-
-func SetOnProgressUpdated(cb func(int, models.BenchmarkProgress)) {
-	onProgressUpdated = cb
+// Service manages benchmark data and progress tracking.
+type Service struct {
+	mu                sync.Mutex
+	progressCache     map[int]models.BenchmarkProgress
+	scenarioIndex     map[string][]int
+	benchmarksList    []models.Benchmark
+	loadOnce          sync.Once
+	loadErr           error
+	onProgressUpdated func(int, models.BenchmarkProgress)
+	settingsSvc       *settings.Service
+	cacheSvc          *cache.Service
 }
 
-func init() {
-	cache.RegisterOnClear(func() {
-		progressCacheMu.Lock()
-		defer progressCacheMu.Unlock()
-		memProgressCache = nil
-		memScenarioIndex = nil
+// NewService creates a new benchmark service.
+func NewService(settingsSvc *settings.Service, cacheSvc *cache.Service) *Service {
+	s := &Service{
+		progressCache: make(map[int]models.BenchmarkProgress),
+		scenarioIndex: make(map[string][]int),
+		settingsSvc:   settingsSvc,
+		cacheSvc:      cacheSvc,
+	}
+	// Register cache clear callback
+	cacheSvc.RegisterOnClear(func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.progressCache = make(map[int]models.BenchmarkProgress)
+		s.scenarioIndex = make(map[string][]int)
 	})
+	return s
 }
 
-func GetBenchmarks() ([]models.Benchmark, error) {
-	loadOnce.Do(func() {
+// SetOnProgressUpdated sets the callback for when progress is updated.
+func (s *Service) SetOnProgressUpdated(cb func(int, models.BenchmarkProgress)) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.onProgressUpdated = cb
+}
+
+// GetBenchmarks returns the list of available benchmarks.
+func (s *Service) GetBenchmarks() ([]models.Benchmark, error) {
+	s.loadOnce.Do(func() {
 		if len(embeddedBenchmarks) == 0 {
-			loadErr = errors.New("embedded benchmarks data is empty")
+			s.loadErr = errors.New("embedded benchmarks data is empty")
 			return
 		}
-		if err := json.Unmarshal(embeddedBenchmarks, &benchmarksListCache); err != nil {
-			loadErr = fmt.Errorf("failed to parse embedded benchmarks: %w", err)
+		if err := json.Unmarshal(embeddedBenchmarks, &s.benchmarksList); err != nil {
+			s.loadErr = fmt.Errorf("failed to parse embedded benchmarks: %w", err)
 			return
 		}
 	})
-	return benchmarksListCache, loadErr
+	return s.benchmarksList, s.loadErr
 }
 
-// GetPlayerProgressRaw fetches the player progress JSON for a given benchmarkId.
-// Order is preserved by the caller via a streaming decoder when needed.
-func GetPlayerProgressRaw(benchmarkId int) (string, error) {
-	steamID := steam.GetSteamID()
-	if steamID == "" {
-		return "", errors.New("steam ID not found")
-	}
-	url := fmt.Sprintf(constants.KovaaksPlayerProgressURL, benchmarkId, steamID)
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(url)
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch player progress: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status %d from progress endpoint", resp.StatusCode)
-	}
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read progress response: %w", err)
-	}
-	return string(b), nil
-}
-
-func GetBenchmarkProgress(benchmarkId int, useCache bool) (models.BenchmarkProgress, bool, error) {
+// GetBenchmarkProgress returns progress for a specific benchmark.
+func (s *Service) GetBenchmarkProgress(benchmarkId int, useCache bool) (models.BenchmarkProgress, bool, error) {
 	if useCache {
-		if p, ok := GetCachedBenchmarkProgress(benchmarkId); ok {
+		if p, ok := s.GetCachedBenchmarkProgress(benchmarkId); ok {
 			return p, true, nil
 		}
 	}
 
-	raw, err := GetPlayerProgressRaw(benchmarkId)
+	raw, err := s.GetPlayerProgressRaw(benchmarkId)
 	if err != nil {
 		return models.BenchmarkProgress{}, false, err
 	}
-	prog, err := buildStructuredProgress(raw, benchmarkId)
+	prog, err := s.buildStructuredProgress(raw, benchmarkId)
 	if err != nil {
 		return models.BenchmarkProgress{}, false, err
 	}
 
 	// Update cache asynchronously
 	go func(bid int, p models.BenchmarkProgress) {
-		progressCacheMu.Lock()
-		defer progressCacheMu.Unlock()
+		s.mu.Lock()
+		defer s.mu.Unlock()
 
 		// Ensure cache is loaded
-		if memProgressCache == nil {
+		if len(s.progressCache) == 0 {
 			// Try to load, if fails, make new map
-			if _, err := LoadBenchmarkProgressCache(); err != nil {
-				memProgressCache = make(map[int]models.BenchmarkProgress)
+			if _, err := s.loadCacheLocked(); err != nil {
+				// ignore error, start fresh
 			}
 		}
 
-		memProgressCache[bid] = p
-		_ = SaveBenchmarkProgressCache(memProgressCache)
+		s.progressCache[bid] = p
+		_ = s.saveCacheLocked()
 
-		if onProgressUpdated != nil {
-			onProgressUpdated(bid, p)
+		if s.onProgressUpdated != nil {
+			s.onProgressUpdated(bid, p)
 		}
 	}(benchmarkId, prog)
 
 	return prog, false, nil
 }
 
-// GetAllBenchmarkProgresses returns progress for all benchmarks, using cache if available.
-// It also checks for missing benchmarks in the cache and fetches them.
-// It also prunes benchmarks from the cache that are no longer in the benchmarks list.
-func GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
-	list, err := GetBenchmarks()
+// GetAllBenchmarkProgresses returns progress for all benchmarks.
+func (s *Service) GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
+	list, err := s.GetBenchmarks()
 	if err != nil {
 		return nil, err
 	}
 
-	progressCacheMu.Lock()
+	s.mu.Lock()
 	// Ensure cache is loaded
-	if memProgressCache == nil {
-		_, _ = LoadBenchmarkProgressCache()
-	}
-	if memProgressCache == nil {
-		memProgressCache = make(map[int]models.BenchmarkProgress)
+	if len(s.progressCache) == 0 {
+		_, _ = s.loadCacheLocked()
 	}
 
 	// Build set of valid IDs
@@ -154,28 +141,28 @@ func GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
 
 	// Prune obsolete entries from cache
 	pruned := false
-	for id := range memProgressCache {
+	for id := range s.progressCache {
 		if _, ok := validIDs[id]; !ok {
-			delete(memProgressCache, id)
+			delete(s.progressCache, id)
 			pruned = true
 		}
 	}
 	if pruned {
-		_ = SaveBenchmarkProgressCache(memProgressCache)
+		_ = s.saveCacheLocked()
 	}
 
 	// Create a copy to return and identify missing IDs
-	result := make(map[int]models.BenchmarkProgress, len(memProgressCache))
+	result := make(map[int]models.BenchmarkProgress, len(s.progressCache))
 	missingIDs := []int{}
 
 	for id := range validIDs {
-		if p, ok := memProgressCache[id]; ok {
+		if p, ok := s.progressCache[id]; ok {
 			result[id] = p
 		} else {
 			missingIDs = append(missingIDs, id)
 		}
 	}
-	progressCacheMu.Unlock()
+	s.mu.Unlock()
 
 	if len(missingIDs) > 0 {
 		var mu sync.Mutex
@@ -189,7 +176,7 @@ func GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
 				sem <- struct{}{}
 				defer func() { <-sem }()
 
-				p, _, err := GetBenchmarkProgress(bid, false)
+				p, _, err := s.GetBenchmarkProgress(bid, false)
 				if err == nil {
 					mu.Lock()
 					result[bid] = p
@@ -203,14 +190,13 @@ func GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
 	return result, nil
 }
 
-// RefreshAllBenchmarkProgresses fetches fresh data for all benchmarks and updates the cache.
-func RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
-	list, err := GetBenchmarks()
+// RefreshAllBenchmarkProgresses fetches fresh data for all benchmarks.
+func (s *Service) RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
+	list, err := s.GetBenchmarks()
 	if err != nil {
 		return nil, err
 	}
 
-	// Use a map to track unique KovaaksBenchmarkIDs to avoid duplicate fetches
 	uniqueIDs := make(map[int]struct{})
 	for _, b := range list {
 		for _, d := range b.Difficulties {
@@ -221,8 +207,6 @@ func RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
 	results := make(map[int]models.BenchmarkProgress)
 	var mu sync.Mutex
 	var wg sync.WaitGroup
-
-	// Limit concurrency to avoid rate limits or overwhelming the client
 	sem := make(chan struct{}, 3)
 
 	for id := range uniqueIDs {
@@ -232,7 +216,7 @@ func RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			prog, _, err := GetBenchmarkProgress(bid, false)
+			prog, _, err := s.GetBenchmarkProgress(bid, false)
 			if err == nil {
 				mu.Lock()
 				results[bid] = prog
@@ -245,57 +229,8 @@ func RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
 	return results, nil
 }
 
-func rebuildScenarioIndex() {
-	memScenarioIndex = make(map[string][]int)
-	for bid, prog := range memProgressCache {
-		for _, cat := range prog.Categories {
-			for _, group := range cat.Groups {
-				for _, scen := range group.Scenarios {
-					name := strings.ToLower(scen.Name)
-					// Avoid duplicates
-					found := false
-					for _, existingID := range memScenarioIndex[name] {
-						if existingID == bid {
-							found = true
-							break
-						}
-					}
-					if !found {
-						memScenarioIndex[name] = append(memScenarioIndex[name], bid)
-					}
-				}
-			}
-		}
-	}
-}
-
-// SaveBenchmarkProgressCache persists the progress map to disk.
-func SaveBenchmarkProgressCache(data map[int]models.BenchmarkProgress) error {
-	memProgressCache = data
-	rebuildScenarioIndex()
-	return cache.Save(constants.BenchmarksCacheFileName, data)
-}
-
-// LoadBenchmarkProgressCache loads the progress map from disk.
-func LoadBenchmarkProgressCache() (map[int]models.BenchmarkProgress, error) {
-	if memProgressCache != nil {
-		return memProgressCache, nil
-	}
-	if !cache.Exists(constants.BenchmarksCacheFileName) {
-		return make(map[int]models.BenchmarkProgress), nil
-	}
-	var data map[int]models.BenchmarkProgress
-	if err := cache.Load(constants.BenchmarksCacheFileName, &data); err != nil {
-		return nil, err
-	}
-	memProgressCache = data
-	rebuildScenarioIndex()
-	return data, nil
-}
-
-// CheckAndRefreshIfNeeded checks if the given scenario score is a new highscore for any benchmark
-// and refreshes that benchmark if so.
-func CheckAndRefreshIfNeeded(rec models.ScenarioRecord) {
+// CheckAndRefreshIfNeeded checks if a scenario record updates any benchmark progress.
+func (s *Service) CheckAndRefreshIfNeeded(rec models.ScenarioRecord) {
 	scenarioName, ok := rec.Stats["Scenario"].(string)
 	if !ok {
 		return
@@ -306,20 +241,18 @@ func CheckAndRefreshIfNeeded(rec models.ScenarioRecord) {
 	}
 	score := util.ToFloat(scoreVal)
 
-	progressCacheMu.Lock()
-	// Ensure cache is loaded
-	if memProgressCache == nil {
-		_, _ = LoadBenchmarkProgressCache()
+	s.mu.Lock()
+	if len(s.progressCache) == 0 {
+		_, _ = s.loadCacheLocked()
 	}
 
-	// Use index to find relevant benchmarks
 	nameLower := strings.ToLower(scenarioName)
-	bids := memScenarioIndex[nameLower]
+	bids := s.scenarioIndex[nameLower]
 
 	benchmarksToRefresh := make(map[int]struct{})
 
 	for _, bid := range bids {
-		progress, ok := memProgressCache[bid]
+		progress, ok := s.progressCache[bid]
 		if !ok {
 			continue
 		}
@@ -347,62 +280,114 @@ func CheckAndRefreshIfNeeded(rec models.ScenarioRecord) {
 			benchmarksToRefresh[bid] = struct{}{}
 		}
 	}
-	progressCacheMu.Unlock()
+	s.mu.Unlock()
 
 	if len(benchmarksToRefresh) > 0 {
 		go func() {
 			for bid := range benchmarksToRefresh {
-				// GetBenchmarkProgress now updates the cache internally
-				_, _, _ = GetBenchmarkProgress(bid, false)
+				_, _, _ = s.GetBenchmarkProgress(bid, false)
 			}
 		}()
 	}
 }
 
-// GetCachedBenchmarkProgress returns the cached progress for a benchmark, or false if not found.
-func GetCachedBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, bool) {
-	progressCacheMu.Lock()
-	defer progressCacheMu.Unlock()
+// GetCachedBenchmarkProgress returns cached progress.
+func (s *Service) GetCachedBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	cacheData, err := LoadBenchmarkProgressCache()
-	if err != nil {
-		return models.BenchmarkProgress{}, false
+	if len(s.progressCache) == 0 {
+		_, _ = s.loadCacheLocked()
 	}
-	p, ok := cacheData[benchmarkId]
+	p, ok := s.progressCache[benchmarkId]
 	return p, ok
 }
 
-// We intentionally parse directly into models.ScenarioProgress to keep our
-// downstream data flowing via the canonical type used by the frontend.
+// Internal helpers
 
-type rawRank struct {
-	Name  string `json:"name"`
-	Color string `json:"color"`
+func (s *Service) GetPlayerProgressRaw(benchmarkId int) (string, error) {
+	steamID := steam.GetSteamID(s.settingsSvc.Get())
+	if steamID == "" {
+		return "", errors.New("steam ID not found")
+	}
+	url := fmt.Sprintf(constants.KovaaksPlayerProgressURL, benchmarkId, steamID)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch player progress: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected status %d from progress endpoint", resp.StatusCode)
+	}
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read progress response: %w", err)
+	}
+	return string(b), nil
 }
 
-// buildStructuredProgress parses the upstream raw JSON preserving the scenario order,
-// then maps it onto the benchmark definitions for the given benchmarkId.
-func buildStructuredProgress(raw string, benchmarkId int) (models.BenchmarkProgress, error) {
+func (s *Service) rebuildScenarioIndexLocked() {
+	s.scenarioIndex = make(map[string][]int)
+	for bid, prog := range s.progressCache {
+		for _, cat := range prog.Categories {
+			for _, group := range cat.Groups {
+				for _, scen := range group.Scenarios {
+					name := strings.ToLower(scen.Name)
+					found := false
+					for _, existingID := range s.scenarioIndex[name] {
+						if existingID == bid {
+							found = true
+							break
+						}
+					}
+					if !found {
+						s.scenarioIndex[name] = append(s.scenarioIndex[name], bid)
+					}
+				}
+			}
+		}
+	}
+}
+
+func (s *Service) saveCacheLocked() error {
+	s.rebuildScenarioIndexLocked()
+	return s.cacheSvc.Save(constants.BenchmarksCacheFileName, s.progressCache)
+}
+
+func (s *Service) loadCacheLocked() (map[int]models.BenchmarkProgress, error) {
+	if !s.cacheSvc.Exists(constants.BenchmarksCacheFileName) {
+		return make(map[int]models.BenchmarkProgress), nil
+	}
+	var data map[int]models.BenchmarkProgress
+	if err := s.cacheSvc.Load(constants.BenchmarksCacheFileName, &data); err != nil {
+		return nil, err
+	}
+	s.progressCache = data
+	s.rebuildScenarioIndexLocked()
+	return data, nil
+}
+
+// Parsing logic (stateless)
+
+func (s *Service) buildStructuredProgress(raw string, benchmarkId int) (models.BenchmarkProgress, error) {
 	var out models.BenchmarkProgress
 
-	// Step 1: parse top-level values using a streaming decoder
 	scenarios, ranks, overallRank, benchProg, err := parseProgressTokens(raw)
 	if err != nil {
 		return out, err
 	}
 
-	// Step 2: locate matching difficulty metadata to derive grouping and colors
-	b, diff := findDifficultyByBenchmarkID(benchmarkId)
+	b, diff := s.findDifficultyByBenchmarkID(benchmarkId)
 
-	// Build rank defs combining upstream order with fallback colors from difficulty
 	out.Ranks = mergeRankDefs(ranks, diff)
 	out.OverallRank = overallRank
 	out.BenchmarkProgress = benchProg
-
-	// Step 3: group scenarios into categories/subcategories by scenarioCount
 	out.Categories = groupScenariosByMeta(scenarios, diff)
 
-	// Attempt to compute any energies using the benchmark rank calculation.
 	if b != nil {
 		rankcalc.UpdateEnergies(b.RankCalculation, b, diff, &out.Categories)
 	}
@@ -410,8 +395,8 @@ func buildStructuredProgress(raw string, benchmarkId int) (models.BenchmarkProgr
 	return out, nil
 }
 
-func findDifficultyByBenchmarkID(benchmarkId int) (*models.Benchmark, *models.BenchmarkDifficulty) {
-	list, err := GetBenchmarks()
+func (s *Service) findDifficultyByBenchmarkID(benchmarkId int) (*models.Benchmark, *models.BenchmarkDifficulty) {
+	list, err := s.GetBenchmarks()
 	if err != nil {
 		return nil, nil
 	}
@@ -427,6 +412,14 @@ func findDifficultyByBenchmarkID(benchmarkId int) (*models.Benchmark, *models.Be
 	return nil, nil
 }
 
+// ... (include helper functions: mergeRankDefs, groupScenariosByMeta, parseProgressTokens, etc.)
+// I will copy them from the original file.
+
+type rawRank struct {
+	Name  string `json:"name"`
+	Color string `json:"color"`
+}
+
 func mergeRankDefs(ranks []rawRank, diff *models.BenchmarkDifficulty) []models.RankDef {
 	defs := make([]models.RankDef, 0, len(ranks))
 	var rankColors map[string]string
@@ -439,7 +432,6 @@ func mergeRankDefs(ranks []rawRank, diff *models.BenchmarkDifficulty) []models.R
 			continue
 		}
 		col := strings.TrimSpace(r.Color)
-		// Prefer configured colors from benchmark metadata (case-insensitive match)
 		for k, v := range rankColors {
 			if strings.EqualFold(strings.TrimSpace(k), name) && strings.TrimSpace(v) != "" {
 				col = strings.TrimSpace(v)
@@ -447,7 +439,7 @@ func mergeRankDefs(ranks []rawRank, diff *models.BenchmarkDifficulty) []models.R
 			}
 		}
 		if col == "" {
-			col = "#60a5fa" // fallback if no color found anywhere
+			col = "#60a5fa"
 		}
 		defs = append(defs, models.RankDef{Name: name, Color: col})
 	}
@@ -495,8 +487,6 @@ func groupScenariosByMeta(scenarios []models.ScenarioProgress, diff *models.Benc
 	return cats
 }
 
-// parseProgressTokens walks the raw JSON token stream to extract ordered scenarios,
-// ranks, and summary numbers without decoding into Go maps (which would randomize order).
 func parseProgressTokens(raw string) (scenarios []models.ScenarioProgress, ranks []rawRank, overallRank int, benchProg float64, err error) {
 	dec := json.NewDecoder(strings.NewReader(raw))
 	dec.UseNumber()
@@ -577,11 +567,9 @@ func parseCategories(dec *json.Decoder, scenarios *[]models.ScenarioProgress) er
 		return fmt.Errorf("categories: expected '{'")
 	}
 	for dec.More() {
-		// category key
 		if _, err := dec.Token(); err != nil {
 			return err
 		}
-		// category object start
 		t2, err := dec.Token()
 		if err != nil {
 			return err
@@ -682,12 +670,9 @@ func parseScenarios(dec *json.Decoder, scenarios *[]models.ScenarioProgress) err
 		if _, err := dec.Token(); err != nil {
 			return err
 		}
-		// Compute and prepend baseline threshold (as we previously did on the frontend)
 		if len(s.Thresholds) > 0 {
 			base := initialThresholdBaselineGo(s.Thresholds)
 			s.Thresholds = append([]float64{base}, s.Thresholds...)
-
-			// Calculate progress percentage relative to the highest threshold
 			maxThreshold := s.Thresholds[len(s.Thresholds)-1]
 			if maxThreshold > 0 {
 				s.Progress = (s.Score / maxThreshold) * 100.0
@@ -699,8 +684,6 @@ func parseScenarios(dec *json.Decoder, scenarios *[]models.ScenarioProgress) err
 	return err
 }
 
-// initialThresholdBaselineGo replicates the frontend logic:
-// take average diff between successive thresholds and subtract from first threshold, clamped to 0.
 func initialThresholdBaselineGo(thresholds []float64) float64 {
 	n := len(thresholds)
 	if n <= 1 {

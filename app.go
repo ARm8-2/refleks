@@ -8,7 +8,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	appsvc "refleks/internal/appsvc"
+	"refleks/internal/ai"
 	"refleks/internal/benchmarks"
 	"refleks/internal/cache"
 	"refleks/internal/constants"
@@ -16,14 +16,21 @@ import (
 	"refleks/internal/scenarios"
 	appsettings "refleks/internal/settings"
 	"refleks/internal/traces"
+	"refleks/internal/tracking"
+	"refleks/internal/updater"
 )
 
 // App struct
 type App struct {
-	ctx      context.Context
-	appSvc   *appsvc.AppService
-	aiSvc    *appsvc.AIService
-	settings models.Settings
+	ctx          context.Context
+	trackingSvc  *tracking.Service
+	aiSvc        *ai.Service
+	settingsSvc  *appsettings.Service
+	benchmarkSvc *benchmarks.Service
+	scenarioSvc  *scenarios.Service
+	updaterSvc   *updater.Service
+	cacheSvc     *cache.Service
+	tracesSvc    *traces.Service
 }
 
 // NewApp creates a new App application struct
@@ -34,44 +41,51 @@ func NewApp() *App { return &App{} }
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	runtime.LogInfo(a.ctx, "RefleK's app starting up")
-	// Load settings from disk
-	if s, err := appsettings.Load(); err == nil {
-		a.settings = s
-	} else {
+
+	// Initialize Settings Service
+	a.settingsSvc = appsettings.NewService()
+	if err := a.settingsSvc.Load(); err != nil {
 		runtime.LogWarning(a.ctx, "settings load failed, using defaults: "+err.Error())
-		a.settings = appsettings.Default()
-		_ = appsettings.Save(a.settings)
+		// Load failed, but NewService already set defaults. Try to save them.
+		_ = a.settingsSvc.Update(a.settingsSvc.Get())
 	}
-	// Ensure sane defaults for new fields
-	a.settings = appsettings.Sanitize(a.settings)
+	settings := a.settingsSvc.Get()
 
-	// Configure traces storage directory (supports placeholders)
-	tracesDir := appsettings.ExpandPathPlaceholders(a.settings.TracesDir)
-	traces.SetBaseDir(tracesDir)
+	// Initialize Core Services
+	a.cacheSvc = cache.NewService()
+	a.tracesSvc = traces.NewService()
+	a.updaterSvc = updater.NewService(constants.GitHubOwner, constants.GitHubRepo, constants.AppVersion)
 
-	// Initialize coordinated AppService (wires mouse, watcher, updater)
-	a.appSvc = appsvc.NewAppService(a.ctx, &a.settings)
-	// Auto-start watcher with default/configured path
-	if err := a.appSvc.StartWatcher(""); err != nil {
+	// Configure traces storage directory
+	tracesDir := appsettings.ExpandPathPlaceholders(settings.TracesDir)
+	a.tracesSvc.SetBaseDir(tracesDir)
+
+	// Initialize Domain Services
+	a.benchmarkSvc = benchmarks.NewService(a.settingsSvc, a.cacheSvc)
+	a.scenarioSvc = scenarios.NewService(a.settingsSvc)
+
+	// Initialize Tracking Service (coordinates Watcher + Mouse)
+	a.trackingSvc = tracking.NewService(a.ctx, a.settingsSvc, a.benchmarkSvc, a.tracesSvc)
+
+	// Initialize AI Service
+	a.aiSvc = ai.NewService(a.ctx, a.settingsSvc)
+
+	// Auto-start watcher
+	if err := a.trackingSvc.StartWatcher(""); err != nil {
 		runtime.LogWarningf(a.ctx, "Auto-start watcher failed: %v", err)
 	}
 
-	// Initialize AI service
-	a.aiSvc = appsvc.NewAIService(a.ctx, &a.settings)
-
 	// Fire-and-forget benchmark cache warmup/sync
 	go func() {
-		// Small delay to avoid competing with startup I/O
 		time.Sleep(1 * time.Second)
-		_, err := benchmarks.GetAllBenchmarkProgresses()
+		_, err := a.benchmarkSvc.GetAllBenchmarkProgresses()
 		if err != nil {
 			runtime.LogErrorf(a.ctx, "benchmark cache sync failed: %v", err)
 		}
 	}()
 
-	// Fire-and-forget check for app updates; emit event if available
+	// Fire-and-forget check for app updates
 	go func() {
-		// Small delay to avoid competing with startup I/O
 		time.Sleep(2 * time.Second)
 		info, err := a.CheckForUpdates()
 		if err != nil {
@@ -80,51 +94,40 @@ func (a *App) startup(ctx context.Context) {
 		}
 		if info.HasUpdate {
 			runtime.LogInfof(a.ctx, "update available: %s -> %s", info.CurrentVersion, info.LatestVersion)
-			runtime.EventsEmit(a.ctx, "update:available", info)
+			runtime.EventsEmit(a.ctx, constants.EventUpdateAvailable, info)
 		}
 	}()
 }
 
 // StartWatcher begins monitoring the given directory for new Kovaak's CSV files.
 func (a *App) StartWatcher(path string) error {
-	if a.appSvc == nil {
-		a.appSvc = appsvc.NewAppService(a.ctx, &a.settings)
-	}
-	return a.appSvc.StartWatcher(path)
+	return a.trackingSvc.StartWatcher(path)
 }
 
 // StopWatcher stops the watcher if running.
 func (a *App) StopWatcher() error {
-	if a.appSvc == nil {
-		return nil
-	}
-	return a.appSvc.StopWatcher()
+	return a.trackingSvc.StopWatcher()
 }
 
 // GetRecentScenarios returns most recent parsed scenarios, up to optional limit.
 func (a *App) GetRecentScenarios(limit int) []models.ScenarioRecord {
-	if a.appSvc == nil {
-		return nil
-	}
-	return a.appSvc.GetRecent(limit)
+	return a.trackingSvc.GetRecent(limit)
 }
 
 // GetLastScenarioScores fetches the last 10 scores for a given scenario from KovaaK's API.
 func (a *App) GetLastScenarioScores(scenarioName string) ([]models.KovaaksLastScore, error) {
-	return scenarios.GetLastScores(scenarioName)
+	return a.scenarioSvc.GetLastScores(scenarioName)
 }
 
 // GetBenchmarks returns the embedded benchmarks list for the Explore UI.
 func (a *App) GetBenchmarks() ([]models.Benchmark, error) {
-	return benchmarks.GetBenchmarks()
+	return a.benchmarkSvc.GetBenchmarks()
 }
 
 // GetBenchmarkProgress returns a structured benchmark progress model for the given benchmarkId.
-// It attempts to return cached data immediately while triggering a background refresh.
-// If no cache is available, it waits for the fresh data.
 func (a *App) GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, error) {
 	// 1. Try to get from cache (or fetch if missing)
-	data, cached, err := benchmarks.GetBenchmarkProgress(benchmarkId, true)
+	data, cached, err := a.benchmarkSvc.GetBenchmarkProgress(benchmarkId, true)
 	if err != nil {
 		return models.BenchmarkProgress{}, err
 	}
@@ -132,10 +135,10 @@ func (a *App) GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, e
 	// 2. Trigger background refresh (if it was cached)
 	if cached {
 		go func() {
-			fresh, _, err := benchmarks.GetBenchmarkProgress(benchmarkId, false)
+			fresh, _, err := a.benchmarkSvc.GetBenchmarkProgress(benchmarkId, false)
 			if err == nil {
 				// Emit event with fresh data so frontend can update
-				runtime.EventsEmit(a.ctx, fmt.Sprintf("benchmark:progress:%d", benchmarkId), fresh)
+				runtime.EventsEmit(a.ctx, fmt.Sprintf("%s%d", constants.EventBenchmarkProgressPrefix, benchmarkId), fresh)
 			}
 		}()
 	}
@@ -145,44 +148,38 @@ func (a *App) GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, e
 
 // GetAllBenchmarkProgresses returns progress for all benchmarks, using cache if available.
 func (a *App) GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
-	return benchmarks.GetAllBenchmarkProgresses()
+	return a.benchmarkSvc.GetAllBenchmarkProgresses()
 }
 
 // RefreshAllBenchmarkProgresses fetches fresh data for all benchmarks and updates the cache.
 func (a *App) RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
-	return benchmarks.RefreshAllBenchmarkProgresses()
+	return a.benchmarkSvc.RefreshAllBenchmarkProgresses()
 }
 
 // --- Settings IPC ---
 
 // GetSettings returns the current settings.
 func (a *App) GetSettings() models.Settings {
-	return a.settings
+	return a.settingsSvc.Get()
 }
 
 // UpdateSettings updates settings and persists them; applies to watcher if needed.
 func (a *App) UpdateSettings(s models.Settings) error {
-	if a.appSvc == nil {
-		a.appSvc = appsvc.NewAppService(a.ctx, &a.settings)
-	}
-	return a.appSvc.UpdateSettings(s)
+	return a.trackingSvc.UpdateSettings(s)
 }
 
-// Favorites helpers (retained API expected by the frontend)
+// Favorites helpers
 func (a *App) GetFavoriteBenchmarks() []string {
-	return appsettings.GetFavoriteBenchmarks(a.settings)
+	return a.settingsSvc.GetFavoriteBenchmarks()
 }
 
 func (a *App) SetFavoriteBenchmarks(ids []string) error {
-	if err := appsettings.SetFavoriteBenchmarks(&a.settings, ids); err != nil {
-		return err
-	}
-	return nil
+	return a.settingsSvc.SetFavoriteBenchmarks(ids)
 }
 
 // ResetSettings resets settings to application defaults and applies them immediately.
 func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, resetSessionNotes bool) error {
-	newSettings := a.settings
+	newSettings := a.settingsSvc.Get()
 
 	if resetConfig {
 		defaults := appsettings.Default()
@@ -210,11 +207,7 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		newSettings.SessionNotes = nil
 	}
 
-	if a.appSvc == nil {
-		a.appSvc = appsvc.NewAppService(a.ctx, &a.settings)
-	}
-	// Use OverwriteSettings to ensure empty fields are actually cleared (skipping merge logic)
-	return a.appSvc.OverwriteSettings(newSettings)
+	return a.trackingSvc.OverwriteSettings(newSettings)
 }
 
 // --- App metadata ---
@@ -224,14 +217,12 @@ func (a *App) GetVersion() string {
 	return constants.AppVersion
 }
 
-// GetDefaultSettings returns the application's default settings (sanitized),
-// useful for UI placeholders and help text.
+// GetDefaultSettings returns the application's default settings (sanitized).
 func (a *App) GetDefaultSettings() models.Settings {
 	return appsettings.Sanitize(appsettings.Default())
 }
 
 // LaunchKovaaksScenario opens the Steam deep-link to launch a given scenario in Kovaak's.
-// The "mode" parameter is optional; default is "challenge". Returns error on failure.
 func (a *App) LaunchKovaaksScenario(name string, mode string) error {
 	n := url.PathEscape(name)
 	if n == "" {
@@ -247,7 +238,6 @@ func (a *App) LaunchKovaaksScenario(name string, mode string) error {
 }
 
 // LaunchKovaaksPlaylist opens a Steam deep-link that jumps directly to a shared playlist by sharecode.
-// Returns error on failure.
 func (a *App) LaunchKovaaksPlaylist(sharecode string) error {
 	sc := url.PathEscape(sharecode)
 	if sc == "" {
@@ -262,19 +252,12 @@ func (a *App) LaunchKovaaksPlaylist(sharecode string) error {
 
 // CheckForUpdates queries GitHub releases and returns update availability and download URL.
 func (a *App) CheckForUpdates() (models.UpdateInfo, error) {
-	if a.appSvc == nil {
-		a.appSvc = appsvc.NewAppService(a.ctx, &a.settings)
-	}
-	return a.appSvc.CheckForUpdates(a.ctx)
+	return a.updaterSvc.CheckForUpdates(a.ctx)
 }
 
 // DownloadAndInstallUpdate downloads the specified (or latest) installer and starts it, then quits the app.
-// version may be empty to auto-detect latest.
 func (a *App) DownloadAndInstallUpdate(version string) error {
-	if a.appSvc == nil {
-		a.appSvc = appsvc.NewAppService(a.ctx, &a.settings)
-	}
-	if err := a.appSvc.DownloadAndInstallUpdate(a.ctx, version); err != nil {
+	if err := a.updaterSvc.DownloadAndInstallUpdate(a.ctx, version); err != nil {
 		return err
 	}
 	// Gracefully quit current app so installer can proceed
@@ -288,11 +271,7 @@ func (a *App) DownloadAndInstallUpdate(version string) error {
 // --- AI Insights (Sessions) ---
 
 // GenerateSessionInsights starts a streaming AI analysis for the provided session records.
-// Returns a requestId used to correlate streaming events or an error on failure.
 func (a *App) GenerateSessionInsights(sessionId string, records []models.ScenarioRecord, prompt string, options models.AIOptions) (string, error) {
-	if a.aiSvc == nil {
-		a.aiSvc = appsvc.NewAIService(a.ctx, &a.settings)
-	}
 	if sessionId == "" {
 		sessionId = "session"
 	}
@@ -304,32 +283,24 @@ func (a *App) GenerateSessionInsights(sessionId string, records []models.Scenari
 
 // CancelSessionInsights cancels a running AI stream by requestId.
 func (a *App) CancelSessionInsights(requestId string) error {
-	if a.aiSvc == nil {
-		return fmt.Errorf("ai service not initialized")
-	}
 	a.aiSvc.Cancel(requestId)
 	return nil
 }
 
 // SaveScenarioNote persists a user note and sensitivity for a scenario.
 func (a *App) SaveScenarioNote(scenario, notes, sens string) error {
-	if a.appSvc == nil {
-		return fmt.Errorf("app service not initialized")
-	}
-	return a.appSvc.SaveScenarioNote(scenario, notes, sens)
+	return a.trackingSvc.SaveScenarioNote(scenario, notes, sens)
 }
 
 // SaveSessionNote persists a user name and notes for a session.
 func (a *App) SaveSessionNote(sessionID, name, notes string) error {
-	if a.appSvc == nil {
-		return fmt.Errorf("app service not initialized")
-	}
-	return a.appSvc.SaveSessionNote(sessionID, name, notes)
+	return a.trackingSvc.SaveSessionNote(sessionID, name, notes)
 }
 
 // ClearCache clears the application cache.
 func (a *App) ClearCache() error {
-	if err := cache.ClearAll(); err != nil {
+	// This triggers callbacks registered via cache.RegisterOnClear
+	if err := a.cacheSvc.ClearAll(); err != nil {
 		return err
 	}
 	return nil

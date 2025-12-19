@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"refleks/internal/constants"
+	"refleks/internal/models"
 	"refleks/internal/settings"
 	"strings"
 )
@@ -14,14 +15,10 @@ import (
 // 1) settings override (Advanced)
 // 2) environment variable override (e.g., dev containers/CI)
 // 3) loginusers.vdf MostRecent user
-func GetSteamID() string {
+func GetSteamID(s models.Settings) string {
 	// Priority 1: explicit override in settings (Advanced)
-	// If loading settings fails, fall through to other resolution methods.
-	if s, err := settings.Load(); err == nil {
-		s = settings.Sanitize(s)
-		if v := strings.TrimSpace(s.SteamIDOverride); v != "" {
-			return v
-		}
+	if v := strings.TrimSpace(s.SteamIDOverride); v != "" {
+		return v
 	}
 
 	// Priority 2: environment variable override (useful for dev containers/CI)
@@ -30,7 +27,7 @@ func GetSteamID() string {
 	}
 
 	// Priority 3: parse Steam's loginusers.vdf to find MostRecent user
-	loginUsersPath := steamLoginUsersPath()
+	loginUsersPath := steamLoginUsersPath(s)
 	id, _, err := parseMostRecentUser(loginUsersPath)
 	if err != nil {
 		return ""
@@ -43,13 +40,10 @@ func GetSteamID() string {
 // 1) settings override (Advanced)
 // 2) environment variable override
 // 3) loginusers.vdf MostRecent user
-func GetPersonaName() string {
+func GetPersonaName(s models.Settings) string {
 	// Priority 1: explicit override in settings (Advanced)
-	if s, err := settings.Load(); err == nil {
-		s = settings.Sanitize(s)
-		if v := strings.TrimSpace(s.PersonaNameOverride); v != "" {
-			return v
-		}
+	if v := strings.TrimSpace(s.PersonaNameOverride); v != "" {
+		return v
 	}
 
 	// Priority 2: environment variable override
@@ -58,7 +52,7 @@ func GetPersonaName() string {
 	}
 
 	// Priority 3: parse Steam's loginusers.vdf to find MostRecent user
-	loginUsersPath := steamLoginUsersPath()
+	loginUsersPath := steamLoginUsersPath(s)
 	_, name, err := parseMostRecentUser(loginUsersPath)
 	if err != nil {
 		return ""
@@ -67,13 +61,7 @@ func GetPersonaName() string {
 }
 
 // steamLoginUsersPath builds the expected path to Steam's loginusers.vdf using settings.
-func steamLoginUsersPath() string {
-	// Load settings if present; otherwise use defaults
-	s, err := settings.Load()
-	if err != nil {
-		s = settings.Default()
-	}
-	s = settings.Sanitize(s)
+func steamLoginUsersPath(s models.Settings) string {
 	steamDir := settings.ExpandPathPlaceholders(s.SteamInstallDir)
 	// Compose path to config/loginusers.vdf (use OS-specific separator)
 	return filepath.Join(steamDir, "config", "loginusers.vdf")

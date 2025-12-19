@@ -1,8 +1,6 @@
 package settings
 
 import (
-	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -132,56 +130,4 @@ func Path() (string, error) {
 		return "", err
 	}
 	return filepath.Join(base, "settings.json"), nil
-}
-
-// Load reads settings from disk.
-func Load() (models.Settings, error) {
-	path, err := Path()
-	if err != nil {
-		return models.Settings{}, err
-	}
-	b, err := os.ReadFile(path)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return models.Settings{}, errors.New("no settings yet")
-		}
-		return models.Settings{}, err
-	}
-	var s models.Settings
-	if err := json.Unmarshal(b, &s); err != nil {
-		return models.Settings{}, err
-	}
-	return s, nil
-}
-
-// Save writes settings to disk.
-func Save(s models.Settings) error {
-	// Ensure config dir exists
-	if _, err := EnsureConfigDir(); err != nil {
-		return err
-	}
-	path, err := Path()
-	if err != nil {
-		return err
-	}
-	b, err := json.MarshalIndent(s, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(path, b, 0o644)
-}
-
-// GetFavoriteBenchmarks returns a defensive copy of the favorites list from the provided settings.
-func GetFavoriteBenchmarks(s models.Settings) []string {
-	return append([]string(nil), s.FavoriteBenchmarks...)
-}
-
-// SetFavoriteBenchmarks updates the provided settings in-memory and persists them to disk.
-// The provided settings pointer will be mutated. Returns an error if persistence fails.
-func SetFavoriteBenchmarks(s *models.Settings, ids []string) error {
-	if s == nil {
-		return errors.New("nil settings")
-	}
-	s.FavoriteBenchmarks = append([]string(nil), ids...)
-	return Save(*s)
 }

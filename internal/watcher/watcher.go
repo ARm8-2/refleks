@@ -29,19 +29,21 @@ type Watcher struct {
 	stopCh  chan struct{}
 	seen    map[string]struct{} // full file path set
 
-	recent []models.ScenarioRecord
-	mouse  MouseProvider
+	recent    []models.ScenarioRecord
+	mouse     MouseProvider
+	tracesSvc *traces.Service
 
 	OnScenarioParsed func(models.ScenarioRecord)
 }
 
 // New returns a new Watcher with the given config.
-func New(ctx context.Context, cfg models.WatcherConfig) *Watcher {
+func New(ctx context.Context, cfg models.WatcherConfig, tracesSvc *traces.Service) *Watcher {
 	return &Watcher{
-		ctx:    ctx,
-		cfg:    cfg,
-		stopCh: make(chan struct{}),
-		seen:   make(map[string]struct{}),
+		ctx:       ctx,
+		cfg:       cfg,
+		stopCh:    make(chan struct{}),
+		seen:      make(map[string]struct{}),
+		tracesSvc: tracesSvc,
 	}
 }
 
@@ -77,7 +79,7 @@ func (w *Watcher) Start() error {
 		}
 	}
 
-	runtime.EventsEmit(w.ctx, "watcher:started", map[string]string{"path": w.cfg.Path})
+	runtime.EventsEmit(w.ctx, constants.EventWatcherStarted, map[string]string{"path": w.cfg.Path})
 
 	// Optionally parse existing files once
 	if w.cfg.ParseExistingOnStart {
@@ -198,7 +200,7 @@ func (w *Watcher) scanOnce(includeAll bool) error {
 		}
 
 		// Emit a flat ScenarioRecord to simplify the IPC contract.
-		runtime.EventsEmit(w.ctx, "scenario:added", rec)
+		runtime.EventsEmit(w.ctx, constants.EventScenarioAdded, rec)
 	}
 	return nil
 }
@@ -291,8 +293,8 @@ func (w *Watcher) parseFile(fullPath string) (models.ScenarioRecord, error) {
 	// If we captured a trace, persist it to disk for future reloads.
 	if len(rec.MouseTrace) > 0 {
 		// Only write if not already present to avoid churn.
-		if !traces.Exists(rec.FileName) {
-			_ = traces.Save(traces.ScenarioData{
+		if !w.tracesSvc.Exists(rec.FileName) {
+			_ = w.tracesSvc.Save(traces.ScenarioData{
 				Version:      1,
 				FileName:     rec.FileName,
 				ScenarioName: info.ScenarioName,
@@ -302,8 +304,8 @@ func (w *Watcher) parseFile(fullPath string) (models.ScenarioRecord, error) {
 		}
 	} else {
 		// No live capture available (e.g., after restart). Attempt to load persisted data.
-		if traces.Exists(rec.FileName) {
-			if sd, err := traces.Load(rec.FileName); err == nil && len(sd.MouseTrace) > 0 {
+		if w.tracesSvc.Exists(rec.FileName) {
+			if sd, err := w.tracesSvc.Load(rec.FileName); err == nil && len(sd.MouseTrace) > 0 {
 				rec.MouseTrace = sd.MouseTrace
 			}
 		}
@@ -408,8 +410,8 @@ func (w *Watcher) ReloadTraces() int {
 	for i := range w.recent {
 		rec := w.recent[i]
 		// Attempt to load persisted trace
-		if traces.Exists(rec.FileName) {
-			if sd, err := traces.Load(rec.FileName); err == nil {
+		if w.tracesSvc.Exists(rec.FileName) {
+			if sd, err := w.tracesSvc.Load(rec.FileName); err == nil {
 				if len(sd.MouseTrace) > 0 {
 					if !equalMouseTrace(rec.MouseTrace, sd.MouseTrace) {
 						rec.MouseTrace = sd.MouseTrace
@@ -423,7 +425,7 @@ func (w *Watcher) ReloadTraces() int {
 	w.mu.Unlock()
 
 	for _, rec := range toEmit {
-		runtime.EventsEmit(w.ctx, "scenario:updated", rec)
+		runtime.EventsEmit(w.ctx, constants.EventScenarioUpdated, rec)
 	}
 	return len(toEmit)
 }

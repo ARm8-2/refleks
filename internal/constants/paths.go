@@ -28,4 +28,5 @@ const (
 
 	// Cache file names
 	BenchmarksCacheFileName = "benchmarks.json"
+	SettingsFileName        = "settings.json"
 )
