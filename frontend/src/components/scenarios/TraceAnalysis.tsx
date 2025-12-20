@@ -221,8 +221,26 @@ export function TraceAnalysis({
               Optimal {analysis.counts.optimal} ({fmtPct(analysis.counts.optimal)})
             </span>
           </div>
-          <div className="text-xs text-secondary">
-            Efficiency <span className="text-primary font-semibold">{formatPct(analysis.avgEfficiency)}</span>
+          <div className="text-xs text-secondary flex gap-3 items-center">
+            <span>Efficiency <span className="text-primary font-semibold">{formatPct(analysis.avgEfficiency)}</span></span>
+            {analysis.cm360 && (
+              <span title="Sensitivity (cm/360)">Sens <span className="text-primary font-semibold">{formatNumber(analysis.cm360, 1)}cm</span></span>
+            )}
+            {analysis.totalDistanceCm && (
+              <span title="Total physical distance moved">Dist <span className="text-primary font-semibold">{formatNumber(analysis.totalDistanceCm / 100, 2)}m</span></span>
+            )}
+            {analysis.avgSpeedCmS && (
+              <span title="Average mouse speed (while moving)">Avg Spd <span className="text-primary font-semibold">{formatNumber(analysis.avgSpeedCmS, 1)}cm/s</span></span>
+            )}
+            {analysis.peakSpeedCmS && (
+              <span title="Peak mouse speed">Peak <span className="text-primary font-semibold">{formatNumber(analysis.peakSpeedCmS, 0)}cm/s</span></span>
+            )}
+            {analysis.avgFlickSpeedCmS && (
+              <span title="Average peak speed during flicks">Flick <span className="text-primary font-semibold">{formatNumber(analysis.avgFlickSpeedCmS, 0)}cm/s</span></span>
+            )}
+            {analysis.maxAccelG && (
+              <span title="Peak acceleration in G-force">Max G <span className="text-primary font-semibold">{formatNumber(analysis.maxAccelG, 1)}</span></span>
+            )}
           </div>
         </div>
       </div>

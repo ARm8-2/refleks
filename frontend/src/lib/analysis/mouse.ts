@@ -61,6 +61,13 @@ export type MouseTraceAnalysis = {
     overshoot: { slight: number; moderate: number; severe: number }
     undershoot: { slight: number; moderate: number; severe: number }
   }
+  // Physical metrics
+  cm360: number | null
+  totalDistanceCm: number | null
+  maxAccelG: number | null
+  avgSpeedCmS: number | null
+  peakSpeedCmS: number | null
+  avgFlickSpeedCmS: number | null
 }
 
 export type SensSuggestion = {
@@ -142,6 +149,79 @@ export function computeMouseTraceAnalysis(item: ScenarioRecord, overridePoints?:
     if (Number.isFinite(a.efficiency)) { effSum += a.efficiency; effN++ }
   }
 
+  // Physical metrics calculation
+  const cm360 = Number(item.stats['cm/360']) || null
+  const dpi = Number(item.stats['DPI'])
+  let totalDistanceCm: number | null = null
+  let maxAccelG: number | null = null
+  let avgSpeedCmS: number | null = null
+  let peakSpeedCmS: number | null = null
+  let avgFlickSpeedCmS: number | null = null
+
+  if (Number.isFinite(dpi) && dpi > 0 && points.length > 1) {
+    const cmPerCount = 2.54 / dpi
+    let totalDist = 0
+    let maxAccel = 0
+    let maxSpeed = 0
+    let speedSum = 0
+    let speedCount = 0
+    let prevV = 0
+
+    for (let i = 1; i < points.length; i++) {
+      const p1 = points[i - 1]
+      const p2 = points[i]
+      const dt = (p2.ts - p1.ts) / 1000 // seconds
+
+      // Skip large gaps (pauses) or zero time
+      if (dt <= 0.0001 || dt > 0.5) {
+        prevV = 0
+        continue
+      }
+
+      const distCounts = Math.hypot(p2.x - p1.x, p2.y - p1.y)
+      const distCm = distCounts * cmPerCount
+      totalDist += distCm
+
+      const v = distCm / dt // cm/s
+      if (v > maxSpeed) maxSpeed = v
+
+      // Only count speed if moving (ignore tiny jitter)
+      if (v > 1.0) {
+        speedSum += v
+        speedCount++
+      }
+
+      // Calculate acceleration if we have a previous velocity
+      // We need at least 3 points for accel, but here we use prevV from previous iteration
+      if (i > 1) {
+        const accel = Math.abs(v - prevV) / dt // cm/s^2
+        if (accel > maxAccel) maxAccel = accel
+      }
+      prevV = v
+    }
+
+    totalDistanceCm = totalDist
+    // Convert cm/s^2 to G (980.665 cm/s^2)
+    maxAccelG = maxAccel / 980.665
+    avgSpeedCmS = speedCount > 0 ? speedSum / speedCount : 0
+    peakSpeedCmS = maxSpeed
+
+    // Calculate average flick speed from kill analyses
+    // analyses[].maxVelocity is in pixels/ms
+    // cm/s = pixels/ms * 1000 * cmPerCount
+    if (analyses.length > 0) {
+      let flickSpeedSum = 0
+      let flickCount = 0
+      for (const a of analyses) {
+        if (a.maxVelocity > 0) {
+          flickSpeedSum += a.maxVelocity * 1000 * cmPerCount
+          flickCount++
+        }
+      }
+      avgFlickSpeedCmS = flickCount > 0 ? flickSpeedSum / flickCount : 0
+    }
+  }
+
   return {
     kills: analyses,
     counts: { overshoot, undershoot, optimal },
@@ -152,6 +232,12 @@ export function computeMouseTraceAnalysis(item: ScenarioRecord, overridePoints?:
     overallOvershootPixels: analyses.length > 0 ? allKillsOvershootPixels / analyses.length : 0,
     overallUndershootPixels: analyses.length > 0 ? allKillsUndershootPixels / analyses.length : 0,
     severityCounts,
+    cm360,
+    totalDistanceCm,
+    maxAccelG,
+    avgSpeedCmS,
+    peakSpeedCmS,
+    avgFlickSpeedCmS,
   }
 }// --- Core helpers ---
 export function parseEventsToKills(events: string[][], baseIso: string): MouseKillEvent[] {
