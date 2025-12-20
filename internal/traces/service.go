@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"refleks/internal/models"
 	appsettings "refleks/internal/settings"
@@ -18,6 +19,49 @@ type ScenarioData struct {
 	ScenarioName string              `json:"scenarioName,omitempty"`
 	DatePlayed   string              `json:"datePlayed,omitempty"`
 	MouseTrace   []models.MousePoint `json:"mouseTrace,omitempty"`
+}
+
+// UnmarshalJSON handles legacy trace files where timestamps were strings.
+func (s *ScenarioData) UnmarshalJSON(data []byte) error {
+	type legacyPoint struct {
+		TS      interface{} `json:"ts"`
+		X       int32       `json:"x"`
+		Y       int32       `json:"y"`
+		Buttons int32       `json:"buttons"`
+	}
+	type Alias ScenarioData
+	aux := &struct {
+		MouseTrace []legacyPoint `json:"mouseTrace,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(s),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if aux.MouseTrace != nil {
+		s.MouseTrace = make([]models.MousePoint, len(aux.MouseTrace))
+		for i, lp := range aux.MouseTrace {
+			var ts int64
+			switch v := lp.TS.(type) {
+			case float64:
+				ts = int64(v)
+			case string:
+				if t, err := time.Parse(time.RFC3339, v); err == nil {
+					ts = t.UnixMilli()
+				}
+			}
+			s.MouseTrace[i] = models.MousePoint{
+				TS:      ts,
+				X:       lp.X,
+				Y:       lp.Y,
+				Buttons: lp.Buttons,
+			}
+		}
+	}
+	return nil
 }
 
 // Service manages storage of scenario trace data.

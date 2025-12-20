@@ -1,11 +1,10 @@
-import { tsMs } from '../../lib/trace';
-import { clamp, formatMmSs } from '../../lib/utils';
-import type { Point } from '../../types/ipc';
+import type { MousePoint } from '../types/ipc';
+import { clamp, formatMmSs } from './utils';
 
-export type Highlight = { startTs?: any; endTs?: any; color?: string }
-export type Marker = { ts: any; color?: string; radius?: number; type?: 'circle' | 'cross' }
+export type Highlight = { startTs?: number; endTs?: number; color?: string }
+export type Marker = { ts: number; color?: string; radius?: number; type?: 'circle' | 'cross' }
 
-export function fmtTime(ms: number): string {
+export function formatTime(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) return '0:00.00'
   const s = ms / 1000
   return formatMmSs(s, 2)
@@ -18,11 +17,11 @@ export function lerpRGB(a: [number, number, number], b: [number, number, number]
   return [r, g, b2]
 }
 
-export function findPointIndex(points: Point[], targetMs: number): number {
+export function findPointIndex(points: MousePoint[], targetMs: number): number {
   let lo = 0, hi = points.length - 1
   while (lo < hi) {
     const mid = (lo + hi) >>> 1
-    if (tsMs(points[mid].ts) < targetMs) lo = mid + 1
+    if (points[mid].ts < targetMs) lo = mid + 1
     else hi = mid
   }
   return lo
@@ -39,7 +38,7 @@ export function renderTrace(
   props: {
     width: number
     height: number
-    points: Point[]
+    points: MousePoint[]
     startIdx: number
     endIdx: number
     step: number
@@ -211,8 +210,8 @@ export function renderTrace(
 
   // Highlight overlay for selected segment
   if (highlight && (highlight.startTs || highlight.endTs)) {
-    const hStartMs = tsMs(highlight.startTs ?? points[0].ts)
-    const hEndMs = tsMs(highlight.endTs ?? points[points.length - 1].ts)
+    const hStartMs = highlight.startTs ?? points[0].ts
+    const hEndMs = highlight.endTs ?? points[points.length - 1].ts
     if (Number.isFinite(hStartMs) && Number.isFinite(hEndMs)) {
       const i0 = Math.max(0, Math.min(points.length - 1, findPointIndex(points, hStartMs)))
       const i1 = Math.max(0, Math.min(points.length - 1, findPointIndex(points, hEndMs)))
@@ -233,7 +232,7 @@ export function renderTrace(
   // Draw optional external markers
   if (Array.isArray(markers) && markers.length > 0) {
     for (const m of markers) {
-      const ms = tsMs(m.ts)
+      const ms = m.ts
       const i = Math.max(0, Math.min(points.length - 1, findPointIndex(points, ms)))
       const sx = toX(points[i].x)
       const sy = toY(points[i].y)

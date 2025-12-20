@@ -1,13 +1,6 @@
-import { Point } from '../types/ipc';
+import { MousePoint } from '../types/ipc';
 
-export function tsMs(v: any): number {
-  if (v == null) return 0
-  if (typeof v === 'number') return v
-  const n = Date.parse(String(v))
-  return Number.isFinite(n) ? n : 0
-}
-
-export function decodeTraceData(base64: string): Point[] {
+export function decodeTraceData(base64: string): MousePoint[] {
   if (!base64) return [];
 
   try {
@@ -26,7 +19,7 @@ export function decodeTraceData(base64: string): Point[] {
     const count = view.getUint32(offset, true);
     offset += 4;
 
-    const points: Point[] = new Array(count);
+    const points: MousePoint[] = new Array(count);
     const pointSize = 20;
 
     for (let i = 0; i < count; i++) {
@@ -38,10 +31,10 @@ export function decodeTraceData(base64: string): Point[] {
       const buttons = view.getUint32(offset + 16, true);
 
       // Convert nano to milliseconds
-      const tsMs = Number(tsNano / BigInt(1000000));
+      const ms = Number(tsNano / BigInt(1000000));
 
       points[i] = {
-        ts: tsMs,
+        ts: ms,
         x,
         y,
         buttons

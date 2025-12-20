@@ -1,5 +1,5 @@
-import type { Point, ScenarioRecord } from '../../types/ipc'
-import { decodeTraceData, tsMs } from '../trace'
+import type { MousePoint, ScenarioRecord } from '../../types/ipc'
+import { decodeTraceData } from '../trace'
 import { clamp, formatNumber, formatPct } from '../utils'
 
 export type MouseKillEvent = {
@@ -77,7 +77,7 @@ export type SensSuggestion = {
 
 
 // Entry point used by UI
-export function computeMouseTraceAnalysis(item: ScenarioRecord, overridePoints?: Point[]): MouseTraceAnalysis | null {
+export function computeMouseTraceAnalysis(item: ScenarioRecord, overridePoints?: MousePoint[]): MouseTraceAnalysis | null {
   let points = overridePoints || (Array.isArray(item.mouseTrace) ? item.mouseTrace : [])
   if (points.length === 0 && item.traceData) {
     points = decodeTraceData(item.traceData)
@@ -193,17 +193,17 @@ export function parseEventsToKills(events: string[][], baseIso: string): MouseKi
   return out
 }
 
-export function findWindow(points: Point[], ev: MouseKillEvent, capSec: number): { startMs: number; endMs: number; startIndex: number; endIndex: number } | null {
+export function findWindow(points: MousePoint[], ev: MouseKillEvent, capSec: number): { startMs: number; endMs: number; startIndex: number; endIndex: number } | null {
   if (!points.length) return null
   const endMs = ev.tsAbsMs
-  const startMs = Math.max(tsMs(points[0].ts), endMs - Math.max(0.1, Math.min(Math.max(0, ev.ttkSec) || capSec, capSec)) * 1000)
+  const startMs = Math.max(points[0].ts, endMs - Math.max(0.1, Math.min(Math.max(0, ev.ttkSec) || capSec, capSec)) * 1000)
   const startIndex = lowerBound(points, startMs)
   const endIndex = lowerBound(points, endMs)
   if (endIndex <= startIndex) return null
   return { startMs, endMs, startIndex, endIndex }
 }
 
-export function analyzeWindow(points: Point[], win: { startMs: number; endMs: number; startIndex: number; endIndex: number }, ev: MouseKillEvent): KillAnalysis {
+export function analyzeWindow(points: MousePoint[], win: { startMs: number; endMs: number; startIndex: number; endIndex: number }, ev: MouseKillEvent): KillAnalysis {
   const { startIndex, endIndex, startMs, endMs } = win
   // Points: the starting point for this analysis window, and the point where the kill occurred
   const startPoint = points[startIndex]
@@ -252,7 +252,7 @@ export function analyzeWindow(points: Point[], win: { startMs: number; endMs: nu
 
     if (i > startIndex) {
       const prevP = points[i - 1]
-      const dt = tsMs(p.ts) - tsMs(prevP.ts)
+      const dt = p.ts - prevP.ts
       const dist = Math.hypot(p.x - prevP.x, p.y - prevP.y)
       velocities.push(dt > 0 ? dist / dt : 0)
     }
@@ -514,11 +514,11 @@ function parseTTK(s: any): number {
 }
 function toInt(s: any): number { const n = parseInt(String(s || ''), 10); return Number.isFinite(n) ? n : NaN }
 function toFloat(s: any): number { const n = parseFloat(String(s || '')); return Number.isFinite(n) ? n : NaN }
-function lowerBound(points: Point[], targetMs: number, lo = 0, hi = points.length - 1): number {
+function lowerBound(points: MousePoint[], targetMs: number, lo = 0, hi = points.length - 1): number {
   let l = Math.max(0, lo), r = Math.max(l, hi)
   while (l < r) {
     const mid = (l + r) >>> 1
-    const t = tsMs(points[mid].ts)
+    const t = points[mid].ts
     if (t < targetMs) l = mid + 1; else r = mid
   }
   return Math.max(0, Math.min(points.length - 1, l))

@@ -5,7 +5,7 @@ import { Dropdown } from '../../components/shared/Dropdown';
 import { Tabs } from '../../components/shared/Tabs';
 import { useOpenedBenchmarkProgress } from '../../hooks/useOpenedBenchmarkProgress';
 import { useUIState } from '../../hooks/useUIState';
-import { copyNodeToClipboard } from '../../lib/copyNodeToClipboard';
+import { copyNodeToClipboard } from '../../lib/clipboard';
 import { launchPlaylist } from '../../lib/internal';
 import type { Benchmark } from '../../types/ipc';
 import { AiTab } from './tabs/Ai';

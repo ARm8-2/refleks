@@ -3,16 +3,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useChartTheme } from '../../hooks/useChartTheme';
 import { usePageState } from '../../hooks/usePageState';
 import { colorWithAlpha, cssColorToRGB } from '../../lib/theme';
-import { tsMs } from '../../lib/trace';
+import { findPointIndex, formatTime, getCanvasScale, Highlight, Marker, renderTrace } from '../../lib/trace-renderer';
 import { clamp } from '../../lib/utils';
-import type { Point } from '../../types/ipc';
+import type { MousePoint } from '../../types/ipc';
 import { Dropdown } from '../shared/Dropdown';
 import { SegmentedControl } from '../shared/SegmentedControl';
 import { Toggle } from '../shared/Toggle';
-import { findPointIndex, fmtTime, getCanvasScale, Highlight, Marker, renderTrace } from './TraceRenderer';
 
 type TraceViewerProps = {
-  points: Point[]
+  points: MousePoint[]
   stats: Record<string, any>
   highlight?: Highlight
   markers?: Marker[]
@@ -64,17 +63,14 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
 
   const [clickMarkersMode, setClickMarkersMode] = usePageState<'all' | 'down' | 'none'>('trace:clickMarkers', 'down')
 
-  // Normalize points once to avoid repeated tsMs calls
-  const normalizedPoints = useMemo(() => points.map(p => ({ ...p, ts: tsMs(p.ts) })), [points])
-
   // Base data bounds/resolution
   const base = useMemo(() => {
-    if (normalizedPoints.length === 0) return { w: 1, h: 1, minX: 0, minY: 0, cx: 0.5, cy: 0.5 }
-    let minX = normalizedPoints[0].x,
-      maxX = normalizedPoints[0].x,
-      minY = normalizedPoints[0].y,
-      maxY = normalizedPoints[0].y
-    for (const p of normalizedPoints) {
+    if (points.length === 0) return { w: 1, h: 1, minX: 0, minY: 0, cx: 0.5, cy: 0.5 }
+    let minX = points[0].x,
+      maxX = points[0].x,
+      minY = points[0].y,
+      maxY = points[0].y
+    for (const p of points) {
       if (p.x < minX) minX = p.x
       if (p.x > maxX) maxX = p.x
       if (p.y < minY) minY = p.y
@@ -93,10 +89,10 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
       }
     }
     return { w: dataW, h: dataH, minX, minY, cx: minX + dataW / 2, cy: minY + dataH / 2 }
-  }, [normalizedPoints, stats])
+  }, [points, stats])
 
-  const firstTS = normalizedPoints[0]?.ts
-  const lastTS = normalizedPoints[normalizedPoints.length - 1]?.ts
+  const firstTS = points[0]?.ts
+  const lastTS = points[points.length - 1]?.ts
   const t0 = firstTS || 0
   const tN = lastTS || 0
   const durationMs = Math.max(0, tN - t0)
@@ -105,47 +101,47 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
   useEffect(() => {
     stopAnim()
     setIsPlaying(false)
-    setPlayIndex(normalizedPoints.length)
+    setPlayIndex(points.length)
     curIndexRef.current = 0
     virtualElapsedRef.current = 0
     baseStartRef.current = 0
     setZoom(1)
     centerRef.current = { cx: (base as any).cx ?? 0, cy: (base as any).cy ?? 0 }
-  }, [normalizedPoints])
+  }, [points])
 
   // External seek
   useEffect(() => {
-    if (seekToTs == null || normalizedPoints.length === 0) return
-    const abs = tsMs(seekToTs)
+    if (seekToTs == null || points.length === 0) return
+    const abs = seekToTs
     if (!Number.isFinite(abs)) return
-    const i = findPointIndex(normalizedPoints, abs)
+    const i = findPointIndex(points, abs)
     curIndexRef.current = i
     setPlayIndex(i)
     if (autoFollowRef.current) {
-      const p = normalizedPoints[Math.max(0, Math.min(normalizedPoints.length - 1, i))]
+      const p = points[Math.max(0, Math.min(points.length - 1, i))]
       if (p) centerRef.current = { cx: p.x, cy: p.y }
     }
   }, [seekToTs])
 
   // External center
   useEffect(() => {
-    if (centerOnTs == null || normalizedPoints.length === 0) return
-    const abs = tsMs(centerOnTs)
+    if (centerOnTs == null || points.length === 0) return
+    const abs = centerOnTs
     if (!Number.isFinite(abs)) return
-    const i = Math.max(0, Math.min(normalizedPoints.length - 1, findPointIndex(normalizedPoints, abs)))
-    const p = normalizedPoints[i]
+    const i = Math.max(0, Math.min(points.length - 1, findPointIndex(points, abs)))
+    const p = points[i]
     centerRef.current = { cx: p.x, cy: p.y }
     setTransformTick(t => t + 1)
   }, [centerOnTs])
 
   // Playback
   const play = () => {
-    if (isPlaying || normalizedPoints.length < 2) return
+    if (isPlaying || points.length < 2) return
     setIsPlaying(true)
     lastFrameTimeRef.current = performance.now()
-    const curIdx = Math.max(0, Math.min(normalizedPoints.length - 1, playIndex))
+    const curIdx = Math.max(0, Math.min(points.length - 1, playIndex))
     curIndexRef.current = curIdx
-    baseStartRef.current = normalizedPoints[curIdx]?.ts || t0
+    baseStartRef.current = points[curIdx]?.ts || t0
     virtualElapsedRef.current = 0
     rafRef.current = requestAnimationFrame(tick)
   }
@@ -156,8 +152,8 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
   const reset = () => {
     setIsPlaying(false)
     stopAnim()
-    curIndexRef.current = normalizedPoints.length
-    setPlayIndex(normalizedPoints.length)
+    curIndexRef.current = points.length
+    setPlayIndex(points.length)
     centerRef.current = { cx: (base as any).cx ?? 0, cy: (base as any).cy ?? 0 }
     // Notify parent so it can clear any selection/highlight
     try { onReset && onReset() } catch { }
@@ -176,19 +172,19 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
 
     const targetTs = baseStartRef.current + virtualElapsedRef.current
     let i = curIndexRef.current
-    while (i < normalizedPoints.length && normalizedPoints[i].ts <= targetTs) i++
+    while (i < points.length && points[i].ts <= targetTs) i++
     curIndexRef.current = i
     setPlayIndex(i)
     if (autoFollowRef.current) {
-      const followIdx = Math.max(0, Math.min(normalizedPoints.length - 1, i - 1))
-      const p = normalizedPoints[followIdx]
+      const followIdx = Math.max(0, Math.min(points.length - 1, i - 1))
+      const p = points[followIdx]
       if (p) centerRef.current = { cx: p.x, cy: p.y }
     }
-    if (targetTs >= tN || i >= normalizedPoints.length) {
+    if (targetTs >= tN || i >= points.length) {
       // Loop playback back to the start
       curIndexRef.current = 0
       setPlayIndex(0)
-      baseStartRef.current = normalizedPoints[0]?.ts || t0
+      baseStartRef.current = points[0]?.ts || t0
       virtualElapsedRef.current = 0
       lastFrameTimeRef.current = performance.now()
       rafRef.current = requestAnimationFrame(tick)
@@ -201,7 +197,7 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
   useEffect(() => {
     const canvas = canvasRef.current
     const wrap = wrapRef.current
-    if (!canvas || !wrap || normalizedPoints.length === 0) return
+    if (!canvas || !wrap || points.length === 0) return
     const dpr = window.devicePixelRatio || 1
     const cssW = Math.max(320, wrap.clientWidth)
     let cssH = 0
@@ -221,16 +217,16 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
 
     // Calculate visible range
     const max = 10000
-    const idx = Math.max(0, Math.min(playIndex, normalizedPoints.length - 1))
-    const curT = normalizedPoints[idx].ts
+    const idx = Math.max(0, Math.min(playIndex, points.length - 1))
+    const curT = points[idx].ts
     let startIdx = 0
-    let endIdx = Math.min(playIndex, normalizedPoints.length)
+    let endIdx = Math.min(playIndex, points.length)
     let step = 1
 
     if (trailMode === 'last2') {
       const tailStart = curT - 2000
-      startIdx = findPointIndex(normalizedPoints, tailStart)
-      endIdx = Math.min(playIndex, normalizedPoints.length)
+      startIdx = findPointIndex(points, tailStart)
+      endIdx = Math.min(playIndex, points.length)
     }
 
     const count = Math.max(1, endIdx - startIdx)
@@ -241,7 +237,7 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
     renderTrace(ctx, {
       width: cssW,
       height: cssH,
-      points: normalizedPoints,
+      points: points,
       startIdx,
       endIdx,
       step,
@@ -264,7 +260,7 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
       trailStroke,
     })
   }, [
-    normalizedPoints,
+    points,
     playIndex,
     trailMode,
     base,
@@ -406,8 +402,8 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
 
   // Scrub & nudge
   const curTs = points[Math.max(0, Math.min(playIndex, points.length - 1))]?.ts
-  const curAbsMs = tsMs(curTs) || 0
-  const startAbsMs = tsMs(firstTS) || 0
+  const curAbsMs = curTs || 0
+  const startAbsMs = firstTS || 0
   const progressMs = Math.max(0, curAbsMs - startAbsMs)
 
   const seekTo = (targetMs: number) => {
@@ -416,7 +412,7 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
     curIndexRef.current = i
     setPlayIndex(i)
     if (isPlaying) {
-      baseStartRef.current = tsMs(points[i]?.ts) || startAbsMs
+      baseStartRef.current = points[i]?.ts || startAbsMs
       virtualElapsedRef.current = 0
       lastFrameTimeRef.current = performance.now()
     }
@@ -460,7 +456,7 @@ export function TraceViewer({ points, stats, highlight, markers, seekToTs, cente
             className="w-full range-pill appearance-none h-3 rounded bg-surface-3"
           />
           <span className="text-xs font-mono text-secondary whitespace-nowrap">
-            {fmtTime(progressMs)} / {fmtTime(durationMs)}
+            {formatTime(progressMs)} / {formatTime(durationMs)}
           </span>
         </div>
 

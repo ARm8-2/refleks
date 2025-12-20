@@ -7,12 +7,12 @@ import { useChartTheme } from '../../../hooks/useChartTheme';
 import { computeMouseTraceAnalysis, type MouseTraceAnalysis } from '../../../lib/analysis/mouse';
 import { getScenarioTrace } from '../../../lib/internal';
 import { decodeTraceData } from '../../../lib/trace';
-import type { Point, ScenarioRecord } from '../../../types/ipc';
+import type { MousePoint, ScenarioRecord } from '../../../types/ipc';
 
 type MouseTraceTabProps = { item: ScenarioRecord }
 
 export function MouseTraceTab({ item }: MouseTraceTabProps) {
-  const [fetchedPoints, setFetchedPoints] = useState<Point[] | null>(null);
+  const [fetchedPoints, setFetchedPoints] = useState<MousePoint[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

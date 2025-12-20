@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"time"
 
 	"refleks/internal/models"
 )
@@ -76,7 +75,7 @@ func writePoints(w io.Writer, points []models.MousePoint) error {
 	// Total 20 bytes per point
 	buf := make([]byte, 20)
 	for _, p := range points {
-		binary.LittleEndian.PutUint64(buf[0:], uint64(p.TS.UnixNano()))
+		binary.LittleEndian.PutUint64(buf[0:], uint64(p.TS*1000000))
 		binary.LittleEndian.PutUint32(buf[8:], uint32(p.X))
 		binary.LittleEndian.PutUint32(buf[12:], uint32(p.Y))
 		binary.LittleEndian.PutUint32(buf[16:], uint32(p.Buttons))
@@ -143,7 +142,7 @@ func ReadBinary(r io.Reader) (ScenarioData, error) {
 		buttons := int32(binary.LittleEndian.Uint32(buf[16:]))
 
 		points[i] = models.MousePoint{
-			TS:      time.Unix(0, tsNano),
+			TS:      tsNano / 1000000,
 			X:       x,
 			Y:       y,
 			Buttons: buttons,

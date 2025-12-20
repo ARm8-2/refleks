@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { EventsOn } from '../../wailsjs/runtime'
 import { getRecentScenarios, getSettings } from '../lib/internal'
 import { useStore } from './useStore'

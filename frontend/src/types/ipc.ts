@@ -1,5 +1,5 @@
-export type Point = {
-  ts: any
+export type MousePoint = {
+  ts: number
   x: number
   y: number
   buttons?: number
@@ -10,7 +10,7 @@ export interface ScenarioRecord {
   fileName: string
   stats: Record<string, any>
   events: string[][]
-  mouseTrace?: Array<Point>
+  mouseTrace?: Array<MousePoint>
   traceData?: string
   hasTrace?: boolean
 }

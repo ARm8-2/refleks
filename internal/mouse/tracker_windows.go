@@ -117,9 +117,9 @@ func (t *trackerWin) SetBufferDuration(d time.Duration) {
 	t.bufDur = d
 	// prune immediately (lazy: update start index, compact only occasionally)
 	now := time.Now()
-	cutoff := now.Add(-d)
+	cutoff := now.Add(-d).UnixMilli()
 	j := t.start
-	for j < len(t.buf) && t.buf[j].TS.Before(cutoff) {
+	for j < len(t.buf) && t.buf[j].TS < cutoff {
 		j++
 	}
 	if j > t.start {
@@ -145,13 +145,15 @@ func (t *trackerWin) GetRange(start, end time.Time) []models.MousePoint {
 	if len(t.buf) == 0 {
 		return nil
 	}
+	startMs := start.UnixMilli()
+	endMs := end.UnixMilli()
 	out := make([]models.MousePoint, 0, 256)
 	for i := t.start; i < len(t.buf); i++ {
 		p := t.buf[i]
-		if p.TS.Before(start) {
+		if p.TS < startMs {
 			continue
 		}
-		if p.TS.After(end) {
+		if p.TS > endMs {
 			break
 		}
 		out = append(out, p)
@@ -471,12 +473,12 @@ func (t *trackerWin) eventLoop() {
 			}
 			if changed {
 				now := time.Now()
-				t.buf = append(t.buf, models.MousePoint{TS: now, X: t.vx, Y: t.vy, Buttons: int32(t.buttons)})
+				t.buf = append(t.buf, models.MousePoint{TS: now.UnixMilli(), X: t.vx, Y: t.vy, Buttons: int32(t.buttons)})
 				// prune occasionally
 				if time.Since(t.lastPrune) > time.Second || (len(t.buf)-t.start) > 16384 {
-					cutoff := now.Add(-t.bufDur)
+					cutoff := now.Add(-t.bufDur).UnixMilli()
 					j := t.start
-					for j < len(t.buf) && t.buf[j].TS.Before(cutoff) {
+					for j < len(t.buf) && t.buf[j].TS < cutoff {
 						j++
 					}
 					if j > t.start {
