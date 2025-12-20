@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { autoHiddenRanks } from '../lib/benchmarks'
+import { autoHiddenRanks } from '../lib/benchmarks/visibility'
 import type { BenchmarkProgress } from '../types/ipc'
 import { usePageState } from './usePageState'
 

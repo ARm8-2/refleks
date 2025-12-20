@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getLastScenarioScores } from '../../lib/internal'
 import type { KovaaksLastScore, RankDef } from '../../types/ipc'
 import { ChartBox } from '../shared/ChartBox'
+import { Loading } from '../shared/Loading'
 import { ScenarioHistoryChart } from './ScenarioHistoryChart'
 
 type ScenarioHistoryModalProps = {
@@ -40,7 +41,7 @@ export function ScenarioHistoryModal({ isOpen, onClose, scenarioName, ranks, thr
       modalControls={null}
     >
       <div className="h-full w-full">
-        {loading && <div className="text-center text-secondary py-8">Loading...</div>}
+        {loading && <Loading />}
         {error && <div className="text-center text-red-500 py-8">{error}</div>}
         {!loading && !error && scores.length === 0 && (
           <div className="text-center text-secondary py-8">No scores found.</div>

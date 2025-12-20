@@ -3,11 +3,13 @@ import { useDragScroll } from '../../hooks/useDragScroll'
 import { useHorizontalWheelScroll } from '../../hooks/useHorizontalWheelScroll'
 import { usePageState } from '../../hooks/usePageState'
 import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
-import { cellFill, computeFillColor, PADDING_COL_WIDTH, RANK_MIN_WIDTH, SCORE_COL_WIDTH } from '../../lib/benchmarks'
+import { PADDING_COL_WIDTH, RANK_MIN_WIDTH, SCORE_COL_WIDTH } from '../../lib/benchmarks/layout'
+import { cellFill, computeFillColor } from '../../lib/benchmarks/ui'
 import { MISSING_STR } from '../../lib/constants'
 import { formatNumber } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
 import { InfoBox } from '../shared/InfoBox'
+import { Loading } from '../shared/Loading'
 import { Toggle } from '../shared/Toggle'
 
 type ScenarioBenchmarkProgressProps = {
@@ -96,7 +98,7 @@ export function ScenarioBenchmarkProgress({
           <div className="h-full flex items-center justify-center text-sm text-red-400">{error}</div>
         )}
         {(selectedBenchId && loading) && (
-          <div className="h-full flex items-center justify-center text-sm text-secondary">Loading benchmark progress…</div>
+          <Loading />
         )}
         {(selectedBenchId && !loading && !error) && (
           bench && progress && scenario ? (

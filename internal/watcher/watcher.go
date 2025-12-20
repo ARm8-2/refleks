@@ -151,6 +151,18 @@ func (w *Watcher) scanOnce(includeAll bool) error {
 			continue
 		}
 		full := filepath.Join(w.cfg.Path, name)
+
+		// Optimization: If we're not forcing a re-scan, skip files we've already processed.
+		// This avoids expensive regex parsing on thousands of files every poll interval.
+		if !includeAll {
+			w.mu.RLock()
+			_, known := w.seen[full]
+			w.mu.RUnlock()
+			if known {
+				continue
+			}
+		}
+
 		info, err := parser.ParseFilename(name)
 		if err != nil {
 			continue
@@ -302,12 +314,14 @@ func (w *Watcher) parseFile(fullPath string) (models.ScenarioRecord, error) {
 				MouseTrace:   rec.MouseTrace,
 			})
 		}
+		// We have a trace, but we don't send it immediately to save bandwidth/memory.
+		// The frontend will request it if needed.
+		rec.HasTrace = true
+		rec.MouseTrace = nil
 	} else {
-		// No live capture available (e.g., after restart). Attempt to load persisted data.
+		// No live capture available (e.g., after restart). Check if persisted data exists.
 		if w.tracesSvc.Exists(rec.FileName) {
-			if sd, err := w.tracesSvc.Load(rec.FileName); err == nil && len(sd.MouseTrace) > 0 {
-				rec.MouseTrace = sd.MouseTrace
-			}
+			rec.HasTrace = true
 		}
 	}
 	return rec, nil
@@ -400,26 +414,19 @@ func (w *Watcher) UpdateConfig(cfg models.WatcherConfig) error {
 	return nil
 }
 
-// ReloadTraces attempts to reload persisted mouse traces for recent scenarios
-// from the traces storage directory. For any records that gain a non-empty
-// MouseTrace as a result, a 'ScenarioUpdated' event is emitted.
+// ReloadTraces checks for persisted mouse traces for recent scenarios.
+// If a record didn't have a trace but now does, a 'ScenarioUpdated' event is emitted.
 func (w *Watcher) ReloadTraces() int {
 	// Copy updated records to emit outside the lock
 	var toEmit []models.ScenarioRecord
 	w.mu.Lock()
 	for i := range w.recent {
 		rec := w.recent[i]
-		// Attempt to load persisted trace
-		if w.tracesSvc.Exists(rec.FileName) {
-			if sd, err := w.tracesSvc.Load(rec.FileName); err == nil {
-				if len(sd.MouseTrace) > 0 {
-					if !equalMouseTrace(rec.MouseTrace, sd.MouseTrace) {
-						rec.MouseTrace = sd.MouseTrace
-						w.recent[i] = rec
-						toEmit = append(toEmit, rec)
-					}
-				}
-			}
+		// Check if trace exists on disk
+		if !rec.HasTrace && w.tracesSvc.Exists(rec.FileName) {
+			rec.HasTrace = true
+			w.recent[i] = rec
+			toEmit = append(toEmit, rec)
 		}
 	}
 	w.mu.Unlock()
@@ -434,19 +441,6 @@ func (w *Watcher) ReloadTraces() int {
 func isKovaaksStatsFile(name string) bool {
 	lower := strings.ToLower(name)
 	return strings.HasSuffix(lower, " stats.csv")
-}
-
-// equalMouseTrace provides a fast equality check for two mouse traces.
-func equalMouseTrace(a, b []models.MousePoint) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if !a[i].TS.Equal(b[i].TS) || a[i].X != b[i].X || a[i].Y != b[i].Y || a[i].Buttons != b[i].Buttons {
-			return false
-		}
-	}
-	return true
 }
 
 // effectiveRecentCap returns the in-memory cap for recent scenarios.

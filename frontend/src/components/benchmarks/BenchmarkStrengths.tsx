@@ -1,12 +1,14 @@
-import { useMemo } from 'react'
-import { Bar, Radar } from 'react-chartjs-2'
-import { ChartBox, Dropdown, SegmentedControl } from '..'
-import { useChartTheme } from '../../hooks/useChartTheme'
-import { usePageState } from '../../hooks/usePageState'
-import { normalizedRankProgress } from '../../lib/benchmarks'
-import { CHART_DECIMALS } from '../../lib/constants'
-import { formatNumber, formatPct } from '../../lib/utils'
-import type { Benchmark, BenchmarkProgress, ProgressScenario, RankDef } from '../../types/ipc'
+import { useMemo } from 'react';
+import { Bar, Radar } from 'react-chartjs-2';
+import { useChartTheme } from '../../hooks/useChartTheme';
+import { usePageState } from '../../hooks/usePageState';
+import { normalizedRankProgress } from '../../lib/benchmarks/ui';
+import { CHART_DECIMALS } from '../../lib/constants';
+import { formatNumber, formatPct } from '../../lib/utils';
+import type { Benchmark, BenchmarkProgress, ProgressScenario, RankDef } from '../../types/ipc';
+import { ChartBox } from '../shared/ChartBox';
+import { Dropdown } from '../shared/Dropdown';
+import { SegmentedControl } from '../shared/SegmentedControl';
 
 type BenchmarkStrengthsProps = {
   bench: Benchmark

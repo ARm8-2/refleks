@@ -8,7 +8,14 @@ type ScenarioRecord struct {
 	Stats    map[string]any `json:"stats"`
 	Events   [][]string     `json:"events"`
 	// Optional mouse trace captured locally. Absent when disabled or unavailable.
+	// Deprecated: Use TraceData (base64 binary) for performance.
 	MouseTrace []MousePoint `json:"mouseTrace,omitempty"`
+	// TraceData is the base64-encoded binary representation of the mouse trace.
+	// Format: [Count:4][TS:8][X:4][Y:4][Buttons:4]...
+	// Note: This is now loaded lazily. Use HasTrace to check availability.
+	TraceData string `json:"traceData,omitempty"`
+	// HasTrace indicates if a trace file exists on disk for this scenario.
+	HasTrace bool `json:"hasTrace"`
 }
 
 type MousePoint struct {

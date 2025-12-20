@@ -1,9 +1,14 @@
-import { useEffect, useMemo } from 'react'
-import { MetricsControls, PerformanceVsSensChart, SessionLengthRecommendation, SessionMetricsChart, SummaryStats, TimeOfDayAreaChart } from '../../../components'
-import { usePageState } from '../../../hooks/usePageState'
-import { useStore } from '../../../hooks/useStore'
-import { computeSessionAverages, groupByScenario } from '../../../lib/analysis/metrics'
-import { getScenarioName } from '../../../lib/utils'
+import { useEffect, useMemo } from 'react';
+import { MetricsControls } from '../../../components/sessions/MetricsControls';
+import { PerformanceVsSensChart } from '../../../components/sessions/PerformanceVsSensChart';
+import { SessionLengthRecommendation } from '../../../components/sessions/SessionLengthRecommendation';
+import { SessionMetricsChart } from '../../../components/sessions/SessionMetricsChart';
+import { SummaryStats } from '../../../components/sessions/SummaryStats';
+import { TimeOfDayAreaChart } from '../../../components/sessions/TimeOfDayAreaChart';
+import { usePageState } from '../../../hooks/usePageState';
+import { useStore } from '../../../hooks/useStore';
+import { computeSessionAverages, groupByScenario } from '../../../lib/analysis/metrics';
+import { getScenarioName } from '../../../lib/utils';
 
 export function ProgressAllTab() {
   // All scenarios across all sessions (newest first in store)

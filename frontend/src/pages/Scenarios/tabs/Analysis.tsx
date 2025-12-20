@@ -1,7 +1,12 @@
-import { useMemo } from 'react'
-import { AccuracyVsSpeedChart, AccuracyVsSpeedDetails, EventsOverTimeChart, EventsOverTimeDetails, TTKMovingAverageChart, TTKMovingAverageDetails } from '../../../components'
-import { computeScenarioAnalysis } from '../../../lib/analysis/scenario'
-import type { ScenarioRecord } from '../../../types/ipc'
+import { useMemo } from 'react';
+import { AccuracyVsSpeedChart } from '../../../components/scenarios/AccuracyVsSpeedChart';
+import { AccuracyVsSpeedDetails } from '../../../components/scenarios/AccuracyVsSpeedDetails';
+import { EventsOverTimeChart } from '../../../components/scenarios/EventsOverTimeChart';
+import { EventsOverTimeDetails } from '../../../components/scenarios/EventsOverTimeDetails';
+import { TTKMovingAverageChart } from '../../../components/scenarios/TTKMovingAverageChart';
+import { TTKMovingAverageDetails } from '../../../components/scenarios/TTKMovingAverageDetails';
+import { computeScenarioAnalysis } from '../../../lib/analysis/scenario';
+import type { ScenarioRecord } from '../../../types/ipc';
 
 type ScenariosAnalysisTabProps = { item: ScenarioRecord }
 

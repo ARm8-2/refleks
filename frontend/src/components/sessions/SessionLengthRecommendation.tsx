@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useChartTheme } from '../../hooks/useChartTheme'
-import { buildScenarioProfiles, recommendSessionLength } from '../../lib/analysis'
+import { buildScenarioProfiles, recommendSessionLength } from '../../lib/analysis/session'
 import { colorWithAlpha } from '../../lib/theme'
 import type { Session } from '../../types/domain'
 import { InfoBox } from '../shared/InfoBox'

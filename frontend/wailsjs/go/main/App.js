@@ -50,6 +50,10 @@ export function GetRecentScenarios(arg1) {
   return window['go']['main']['App']['GetRecentScenarios'](arg1);
 }
 
+export function GetScenarioTrace(arg1) {
+  return window['go']['main']['App']['GetScenarioTrace'](arg1);
+}
+
 export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
 }

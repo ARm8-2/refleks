@@ -1,18 +1,68 @@
-import { useMemo, useState } from 'react';
-import { TraceAnalysis, TraceViewer } from '../../../components';
+import { useEffect, useMemo, useState } from 'react';
+import { TraceAnalysis } from '../../../components/scenarios/TraceAnalysis';
+import { TraceViewer } from '../../../components/scenarios/TraceViewer';
+import { Loading } from '../../../components/shared/Loading';
 import { Modal } from '../../../components/shared/Modal';
 import { useChartTheme } from '../../../hooks/useChartTheme';
 import { computeMouseTraceAnalysis, type MouseTraceAnalysis } from '../../../lib/analysis/mouse';
-import type { ScenarioRecord } from '../../../types/ipc';
+import { getScenarioTrace } from '../../../lib/internal';
+import { decodeTraceData } from '../../../lib/trace';
+import type { Point, ScenarioRecord } from '../../../types/ipc';
 
 type MouseTraceTabProps = { item: ScenarioRecord }
 
 export function MouseTraceTab({ item }: MouseTraceTabProps) {
-  const points = Array.isArray(item.mouseTrace) ? item.mouseTrace : []
+  const [fetchedPoints, setFetchedPoints] = useState<Point[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Reset when item changes
+    setFetchedPoints(null);
+
+    // If we already have data in the record, no need to fetch
+    if ((Array.isArray(item.mouseTrace) && item.mouseTrace.length > 0) || item.traceData) {
+      return;
+    }
+
+    // If we have a trace on disk but no data loaded, fetch it
+    if (item.hasTrace) {
+      setLoading(true);
+      getScenarioTrace(item.fileName)
+        .then(data => {
+          const pts = decodeTraceData(data);
+          setFetchedPoints(pts);
+          // Optionally update the item in place to cache it for this session?
+          // item.traceData = data;
+        })
+        .catch(err => console.error("Failed to load trace:", err))
+        .finally(() => setLoading(false));
+    }
+  }, [item.fileName, item.hasTrace, item.mouseTrace, item.traceData]);
+
+  const points = useMemo(() => {
+    if (fetchedPoints) return fetchedPoints;
+    if (Array.isArray(item.mouseTrace) && item.mouseTrace.length > 0) {
+      return item.mouseTrace;
+    }
+    if (item.traceData) {
+      return decodeTraceData(item.traceData);
+    }
+    return [];
+  }, [item.mouseTrace, item.traceData, fetchedPoints]);
+
   const chart = useChartTheme()
   const [sel, setSel] = useState<{ startMs: number; endMs: number; killMs: number; classification: 'optimal' | 'overshoot' | 'undershoot' } | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const analysis: MouseTraceAnalysis | null = useMemo(() => computeMouseTraceAnalysis(item), [item])
+
+  // We need to re-compute analysis when points change (e.g. after fetch)
+  const analysis: MouseTraceAnalysis | null = useMemo(() => {
+    if (points.length === 0) return null;
+    return computeMouseTraceAnalysis(item, points);
+  }, [item, points]);
+
+  if (loading) {
+    return <Loading />;
+  }
 
   if (points.length === 0) {
     return (

@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { Scatter } from 'react-chartjs-2';
-import { ChartBox } from '..';
 import { useChartTheme } from '../../hooks/useChartTheme';
 import { usePageState } from '../../hooks/usePageState';
 import { CHART_DECIMALS } from '../../lib/constants';
 import { formatNumber, formatPct, formatUiValueForLabel } from '../../lib/utils';
+import { ChartBox } from '../shared/ChartBox';
 
 type AccuracyVsSpeedChartProps = {
   points: Array<{ x: number; y: number; i: number }>

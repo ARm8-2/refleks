@@ -1,7 +1,7 @@
 import { Send, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EventsOn } from '../../../../wailsjs/runtime'
-import { Button } from '../../../components'
+import { Button } from '../../../components/shared/Button'
 import { Markdown } from '../../../components/shared/Markdown'
 import { useUIState } from '../../../hooks/useUIState'
 import { cancelSessionInsights, generateSessionInsights, getSettings } from '../../../lib/internal'

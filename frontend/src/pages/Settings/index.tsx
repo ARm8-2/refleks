@@ -1,14 +1,16 @@
-import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
-import { BrowserOpenURL } from '../../../wailsjs/runtime'
-import { Button, Dropdown } from '../../components'
-import { ClearCacheModal } from '../../components/settings/ClearCacheModal'
-import { ResetSettingsModal } from '../../components/settings/ResetSettingsModal'
-import { useStore } from '../../hooks/useStore'
-import { MISSING_STR } from '../../lib/constants'
-import { checkForUpdates, clearCache, downloadAndInstallUpdate, getSettings, getVersion, resetSettings, updateSettings } from '../../lib/internal'
-import { FONTS, setFont, setTheme, THEMES, type Font, type Theme } from '../../lib/theme'
-import type { Settings, UpdateInfo } from '../../types/ipc'
+import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
+import { BrowserOpenURL } from '../../../wailsjs/runtime';
+import { ClearCacheModal } from '../../components/settings/ClearCacheModal';
+import { ResetSettingsModal } from '../../components/settings/ResetSettingsModal';
+import { Button } from '../../components/shared/Button';
+import { Dropdown } from '../../components/shared/Dropdown';
+import { Loading } from '../../components/shared/Loading';
+import { useStore } from '../../hooks/useStore';
+import { MISSING_STR } from '../../lib/constants';
+import { checkForUpdates, clearCache, downloadAndInstallUpdate, getSettings, getVersion, resetSettings, updateSettings } from '../../lib/internal';
+import { FONTS, setFont, setTheme, THEMES, type Font, type Theme } from '../../lib/theme';
+import type { Settings, UpdateInfo } from '../../types/ipc';
 
 export function SettingsPage() {
   const setSessionGap = useStore(s => s.setSessionGap)
@@ -81,7 +83,7 @@ export function SettingsPage() {
     }
   }
 
-  if (!settings) return <div className="p-4">Loading settings...</div>
+  if (!settings) return <Loading />
 
   return (
     <div className="space-y-4 h-full overflow-auto p-4">

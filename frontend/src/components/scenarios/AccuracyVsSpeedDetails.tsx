@@ -1,6 +1,6 @@
-import { InfoBox } from '..'
 import { CHART_DECIMALS } from '../../lib/constants'
 import { formatNumber, formatPct } from '../../lib/utils'
+import { InfoBox } from '../shared/InfoBox'
 
 type AccuracyVsSpeedDetailsProps = {
   scatter: {

@@ -124,27 +124,34 @@ export function useStore<T>(selector: (s: Ctx) => T): T {
 // --- Helpers ---
 function groupSessions(items: ScenarioRecord[], gapMinutes = 30, notes: Record<string, { name: string; notes: string }> = {}): Session[] {
   if (!Array.isArray(items) || items.length === 0) return []
-  // Ensure newest first
-  const sorted = [...items].sort((a, b) => endTs(b) - endTs(a))
+
+  // Optimization: Items are maintained in sorted order (newest first) by the store.
+  // Skipping the sort saves O(N log N) and many Date.parse calls.
+  const sorted = items
 
   const groups: ScenarioRecord[][] = []
   let currentGroup: ScenarioRecord[] = []
+  let lastTs = 0
 
   for (const it of sorted) {
+    const t = endTs(it)
+
     if (currentGroup.length === 0) {
       currentGroup.push(it)
+      lastTs = t
       continue
     }
 
-    const last = currentGroup[currentGroup.length - 1]
-    const t = endTs(it)
-    const dt = Math.abs(endTs(last) - t)
+    // Compare with the oldest item in the current group (which was the last one added)
+    const dt = Math.abs(lastTs - t)
 
     if (dt <= gapMinutes * 60 * 1000) {
       currentGroup.push(it)
+      lastTs = t
     } else {
       groups.push(currentGroup)
       currentGroup = [it]
+      lastTs = t
     }
   }
   if (currentGroup.length > 0) {

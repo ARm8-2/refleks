@@ -138,3 +138,8 @@ export async function cancelSessionInsights(requestId: string): Promise<void> {
 export async function clearCache(): Promise<void> {
   await _ClearCache()
 }
+
+export async function getScenarioTrace(fileName: string): Promise<string> {
+  // Direct call to avoid build errors before Wails regenerates bindings
+  return await (window as any).go.main.App.GetScenarioTrace(fileName)
+}

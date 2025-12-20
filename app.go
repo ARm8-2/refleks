@@ -305,3 +305,16 @@ func (a *App) ClearCache() error {
 	}
 	return nil
 }
+
+// GetScenarioTrace retrieves the binary trace data for a scenario, encoded as Base64.
+// This is called lazily by the frontend when the user views the trace tab.
+func (a *App) GetScenarioTrace(fileName string) (string, error) {
+	if !a.tracesSvc.Exists(fileName) {
+		return "", fmt.Errorf("trace not found")
+	}
+	data, err := a.tracesSvc.Load(fileName)
+	if err != nil {
+		return "", err
+	}
+	return traces.EncodeTraceBase64(data.MouseTrace)
+}

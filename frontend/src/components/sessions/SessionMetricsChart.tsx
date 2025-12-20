@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
-import { ChartBox, Dropdown } from '..'
-import { usePageState } from '../../hooks/usePageState'
-import { buildChartSeries } from '../../lib/analysis/metrics'
-import { MetricsLineChart } from './MetricsLineChart'
+import { useMemo } from 'react';
+import { usePageState } from '../../hooks/usePageState';
+import { buildChartSeries } from '../../lib/analysis/metrics';
+import { ChartBox } from '../shared/ChartBox';
+import { Dropdown } from '../shared/Dropdown';
+import { MetricsLineChart } from './MetricsLineChart';
 
 type SessionMetricsChartProps = {
   metrics: { score: number[]; acc: number[]; ttk: number[] }

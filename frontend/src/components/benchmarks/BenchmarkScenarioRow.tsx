@@ -1,6 +1,6 @@
 import { ChartLine, NotebookPen, Play } from 'lucide-react'
 import { Fragment, type MouseEvent } from 'react'
-import { cellFill, computeFillColor } from '../../lib/benchmarks'
+import { cellFill, computeFillColor } from '../../lib/benchmarks/ui'
 import { MISSING_STR } from '../../lib/constants'
 import { launchScenario } from '../../lib/internal'
 import { formatNumber } from '../../lib/utils'

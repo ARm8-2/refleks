@@ -1,12 +1,13 @@
-import { useMemo } from 'react'
-import { Scatter } from 'react-chartjs-2'
-import { ChartBox, Dropdown } from '..'
-import { useChartTheme } from '../../hooks/useChartTheme'
-import { usePageState } from '../../hooks/usePageState'
-import { CHART_DECIMALS } from '../../lib/constants'
-import { colorWithAlpha, cssColorToRGB } from '../../lib/theme'
-import { formatNumber, formatPct, formatUiValueForLabel, getScenarioName } from '../../lib/utils'
-import type { ScenarioRecord } from '../../types/ipc'
+import { useMemo } from 'react';
+import { Scatter } from 'react-chartjs-2';
+import { useChartTheme } from '../../hooks/useChartTheme';
+import { usePageState } from '../../hooks/usePageState';
+import { CHART_DECIMALS } from '../../lib/constants';
+import { colorWithAlpha, cssColorToRGB } from '../../lib/theme';
+import { formatNumber, formatPct, formatUiValueForLabel, getScenarioName } from '../../lib/utils';
+import type { ScenarioRecord } from '../../types/ipc';
+import { ChartBox } from '../shared/ChartBox';
+import { Dropdown } from '../shared/Dropdown';
 
 type PerformanceVsSensChartProps = {
   items: ScenarioRecord[]

@@ -1,13 +1,15 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { AppErrorBoundary } from './components/layout/AppErrorBoundary'
 import { AppLayout } from './components/layout/AppLayout'
+import { Loading } from './components/shared/Loading'
 import { StoreProvider } from './hooks/useStore'
 import { applyFont, applyTheme, getSavedFont, getSavedTheme } from './lib/theme'
-import { BenchmarksPage } from './pages/Benchmarks'
-import { ScenariosPage } from './pages/Scenarios'
-import { SessionsPage } from './pages/Sessions'
-import { SettingsPage } from './pages/Settings'
+
+const BenchmarksPage = lazy(() => import('./pages/Benchmarks').then(m => ({ default: m.BenchmarksPage })))
+const ScenariosPage = lazy(() => import('./pages/Scenarios').then(m => ({ default: m.ScenariosPage })))
+const SessionsPage = lazy(() => import('./pages/Sessions').then(m => ({ default: m.SessionsPage })))
+const SettingsPage = lazy(() => import('./pages/Settings').then(m => ({ default: m.SettingsPage })))
 
 export default function App() {
   // Simple theme bootstrap: read localStorage and set class on <html>.
@@ -19,14 +21,16 @@ export default function App() {
   return (
     <StoreProvider>
       <AppErrorBoundary>
-        <Routes>
-          <Route path="/" element={<AppLayout />}>
-            <Route index element={<SessionsPage />} />
-            <Route path="scenarios" element={<ScenariosPage />} />
-            <Route path="benchmarks" element={<BenchmarksPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-          </Route>
-        </Routes>
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route path="/" element={<AppLayout />}>
+              <Route index element={<SessionsPage />} />
+              <Route path="scenarios" element={<ScenariosPage />} />
+              <Route path="benchmarks" element={<BenchmarksPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
+          </Routes>
+        </Suspense>
       </AppErrorBoundary>
     </StoreProvider>
   )

@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
-import { ChartBox } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import { usePageState } from '../../hooks/usePageState'
 import { CHART_DECIMALS, MISSING_STR } from '../../lib/constants'
 import { extractChartValue, formatNumber, formatSeconds } from '../../lib/utils'
+import { ChartBox } from '../shared/ChartBox'
 
 type TTKMovingAverageChartProps = {
   labels: string[]

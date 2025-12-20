@@ -1,7 +1,7 @@
 import { Coffee, TrendingDown, X } from 'lucide-react'
 import { useState } from 'react'
 import { useStore } from '../../hooks/useStore'
-import { SessionAnalysis, SessionHealthLevel } from '../../lib/analysis'
+import { SessionAnalysis, SessionHealthLevel } from '../../lib/analysis/session'
 import { formatDuration } from '../../lib/utils'
 import type { Session } from '../../types/domain'
 

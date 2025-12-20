@@ -1,15 +1,24 @@
-import { useEffect, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { DailyActivity, FatigueAlert, Findings, MetricsControls, PerformanceVsSensChart, ScenarioBenchmarkProgress, SessionMetricsChart, SessionMixChart, SessionStatus, SummaryStats } from '../../../components'
-import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkProgress'
-import { usePageState } from '../../../hooks/usePageState'
-import { useStore } from '../../../hooks/useStore'
-import { useUIState } from '../../../hooks/useUIState'
-import { computeFindings } from '../../../lib/analysis/findings'
-import { groupByScenario } from '../../../lib/analysis/metrics'
-import { analyzeSessionHealth, buildScenarioProfiles, recommendSessionLength } from '../../../lib/analysis/session'
-import { getScenarioName } from '../../../lib/utils'
-import type { Session } from '../../../types/domain'
+import { useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { DailyActivity } from '../../../components/sessions/DailyActivity';
+import { FatigueAlert } from '../../../components/sessions/FatigueAlert';
+import { Findings } from '../../../components/sessions/Findings';
+import { MetricsControls } from '../../../components/sessions/MetricsControls';
+import { PerformanceVsSensChart } from '../../../components/sessions/PerformanceVsSensChart';
+import { ScenarioBenchmarkProgress } from '../../../components/sessions/ScenarioBenchmarkProgress';
+import { SessionMetricsChart } from '../../../components/sessions/SessionMetricsChart';
+import { SessionMixChart } from '../../../components/sessions/SessionMixChart';
+import { SessionStatus } from '../../../components/sessions/SessionStatus';
+import { SummaryStats } from '../../../components/sessions/SummaryStats';
+import { useOpenedBenchmarkProgress } from '../../../hooks/useOpenedBenchmarkProgress';
+import { usePageState } from '../../../hooks/usePageState';
+import { useStore } from '../../../hooks/useStore';
+import { useUIState } from '../../../hooks/useUIState';
+import { computeFindings } from '../../../lib/analysis/findings';
+import { groupByScenario } from '../../../lib/analysis/metrics';
+import { analyzeSessionHealth, buildScenarioProfiles, recommendSessionLength } from '../../../lib/analysis/session';
+import { getScenarioName } from '../../../lib/utils';
+import type { Session } from '../../../types/domain';
 
 type OverviewTabProps = { session: Session | null }
 

@@ -26,6 +26,8 @@ export function GetLastScenarioScores(arg1:string):Promise<Array<models.KovaaksL
 
 export function GetRecentScenarios(arg1:number):Promise<Array<models.ScenarioRecord>>;
 
+export function GetScenarioTrace(arg1:string):Promise<string>;
+
 export function GetSettings():Promise<models.Settings>;
 
 export function GetVersion():Promise<string>;

@@ -1,6 +1,6 @@
 import { Calendar, Flame } from 'lucide-react'
 import { useMemo } from 'react'
-import { calculateDailyActivity } from '../../lib/analysis'
+import { calculateDailyActivity } from '../../lib/analysis/activity'
 import { formatDuration } from '../../lib/utils'
 import type { Session } from '../../types/domain'
 

@@ -1,13 +1,16 @@
-import { Camera, ChevronLeft, Play, Star } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { Dropdown, Tabs } from '../../components'
-import ShareBenchmarkProgress from '../../components/benchmarks/ShareBenchmarkProgress'
-import { useOpenedBenchmarkProgress } from '../../hooks/useOpenedBenchmarkProgress'
-import { useUIState } from '../../hooks/useUIState'
-import { copyNodeToClipboard } from '../../lib/copyNodeToClipboard'
-import { launchPlaylist } from '../../lib/internal'
-import type { Benchmark } from '../../types/ipc'
-import { AiTab, AnalysisTab, OverviewTab } from './tabs'
+import { Camera, ChevronLeft, Play, Star } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import ShareBenchmarkProgress from '../../components/benchmarks/ShareBenchmarkProgress';
+import { Dropdown } from '../../components/shared/Dropdown';
+import { Tabs } from '../../components/shared/Tabs';
+import { useOpenedBenchmarkProgress } from '../../hooks/useOpenedBenchmarkProgress';
+import { useUIState } from '../../hooks/useUIState';
+import { copyNodeToClipboard } from '../../lib/copyNodeToClipboard';
+import { launchPlaylist } from '../../lib/internal';
+import type { Benchmark } from '../../types/ipc';
+import { AiTab } from './tabs/Ai';
+import { AnalysisTab } from './tabs/Analysis';
+import { OverviewTab } from './tabs/Overview';
 
 type BenchmarksDetailProps = {
   id: string

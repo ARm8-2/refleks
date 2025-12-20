@@ -1,15 +1,17 @@
-import { ChevronDown, Search, Sparkles, Star } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { EventsOn } from '../../../wailsjs/runtime'
-import { BenchmarkCard, Dropdown, Input } from '../../components'
-import { useBenchmarkRecommendations } from '../../hooks/useBenchmarkRecommendations'
-import { usePageState } from '../../hooks/usePageState'
-import { useUIState } from '../../hooks/useUIState'
-import { DEFAULT_BENCHMARK_CATEGORY } from '../../lib/constants'
-import { getAllBenchmarkProgresses } from '../../lib/internal'
-import { getBenchmarkCategory } from '../../lib/utils'
-import type { BenchmarkListItem } from '../../types/domain'
-import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
+import { ChevronDown, Search, Sparkles, Star } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { EventsOn } from '../../../wailsjs/runtime';
+import { BenchmarkCard } from '../../components/benchmarks/BenchmarkCard';
+import { Dropdown } from '../../components/shared/Dropdown';
+import { Input } from '../../components/shared/Input';
+import { useBenchmarkRecommendations } from '../../hooks/useBenchmarkRecommendations';
+import { usePageState } from '../../hooks/usePageState';
+import { useUIState } from '../../hooks/useUIState';
+import { DEFAULT_BENCHMARK_CATEGORY } from '../../lib/constants';
+import { getAllBenchmarkProgresses } from '../../lib/internal';
+import { getBenchmarkCategory } from '../../lib/utils';
+import type { BenchmarkListItem } from '../../types/domain';
+import type { Benchmark, BenchmarkProgress } from '../../types/ipc';
 
 function useBenchmarkList(items: BenchmarkListItem[], favorites: string[]) {
   const [query, setQuery] = usePageState<string>('explore:query', '')

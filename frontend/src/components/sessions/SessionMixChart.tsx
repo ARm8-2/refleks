@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { ChartBox } from '..'
 import { groupByScenario } from '../../lib/analysis/metrics'
 import type { Session } from '../../types/domain'
+import { ChartBox } from '../shared/ChartBox'
 import { ScenarioMixRadarChart } from './ScenarioMixRadarChart'
 
 type SessionMixChartProps = {

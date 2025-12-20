@@ -1,6 +1,6 @@
 import { Activity, Clock, Gamepad2 } from 'lucide-react'
 import { useUIState } from '../../hooks/useUIState'
-import { SessionAnalysis, SessionHealthLevel, SessionLengthRecommendation } from '../../lib/analysis'
+import { SessionAnalysis, SessionHealthLevel, SessionLengthRecommendation } from '../../lib/analysis/session'
 import { formatDuration } from '../../lib/utils'
 import type { Session } from '../../types/domain'
 import { SessionProgressBar } from './SessionProgressBar'

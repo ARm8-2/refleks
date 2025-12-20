@@ -1,5 +1,6 @@
 import type { Point, ScenarioRecord } from '../../types/ipc'
-import { formatNumber, formatPct } from '../utils'
+import { decodeTraceData, tsMs } from '../trace'
+import { clamp, formatNumber, formatPct } from '../utils'
 
 export type MouseKillEvent = {
   idx: number
@@ -76,8 +77,11 @@ export type SensSuggestion = {
 
 
 // Entry point used by UI
-export function computeMouseTraceAnalysis(item: ScenarioRecord): MouseTraceAnalysis | null {
-  const points = Array.isArray(item.mouseTrace) ? item.mouseTrace : []
+export function computeMouseTraceAnalysis(item: ScenarioRecord, overridePoints?: Point[]): MouseTraceAnalysis | null {
+  let points = overridePoints || (Array.isArray(item.mouseTrace) ? item.mouseTrace : [])
+  if (points.length === 0 && item.traceData) {
+    points = decodeTraceData(item.traceData)
+  }
   const events = Array.isArray(item.events) ? item.events : []
   if (points.length < 4 || events.length === 0) return null
   const baseIso = String((item.stats as any)?.['Date Played'] || '')
@@ -510,7 +514,6 @@ function parseTTK(s: any): number {
 }
 function toInt(s: any): number { const n = parseInt(String(s || ''), 10); return Number.isFinite(n) ? n : NaN }
 function toFloat(s: any): number { const n = parseFloat(String(s || '')); return Number.isFinite(n) ? n : NaN }
-function tsMs(v: any): number { if (v == null) return 0; if (typeof v === 'number') return v; const n = Date.parse(String(v)); return Number.isFinite(n) ? n : 0 }
 function lowerBound(points: Point[], targetMs: number, lo = 0, hi = points.length - 1): number {
   let l = Math.max(0, lo), r = Math.max(l, hi)
   while (l < r) {
@@ -520,7 +523,6 @@ function lowerBound(points: Point[], targetMs: number, lo = 0, hi = points.lengt
   }
   return Math.max(0, Math.min(points.length - 1, l))
 }
-function clamp(n: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, n)) }
 function median(arr: number[]): number { const a = arr.filter(Number.isFinite).slice().sort((x, y) => x - y); const n = a.length; if (!n) return 0; const m = Math.floor(n / 2); return n % 2 ? a[m] : (a[m - 1] + a[m]) / 2 }
 
 // Suggest a sensitivity adjustment (cm/360) given an analysis and the run stats.

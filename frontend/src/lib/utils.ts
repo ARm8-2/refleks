@@ -177,3 +177,7 @@ export function formatMmSs(totalSeconds: any, decimals = 0): string {
   const intPadded = intPart.padStart(2, '0')
   return frac ? `${m}:${intPadded}.${frac}` : `${m}:${intPadded}`
 }
+
+export function clamp(n: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, n))
+}

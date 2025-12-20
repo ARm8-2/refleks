@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { SCENARIO_DEFAULT_WIDTH, SCENARIO_MAX_WIDTH, SCENARIO_MIN_WIDTH } from '../lib/benchmarks'
+import { SCENARIO_DEFAULT_WIDTH, SCENARIO_MAX_WIDTH, SCENARIO_MIN_WIDTH } from '../lib/benchmarks/layout'
 
 export type UseResizableScenarioOptions = {
   initialWidth?: number

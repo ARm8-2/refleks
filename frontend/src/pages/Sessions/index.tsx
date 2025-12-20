@@ -1,12 +1,18 @@
-import { Edit, ListFilter, NotebookPen, Search } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { Dropdown, Input, ListDetail, SessionNotesModal, Tabs } from '../../components'
-import { usePageState } from '../../hooks/usePageState'
-import { useStore } from '../../hooks/useStore'
-import { useUIState } from '../../hooks/useUIState'
-import { formatDuration, formatRelativeAgoShort, getHighScores } from '../../lib/utils'
-import type { Session } from '../../types/domain'
-import { AiTab, OverviewTab, ProgressAllTab } from './tabs'
+import { Edit, ListFilter, NotebookPen, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { SessionNotesModal } from '../../components/sessions/SessionNotesModal';
+import { Dropdown } from '../../components/shared/Dropdown';
+import { Input } from '../../components/shared/Input';
+import { ListDetail } from '../../components/shared/ListDetail';
+import { Tabs } from '../../components/shared/Tabs';
+import { usePageState } from '../../hooks/usePageState';
+import { useStore } from '../../hooks/useStore';
+import { useUIState } from '../../hooks/useUIState';
+import { formatDuration, formatRelativeAgoShort, getHighScores } from '../../lib/utils';
+import type { Session } from '../../types/domain';
+import { AiTab } from './tabs/Ai';
+import { OverviewTab } from './tabs/Overview';
+import { ProgressAllTab } from './tabs/ProgressAll';
 
 export function SessionsPage() {
   const sessions = useStore(s => s.sessions)

@@ -11,6 +11,8 @@ export interface ScenarioRecord {
   stats: Record<string, any>
   events: string[][]
   mouseTrace?: Array<Point>
+  traceData?: string
+  hasTrace?: boolean
 }
 
 export interface BenchmarkDifficulty {

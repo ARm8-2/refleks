@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import { REFLEKS_SYMBOL } from '../../assets'
-import { cellFill, computeFillColor, gridColsShare } from '../../lib/benchmarks'
+import { cellFill, computeFillColor, gridColsShare } from '../../lib/benchmarks/ui'
 import { MISSING_STR } from '../../lib/constants'
 import { formatNumber } from '../../lib/utils'
 import type { Benchmark, BenchmarkProgress } from '../../types/ipc'

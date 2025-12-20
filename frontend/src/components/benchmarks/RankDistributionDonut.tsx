@@ -1,11 +1,12 @@
-import { useMemo } from 'react'
-import { Doughnut } from 'react-chartjs-2'
-import { ChartBox, Dropdown } from '..'
-import { useChartTheme } from '../../hooks/useChartTheme'
-import { usePageState } from '../../hooks/usePageState'
-import { CHART_DECIMALS } from '../../lib/constants'
-import { formatNumber } from '../../lib/utils'
-import type { Benchmark, BenchmarkProgress } from '../../types/ipc'
+import { useMemo } from 'react';
+import { Doughnut } from 'react-chartjs-2';
+import { useChartTheme } from '../../hooks/useChartTheme';
+import { usePageState } from '../../hooks/usePageState';
+import { CHART_DECIMALS } from '../../lib/constants';
+import { formatNumber } from '../../lib/utils';
+import type { Benchmark, BenchmarkProgress } from '../../types/ipc';
+import { ChartBox } from '../shared/ChartBox';
+import { Dropdown } from '../shared/Dropdown';
 
 type RankDistributionDonutProps = {
   bench: Benchmark

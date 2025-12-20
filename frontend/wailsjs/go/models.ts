@@ -431,6 +431,8 @@ export namespace models {
 	    stats: Record<string, any>;
 	    events: string[][];
 	    mouseTrace?: MousePoint[];
+	    traceData?: string;
+	    hasTrace: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new ScenarioRecord(source);
@@ -443,6 +445,8 @@ export namespace models {
 	        this.stats = source["stats"];
 	        this.events = source["events"];
 	        this.mouseTrace = this.convertValues(source["mouseTrace"], MousePoint);
+	        this.traceData = source["traceData"];
+	        this.hasTrace = source["hasTrace"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -65,26 +65,42 @@ func (s *Service) tracesDir() (string, error) {
 	return dir, nil
 }
 
+// toTraceBaseName converts a stats filename (e.g. "Scenario - ... Stats.csv")
+// to a trace base filename (e.g. "Scenario - ...").
+func (s *Service) toTraceBaseName(original string) string {
+	safeName := filepath.Base(original)
+	ext := filepath.Ext(safeName)
+	if ext != "" {
+		safeName = strings.TrimSuffix(safeName, ext)
+	}
+	// Strip " Stats" suffix if present (KovaaK's export format)
+	safeName = strings.TrimSuffix(safeName, " Stats")
+	return safeName
+}
+
 // Exists checks if a trace file exists for the given scenario filename.
+// Checks for .trace (binary) first, then .json (legacy).
 func (s *Service) Exists(originalFileName string) bool {
 	dir, err := s.tracesDir()
 	if err != nil {
 		return false
 	}
 
-	safeName := filepath.Base(originalFileName)
-	ext := filepath.Ext(safeName)
-	if ext != "" {
-		safeName = strings.TrimSuffix(safeName, ext)
-	}
-	safeName += ".json"
+	base := s.toTraceBaseName(originalFileName)
 
-	path := filepath.Join(dir, safeName)
-	_, err = os.Stat(path)
-	return err == nil
+	// Check binary
+	if _, err := os.Stat(filepath.Join(dir, base+".trace")); err == nil {
+		return true
+	}
+	// Check legacy json
+	if _, err := os.Stat(filepath.Join(dir, base+".json")); err == nil {
+		return true
+	}
+	return false
 }
 
 // Save stores the trace data for a scenario.
+// Uses the new binary format (.trace).
 func (s *Service) Save(data ScenarioData) error {
 	dir, err := s.tracesDir()
 	if err != nil {
@@ -92,42 +108,41 @@ func (s *Service) Save(data ScenarioData) error {
 	}
 
 	// Sanitize filename
-	safeName := filepath.Base(data.FileName)
-	if safeName == "." || safeName == "/" {
+	if data.FileName == "." || data.FileName == "/" {
 		return nil // invalid
 	}
-	// Replace extension with .json
-	ext := filepath.Ext(safeName)
-	if ext != "" {
-		safeName = strings.TrimSuffix(safeName, ext)
-	}
-	safeName += ".json"
 
-	path := filepath.Join(dir, safeName)
+	base := s.toTraceBaseName(data.FileName)
+	path := filepath.Join(dir, base+".trace")
+
 	f, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	return json.NewEncoder(f).Encode(data)
+	return WriteBinary(f, data)
 }
 
 // Load retrieves trace data for a scenario filename.
+// Tries binary (.trace) first, then legacy JSON (.json).
 func (s *Service) Load(originalFileName string) (ScenarioData, error) {
 	dir, err := s.tracesDir()
 	if err != nil {
 		return ScenarioData{}, err
 	}
 
-	safeName := filepath.Base(originalFileName)
-	ext := filepath.Ext(safeName)
-	if ext != "" {
-		safeName = strings.TrimSuffix(safeName, ext)
-	}
-	safeName += ".json"
+	base := s.toTraceBaseName(originalFileName)
 
-	path := filepath.Join(dir, safeName)
+	// 1. Try Binary (.trace)
+	path := filepath.Join(dir, base+".trace")
+	if f, err := os.Open(path); err == nil {
+		defer f.Close()
+		return ReadBinary(f)
+	}
+
+	// 2. Try Legacy JSON (.json)
+	path = filepath.Join(dir, base+".json")
 	f, err := os.Open(path)
 	if err != nil {
 		return ScenarioData{}, err

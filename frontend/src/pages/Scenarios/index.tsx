@@ -1,19 +1,24 @@
-import { ListFilter, Play, Search } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { EventsOn } from '../../../wailsjs/runtime'
-import { Dropdown, Input, ListDetail, Tabs } from '../../components'
-import { usePageState } from '../../hooks/usePageState'
-import { useStore } from '../../hooks/useStore'
-import { useUIState } from '../../hooks/useUIState'
-import { getSettings, launchScenario } from '../../lib/internal'
-import { formatPct01, getBestRuns, getDatePlayed, getScenarioName } from '../../lib/utils'
-import type { ScenarioRecord } from '../../types/ipc'
-import { AiTab, AnalysisTab, MouseTraceTab, RawTab } from './tabs'
+import { ListFilter, Play, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { EventsOn } from '../../../wailsjs/runtime';
+import { Dropdown } from '../../components/shared/Dropdown';
+import { Input } from '../../components/shared/Input';
+import { ListDetail } from '../../components/shared/ListDetail';
+import { Tabs } from '../../components/shared/Tabs';
+import { usePageState } from '../../hooks/usePageState';
+import { useStore } from '../../hooks/useStore';
+import { useUIState } from '../../hooks/useUIState';
+import { getSettings, launchScenario } from '../../lib/internal';
+import { formatPct01, getBestRuns, getDatePlayed, getScenarioName } from '../../lib/utils';
+import type { ScenarioRecord } from '../../types/ipc';
+import { AiTab } from './tabs/Ai';
+import { AnalysisTab } from './tabs/Analysis';
+import { MouseTraceTab } from './tabs/MouseTrace';
+import { RawTab } from './tabs/Raw';
 
 export function ScenariosPage() {
   const scenarios = useStore(s => s.scenarios)
-  const newCount = useStore(s => s.newScenarios)
   const [sp, setSp] = useSearchParams()
   const [activeId, setActiveId] = usePageState<string | null>('activeFile', scenarios[0]?.filePath ?? null)
   const active = useMemo(() => scenarios.find(s => s.filePath === activeId) ?? scenarios[0] ?? null, [scenarios, activeId])
@@ -205,7 +210,5 @@ function ScenarioDetail({ item }: { item: ScenarioRecord | null }) {
   ]
   return <Tabs tabs={tabs} active={tab} onChange={(id) => { setTab(id as any); const p = new URLSearchParams(sp); p.set('tab', String(id)); setSp(p) }} />
 }
-
-// use formatPct01 from lib/utils for consistent percent formatting
 
 export default ScenariosPage

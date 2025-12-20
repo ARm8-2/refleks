@@ -1,6 +1,5 @@
 import { Copy } from 'lucide-react'
 import { useMemo } from 'react'
-import { Button } from '..'
 import { useChartTheme } from '../../hooks/useChartTheme'
 import type { KillAnalysis, MouseTraceAnalysis, SensSuggestion } from '../../lib/analysis/mouse'
 import { computeSuggestedSens } from '../../lib/analysis/mouse'
@@ -8,6 +7,7 @@ import { CHART_DECIMALS } from '../../lib/constants'
 import { colorWithAlpha } from '../../lib/theme'
 import { formatNumber, formatPct, formatSeconds } from '../../lib/utils'
 import type { ScenarioRecord } from '../../types/ipc'
+import { Button } from '../shared/Button'
 import { InfoBox } from '../shared/InfoBox'
 
 function SuggestedHeader({ suggestion, severityColors }: { suggestion: NonNullable<SensSuggestion>, severityColors: Record<'severe' | 'moderate' | 'slight', string> }) {
