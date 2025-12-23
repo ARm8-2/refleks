@@ -36,6 +36,8 @@ export function LaunchKovaaksPlaylist(arg1:string):Promise<void>;
 
 export function LaunchKovaaksScenario(arg1:string,arg2:string):Promise<void>;
 
+export function QuitApp():Promise<void>;
+
 export function RefreshAllBenchmarkProgresses():Promise<Record<number, models.BenchmarkProgress>>;
 
 export function ResetSettings(arg1:boolean,arg2:boolean,arg3:boolean,arg4:boolean):Promise<void>;
@@ -44,7 +46,11 @@ export function SaveScenarioNote(arg1:string,arg2:string,arg3:string):Promise<vo
 
 export function SaveSessionNote(arg1:string,arg2:string,arg3:string):Promise<void>;
 
+export function SetAutostart(arg1:boolean):Promise<void>;
+
 export function SetFavoriteBenchmarks(arg1:Array<string>):Promise<void>;
+
+export function ShowWindow():Promise<void>;
 
 export function StartWatcher(arg1:string):Promise<void>;
 

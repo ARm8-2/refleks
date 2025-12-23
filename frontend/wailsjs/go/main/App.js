@@ -70,6 +70,10 @@ export function LaunchKovaaksScenario(arg1, arg2) {
   return window['go']['main']['App']['LaunchKovaaksScenario'](arg1, arg2);
 }
 
+export function QuitApp() {
+  return window['go']['main']['App']['QuitApp']();
+}
+
 export function RefreshAllBenchmarkProgresses() {
   return window['go']['main']['App']['RefreshAllBenchmarkProgresses']();
 }
@@ -86,8 +90,16 @@ export function SaveSessionNote(arg1, arg2, arg3) {
   return window['go']['main']['App']['SaveSessionNote'](arg1, arg2, arg3);
 }
 
+export function SetAutostart(arg1) {
+  return window['go']['main']['App']['SetAutostart'](arg1);
+}
+
 export function SetFavoriteBenchmarks(arg1) {
   return window['go']['main']['App']['SetFavoriteBenchmarks'](arg1);
+}
+
+export function ShowWindow() {
+  return window['go']['main']['App']['ShowWindow']();
 }
 
 export function StartWatcher(arg1) {

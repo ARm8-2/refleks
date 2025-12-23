@@ -35,6 +35,7 @@ func Default() models.Settings {
 		MouseTrackingEnabled: false,
 		MouseBufferMinutes:   constants.DefaultMouseBufferMinutes,
 		MaxExistingOnStart:   constants.DefaultMaxExistingOnStart,
+		AutostartEnabled:     false,
 	}
 }
 

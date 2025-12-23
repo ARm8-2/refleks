@@ -79,6 +79,7 @@ export interface Settings {
   mouseTrackingEnabled?: boolean
   mouseBufferMinutes?: number
   maxExistingOnStart?: number
+  autostartEnabled?: boolean
   geminiApiKey?: string
   scenarioNotes?: Record<string, ScenarioNote>
   sessionNotes?: Record<string, SessionNote>

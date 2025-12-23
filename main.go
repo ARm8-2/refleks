@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"embed"
+	"flag"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
@@ -14,6 +16,9 @@ import (
 var assets embed.FS
 
 func main() {
+	monitor := flag.Bool("monitor", false, "Start in monitor mode (hidden)")
+	flag.Parse()
+
 	// Create an instance of the app structure
 	app := NewApp()
 
@@ -27,9 +32,20 @@ func main() {
 		},
 		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 1},
 		OnStartup:        app.startup,
+		StartHidden:      *monitor,
 		LogLevel:         logger.ERROR,
 		SingleInstanceLock: &options.SingleInstanceLock{
-			UniqueId: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+			UniqueId: "app.refleks.desktop",
+			OnSecondInstanceLaunch: func(secondInstanceData options.SecondInstanceData) {
+				app.ShowWindow()
+			},
+		},
+		OnBeforeClose: func(ctx context.Context) (prevent bool) {
+			if app.shouldRunInBackground() {
+				app.hideWindow()
+				return true
+			}
+			return false
 		},
 		Windows: &windows.Options{
 			WebviewIsTransparent: false,

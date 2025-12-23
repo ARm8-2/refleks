@@ -15,10 +15,12 @@ import {
   GetVersion as _GetVersion,
   LaunchKovaaksPlaylist as _LaunchKovaaksPlaylist,
   LaunchKovaaksScenario as _LaunchKovaaksScenario,
+  QuitApp as _QuitApp,
   RefreshAllBenchmarkProgresses as _RefreshAllBenchmarkProgresses,
   ResetSettings as _ResetSettings,
   SaveScenarioNote as _SaveScenarioNote,
   SaveSessionNote as _SaveSessionNote,
+  SetAutostart as _SetAutostart,
   SetFavoriteBenchmarks as _SetFavoriteBenchmarks,
   StartWatcher as _StartWatcher,
   StopWatcher as _StopWatcher,
@@ -27,6 +29,14 @@ import {
 import type { Benchmark, BenchmarkProgress, KovaaksLastScore, ScenarioRecord, Settings, UpdateInfo } from '../types/ipc'
 
 // Typed wrappers around Wails-generated bindings with normalized results
+
+export async function setAutostart(enabled: boolean): Promise<void> {
+  await _SetAutostart(enabled)
+}
+
+export async function quitApp(): Promise<void> {
+  await _QuitApp()
+}
 
 export async function startWatcher(path = ''): Promise<void> {
   await _StartWatcher(path)

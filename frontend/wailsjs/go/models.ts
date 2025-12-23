@@ -475,6 +475,7 @@ export namespace models {
 	    mouseTrackingEnabled: boolean;
 	    mouseBufferMinutes: number;
 	    maxExistingOnStart: number;
+	    autostartEnabled: boolean;
 	    geminiApiKey?: string;
 	    scenarioNotes?: Record<string, ScenarioNote>;
 	    sessionNotes?: Record<string, SessionNote>;
@@ -497,6 +498,7 @@ export namespace models {
 	        this.mouseTrackingEnabled = source["mouseTrackingEnabled"];
 	        this.mouseBufferMinutes = source["mouseBufferMinutes"];
 	        this.maxExistingOnStart = source["maxExistingOnStart"];
+	        this.autostartEnabled = source["autostartEnabled"];
 	        this.geminiApiKey = source["geminiApiKey"];
 	        this.scenarioNotes = this.convertValues(source["scenarioNotes"], ScenarioNote, true);
 	        this.sessionNotes = this.convertValues(source["sessionNotes"], SessionNote, true);

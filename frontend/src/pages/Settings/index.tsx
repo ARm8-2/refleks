@@ -8,7 +8,7 @@ import { Dropdown } from '../../components/shared/Dropdown';
 import { Loading } from '../../components/shared/Loading';
 import { useStore } from '../../hooks/useStore';
 import { MISSING_STR } from '../../lib/constants';
-import { checkForUpdates, clearCache, downloadAndInstallUpdate, getSettings, getVersion, resetSettings, updateSettings } from '../../lib/internal';
+import { checkForUpdates, clearCache, downloadAndInstallUpdate, getSettings, getVersion, quitApp, resetSettings, setAutostart, updateSettings } from '../../lib/internal';
 import { FONTS, setFont, setTheme, THEMES, type Font, type Theme } from '../../lib/theme';
 import type { Settings, UpdateInfo } from '../../types/ipc';
 
@@ -39,6 +39,16 @@ export function SettingsPage() {
       const next = { ...prev, [key]: value }
       return next
     })
+  }
+
+  const handleAutostartChange = async (enabled: boolean) => {
+    try {
+      await setAutostart(enabled)
+      updateField('autostartEnabled', enabled)
+    } catch (e) {
+      console.error('SetAutostart error:', e)
+      alert('Failed to update autostart: ' + (e as Error)?.message)
+    }
   }
 
   const save = async () => {
@@ -173,6 +183,20 @@ export function SettingsPage() {
                 className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
               />
             </Field>
+            <Field label="Autostart with Kovaak's">
+              <div className="flex flex-col gap-1">
+                <Dropdown
+                  value={settings.autostartEnabled ? 'on' : 'off'}
+                  onChange={(v: string) => handleAutostartChange(v === 'on')}
+                  options={[{ label: 'On', value: 'on' }, { label: 'Off', value: 'off' }]}
+                  size="md"
+                />
+                <span className="text-xs text-secondary">
+                  When enabled, RefleK's will start hidden with Windows and open automatically when Kovaak's launches.
+                  Closing the window will keep it running in the background.
+                </span>
+              </div>
+            </Field>
             <Field label="Enable mouse tracking (Windows)">
               <Dropdown
                 value={settings.mouseTrackingEnabled ? 'on' : 'off'}
@@ -298,6 +322,9 @@ export function SettingsPage() {
             <Button variant="accent" size="md" onClick={save} disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
             <Button variant="secondary" size="md" onClick={() => setIsResetOpen(true)} disabled={saving}>Reset to defaults</Button>
             <Button variant="secondary" size="md" onClick={() => setIsClearCacheOpen(true)} disabled={saving}>Clear Cache</Button>
+            {settings.autostartEnabled && (
+              <Button variant="danger" size="md" onClick={() => quitApp()}>Quit App</Button>
+            )}
           </div>
         </section>
       </div>

@@ -9,10 +9,12 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"refleks/internal/ai"
+	"refleks/internal/autostart"
 	"refleks/internal/benchmarks"
 	"refleks/internal/cache"
 	"refleks/internal/constants"
 	"refleks/internal/models"
+	"refleks/internal/process"
 	"refleks/internal/scenarios"
 	appsettings "refleks/internal/settings"
 	"refleks/internal/traces"
@@ -22,15 +24,19 @@ import (
 
 // App struct
 type App struct {
-	ctx          context.Context
-	trackingSvc  *tracking.Service
-	aiSvc        *ai.Service
-	settingsSvc  *appsettings.Service
-	benchmarkSvc *benchmarks.Service
-	scenarioSvc  *scenarios.Service
-	updaterSvc   *updater.Service
-	cacheSvc     *cache.Service
-	tracesSvc    *traces.Service
+	ctx            context.Context
+	trackingSvc    *tracking.Service
+	aiSvc          *ai.Service
+	settingsSvc    *appsettings.Service
+	benchmarkSvc   *benchmarks.Service
+	scenarioSvc    *scenarios.Service
+	updaterSvc     *updater.Service
+	cacheSvc       *cache.Service
+	tracesSvc      *traces.Service
+	autostartSvc   *autostart.Service
+	processWatcher *process.Watcher
+	watcherCancel  context.CancelFunc
+	isQuitting     bool
 }
 
 // NewApp creates a new App application struct
@@ -69,6 +75,14 @@ func (a *App) startup(ctx context.Context) {
 
 	// Initialize AI Service
 	a.aiSvc = ai.NewService(a.ctx, a.settingsSvc)
+
+	// Initialize Autostart Service
+	a.autostartSvc = autostart.NewService()
+
+	// Initialize Process Watcher if enabled
+	if settings.AutostartEnabled {
+		a.startProcessWatcher()
+	}
 
 	// Auto-start watcher
 	if err := a.trackingSvc.StartWatcher(""); err != nil {
@@ -193,6 +207,16 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		newSettings.MouseBufferMinutes = defaults.MouseBufferMinutes
 		newSettings.MaxExistingOnStart = defaults.MaxExistingOnStart
 		newSettings.GeminiAPIKey = defaults.GeminiAPIKey
+		newSettings.AutostartEnabled = defaults.AutostartEnabled
+
+		// Sync autostart state
+		if newSettings.AutostartEnabled {
+			_ = a.autostartSvc.Enable("--monitor")
+			a.startProcessWatcher()
+		} else {
+			_ = a.autostartSvc.Disable()
+			a.stopProcessWatcher()
+		}
 	}
 
 	if resetFavorites {
@@ -317,4 +341,78 @@ func (a *App) GetScenarioTrace(fileName string) (string, error) {
 		return "", err
 	}
 	return traces.EncodeTraceBase64(data.MouseTrace)
+}
+
+// --- Autostart & Monitoring ---
+
+func (a *App) SetAutostart(enabled bool) error {
+	settings := a.settingsSvc.Get()
+	settings.AutostartEnabled = enabled
+	if err := a.settingsSvc.Update(settings); err != nil {
+		return err
+	}
+
+	if enabled {
+		if err := a.autostartSvc.Enable("--monitor"); err != nil {
+			return fmt.Errorf("failed to enable autostart: %w", err)
+		}
+		a.startProcessWatcher()
+	} else {
+		if err := a.autostartSvc.Disable(); err != nil {
+			return fmt.Errorf("failed to disable autostart: %w", err)
+		}
+		a.stopProcessWatcher()
+	}
+	return nil
+}
+
+func (a *App) startProcessWatcher() {
+	if a.watcherCancel != nil {
+		return // Already running
+	}
+	ctx, cancel := context.WithCancel(a.ctx)
+	a.watcherCancel = cancel
+
+	a.processWatcher = process.NewWatcher("FPSAimTrainer.exe", func() {
+		runtime.WindowShow(a.ctx)
+		if runtime.Environment(a.ctx).Platform == "windows" {
+			// Briefly set always on top to grab focus, then disable
+			runtime.WindowSetAlwaysOnTop(a.ctx, true)
+			go func() {
+				time.Sleep(500 * time.Millisecond)
+				runtime.WindowSetAlwaysOnTop(a.ctx, false)
+			}()
+		}
+	})
+	go a.processWatcher.Start(ctx)
+}
+
+func (a *App) stopProcessWatcher() {
+	if a.watcherCancel != nil {
+		a.watcherCancel()
+		a.watcherCancel = nil
+		a.processWatcher = nil
+	}
+}
+
+// QuitApp sets the quitting flag and exits.
+func (a *App) QuitApp() {
+	a.isQuitting = true
+	runtime.Quit(a.ctx)
+}
+
+// ShowWindow brings the window to front.
+func (a *App) ShowWindow() {
+	runtime.WindowShow(a.ctx)
+}
+
+func (a *App) shouldRunInBackground() bool {
+	if a.isQuitting {
+		return false
+	}
+	return a.settingsSvc.Get().AutostartEnabled
+}
+
+func (a *App) hideWindow() {
+	runtime.WindowHide(a.ctx)
 }
