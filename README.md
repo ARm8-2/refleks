@@ -10,7 +10,7 @@ RefleK's is a local desktop app for Kovaak's analytics, session tracking, and be
 
 Built with a high-performance Go backend and a modern React frontend, RefleK's provides local, real-time analytics and actionable insights for your aim training.
 
-Download the latest release for Windows at [refleks.app](https://refleks.app).
+Download the latest release for Windows at [refleks-app.com](https://refleks-app.com).
 
 ## Contributing
 
