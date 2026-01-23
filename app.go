@@ -373,7 +373,7 @@ func (a *App) startProcessWatcher() {
 	ctx, cancel := context.WithCancel(a.ctx)
 	a.watcherCancel = cancel
 
-	a.processWatcher = process.NewWatcher("FPSAimTrainer.exe", func() {
+	a.processWatcher = process.NewWatcher(constants.KovaaksProcessName, func() {
 		runtime.WindowShow(a.ctx)
 		if runtime.Environment(a.ctx).Platform == "windows" {
 			// Briefly set always on top to grab focus, then disable
@@ -383,7 +383,7 @@ func (a *App) startProcessWatcher() {
 				runtime.WindowSetAlwaysOnTop(a.ctx, false)
 			}()
 		}
-	})
+	}, nil)
 	go a.processWatcher.Start(ctx)
 }
 

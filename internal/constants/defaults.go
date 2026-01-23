@@ -18,8 +18,9 @@ const (
 	// Mouse tracking defaults
 	DefaultMouseSampleHz = 125
 
-	// Kovaak's Steam App information
-	KovaaksSteamAppID = 824270
+	// Kovaak's process and Steam App information
+	KovaaksProcessName = "FPSAimTrainer.exe"
+	KovaaksSteamAppID  = 824270
 
 	// Updater default timeouts (in seconds)
 	// UpdaterHTTPTimeoutSeconds is used for quick API calls (e.g., GitHub latest release). Keep small.

@@ -11,6 +11,7 @@ import (
 	"refleks/internal/constants"
 	"refleks/internal/models"
 	"refleks/internal/mouse"
+	"refleks/internal/process"
 	appsettings "refleks/internal/settings"
 	"refleks/internal/traces"
 	"refleks/internal/watcher"
@@ -18,12 +19,14 @@ import (
 
 // Service coordinates mouse and watcher services.
 type Service struct {
-	ctx          context.Context
-	watcher      *watcher.Watcher
-	mouse        mouse.Provider
-	settingsSvc  *appsettings.Service
-	benchmarkSvc *benchmarks.Service
-	tracesSvc    *traces.Service
+	ctx             context.Context
+	watcher         *watcher.Watcher
+	mouse           mouse.Provider
+	settingsSvc     *appsettings.Service
+	benchmarkSvc    *benchmarks.Service
+	tracesSvc       *traces.Service
+	procWatcher     *process.Watcher
+	procWatcherStop context.CancelFunc
 }
 
 // NewService constructs and wires the subservices.
@@ -41,11 +44,7 @@ func NewService(ctx context.Context, settingsSvc *appsettings.Service, benchmark
 	svc.mouse = mouse.New(constants.DefaultMouseSampleHz)
 	svc.mouse.SetBufferDuration(time.Duration(settings.MouseBufferMinutes) * time.Minute)
 	if settings.MouseTrackingEnabled {
-		if err := svc.mouse.Start(); err != nil {
-			runtime.LogWarningf(ctx, "mouse tracker start failed: %v", err)
-		} else {
-			runtime.LogInfo(ctx, "mouse tracker started")
-		}
+		svc.startMouseProcessWatcher()
 	}
 
 	// Initialize Watcher with default/current settings
@@ -167,15 +166,13 @@ func (s *Service) OverwriteSettings(newS models.Settings) error {
 		s.mouse = mouse.New(constants.DefaultMouseSampleHz)
 	}
 	s.mouse.SetBufferDuration(time.Duration(newS.MouseBufferMinutes) * time.Minute)
-	if newS.MouseTrackingEnabled {
-		if !s.mouse.Enabled() {
-			if err := s.mouse.Start(); err != nil {
-				runtime.LogWarningf(s.ctx, "mouse tracker start failed: %v", err)
-			}
-		}
-	} else {
-		if s.mouse.Enabled() {
-			s.mouse.Stop()
+
+	// Handle mouse tracking state change
+	if newS.MouseTrackingEnabled != prevSettings.MouseTrackingEnabled {
+		if newS.MouseTrackingEnabled {
+			s.startMouseProcessWatcher()
+		} else {
+			s.stopMouseProcessWatcher()
 		}
 	}
 
@@ -268,4 +265,47 @@ func (s *Service) SaveSessionNote(sessionID, name, notes string) error {
 		Notes: notes,
 	}
 	return s.settingsSvc.Update(current)
+}
+
+// startMouseProcessWatcher starts the process watcher that controls mouse tracking.
+// Mouse tracking only runs when Kovaak's (FPSAimTrainer.exe) is running.
+func (s *Service) startMouseProcessWatcher() {
+	if s.procWatcherStop != nil {
+		return // Already running
+	}
+
+	ctx, cancel := context.WithCancel(s.ctx)
+	s.procWatcherStop = cancel
+
+	s.procWatcher = process.NewWatcher(constants.KovaaksProcessName,
+		func() {
+			// Kovaak's started - start mouse tracking
+			if err := s.mouse.Start(); err != nil {
+				runtime.LogWarningf(s.ctx, "mouse tracker start failed: %v", err)
+			} else {
+				runtime.LogInfo(s.ctx, "mouse tracker started (process detected)")
+			}
+		},
+		func() {
+			// Kovaak's stopped - stop mouse tracking
+			s.mouse.Stop()
+			runtime.LogInfo(s.ctx, "mouse tracker stopped (process exited)")
+		},
+	)
+	go s.procWatcher.Start(ctx)
+}
+
+// stopMouseProcessWatcher stops the process watcher and ensures mouse tracking is stopped.
+func (s *Service) stopMouseProcessWatcher() {
+	if s.procWatcherStop != nil {
+		s.procWatcherStop()
+		s.procWatcherStop = nil
+	}
+	s.procWatcher = nil
+
+	// Ensure mouse tracking is stopped
+	if s.mouse != nil && s.mouse.Enabled() {
+		s.mouse.Stop()
+		runtime.LogInfo(s.ctx, "mouse tracker stopped (tracking disabled)")
+	}
 }
