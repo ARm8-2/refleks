@@ -191,10 +191,10 @@ export function SettingsPage() {
                   options={[{ label: 'On', value: 'on' }, { label: 'Off', value: 'off' }]}
                   size="md"
                 />
-                <span className="text-xs text-secondary">
+                {/* <span className="text-xs text-secondary">
                   When enabled, RefleK's will start hidden with Windows and open automatically when Kovaak's launches.
-                  Closing the window will keep it running in the background.
-                </span>
+                  Closing the window will keep it in memory.
+                </span> */}
               </div>
             </Field>
             <Field label="Enable mouse tracking (Windows)">
