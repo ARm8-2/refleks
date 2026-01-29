@@ -286,7 +286,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
             {categories.map(({ name: catName, color: catColor, groups }) => {
               const ranks = rankDefs
               // Lighten the category color for better readability on dark backgrounds
-              const displayCatColor = catColor ? `color-mix(in srgb, ${catColor} 85%, white)` : 'var(--text-primary)'
+              const displayCatColor = catColor ? `color-mix(in srgb, ${catColor}, white)` : 'var(--text-primary)'
 
               return (
                 <div key={catName} className={`border border-primary rounded bg-surface-3 overflow-hidden ${compactMode ? 'mt-1' : 'mt-3'}`}>
@@ -297,7 +297,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                         className={`font-bold tracking-wide ${compactMode ? 'text-[10px]' : 'text-[11px]'}`}
                         style={{
                           color: displayCatColor,
-                          textShadow: `0 0 20px ${catColor || 'var(--text-primary)'}`,
+                          // textShadow: `0 0 20px ${catColor || 'var(--text-primary)'}`,
                           writingMode: 'vertical-rl',
                           transform: 'rotate(180deg)'
                         }}
@@ -307,7 +307,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                     </div>
                     <div className={`flex-1 p-2 ${compactMode ? 'space-y-1' : 'space-y-3'}`}>
                       {groups.map((g, gi) => {
-                        const displaySubColor = g.color ? `color-mix(in srgb, ${g.color} 85%, white)` : 'var(--text-primary)'
+                        const displaySubColor = g.color ? `color-mix(in srgb, ${g.color}, white)` : 'var(--text-primary)'
                         return (
                           <div key={gi} className="flex gap-2">
                             {/* Subcategory vertical label with fixed width for alignment */}
@@ -317,7 +317,7 @@ export function BenchmarkProgress({ progress }: BenchmarkProgressProps) {
                                   className={`font-bold tracking-wide ${compactMode ? 'text-[10px]' : 'text-[11px]'}`}
                                   style={{
                                     color: displaySubColor,
-                                    textShadow: `0 0 15px ${g.color || 'var(--text-primary)'}`,
+                                    // textShadow: `0 0 15px ${g.color || 'var(--text-primary)'}`,
                                     writingMode: 'vertical-rl',
                                     transform: 'rotate(180deg)'
                                   }}
