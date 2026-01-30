@@ -308,10 +308,10 @@ export function SettingsPage() {
                   placeholder="AIza..."
                   className="w-full px-2 py-1 rounded bg-surface-3 border border-primary"
                 />
-              </Field> */}
+              </Field>
               <div className="text-xs text-secondary">
                 You can also set the environment variable <code className="px-1 py-0.5 rounded bg-surface-3 border border-primary">REFLEKS_GEMINI_API_KEY</code> to override this value at runtime.
-              </div>
+              </div> */}
             </div>
           )}
         </section>
