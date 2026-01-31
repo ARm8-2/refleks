@@ -118,7 +118,7 @@ export function BenchmarkInfoModal({ isOpen, onClose }: BenchmarkInfoModalProps)
               </div>
               <div className="text-xs">
                 <span className="text-primary font-medium block mb-0.5">Quick Play</span>
-                Launch the scenario directly in Kovaak's (requires game configuration).
+                Launch the scenario directly in Kovaak's.
               </div>
             </div>
           </div>
