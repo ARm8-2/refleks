@@ -2,9 +2,9 @@ FROM debian:bookworm-slim
 
 # 1. Install system dependencies and configure locale
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl git ca-certificates build-essential pkg-config \
+    curl git zip ca-certificates build-essential pkg-config \
     libgtk-3-dev libwebkit2gtk-4.0-dev sudo \
-    bash-completion locales \
+    bash-completion locales nsis \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen \
     && rm -rf /var/lib/apt/lists/*
