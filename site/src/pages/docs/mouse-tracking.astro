@@ -1,0 +1,124 @@
+---
+import DocsLayout from "../../layouts/DocsLayout.astro";
+---
+
+<DocsLayout
+  title="Mouse Movement Recording"
+  description="Record and analyze your mouse movements during scenarios."
+  prevPage={{ slug: "benchmarks", title: "Benchmark Progress" }}
+  nextPage={{ slug: "themes", title: "Themes" }}
+>
+  <h2>Overview</h2>
+  <p>
+    RefleK's can record your mouse movements during KovaaK's scenarios. Replay
+    your runs, analyze your mouse paths, and get insights into your aiming
+    patterns.
+  </p>
+
+  <div class="image-container">
+    <img
+      src="/assets/images/mouse_big.webp"
+      alt="Mouse movement analysis"
+      loading="lazy"
+    />
+  </div>
+
+  <h2>Enable Mouse Tracking</h2>
+  <p>Mouse tracking is disabled by default. To enable it:</p>
+  <ol>
+    <li>Open Settings (gear icon)</li>
+    <li>Go to General → Mouse Tracking</li>
+    <li>Toggle it on</li>
+  </ol>
+
+  <h2>How It Works</h2>
+  <p>When mouse tracking is enabled:</p>
+  <ul>
+    <li>
+      RefleK's maintains a rolling buffer of mouse movements while KovaaK's is
+      running
+    </li>
+    <li>
+      Mouse position is captured at high frequency using Windows Raw Input
+    </li>
+    <li>
+      When a scenario ends, the relevant portion is extracted from the buffer
+      and saved with your run
+    </li>
+    <li>Data is stored locally with your run stats</li>
+  </ul>
+
+  <div class="warning">
+    <strong>Anticheat Warning:</strong> Mouse tracking uses low-level Windows input
+    APIs (Raw Input). While this is safe for KovaaK's, some kernel-level anticheats
+    in other games may flag this type of input monitoring. If you play games with
+    aggressive anticheats (like Vanguard or FACEIT), consider disabling mouse tracking
+    or closing RefleK's before launching those games.
+  </div>
+
+  <h2>Playback & Analysis</h2>
+  <p>After a run, you can view the recording:</p>
+  <ul>
+    <li>
+      <strong>Replay:</strong> Watch your mouse path with play/pause controls
+    </li>
+    <li><strong>Speed control:</strong> Slow down or speed up playback</li>
+    <li><strong>Scrubbing:</strong> Jump to any point in the recording</li>
+    <li><strong>Path visualization:</strong> See your entire mouse path</li>
+  </ul>
+
+  <h2>Automatic Insights</h2>
+  <p>RefleK's automatically analyzes your mouse movements:</p>
+  <ul>
+    <li><strong>Overshoots:</strong> When you move past the target</li>
+    <li><strong>Undershoots:</strong> When you don't reach the target</li>
+    <li><strong>Inefficient paths:</strong> Curved or wobbly movements</li>
+  </ul>
+
+  <h2>Sensitivity Training Suggestions</h2>
+  <p>
+    Based on your overshoot and undershoot patterns, RefleK's suggests a <strong
+      >training sensitivity</strong
+    > to help you improve:
+  </p>
+  <ul>
+    <li>
+      <strong>Frequent overshoots:</strong> Suggests a <em>higher</em> sensitivity
+      to train with smaller, more controlled movements
+    </li>
+    <li>
+      <strong>Frequent undershoots:</strong> Suggests a <em>lower</em> sensitivity
+      to train with larger, more confident flicks
+    </li>
+  </ul>
+  <p>
+    This is counterintuitive by design - the goal is to train your muscle memory
+    to compensate for your current weaknesses. After 5-10 runs at the suggested
+    sensitivity, switch back to your normal sens. You'll likely find your
+    movements more refined.
+  </p>
+
+  <div class="warning">
+    <strong>Important:</strong> This is a training sensitivity, not a permanent setting.
+    The idea is to temporarily exaggerate the opposite of your problem to train better
+    motor control.
+  </div>
+
+  <div class="note">
+    <strong>Privacy:</strong> All recordings are stored locally on your computer.
+    Nothing is ever uploaded.
+  </div>
+
+  <h2>Performance</h2>
+  <p>Mouse tracking is optimized to have minimal impact on your system:</p>
+  <ul>
+    <li>Recording doesn't affect your in-game sensitivity</li>
+    <li>Minimal CPU and memory usage</li>
+    <li>No impact on game performance</li>
+  </ul>
+
+  <div class="note">
+    <strong>Note:</strong> Mouse tracking is Windows-only due to platform-specific
+    APIs.
+  </div>
+</DocsLayout>

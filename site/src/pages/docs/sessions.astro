@@ -1,0 +1,130 @@
+---
+import DocsLayout from "../../layouts/DocsLayout.astro";
+---
+
+<DocsLayout
+  title="Sessions"
+  description="Understanding how runs are grouped into practice sessions."
+  prevPage={{ slug: "automatic-tracking", title: "Automatic Tracking" }}
+  nextPage={{ slug: "benchmarks", title: "Benchmark Progress" }}
+>
+  <h2>What Are Sessions?</h2>
+  <p>
+    Sessions are groups of scenario runs based on timing. When you practice,
+    RefleK's automatically groups consecutive runs into a single session, making
+    it easy to review your training blocks.
+  </p>
+
+  <div class="image-container">
+    <img
+      src="/assets/images/sessions_overview_4.webp"
+      alt="Practice sessions overview"
+      loading="lazy"
+    />
+  </div>
+
+  <h2>How Grouping Works</h2>
+  <p>
+    Runs are grouped based on a time gap (default: 20 minutes). If the gap
+    between your last run and the next run is within this time, they're part of
+    the same session. Take a longer break, and a new session starts.
+  </p>
+  <ul>
+    <li>Run at 10:00 AM → Session 1</li>
+    <li>Run at 10:15 AM → Session 1 (15 min since last run)</li>
+    <li>Run at 10:25 AM → Session 1 (10 min since last run)</li>
+    <li>Run at 11:00 AM → Session 2 (35 min gap since last run)</li>
+  </ul>
+
+  <h2>Session Overview</h2>
+  <p>Each session shows aggregated metrics and insights:</p>
+  <ul>
+    <li>
+      <strong>Summary stats:</strong> Total runs, time spent, average score and accuracy
+    </li>
+    <li>
+      <strong>Performance charts:</strong> Score, accuracy, and TTK trends over the
+      session
+    </li>
+    <li>
+      <strong>Scenario mix:</strong> Visual breakdown of scenarios practiced
+    </li>
+    <li>
+      <strong>Best and worst runs:</strong> Highlight your strongest and weakest performances
+    </li>
+    <li>
+      <strong>Daily activity:</strong> See your training history at a glance
+    </li>
+  </ul>
+
+  <h2>Fatigue Detection</h2>
+  <p>
+    RefleK's monitors your performance during a session and alerts you when it
+    detects signs of fatigue:
+  </p>
+  <ul>
+    <li>Declining scores over consecutive runs</li>
+    <li>Decreasing accuracy trends</li>
+    <li>Performance dropping below your session average</li>
+  </ul>
+  <p>
+    When fatigue is detected, you'll see an alert suggesting it might be time
+    for a break.
+  </p>
+
+  <div class="image-container">
+    <img
+      src="/assets/images/fatigue.webp"
+      alt="Fatigue detection alert"
+      loading="lazy"
+    />
+  </div>
+
+  <h2>Session Notes</h2>
+  <p>
+    Add notes to any session to record what you were working on, how you felt,
+    or any insights:
+  </p>
+  <ol>
+    <li>Click on a session to view it</li>
+    <li>Click the notes icon in the header</li>
+    <li>Write your notes and save</li>
+  </ol>
+  <p>You can also rename sessions to give them meaningful titles.</p>
+
+  <div class="image-container">
+    <img
+      src="/assets/images/session_notes.webp"
+      alt="Session notes feature"
+      loading="lazy"
+    />
+  </div>
+
+  <h2>Filtering & Search</h2>
+  <p>Find specific sessions using the filter and search options:</p>
+  <ul>
+    <li>
+      <strong>Search:</strong> Find sessions by scenario name, date, or session name
+    </li>
+    <li>
+      <strong>Filter by run count:</strong> Show only sessions with a minimum number
+      of runs
+    </li>
+    <li>
+      <strong>High scores:</strong> Filter to sessions containing personal bests
+    </li>
+  </ul>
+
+  <h2>Adjusting the Session Gap</h2>
+  <p>You can change the session gap to match your practice style:</p>
+  <ol>
+    <li>Open Settings (gear icon)</li>
+    <li>Go to General → Session Gap</li>
+    <li>Set your preferred gap (e.g., 30 minutes for longer breaks)</li>
+  </ol>
+
+  <div class="note">
+    <strong>Tip:</strong> A shorter gap (5-10 min) is good for intense practice. A
+    longer gap (30+ min) works better if you take frequent breaks.
+  </div>
+</DocsLayout>

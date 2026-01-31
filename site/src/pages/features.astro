@@ -1,0 +1,450 @@
+---
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+// Main features with images - these get the large card treatment
+const mainFeatures = [
+  {
+    title: "Automatic Tracking",
+    description:
+      "RefleK's monitors your KovaaK's stats folder and imports new runs automatically. No clicking, no uploading - just play and your data appears. Score, accuracy, TTK, kills per minute, and more are all tracked.",
+    image: "/assets/images/scen_raw.webp",
+    icon: "bolt",
+  },
+  {
+    title: "Practice Sessions",
+    description:
+      "Runs are grouped automatically based on timing. Review whole training blocks, see aggregated performance, get fatigue alerts when it's time for a break, and track your daily activity patterns.",
+    image: "/assets/images/sessions_overview_5.webp",
+    icon: "clock",
+    reverse: true,
+  },
+  {
+    title: "Benchmark Progress",
+    description:
+      "Browse official KovaaK's benchmarks and track your progress with live updates. Get smart recommendations on which scenarios to focus next. Launch playlists directly from the app.",
+    image: "/assets/images/benchmark_overview.webp",
+    icon: "trophy",
+  },
+  {
+    title: "Mouse Movement Analysis",
+    description:
+      "Record and visualize your mouse movements during scenarios. Automatic detection of overshoots, undershoots, and inefficient mouse paths. Get sensitivity suggestions based on your aiming patterns.",
+    image: "/assets/images/mouse_big.webp",
+    icon: "cursor",
+    reverse: true,
+  },
+];
+
+// Smaller features that go in a 3-column grid
+const smallFeatures = [
+  {
+    title: "Scenario Analysis",
+    description:
+      "TTK moving averages, accuracy vs speed charts, and events over time visualizations for every run.",
+    image: "/assets/images/scen_analysis.webp",
+  },
+  {
+    title: "100% Private",
+    description:
+      "Everything runs locally. No accounts, no tracking, no cloud uploads. Your data stays on your computer.",
+    image: "/assets/images/benchmark_explore_recom.webp",
+  },
+  {
+    title: "Built-in Themes",
+    description:
+      "Dark, Light, Nord, Dracula, Gruvbox, Ocean, Solarized, Midnight, and more.",
+    image: "/assets/images/light_theme.webp",
+  },
+  {
+    title: "Share Progress",
+    description:
+      "One-click share copies a polished benchmark progress image to your clipboard.",
+    image: "/assets/images/share.webp",
+  },
+  {
+    title: "Fatigue Detection",
+    description:
+      "Get alerts when your performance is declining - know when to take a break.",
+    image: "/assets/images/fatigue.webp",
+  },
+  {
+    title: "Auto Updates",
+    description:
+      "Check for updates and install them with one click, right from the app.",
+    image: "/assets/images/settings.webp",
+  },
+];
+---
+
+<BaseLayout
+  title="Features - RefleK's"
+  description="Explore all the features that make RefleK's the best companion for your aim training."
+>
+  <Header slot="header" currentPath="/features" />
+
+  <!-- Hero -->
+  <section class="pt-20 pb-8 sm:pt-24 sm:pb-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <p class="text-accent-primary font-medium text-sm mb-3">Features</p>
+      <h1
+        class="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-text-primary"
+      >
+        Everything you need
+      </h1>
+      <p class="mt-4 text-text-muted max-w-2xl mx-auto">
+        Understand and improve your aim training - automatically.
+      </p>
+    </div>
+  </section>
+
+  <!-- Features with interleaved layout -->
+  <section class="py-8 sm:py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="space-y-16">
+        <!-- Main Feature 1 -->
+        <div
+          class="feature-card rounded-2xl border border-border-primary bg-bg-secondary overflow-hidden"
+        >
+          <div class="grid grid-cols-1 lg:grid-cols-3 min-h-80">
+            <div class="p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
+              <div class="flex items-center gap-3 mb-3">
+                <div
+                  class="w-8 h-8 rounded-lg bg-accent-primary/20 flex items-center justify-center shrink-0"
+                >
+                  <svg
+                    class="w-4 h-4 text-accent-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold text-text-primary">
+                  {mainFeatures[0].title}
+                </h3>
+              </div>
+              <p class="text-text-muted text-sm leading-relaxed">
+                {mainFeatures[0].description}
+              </p>
+            </div>
+            <div
+              class="lg:col-span-2 p-4 sm:p-6 flex items-center justify-center bg-bg-tertiary/50"
+            >
+              <div
+                class="rounded-xl overflow-hidden shadow-2xl border border-border-primary/50 w-full"
+              >
+                <img
+                  src={mainFeatures[0].image}
+                  alt={mainFeatures[0].title}
+                  loading="lazy"
+                  width="3000"
+                  height="1800"
+                  class="w-full h-auto"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Feature 2 -->
+        <div
+          class="feature-card rounded-2xl border border-border-primary bg-bg-secondary overflow-hidden"
+        >
+          <div class="grid grid-cols-1 lg:grid-cols-3 min-h-80">
+            <div
+              class="p-6 sm:p-8 lg:p-10 flex flex-col justify-center order-1 lg:order-2"
+            >
+              <div class="flex items-center gap-3 mb-3">
+                <div
+                  class="w-8 h-8 rounded-lg bg-accent-primary/20 flex items-center justify-center shrink-0"
+                >
+                  <svg
+                    class="w-4 h-4 text-accent-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold text-text-primary">
+                  {mainFeatures[1].title}
+                </h3>
+              </div>
+              <p class="text-text-muted text-sm leading-relaxed">
+                {mainFeatures[1].description}
+              </p>
+            </div>
+            <div
+              class="lg:col-span-2 p-4 sm:p-6 flex items-center justify-center bg-bg-tertiary/50 order-2 lg:order-1"
+            >
+              <div
+                class="rounded-xl overflow-hidden shadow-2xl border border-border-primary/50 w-full"
+              >
+                <img
+                  src={mainFeatures[1].image}
+                  alt={mainFeatures[1].title}
+                  loading="lazy"
+                  width="3000"
+                  height="1800"
+                  class="w-full h-auto"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Small Feature Cards Row 1 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {
+            smallFeatures.slice(0, 3).map((feature) => (
+              <div class="rounded-xl border border-border-primary bg-bg-secondary overflow-hidden hover:border-border-secondary transition-colors flex flex-col">
+                <div class="p-5 pb-4 flex-1">
+                  <h3 class="text-base font-semibold text-text-primary mb-2">
+                    {feature.title}
+                  </h3>
+                  <p class="text-sm text-text-muted leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+                <div class="p-4 bg-bg-tertiary/50 mt-auto">
+                  <div class="aspect-5/3 flex items-center justify-center">
+                    <img
+                      src={feature.image}
+                      alt={feature.title}
+                      loading="lazy"
+                      class="rounded-lg shadow-lg border border-border-primary/50 h-full w-auto max-w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+
+        <!-- Main Feature 3 -->
+        <div
+          class="feature-card rounded-2xl border border-border-primary bg-bg-secondary overflow-hidden"
+        >
+          <div class="grid grid-cols-1 lg:grid-cols-3 min-h-80">
+            <div class="p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
+              <div class="flex items-center gap-3 mb-3">
+                <div
+                  class="w-8 h-8 rounded-lg bg-accent-primary/20 flex items-center justify-center shrink-0"
+                >
+                  <svg
+                    class="w-4 h-4 text-accent-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                    ></path>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold text-text-primary">
+                  {mainFeatures[2].title}
+                </h3>
+              </div>
+              <p class="text-text-muted text-sm leading-relaxed">
+                {mainFeatures[2].description}
+              </p>
+            </div>
+            <div
+              class="lg:col-span-2 p-4 sm:p-6 flex items-center justify-center bg-bg-tertiary/50"
+            >
+              <div
+                class="rounded-xl overflow-hidden shadow-2xl border border-border-primary/50 w-full"
+              >
+                <img
+                  src={mainFeatures[2].image}
+                  alt={mainFeatures[2].title}
+                  loading="lazy"
+                  width="3000"
+                  height="1800"
+                  class="w-full h-auto"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Feature 4 -->
+        <div
+          class="feature-card rounded-2xl border border-border-primary bg-bg-secondary overflow-hidden"
+        >
+          <div class="grid grid-cols-1 lg:grid-cols-3 min-h-80">
+            <div
+              class="p-6 sm:p-8 lg:p-10 flex flex-col justify-center order-1 lg:order-2"
+            >
+              <div class="flex items-center gap-3 mb-3">
+                <div
+                  class="w-8 h-8 rounded-lg bg-accent-primary/20 flex items-center justify-center shrink-0"
+                >
+                  <svg
+                    class="w-4 h-4 text-accent-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
+                    ></path>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold text-text-primary">
+                  {mainFeatures[3].title}
+                </h3>
+              </div>
+              <p class="text-text-muted text-sm leading-relaxed">
+                {mainFeatures[3].description}
+              </p>
+            </div>
+            <div
+              class="lg:col-span-2 p-4 sm:p-6 flex items-center justify-center bg-bg-tertiary/50 order-2 lg:order-1"
+            >
+              <div
+                class="rounded-xl overflow-hidden shadow-2xl border border-border-primary/50 w-full"
+              >
+                <img
+                  src={mainFeatures[3].image}
+                  alt={mainFeatures[3].title}
+                  loading="lazy"
+                  width="3000"
+                  height="1800"
+                  class="w-full h-auto"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Small Feature Cards Row 2 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {
+            smallFeatures.slice(3, 6).map((feature) => (
+              <div class="rounded-xl border border-border-primary bg-bg-secondary overflow-hidden hover:border-border-secondary transition-colors flex flex-col">
+                <div class="p-5 pb-4 flex-1">
+                  <h3 class="text-base font-semibold text-text-primary mb-2">
+                    {feature.title}
+                  </h3>
+                  <p class="text-sm text-text-muted leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+                <div class="p-4 bg-bg-tertiary/50 mt-auto">
+                  <div class="aspect-5/3 flex items-center justify-center">
+                    <img
+                      src={feature.image}
+                      alt={feature.title}
+                      loading="lazy"
+                      class="rounded-lg shadow-lg border border-border-primary/50 h-full w-auto max-w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Open Source Banner -->
+  <section class="py-12 sm:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div
+        class="rounded-2xl border border-border-primary bg-bg-secondary overflow-hidden"
+      >
+        <div class="p-8 sm:p-10 lg:p-12 text-center">
+          <div
+            class="w-12 h-12 rounded-xl bg-accent-primary/20 flex items-center justify-center mx-auto mb-4"
+          >
+            <svg
+              class="w-6 h-6 text-accent-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl sm:text-2xl font-bold text-text-primary mb-3">
+            Free & Open Source
+          </h3>
+          <p class="text-text-muted max-w-xl mx-auto mb-6">
+            RefleK's is licensed under GPL v3. Inspect the code, contribute
+            improvements, or fork it to make your own version. Forever free.
+          </p>
+          <a
+            href="https://github.com/ARm8-2/refleks"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 text-accent-primary hover:text-accent-light font-medium transition-colors"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+              ></path>
+            </svg>
+            View on GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-16 sm:py-24">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h2
+        class="text-2xl sm:text-3xl md:text-4xl font-medium text-text-primary"
+      >
+        Try RefleK's now
+      </h2>
+      <p class="mt-4 text-text-muted">
+        Download RefleK's for free and start tracking your aim training today.
+      </p>
+      <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+        <a
+          href="https://github.com/ARm8-2/refleks/releases/latest"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-accent-primary text-black font-semibold hover:bg-accent-hover transition-colors min-h-12"
+        >
+          Download for Windows
+        </a>
+        <a
+          href="/docs"
+          class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl border border-border-primary bg-bg-secondary text-text-primary hover:bg-bg-tertiary transition-colors min-h-12"
+        >
+          Read the docs
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</BaseLayout>

@@ -1,0 +1,63 @@
+---
+import DocsLayout from "../../layouts/DocsLayout.astro";
+---
+
+<DocsLayout
+  title="Installation"
+  description="Download and install RefleK's on your Windows PC."
+  nextPage={{ slug: "first-setup", title: "First-Time Setup" }}
+>
+  <h2>Download</h2>
+  <p>
+    RefleK's is available for Windows. Download the latest version from our
+    <a
+      href="https://github.com/ARm8-2/refleks/releases/latest"
+      target="_blank"
+      rel="noopener">GitHub releases page</a
+    >.
+  </p>
+
+  <p>You have two options:</p>
+  <ul>
+    <li>
+      <strong>Installer</strong> (<code
+        >refleks-&lt;version&gt;-windows-amd64-installer.exe</code
+      >) - Recommended for most users
+    </li>
+    <li>
+      <strong>Portable ZIP</strong> (<code
+        >refleks-&lt;version&gt;-windows-amd64-portable.zip</code
+      >) - For portable use
+    </li>
+  </ul>
+
+  <h2>Install with the Installer</h2>
+  <ol>
+    <li>Download the installer from the releases page</li>
+    <li>Run the installer and follow the prompts</li>
+    <li>RefleK's will be installed and a desktop shortcut created</li>
+    <li>Launch RefleK's from the Start menu or desktop</li>
+  </ol>
+
+  <div class="image-container">
+    <img
+      src="/assets/images/sessions_overview_2.webp"
+      alt="RefleK's main interface"
+      loading="lazy"
+    />
+  </div>
+
+  <h2>Portable Installation</h2>
+  <ol>
+    <li>Download the portable ZIP from the releases page</li>
+    <li>Extract the ZIP to any folder</li>
+    <li>Run <code>refleks.exe</code> from the extracted folder</li>
+  </ol>
+
+  <h2>System Requirements</h2>
+  <ul>
+    <li>Windows 10 or later (64-bit)</li>
+    <li>KovaaK's installed via Steam</li>
+    <li>WebView2 runtime (included in installer, or auto-downloaded)</li>
+  </ul>
+</DocsLayout>

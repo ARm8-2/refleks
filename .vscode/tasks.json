@@ -135,6 +135,42 @@
 				"isDefault": true
 			},
 			"detail": "Serve the static docs/ folder at http://localhost:8080/"
+		},
+		{
+			"type": "shell",
+			"label": "Site: Dev",
+			"command": "npm",
+			"args": [
+				"run",
+				"dev",
+				"--",
+				"--host"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/site"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "none"
+			},
+			"detail": "Run Astro dev server for the website"
+		},
+		{
+			"type": "shell",
+			"label": "Site: Build",
+			"command": "npm",
+			"args": [
+				"run",
+				"build"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/site"
+			},
+			"problemMatcher": [],
+			"group": {
+				"kind": "build"
+			},
+			"detail": "Build the website to docs/ folder for GitHub Pages"
 		}
 	],
 	"inputs": [

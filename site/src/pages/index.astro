@@ -1,0 +1,278 @@
+---
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="RefleK's - KovaaK's Analytics & Insights">
+	<Header slot="header" currentPath="/" />
+
+	<!-- Hero Section -->
+	<section class="pt-20 pb-8 sm:pt-24 sm:pb-12">
+		<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+			<div class="text-center max-w-3xl mx-auto">
+				<h1
+					class="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight"
+				>
+					<span class="gradient-text">RefleK's</span>
+				</h1>
+				<p class="mt-4 sm:mt-6 text-lg sm:text-xl text-text-secondary">
+					Your aim trainer gives scores. RefleK's gives answers.
+				</p>
+				<p class="mt-4 text-base text-text-muted max-w-xl mx-auto">
+					A free, open-source desktop app that automatically tracks your
+					KovaaK's practice sessions and helps you understand your improvement.
+				</p>
+				<div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+					<a
+						href="https://github.com/ARm8-2/refleks/releases/latest"
+						target="_blank"
+						rel="noopener"
+						class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-accent-primary text-black font-semibold hover:bg-accent-hover transition-colors min-h-12"
+					>
+						Download for Windows
+					</a>
+					<a
+						href="/docs"
+						class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl border border-border-primary bg-bg-secondary text-text-primary hover:bg-bg-tertiary transition-colors min-h-12"
+					>
+						Get Started
+					</a>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Video Preview -->
+	<section class="py-8 sm:py-12">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+			<div class="video-container">
+				<video
+					autoplay
+					loop
+					muted
+					playsinline
+					poster="/assets/images/sessions_overview_5.webp"
+					width="1280"
+					height="720"
+				>
+					<source src="/assets/RefleKs.mp4" type="video/mp4" />
+					Your browser does not support the video tag.
+				</video>
+			</div>
+		</div>
+	</section>
+
+	<!-- Feature Cards -->
+	<section class="py-12 sm:py-20">
+		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+			<div class="space-y-16">
+				<!-- Automatic -->
+				<div
+					class="feature-card rounded-2xl border border-border-primary bg-bg-secondary overflow-hidden"
+				>
+					<div class="grid grid-cols-1 lg:grid-cols-3 min-h-80">
+						<div class="p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
+							<div class="flex items-center gap-3 mb-3">
+								<div
+									class="w-8 h-8 rounded-lg bg-accent-primary/20 flex items-center justify-center shrink-0"
+								>
+									<svg
+										class="w-4 h-4 text-accent-primary"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+									</svg>
+								</div>
+								<h3 class="text-xl font-medium text-text-primary">Automatic</h3>
+							</div>
+							<p class="text-text-muted text-sm leading-relaxed">
+								Stats import automatically as you play. No clicking, no
+								uploading. Just play and watch your data appear.
+							</p>
+						</div>
+						<div
+							class="lg:col-span-2 p-4 sm:p-6 flex items-center justify-center bg-bg-tertiary/50"
+						>
+							<div
+								class="rounded-xl overflow-hidden shadow-2xl border border-border-primary/50 w-full"
+							>
+								<img
+									src="/assets/images/benchmark_overview_2.webp"
+									alt="Automatic stat tracking"
+									loading="lazy"
+									width="3000"
+									height="1800"
+									class="w-full h-auto"
+								/>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Private -->
+				<div
+					class="feature-card rounded-2xl border border-border-primary bg-bg-secondary overflow-hidden"
+				>
+					<div class="grid grid-cols-1 lg:grid-cols-3 min-h-80">
+						<div
+							class="p-6 sm:p-8 lg:p-10 flex flex-col justify-center order-1 lg:order-2"
+						>
+							<div class="flex items-center gap-3 mb-3">
+								<div
+									class="w-8 h-8 rounded-lg bg-accent-primary/20 flex items-center justify-center shrink-0"
+								>
+									<svg
+										class="w-4 h-4 text-accent-primary"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+										></path>
+									</svg>
+								</div>
+								<h3 class="text-xl font-medium text-text-primary">Private</h3>
+							</div>
+							<p class="text-text-muted text-sm leading-relaxed">
+								Everything runs locally on your machine. No accounts, no cloud
+								storage, no data tracking. Your stats stay yours.
+							</p>
+						</div>
+						<div
+							class="lg:col-span-2 p-4 sm:p-6 flex items-center justify-center bg-bg-tertiary/50 order-2 lg:order-1"
+						>
+							<div
+								class="rounded-xl overflow-hidden shadow-2xl border border-border-primary/50 w-full"
+							>
+								<img
+									src="/assets/images/sessions_overview_5.webp"
+									alt="Private local data"
+									loading="lazy"
+									width="3000"
+									height="1800"
+									class="w-full h-auto"
+								/>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Open Source -->
+				<div
+					class="feature-card rounded-2xl border border-border-primary bg-bg-secondary overflow-hidden"
+				>
+					<div class="grid grid-cols-1 lg:grid-cols-3 min-h-80">
+						<div class="p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
+							<div class="flex items-center gap-3 mb-3">
+								<div
+									class="w-8 h-8 rounded-lg bg-accent-primary/20 flex items-center justify-center shrink-0"
+								>
+									<svg
+										class="w-4 h-4 text-accent-primary"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+									</svg>
+								</div>
+								<h3 class="text-xl font-medium text-text-primary">
+									Open Source
+								</h3>
+							</div>
+							<p class="text-text-muted text-sm leading-relaxed">
+								Free forever. Inspect the code, contribute improvements, or fork
+								it to make your own version.
+							</p>
+						</div>
+						<div
+							class="lg:col-span-2 p-4 sm:p-6 flex items-center justify-center bg-bg-tertiary/50"
+						>
+							<div
+								class="rounded-xl overflow-hidden shadow-2xl border border-border-primary/50 w-full"
+							>
+								<img
+									src="/assets/images/github.webp"
+									alt="Open source code on GitHub"
+									loading="lazy"
+									width="3000"
+									height="1800"
+									class="w-full h-auto"
+								/>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="mt-10 text-center">
+				<a
+					href="/features"
+					class="inline-flex items-center text-accent-primary hover:text-accent-light font-medium transition-colors"
+				>
+					See all features
+					<svg
+						class="w-4 h-4 ml-1"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M9 5l7 7-7 7"></path>
+					</svg>
+				</a>
+			</div>
+		</div>
+	</section>
+
+	<!-- CTA Section -->
+	<section class="py-16 sm:py-24">
+		<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+			<h2
+				class="text-2xl sm:text-3xl md:text-4xl font-medium text-text-primary"
+			>
+				Try RefleK's now
+			</h2>
+			<p class="mt-4 text-text-muted max-w-2xl mx-auto">
+				Download RefleK's for free and start getting real insights into your
+				practice.
+			</p>
+			<div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+				<a
+					href="https://github.com/ARm8-2/refleks/releases/latest"
+					target="_blank"
+					rel="noopener"
+					class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl bg-accent-primary text-black font-semibold hover:bg-accent-hover transition-colors min-h-12"
+				>
+					Download for Windows
+				</a>
+				<a
+					href="/docs"
+					class="inline-flex items-center justify-center px-6 py-3.5 rounded-xl border border-border-primary bg-bg-secondary text-text-primary hover:bg-bg-tertiary transition-colors min-h-12"
+				>
+					Read the docs
+				</a>
+			</div>
+		</div>
+	</section>
+
+	<Footer slot="footer" />
+</BaseLayout>

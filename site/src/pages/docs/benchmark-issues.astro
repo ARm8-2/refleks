@@ -1,0 +1,57 @@
+---
+import DocsLayout from "../../layouts/DocsLayout.astro";
+---
+
+<DocsLayout
+  title="Benchmark Issues"
+  description="Fix benchmark progress not updating."
+  prevPage={{ slug: "runs-not-appearing", title: "Runs Not Appearing" }}
+  nextPage={{ slug: "getting-help", title: "Getting Help" }}
+>
+  <h2>Rankings Not Updating</h2>
+  <p>If your benchmark rankings aren't refreshing, try these steps:</p>
+
+  <h2>Check Steam Detection</h2>
+  <p>
+    RefleK's detects your Steam username from your local Steam installation to
+    fetch rankings from KovaaK's servers. If detection fails:
+  </p>
+  <ol>
+    <li>Make sure Steam is installed</li>
+    <li>Open Settings → Advanced</li>
+    <li>Manually enter your SteamID or Persona Name</li>
+  </ol>
+
+  <h2>Refresh Rankings</h2>
+  <ol>
+    <li>Open the Benchmarks page</li>
+    <li>Click the Refresh button</li>
+    <li>Wait a few seconds for rankings to update</li>
+  </ol>
+
+  <h2>Progress Not Tracking</h2>
+  <p>If your runs aren't counting toward benchmark progress:</p>
+  <ul>
+    <li>
+      Make sure you're playing the correct scenario name (exact match required)
+    </li>
+    <li>Check that runs are appearing in the Scenarios page</li>
+    <li>Some benchmarks require specific settings or difficulty modes</li>
+  </ul>
+
+  <div class="image-container">
+    <img
+      src="/assets/images/benchmark_overview.webp"
+      alt="Benchmark progress"
+      loading="lazy"
+    />
+  </div>
+
+  <div class="note">
+    <strong>Need help?</strong> Join our <a
+      href="https://discord.gg/SFsf4GQhJU"
+      target="_blank"
+      rel="noopener noreferrer">Discord server</a
+    > for assistance.
+  </div>
+</DocsLayout>

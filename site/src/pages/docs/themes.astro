@@ -1,0 +1,72 @@
+---
+import DocsLayout from "../../layouts/DocsLayout.astro";
+---
+
+<DocsLayout
+  title="Themes"
+  description="Customize the look of RefleK's with built-in themes."
+  prevPage={{ slug: "mouse-tracking", title: "Mouse Movement" }}
+  nextPage={{ slug: "stats-folder", title: "Stats Folder Issues" }}
+>
+  <h2>Available Themes</h2>
+  <p>
+    RefleK's includes 10 built-in themes to match your setup. Theme changes
+    apply instantly.
+  </p>
+
+  <ul>
+    <li><strong>Dark</strong> - Default dark theme with blue accents</li>
+    <li><strong>Light</strong> - Clean light theme for daytime use</li>
+    <li><strong>Dracula</strong> - Purple-accented dark theme</li>
+    <li><strong>Gruvbox</strong> - Warm retro dark palette</li>
+    <li><strong>Gruvbox Light</strong> - Warm retro light palette</li>
+    <li><strong>Nord</strong> - Cool blue arctic palette</li>
+    <li><strong>Ocean</strong> - Deep blue oceanic theme</li>
+    <li><strong>Solarized Dark</strong> - Popular low-contrast dark theme</li>
+    <li><strong>Solarized Light</strong> - Popular low-contrast light theme</li>
+    <li>
+      <strong>Midnight</strong> - Ultra-dark theme for late night sessions
+    </li>
+  </ul>
+
+  <div class="image-row">
+    <div class="image-container">
+      <img
+        src="/assets/images/gruvbox_theme.webp"
+        alt="Gruvbox dark theme"
+        loading="lazy"
+      />
+    </div>
+    <div class="image-container">
+      <img
+        src="/assets/images/light_theme.webp"
+        alt="Light theme"
+        loading="lazy"
+      />
+    </div>
+  </div>
+
+  <h2>Changing Themes</h2>
+  <ol>
+    <li>Open Settings (gear icon in the top right)</li>
+    <li>Go to Appearance → Theme</li>
+    <li>Select your preferred theme</li>
+    <li>The theme applies immediately</li>
+  </ol>
+
+  <h2>Font Options</h2>
+  <p>You can also customize the font used throughout the app:</p>
+  <ul>
+    <li><strong>Montserrat</strong> - Clean, modern sans-serif (default)</li>
+    <li><strong>Inter</strong> - Highly legible interface font</li>
+    <li>
+      <strong>JetBrains Mono UI</strong> - Monospace font for a technical look
+    </li>
+  </ul>
+
+  <h2>Theme Persistence</h2>
+  <p>
+    Your theme and font preferences are saved automatically and persist between
+    app restarts.
+  </p>
+</DocsLayout>

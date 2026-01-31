@@ -1,0 +1,93 @@
+---
+import DocsLayout from "../../layouts/DocsLayout.astro";
+---
+
+<DocsLayout
+  title="Automatic Tracking"
+  description="How RefleK's monitors your stats folder and imports runs automatically."
+  prevPage={{ slug: "first-setup", title: "First-Time Setup" }}
+  nextPage={{ slug: "sessions", title: "Sessions" }}
+>
+  <h2>How It Works</h2>
+  <p>
+    RefleK's monitors your KovaaK's stats folder in real-time. When you complete
+    a scenario, the new stats file is detected and imported automatically - no
+    clicking, no uploading.
+  </p>
+
+  <div class="image-container">
+    <img
+      src="/assets/images/sessions_overview.webp"
+      alt="Automatic tracking"
+      loading="lazy"
+    />
+  </div>
+
+  <h2>What Happens When You Play</h2>
+  <ol>
+    <li>You complete a scenario in KovaaK's</li>
+    <li>KovaaK's writes a stats CSV file to your stats folder</li>
+    <li>RefleK's detects the new file within seconds</li>
+    <li>The run is parsed and added to your history</li>
+    <li>It appears in your Sessions and Scenarios pages</li>
+    <li>Benchmark progress updates if applicable</li>
+  </ol>
+
+  <h2>Supported Data</h2>
+  <p>RefleK's extracts and tracks:</p>
+  <ul>
+    <li>Score and accuracy</li>
+    <li>Hits, misses, and damage dealt</li>
+    <li>Time-to-kill (TTK) metrics</li>
+    <li>Kills per minute (KPM)</li>
+    <li>Sensitivity settings used</li>
+    <li>Date and time of the run</li>
+    <li>Resolution and other game settings</li>
+  </ul>
+
+  <h2>Scenario Analysis</h2>
+  <p>For each scenario, RefleK's provides detailed analysis:</p>
+  <ul>
+    <li>
+      <strong>Events over time:</strong> See how accuracy and TTK evolved during the
+      run
+    </li>
+    <li>
+      <strong>TTK moving average:</strong> Track your consistency with 5-run moving
+      averages
+    </li>
+    <li>
+      <strong>Accuracy vs Speed:</strong> Understand the relationship between your
+      speed and precision
+    </li>
+    <li><strong>Raw data:</strong> View all the raw stats from the CSV file</li>
+  </ul>
+
+  <div class="image-row">
+    <div class="image-container">
+      <img
+        src="/assets/images/scen_analysis.webp"
+        alt="Scenario analysis charts"
+        loading="lazy"
+      />
+    </div>
+    <div class="image-container">
+      <img
+        src="/assets/images/scen_raw.webp"
+        alt="Raw scenario data view"
+        loading="lazy"
+      />
+    </div>
+  </div>
+
+  <h2>Background Monitoring</h2>
+  <p>
+    RefleK's runs quietly in the background. You can minimize it and it will continue monitoring for new runs. When you're done
+    practicing, your session will be waiting for review.
+  </p>
+
+  <div class="note">
+    <strong>Performance:</strong> The file watcher uses minimal system resources and
+    won't affect your game performance.
+  </div>
+</DocsLayout>

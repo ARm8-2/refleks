@@ -1,0 +1,60 @@
+---
+import DocsLayout from "../../layouts/DocsLayout.astro";
+---
+
+<DocsLayout
+  title="Runs Not Appearing"
+  description="Troubleshoot missing scenario runs."
+  prevPage={{ slug: "stats-folder", title: "Stats Folder Issues" }}
+  nextPage={{ slug: "benchmark-issues", title: "Benchmark Issues" }}
+>
+  <h2>New Runs Not Showing Up</h2>
+  <p>
+    If you've played scenarios but they're not appearing in RefleK's, try these
+    steps:
+  </p>
+
+  <h2>Check the Stats Folder</h2>
+  <ol>
+    <li>Open Settings → General → Stats Folder</li>
+    <li>Verify the path is correct</li>
+    <li>Open the folder in File Explorer</li>
+    <li>Check that new CSV files are being created when you play</li>
+  </ol>
+
+  <h2>Restart RefleK's</h2>
+  <p>Sometimes the file watcher needs a reset:</p>
+  <ol>
+    <li>Close RefleK's completely (check the system tray)</li>
+    <li>Reopen RefleK's</li>
+    <li>Play a scenario and check if it appears</li>
+  </ol>
+
+  <h2>Check KovaaK's Settings</h2>
+  <p>Make sure KovaaK's is configured to save stats:</p>
+  <ul>
+    <li>Open KovaaK's settings</li>
+    <li>Verify that stats saving is enabled</li>
+    <li>Check that CSV format is selected</li>
+  </ul>
+
+  <h2>File Permissions</h2>
+  <p>If RefleK's can't read the stats folder:</p>
+  <ul>
+    <li>Run RefleK's as administrator (right-click → Run as administrator)</li>
+    <li>Check that the stats folder isn't read-only</li>
+    <li>Make sure antivirus isn't blocking access</li>
+  </ul>
+
+  <div class="note">
+    <strong>Still stuck?</strong> Join our <a
+      href="https://discord.gg/SFsf4GQhJU"
+      target="_blank"
+      rel="noopener noreferrer">Discord server</a
+    > or <a
+      href="https://github.com/ARm8-2/refleks/issues"
+      target="_blank"
+      rel="noopener noreferrer">open a GitHub issue</a
+    >.
+  </div>
+</DocsLayout>

@@ -1,0 +1,354 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  prevPage?: { slug: string; title: string };
+  nextPage?: { slug: string; title: string };
+}
+
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import BaseLayout from "./BaseLayout.astro";
+
+const { title, description, prevPage, nextPage } = Astro.props;
+
+// Sidebar navigation
+const sidebarSections = [
+  {
+    title: "Getting Started",
+    items: [
+      { slug: "", title: "Welcome" },
+      { slug: "installation", title: "Installation" },
+      { slug: "first-setup", title: "First-Time Setup" },
+    ],
+  },
+  {
+    title: "Features",
+    items: [
+      { slug: "automatic-tracking", title: "Automatic Tracking" },
+      { slug: "sessions", title: "Sessions" },
+      { slug: "benchmarks", title: "Benchmark Progress" },
+      { slug: "mouse-tracking", title: "Mouse Movement" },
+      { slug: "themes", title: "Themes" },
+    ],
+  },
+  {
+    title: "Troubleshooting",
+    items: [
+      { slug: "stats-folder", title: "Stats Folder Issues" },
+      { slug: "runs-not-appearing", title: "Runs Not Appearing" },
+      { slug: "benchmark-issues", title: "Benchmark Issues" },
+    ],
+  },
+  {
+    title: "Support",
+    items: [
+      { slug: "getting-help", title: "Getting Help" },
+      { slug: "contributing", title: "Contributing" },
+    ],
+  },
+];
+
+// Extract the current page slug from the URL
+// /docs -> "" (welcome page)
+// /docs/installation -> "installation"
+// /docs/first-setup -> "first-setup"
+const pathname = Astro.url.pathname.replace(/\/$/, ""); // Remove trailing slash
+const pathParts = pathname.split("/");
+const currentSlug =
+  pathParts[pathParts.length - 1] === "docs"
+    ? ""
+    : pathParts[pathParts.length - 1];
+---
+
+<BaseLayout title={`${title} - RefleK's Docs`} description={description}>
+  <Header slot="header" currentPath="/docs" />
+
+  <div class="pt-16 min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
+        <!-- Sidebar Navigation -->
+        <aside class="lg:w-56 shrink-0 pb-16">
+          <div
+            class="lg:sticky lg:top-20 pt-8 lg:pt-8 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto lg:pb-8 scrollbar-thin"
+          >
+            <nav class="space-y-6">
+              {
+                sidebarSections.map((section) => (
+                  <div>
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 px-3">
+                      {section.title}
+                    </h4>
+                    <ul class="space-y-0.5">
+                      {section.items.map((item) => {
+                        const isActive = currentSlug === item.slug;
+                        return (
+                          <li>
+                            <a
+                              href={
+                                item.slug === ""
+                                  ? "/docs"
+                                  : `/docs/${item.slug}`
+                              }
+                              class={`block py-2 px-3 rounded-md text-sm transition-colors ${
+                                isActive
+                                  ? "text-accent-primary bg-accent-primary/10 font-medium"
+                                  : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
+                              }`}
+                            >
+                              {item.title}
+                            </a>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))
+              }
+            </nav>
+          </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 min-w-0 pt-8 lg:pt-8 pb-8">
+          <article class="max-w-3xl">
+            <h1
+              class="text-3xl sm:text-4xl font-semibold text-text-primary mb-4"
+            >
+              {title}
+            </h1>
+            {
+              description && (
+                <p class="text-lg text-text-muted mb-8">{description}</p>
+              )
+            }
+
+            <div class="prose-content">
+              <slot />
+            </div>
+
+            <!-- Prev/Next Navigation -->
+            {
+              (prevPage || nextPage) && (
+                <div class="mt-12 pt-8 border-t border-border-primary flex flex-col sm:flex-row gap-4 justify-between">
+                  {prevPage ? (
+                    <a
+                      href={`/docs/${prevPage.slug}`}
+                      class="flex items-center gap-2 text-text-secondary hover:text-accent-primary transition-colors group"
+                    >
+                      <svg
+                        class="w-4 h-4 group-hover:-translate-x-1 transition-transform"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                      <span>{prevPage.title}</span>
+                    </a>
+                  ) : (
+                    <div />
+                  )}
+                  {nextPage && (
+                    <a
+                      href={`/docs/${nextPage.slug}`}
+                      class="flex items-center gap-2 text-text-secondary hover:text-accent-primary transition-colors group sm:ml-auto"
+                    >
+                      <span>{nextPage.title}</span>
+                      <svg
+                        class="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </a>
+                  )}
+                </div>
+              )
+            }
+          </article>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <Footer slot="footer" />
+</BaseLayout>
+
+<style is:global>
+  .prose-content {
+    color: var(--text-secondary);
+    line-height: 1.75;
+    font-size: 1rem;
+  }
+
+  .prose-content h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 2.5rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-primary);
+  }
+
+  .prose-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .prose-content h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .prose-content p {
+    margin-bottom: 1.25rem;
+    color: var(--text-secondary);
+  }
+
+  .prose-content strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .prose-content ul,
+  .prose-content ol {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-left: 0;
+  }
+
+  .prose-content li {
+    position: relative;
+    padding-left: 1.5rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+
+  .prose-content ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .prose-content ol {
+    counter-reset: list-counter;
+  }
+
+  .prose-content ol li {
+    counter-increment: list-counter;
+  }
+
+  .prose-content ol li::before {
+    content: counter(list-counter) ".";
+    position: absolute;
+    left: 0;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .prose-content code {
+    padding: 0.2rem 0.5rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    color: var(--accent-light);
+    font-family: "Courier New", monospace;
+  }
+
+  .prose-content a {
+    color: var(--accent-primary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+    font-weight: 500;
+  }
+
+  .prose-content a:hover {
+    color: var(--accent-light);
+    text-decoration: underline;
+  }
+
+  .prose-content .image-container {
+    margin: 2rem 0;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid var(--border-primary);
+    background: var(--bg-card);
+  }
+
+  .prose-content .image-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Side-by-side images */
+  .prose-content .image-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+
+  .prose-content .image-row .image-container {
+    margin: 0;
+  }
+
+  @media (max-width: 640px) {
+    .prose-content .image-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .prose-content .note {
+    padding: 1rem 1.25rem;
+    border-radius: 0.5rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    margin: 1.5rem 0;
+    line-height: 1.6;
+    font-size: 0.9375rem;
+  }
+
+  .prose-content .note strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .prose-content .warning {
+    padding: 1rem 1.25rem;
+    border-radius: 0.5rem;
+    background: rgba(245, 158, 11, 0.06);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    color: var(--text-secondary);
+    margin: 1.5rem 0;
+    line-height: 1.6;
+    font-size: 0.9375rem;
+  }
+
+  .prose-content .warning strong {
+    color: var(--warning);
+    font-weight: 600;
+  }
+</style>

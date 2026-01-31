@@ -1,0 +1,159 @@
+---
+import DocsLayout from "../../layouts/DocsLayout.astro";
+---
+
+<DocsLayout
+  title="Benchmark Progress"
+  description="Track your progress on official KovaaK's benchmarks."
+  prevPage={{ slug: "sessions", title: "Sessions" }}
+  nextPage={{ slug: "mouse-tracking", title: "Mouse Movement" }}
+>
+  <h2>Official Benchmarks</h2>
+  <p>
+    RefleK's includes all major KovaaK's benchmarks so you can track your
+    progress toward rank goals. Your progress updates automatically as you play
+    benchmark scenarios.
+  </p>
+
+  <div class="image-container">
+    <img
+      src="/assets/images/benchmarks_explore.webp"
+      alt="Benchmark tracking"
+      loading="lazy"
+    />
+  </div>
+
+  <h2>How It Works</h2>
+  <ol>
+    <li>Browse available benchmarks in the Benchmarks page</li>
+    <li>Select a benchmark and difficulty level</li>
+    <li>Play benchmark scenarios in KovaaK's</li>
+    <li>Your scores are tracked automatically</li>
+    <li>Progress bars show your current rank tier</li>
+    <li>See exactly what scores you need for the next rank</li>
+  </ol>
+
+  <h2>Launch Playlists</h2>
+  <p>Start practicing directly from RefleK's:</p>
+  <ul>
+    <li>Click the play button on any benchmark</li>
+    <li>The benchmark playlist launches in KovaaK's</li>
+    <li>Your runs are tracked automatically as you play</li>
+  </ul>
+
+  <h2>Steam Integration</h2>
+  <p>
+    RefleK's detects your Steam username automatically and uses it to fetch your
+    benchmark progress from the KovaaK's servers.
+  </p>
+  <ul>
+    <li>
+      Your Steam username or ID is detected automatically from your local Steam
+      installation
+    </li>
+    <li>
+      Rankings are fetched from KovaaK's servers when you open the Benchmarks
+      page
+    </li>
+    <li>No Steam profile visibility settings required</li>
+  </ul>
+
+  <h2>Favorites & Visibility</h2>
+  <p>Focus on what matters with favorites and visibility controls:</p>
+  <ul>
+    <li>
+      <strong>Favorites:</strong> Star benchmarks for quick access at the top of the
+      list
+    </li>
+    <li>
+      <strong>Hide ranks:</strong> Hide rank tiers you've already achieved or don't
+      care about
+    </li>
+    <li><strong>Auto-hide:</strong> Automatically hide completed ranks</li>
+  </ul>
+
+  <h2>Benchmark Analysis</h2>
+  <p>For each benchmark, RefleK's provides:</p>
+  <ul>
+    <li>
+      <strong>Overview:</strong> Your current rank, progress, and scores for each
+      scenario
+    </li>
+    <li>
+      <strong>Analysis:</strong> Performance trends and score history charts
+    </li>
+    <li>
+      <strong>Scenario history:</strong> Click any scenario to see your run history
+    </li>
+  </ul>
+
+  <h2>Benchmark Recommendations</h2>
+  <p>
+    On the Explore page, enable recommendations to see which benchmarks you
+    should focus on. Click the sparkle button in the toolbar to toggle
+    recommendations on or off.
+  </p>
+  <p>
+    RefleK's prioritizes benchmarks based on your progression state - it favors
+    benchmarks you've started but not finished, suggests next steps in your
+    ladder, and adjusts recommendations for beginners who are just getting
+    started.
+  </p>
+
+  <div class="image-container">
+    <img
+      src="/assets/images/benchmark_explore_recom.webp"
+      alt="Benchmark recommendations in Explore view"
+      loading="lazy"
+    />
+  </div>
+
+  <h2>Scenario Recommendations</h2>
+  <p>
+    Inside a benchmark, RefleK's analyzes your progress and recommends which
+    scenarios to play next:
+  </p>
+  <ul>
+    <li>
+      <strong>Top Picks:</strong> Special recommendations based on high potential,
+      category diversity, and recent focus areas
+    </li>
+    <li>
+      <strong>Priority scenarios:</strong> Scenarios where you're closest to ranking
+      up
+    </li>
+    <li>
+      <strong>Weak points:</strong> Scenarios holding back your overall rank
+    </li>
+    <li>
+      <strong>Quick wins:</strong> Where a small improvement would have the biggest
+      impact
+    </li>
+  </ul>
+  <p>
+    Look for the recommendation icons next to scenarios - they show you exactly
+    where to focus your practice for the fastest rank progression.
+  </p>
+
+  <h2>Share Your Progress</h2>
+  <p>Share your benchmark progress with one click:</p>
+  <ol>
+    <li>Open a benchmark</li>
+    <li>Click the camera/share button</li>
+    <li>A polished image of your progress is copied to clipboard</li>
+    <li>Paste it in Discord, Twitter, or anywhere else</li>
+  </ol>
+
+  <div class="image-container">
+    <img
+      src="/assets/images/share.webp"
+      alt="Share your benchmark progress"
+      loading="lazy"
+    />
+  </div>
+
+  <div class="note">
+    <strong>Tip:</strong> The share image includes your scores, ranks, and progress
+    bars - perfect for showing off your improvement!
+  </div>
+</DocsLayout>

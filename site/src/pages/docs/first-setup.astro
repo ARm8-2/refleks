@@ -1,0 +1,91 @@
+---
+import DocsLayout from "../../layouts/DocsLayout.astro";
+---
+
+<DocsLayout
+  title="First-Time Setup"
+  description="Configure RefleK's for your KovaaK's installation."
+  prevPage={{ slug: "installation", title: "Installation" }}
+  nextPage={{ slug: "automatic-tracking", title: "Automatic Tracking" }}
+>
+  <h2>Automatic Detection</h2>
+  <p>
+    RefleK's is designed to work out of the box. When you first launch it, it
+    will automatically:
+  </p>
+  <ul>
+    <li>Detect your KovaaK's stats folder from your Steam installation</li>
+    <li>Start monitoring for new scenario runs</li>
+    <li>Import your existing stats history</li>
+  </ul>
+
+  <h2>Default Settings</h2>
+  <p>RefleK's comes with sensible defaults that work for most users:</p>
+  <ul>
+    <li>
+      <strong>Stats folder:</strong> Automatically detected from your KovaaK's installation
+    </li>
+    <li>
+      <strong>Session gap:</strong> 20 minutes (runs within this gap are grouped together)
+    </li>
+    <li>
+      <strong>Mouse tracking:</strong> Disabled by default (enable in settings if
+      desired)
+    </li>
+    <li><strong>Theme:</strong> Dark mode</li>
+    <li><strong>Autostart:</strong> Disabled by default</li>
+  </ul>
+
+  <h2>Autostart with KovaaK's</h2>
+  <p>RefleK's can start automatically when you launch KovaaK's:</p>
+  <ol>
+    <li>Open Settings (gear icon in the top right)</li>
+    <li>Go to General → Autostart with KovaaK's</li>
+    <li>Toggle it on</li>
+  </ol>
+  <p>
+    When enabled, RefleK's starts hidden with Windows and opens automatically
+    when KovaaK's launches. Closing the window keeps it running in memory for
+    quick access.
+  </p>
+
+  <h2>Manual Configuration</h2>
+  <p>
+    If RefleK's can't detect your stats folder automatically, you can set it
+    manually:
+  </p>
+  <ol>
+    <li>Open Settings (gear icon in the top right)</li>
+    <li>Go to General → Stats Folder</li>
+    <li>Enter the path to your KovaaK's stats folder</li>
+  </ol>
+
+  <div class="image-container">
+    <img
+      src="/assets/images/settings.webp"
+      alt="RefleK's settings panel"
+      loading="lazy"
+    />
+  </div>
+
+  <p>The default stats folder location is:</p>
+  <p>
+    <code
+      >C:\Program Files
+      (x86)\Steam\steamapps\common\FPSAimTrainer\FPSAimTrainer\stats</code
+    >
+  </p>
+
+  <div class="note">
+    <strong>Tip:</strong> If you have a custom Steam library location, the stats folder
+    will be in that library's steamapps folder.
+  </div>
+
+  <h2>Steam Integration</h2>
+  <p>
+    For benchmark rankings, RefleK's detects your Steam username from your local
+    Steam installation and uses it to fetch your progress from KovaaK's servers.
+    This is automatic on Windows - no Steam profile visibility settings
+    required.
+  </p>
+</DocsLayout>

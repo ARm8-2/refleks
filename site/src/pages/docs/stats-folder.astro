@@ -1,0 +1,71 @@
+---
+import DocsLayout from "../../layouts/DocsLayout.astro";
+---
+
+<DocsLayout
+  title="Stats Folder Issues"
+  description="Fix problems with stats folder detection."
+  prevPage={{ slug: "themes", title: "Themes" }}
+  nextPage={{ slug: "runs-not-appearing", title: "Runs Not Appearing" }}
+>
+  <h2>Stats Folder Not Detected</h2>
+  <p>
+    If RefleK's can't find your KovaaK's stats folder automatically, you'll need
+    to set it manually.
+  </p>
+
+  <h2>Manual Configuration</h2>
+  <ol>
+    <li>Open Settings (gear icon in the top right)</li>
+    <li>Go to General → Stats Folder</li>
+    <li>Enter the path to your KovaaK's stats folder</li>
+  </ol>
+
+  <div class="image-container">
+    <img
+      src="/assets/images/settings.webp"
+      alt="RefleK's settings showing stats folder configuration"
+      loading="lazy"
+    />
+  </div>
+
+  <h2>Common Locations</h2>
+  <p>The stats folder is typically at one of these locations:</p>
+  <ul>
+    <li>
+      <code
+        >C:\Program Files
+        (x86)\Steam\steamapps\common\FPSAimTrainer\FPSAimTrainer\stats</code
+      >
+    </li>
+    <li>
+      <code
+        >D:\SteamLibrary\steamapps\common\FPSAimTrainer\FPSAimTrainer\stats</code
+      >
+    </li>
+  </ul>
+
+  <h2>Finding Your Stats Folder</h2>
+  <ol>
+    <li>Open Steam</li>
+    <li>Right-click on KovaaK's in your library</li>
+    <li>Select "Manage" → "Browse local files"</li>
+    <li>Navigate to the <code>FPSAimTrainer</code> folder inside</li>
+    <li>You should see a <code>stats</code> folder</li>
+  </ol>
+
+  <h2>Verify the Folder</h2>
+  <p>The stats folder should contain CSV files with names like:</p>
+  <p>
+    <code>ScenarioName - Challenge - 2025.01.28-14.30.45 Stats.csv</code>
+  </p>
+  <p>If you see these files, you've found the right folder.</p>
+
+  <div class="note">
+    <strong>Still having issues?</strong> Join our <a
+      href="https://discord.gg/SFsf4GQhJU"
+      target="_blank"
+      rel="noopener noreferrer">Discord server</a
+    > for help.
+  </div>
+</DocsLayout>
