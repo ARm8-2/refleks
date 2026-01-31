@@ -1,15 +1,22 @@
 FROM debian:bookworm-slim
 
-# 1. Install system dependencies
+# 1. Install system dependencies and configure locale
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl git ca-certificates build-essential pkg-config \
     libgtk-3-dev libwebkit2gtk-4.0-dev sudo \
-    bash-completion \
+    bash-completion locales \
+    && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen \
     && rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 # 2. Install Node.js 22 (LTS) from Nodesource
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 # 3. Setup 'vscode' user
 ARG USERNAME=vscode
