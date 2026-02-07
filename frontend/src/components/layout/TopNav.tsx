@@ -60,8 +60,8 @@ export function TopNav() {
               Update to v{update.latestVersion}
             </button>
             <a
-              href="https://refleks-app.com/updates/"
-              onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/updates/') }}
+              href="https://refleks-app.com/changelog/"
+              onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/changelog/') }}
               className="text-[10px] underline underline-offset-2 text-secondary hover:text-primary"
             >
               What's new

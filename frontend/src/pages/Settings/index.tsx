@@ -128,8 +128,8 @@ export function SettingsPage() {
                 </Button>
                 <a
                   className="text-xs underline underline-offset-2 text-secondary hover:text-primary"
-                  href="https://refleks-app.com/updates/"
-                  onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/updates/') }}
+                  href="https://refleks-app.com/changelog/"
+                  onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/changelog/') }}
                 >
                   What’s new
                 </a>
@@ -162,10 +162,10 @@ export function SettingsPage() {
                 )}
                 <a
                   className="text-xs underline underline-offset-2 text-secondary hover:text-primary"
-                  href="https://refleks-app.com/updates/"
-                  onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/updates/') }}
+                  href="https://refleks-app.com/changelog/"
+                  onClick={(e) => { e.preventDefault(); BrowserOpenURL('https://refleks-app.com/changelog/') }}
                 >
-                  View updates page
+                  View changelog
                 </a>
               </div>
             )}
