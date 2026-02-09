@@ -19,9 +19,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return { error }
   }
 
-  componentDidCatch(error: Error, info: any) {
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('Unhandled error in UI', error, info)
-    this.setState({ stack: info?.componentStack })
+    this.setState({ stack: info?.componentStack ?? undefined })
   }
 
   render() {

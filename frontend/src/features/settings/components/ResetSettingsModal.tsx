@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ResetSettings } from '../../../../wailsjs/go/main/App'
 import { Button } from '../../../shared/components/Button'
 import { Modal } from '../../../shared/components/Modal'
+import { resetSettings } from '../../../shared/lib/api'
 
 type ResetSettingsModalProps = {
   isOpen: boolean
@@ -32,7 +32,7 @@ export function ResetSettingsModal({ isOpen, onClose, onReset }: ResetSettingsMo
   const handleReset = async () => {
     setLoading(true)
     try {
-      await ResetSettings(
+      await resetSettings(
         options.config,
         options.favorites,
         options.scenarioNotes,

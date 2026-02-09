@@ -9,7 +9,7 @@ type SettingsSectionProps = {
 export function SettingsSection({ title, children, className = '' }: SettingsSectionProps) {
   return (
     <div className={`flex flex-col gap-3 ${className}`}>
-      <h3 className="text-primary font-medium text-sm border-b border-white/10 pb-2">
+      <h3 className="text-primary font-medium text-sm border-b border-primary pb-2">
         {title}
       </h3>
       <div className="flex flex-col gap-3">

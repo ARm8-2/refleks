@@ -1,27 +1,24 @@
 import { ChevronDown, ChevronUp, Download, ExternalLink, Eye, EyeOff, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import {
-  CheckForUpdates,
-  GetDefaultSettings,
-  GetSettings,
-  GetVersion,
-  QuitApp,
-  SetAutostart,
-  UpdateSettings,
-} from '../../../../wailsjs/go/main/App'
-import { models } from '../../../../wailsjs/go/models'
-import { BrowserOpenURL } from '../../../../wailsjs/runtime'
 import { Button } from '../../../shared/components/Button'
 import { Dropdown, type DropdownOption } from '../../../shared/components/Dropdown'
 import { useStore } from '../../../shared/hooks/useStore'
+import {
+  checkForUpdates,
+  getDefaultSettings,
+  getSettings,
+  getVersion,
+  openURL,
+  quitApp,
+  setAutostart,
+  updateSettings,
+} from '../../../shared/lib/api'
 import { FONTS, THEMES, setFont, setTheme, type Font, type Theme } from '../../../shared/lib/theme'
+import type { Settings, UpdateInfo } from '../../../shared/types/ipc'
 import { ClearCacheModal } from '../components/ClearCacheModal'
 import { ResetSettingsModal } from '../components/ResetSettingsModal'
 import { SettingsField } from '../components/SettingsField'
 import { SettingsSection } from '../components/SettingsSection'
-
-type Settings = models.Settings
-type UpdateInfo = models.UpdateInfo
 
 const MISSING_STR = 'N/A'
 
@@ -50,25 +47,22 @@ export function SettingsPage() {
   const [showApiKey, setShowApiKey] = useState(false)
 
   useEffect(() => {
-    GetSettings().then(setSettings).catch(() => { })
-    GetVersion()
-      .then(v => setCurrentVersion(String(v || '')))
+    getSettings().then(setSettings).catch(() => { })
+    getVersion()
+      .then(v => setCurrentVersion(v))
       .catch(() => setCurrentVersion(''))
   }, [])
 
   const updateField = <K extends keyof Settings>(key: K, value: Settings[K]) => {
-    setSettings(prev => {
-      if (!prev) return null
-      return models.Settings.createFrom({ ...prev, [key]: value })
-    })
+    setSettings(prev => prev ? { ...prev, [key]: value } : null)
   }
 
   const handleAutostartChange = async (enabled: boolean) => {
     try {
-      await SetAutostart(enabled)
+      await setAutostart(enabled)
       updateField('autostartEnabled', enabled)
     } catch (e) {
-      console.error('SetAutostart error:', e)
+      console.error('setAutostart error:', e)
       alert('Failed to update autostart: ' + (e as Error)?.message)
     }
   }
@@ -89,7 +83,7 @@ export function SettingsPage() {
     setChecking(true)
     setCheckError('')
     try {
-      const info = await CheckForUpdates()
+      const info = await checkForUpdates()
       setUpdate(info)
     } catch (e) {
       setCheckError((e as Error)?.message || 'Failed to check for updates')
@@ -102,7 +96,7 @@ export function SettingsPage() {
     if (!settings) return
     setSaving(true)
     try {
-      await UpdateSettings(settings)
+      await updateSettings(settings)
       setSessionGap(settings.sessionGapMinutes)
       if (settings.sessionNotes) {
         const notes: Record<string, { name: string; notes: string }> = {}
@@ -121,10 +115,10 @@ export function SettingsPage() {
 
   const handleReset = async () => {
     try {
-      const defaults = await GetDefaultSettings()
+      const defaults = await getDefaultSettings()
       setSettings(defaults)
-      setTheme(defaults.theme as Theme)
-      if (defaults.font) setFont(defaults.font as Font)
+      setTheme(defaults.theme)
+      if (defaults.font) setFont(defaults.font)
     } catch (e) {
       console.error('Reset error:', e)
     }
@@ -141,7 +135,7 @@ export function SettingsPage() {
   return (
     <div className="flex-1 overflow-auto">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-surface-1 border-b border-primary px-6 py-4">
+      <div className="sticky top-0 z-10 bg-surface border-b border-primary px-6 py-4">
         <h1 className="text-xl font-semibold text-primary">Settings</h1>
       </div>
 
@@ -169,7 +163,7 @@ export function SettingsPage() {
                   {update.releaseNotes}
                 </p>
               )}
-              <Button onClick={() => update.downloadUrl && BrowserOpenURL(update.downloadUrl)} variant="accent" size="sm">
+              <Button onClick={() => update.downloadUrl && openURL(update.downloadUrl)} variant="accent" size="sm">
                 <Download className="w-4 h-4 mr-1.5" />
                 Download
               </Button>
@@ -333,7 +327,7 @@ export function SettingsPage() {
                       </button>
                     </div>
                     <button
-                      onClick={() => BrowserOpenURL('https://aistudio.google.com/apikey')}
+                      onClick={() => openURL('https://aistudio.google.com/apikey')}
                       className="flex items-center gap-1 text-accent hover:underline text-xs whitespace-nowrap"
                     >
                       Get key <ExternalLink className="w-3 h-3" />
@@ -354,7 +348,7 @@ export function SettingsPage() {
             Clear Cache
           </Button>
           <div className="flex-1" />
-          <Button variant="danger" size="sm" onClick={() => QuitApp()}>
+          <Button variant="danger" size="sm" onClick={() => quitApp()}>
             Quit App
           </Button>
           <Button variant="accent" size="sm" onClick={handleSave} disabled={saving}>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ClearCache } from '../../../../wailsjs/go/main/App'
 import { Button } from '../../../shared/components/Button'
 import { Modal } from '../../../shared/components/Modal'
+import { clearCache } from '../../../shared/lib/api'
 
 type ClearCacheModalProps = {
   isOpen: boolean
@@ -14,7 +14,7 @@ export function ClearCacheModal({ isOpen, onClose }: ClearCacheModalProps) {
   const handleClear = async () => {
     setLoading(true)
     try {
-      await ClearCache()
+      await clearCache()
       onClose()
     } catch (error) {
       console.error('Failed to clear cache:', error)

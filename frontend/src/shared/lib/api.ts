@@ -149,6 +149,9 @@ export async function clearCache(): Promise<void> {
   await _ClearCache()
 }
 
+// Runtime helpers
+export { BrowserOpenURL as openURL } from '../../../wailsjs/runtime'
+
 export async function getScenarioTrace(fileName: string): Promise<string> {
   // Direct call to avoid build errors before Wails regenerates bindings
   return await (window as any).go.main.App.GetScenarioTrace(fileName)
