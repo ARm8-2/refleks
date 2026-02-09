@@ -1,0 +1,25 @@
+import { lazy, Suspense } from 'react'
+import { Route, Routes } from 'react-router-dom'
+import { Loading } from '../../shared/components'
+import { AppLayout } from '../layout'
+
+// Lazy load feature pages for code splitting
+const OverviewPage = lazy(() => import('../../features/overview').then(m => ({ default: m.OverviewPage })))
+const HistoryPage = lazy(() => import('../../features/history').then(m => ({ default: m.HistoryPage })))
+const BenchmarksPage = lazy(() => import('../../features/benchmarks').then(m => ({ default: m.BenchmarksPage })))
+const SettingsPage = lazy(() => import('../../features/settings').then(m => ({ default: m.SettingsPage })))
+
+export function AppRoutes() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <Routes>
+        <Route path="/" element={<AppLayout />}>
+          <Route index element={<OverviewPage />} />
+          <Route path="history" element={<HistoryPage />} />
+          <Route path="benchmarks" element={<BenchmarksPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
+      </Routes>
+    </Suspense>
+  )
+}
