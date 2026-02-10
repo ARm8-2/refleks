@@ -4,6 +4,7 @@ export * from './hooks'
 // Re-export specific items to avoid conflicts
 export * from './lib/api'
 export { openURL } from './lib/api'
+export { benchmarkPath } from './lib/navigation'
 export {
   applyFont,
   applyTheme, colorWithAlpha,

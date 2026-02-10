@@ -1,10 +1,12 @@
 import { Activity, HelpCircle, LayoutGrid, PanelLeft, PanelLeftClose, Settings, TrendingUp } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { GetVersion } from '../../../wailsjs/go/main/App'
 import { BrowserOpenURL } from '../../../wailsjs/runtime'
 import { DISCORD_SYMBOL, KO_FI_SYMBOL } from '../../assets'
+import { useBenchmarks } from '../../shared/hooks/useBenchmarks'
+import { benchmarkPath } from '../../shared/lib/navigation'
 
 // Widths in pixels
 const COLLAPSED_WIDTH = 52
@@ -113,6 +115,18 @@ function ActionButton({ icon, label, isExpanded, onClick, href }: ActionButtonPr
 export function Sidebar({ isCollapsed, isExpanded, onMouseEnter, onMouseLeave, onToggle }: SidebarProps) {
   const width = isExpanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH
   const [version, setVersion] = useState('')
+  const { benchmarks, favorites, selectedBenchmark } = useBenchmarks()
+  const location = useLocation()
+
+  // Show up to 3 favorite benchmarks in the sidebar
+  const favBenchmarks = useMemo(() => {
+    if (favorites.length === 0 || benchmarks.length === 0) return []
+    const byName = new Map(benchmarks.map(b => [b.benchmarkName, b]))
+    return favorites
+      .map(name => byName.get(name))
+      .filter((b): b is NonNullable<typeof b> => !!b)
+      .slice(0, 3)
+  }, [benchmarks, favorites])
 
   useEffect(() => {
     GetVersion().then(v => setVersion(String(v || ''))).catch(() => { })
@@ -180,6 +194,48 @@ export function Sidebar({ isCollapsed, isExpanded, onMouseEnter, onMouseLeave, o
             isExpanded={isExpanded}
           />
         </nav>
+
+        {/* Favorite benchmarks */}
+        {favBenchmarks.length > 0 && (
+          <div className="flex flex-col gap-1 p-2 border-t border-primary">
+            {favBenchmarks.map(b => {
+              return (
+                <NavLink
+                  key={b.benchmarkName}
+                  to={benchmarkPath(b.benchmarkName)}
+                  className={() => {
+                    const selected = selectedBenchmark === b.benchmarkName
+                    return `flex items-center h-8 rounded-lg overflow-hidden ${selected ? 'bg-accent/15 text-accent' : 'text-secondary hover:bg-surface-3 hover:text-primary'}`
+                  }}
+                  style={{
+                    paddingLeft: isExpanded ? EXPANDED_ITEM_PADDING : COLLAPSED_ITEM_PADDING,
+                    paddingRight: isExpanded ? EXPANDED_ITEM_PADDING : COLLAPSED_ITEM_PADDING,
+                    gap: isExpanded ? 8 : 0,
+                    transition: 'padding 200ms ease-out, gap 200ms ease-out, background-color 150ms',
+                  }}
+                  title={b.benchmarkName}
+                >
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border border-primary text-secondary ${isExpanded ? 'shrink-0' : 'inline-block w-[36px] text-center truncate -ml-2'}`}
+                    style={b.color ? { borderColor: b.color, color: b.color } : undefined}
+                    title={b.abbreviation}
+                  >
+                    {b.abbreviation}
+                  </span>
+                  <span
+                    className="whitespace-nowrap text-xs truncate"
+                    style={{
+                      opacity: isExpanded ? 1 : 0,
+                      transition: 'opacity 200ms ease-out',
+                    }}
+                  >
+                    {b.benchmarkName}
+                  </span>
+                </NavLink>
+              )
+            })}
+          </div>
+        )}
 
         {/* Bottom actions */}
         <div className="flex flex-col gap-1 p-2 border-t border-primary">
