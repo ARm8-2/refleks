@@ -1,9 +1,10 @@
 import { ChevronDown, ChevronUp, Download, ExternalLink, Eye, EyeOff, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Button } from '../../../shared/components/Button'
-import { Dropdown, type DropdownOption } from '../../../shared/components/Dropdown'
-import { useStore } from '../../../shared/hooks/useStore'
+import { Button, Checkbox, Dropdown, Input, type DropdownOption } from '../../../shared/components'
+import { useStore } from '../../../shared/hooks'
 import {
+  FONTS,
+  THEMES,
   checkForUpdates,
   getDefaultSettings,
   getSettings,
@@ -11,10 +12,13 @@ import {
   openURL,
   quitApp,
   setAutostart,
+  setFont,
+  setTheme,
   updateSettings,
-} from '../../../shared/lib/api'
-import { FONTS, THEMES, setFont, setTheme, type Font, type Theme } from '../../../shared/lib/theme'
-import type { Settings, UpdateInfo } from '../../../shared/types/ipc'
+  type Font,
+  type Theme,
+} from '../../../shared/lib'
+import type { Settings, UpdateInfo } from '../../../shared/types'
 import { ClearCacheModal } from '../components/ClearCacheModal'
 import { ResetSettingsModal } from '../components/ResetSettingsModal'
 import { SettingsField } from '../components/SettingsField'
@@ -140,7 +144,7 @@ export function SettingsPage() {
       </div>
 
       {/* Content */}
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-8 max-w-2xl">
         {/* Updates */}
         <SettingsSection title="Updates">
           <div className="flex items-center gap-4">
@@ -174,59 +178,53 @@ export function SettingsPage() {
         {/* General */}
         <SettingsSection title="General">
           <SettingsField label="Stats Directory" description="Path to KovaaK's stats folder">
-            <input
+            <Input
               type="text"
               value={settings.statsDir}
               onChange={e => updateField('statsDir', e.target.value)}
-              className="w-full max-w-xl px-3 py-1.5 text-sm rounded bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+              fullWidth
+              className="max-w-xl"
             />
           </SettingsField>
 
-          <SettingsField label="Start with Windows" description="Launch RefleK's when you log in" inline>
-            <button
-              onClick={() => handleAutostartChange(!settings.autostartEnabled)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${settings.autostartEnabled ? 'bg-accent' : 'bg-surface-3 border border-primary'}`}
-            >
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${settings.autostartEnabled ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
-            </button>
+          <SettingsField label="Start with Windows" description="Launch RefleK's when you log in" checkbox>
+            <Checkbox
+              checked={!!settings.autostartEnabled}
+              onChange={v => handleAutostartChange(v)}
+            />
           </SettingsField>
 
-          <SettingsField label="Mouse Tracking" description="Record mouse movement during scenarios" inline>
-            <button
-              onClick={() => updateField('mouseTrackingEnabled', !settings.mouseTrackingEnabled)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${settings.mouseTrackingEnabled ? 'bg-accent' : 'bg-surface-3 border border-primary'}`}
-            >
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${settings.mouseTrackingEnabled ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
-            </button>
+          <SettingsField label="Mouse Tracking" description="Record mouse movement during scenarios (Windows only)" checkbox>
+            <Checkbox
+              checked={!!settings.mouseTrackingEnabled}
+              onChange={v => updateField('mouseTrackingEnabled', v)}
+            />
           </SettingsField>
 
-          <SettingsField label="Session Gap" description="Minutes of inactivity before starting a new session" inline>
+          <SettingsField label="Session Gap" description="Minutes of inactivity before starting a new session">
             <Dropdown
               value={String(settings.sessionGapMinutes)}
               onChange={v => updateField('sessionGapMinutes', parseInt(v, 10))}
               options={sessionGapOptions}
-              size="md"
             />
           </SettingsField>
         </SettingsSection>
 
         {/* Appearance */}
         <SettingsSection title="Appearance">
-          <SettingsField label="Theme" description="Color theme for the application" inline>
+          <SettingsField label="Theme" description="Color theme for the application">
             <Dropdown
               value={settings.theme}
               onChange={handleThemeChange}
               options={themeOptions}
-              size="md"
             />
           </SettingsField>
 
-          <SettingsField label="Font" description="Font family for the interface" inline>
+          <SettingsField label="Font" description="Font family for the interface">
             <Dropdown
               value={settings.font || FONTS[0].id}
               onChange={handleFontChange}
               options={fontOptions}
-              size="md"
             />
           </SettingsField>
         </SettingsSection>
@@ -245,64 +243,68 @@ export function SettingsPage() {
             <div className="mt-2 space-y-6">
               <SettingsSection title="Steam">
                 <SettingsField label="Steam Install Directory">
-                  <input
+                  <Input
                     type="text"
                     value={settings.steamInstallDir}
                     onChange={e => updateField('steamInstallDir', e.target.value)}
-                    className="w-full max-w-xl px-3 py-1.5 text-sm rounded bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+                    fullWidth
+                    className="max-w-xl"
                   />
                 </SettingsField>
 
                 <SettingsField label="Steam ID Override" description="Leave empty to auto-detect">
-                  <input
+                  <Input
                     type="text"
                     value={settings.steamIdOverride || ''}
                     onChange={e => updateField('steamIdOverride', e.target.value || undefined)}
-                    className="w-full max-w-xs px-3 py-1.5 text-sm rounded bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-1 focus:ring-accent font-mono"
                     placeholder="76561198000000000"
+                    fullWidth
+                    className="max-w-xs font-mono"
                   />
                 </SettingsField>
 
                 <SettingsField label="Persona Name Override" description="Leave empty to auto-detect">
-                  <input
+                  <Input
                     type="text"
                     value={settings.personaNameOverride || ''}
                     onChange={e => updateField('personaNameOverride', e.target.value || undefined)}
-                    className="w-full max-w-xs px-3 py-1.5 text-sm rounded bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-1 focus:ring-accent"
                     placeholder="Display name"
+                    fullWidth
+                    className="max-w-xs"
                   />
                 </SettingsField>
               </SettingsSection>
 
               <SettingsSection title="Mouse Traces">
                 <SettingsField label="Traces Directory">
-                  <input
+                  <Input
                     type="text"
                     value={settings.tracesDir}
                     onChange={e => updateField('tracesDir', e.target.value)}
-                    className="w-full max-w-xl px-3 py-1.5 text-sm rounded bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+                    fullWidth
+                    className="max-w-xl"
                   />
                 </SettingsField>
 
-                <SettingsField label="Buffer Duration" description="Minutes of mouse data to keep in memory" inline>
-                  <input
+                <SettingsField label="Buffer Duration" description="Minutes of mouse data to keep in memory">
+                  <Input
                     type="number"
                     value={settings.mouseBufferMinutes}
                     onChange={e => updateField('mouseBufferMinutes', parseInt(e.target.value, 10) || 5)}
-                    className="w-20 px-2 py-1 text-sm rounded bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-1 focus:ring-accent text-center"
                     min={1}
                     max={60}
+                    className="w-20 text-center"
                   />
                 </SettingsField>
 
-                <SettingsField label="Max Files on Start" description="Trace files to load at startup" inline>
-                  <input
+                <SettingsField label="Max Files on Start" description="Trace files to load at startup">
+                  <Input
                     type="number"
                     value={settings.maxExistingOnStart}
                     onChange={e => updateField('maxExistingOnStart', parseInt(e.target.value, 10) || 10)}
-                    className="w-20 px-2 py-1 text-sm rounded bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-1 focus:ring-accent text-center"
                     min={0}
                     max={100}
+                    className="w-20 text-center"
                   />
                 </SettingsField>
               </SettingsSection>
@@ -311,12 +313,13 @@ export function SettingsPage() {
                 <SettingsField label="Gemini API Key" description="For AI-powered session insights">
                   <div className="flex items-center gap-2 max-w-md">
                     <div className="relative flex-1">
-                      <input
+                      <Input
                         type={showApiKey ? 'text' : 'password'}
                         value={settings.geminiApiKey || ''}
                         onChange={e => updateField('geminiApiKey', e.target.value || undefined)}
-                        className="w-full px-3 py-1.5 pr-9 text-sm rounded bg-surface-2 border border-primary text-primary focus:outline-none focus:ring-1 focus:ring-accent font-mono"
                         placeholder="API key"
+                        fullWidth
+                        className="pr-9 font-mono"
                       />
                       <button
                         type="button"

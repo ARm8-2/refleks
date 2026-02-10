@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Button } from '../../../shared/components/Button'
-import { Modal } from '../../../shared/components/Modal'
-import { resetSettings } from '../../../shared/lib/api'
+import { Button, Modal } from '../../../shared/components'
+import { resetSettings } from '../../../shared/lib'
 
 type ResetSettingsModalProps = {
   isOpen: boolean

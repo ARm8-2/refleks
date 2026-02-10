@@ -8,11 +8,11 @@ type SettingsSectionProps = {
 
 export function SettingsSection({ title, children, className = '' }: SettingsSectionProps) {
   return (
-    <div className={`flex flex-col gap-3 ${className}`}>
+    <div className={`flex flex-col gap-4 ${className}`}>
       <h3 className="text-primary font-medium text-sm border-b border-primary pb-2">
         {title}
       </h3>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-5">
         {children}
       </div>
     </div>

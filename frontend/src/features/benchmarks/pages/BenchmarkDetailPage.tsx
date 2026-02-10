@@ -1,9 +1,8 @@
 import { ArrowLeft } from 'lucide-react'
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button } from '../../../shared/components/Button'
-import { Loading } from '../../../shared/components/Loading'
-import { useBenchmarks } from '../../../shared/hooks/useBenchmarks'
+import { Button, Loading } from '../../../shared/components'
+import { useBenchmarks } from '../../../shared/hooks'
 
 export function BenchmarkDetailPage() {
   const navigate = useNavigate()

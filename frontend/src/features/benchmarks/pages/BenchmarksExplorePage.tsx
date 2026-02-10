@@ -1,12 +1,9 @@
 import { ChevronDown, Dice5, Search, Sparkles, Star } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Dropdown, type DropdownOption } from '../../../shared/components/Dropdown'
-import { Loading } from '../../../shared/components/Loading'
-import { useBenchmarks } from '../../../shared/hooks/useBenchmarks'
-import { usePersistedState } from '../../../shared/hooks/usePersistedState'
-import { useStore } from '../../../shared/hooks/useStore'
-import type { Benchmark } from '../../../shared/types/ipc'
+import { Dropdown, Input, Loading, type DropdownOption } from '../../../shared/components'
+import { useBenchmarks, usePersistedState, useStore } from '../../../shared/hooks'
+import type { Benchmark } from '../../../shared/types'
 import { BenchmarkCard } from '../components/BenchmarkCard'
 import { getRecommendedBenchmarks } from '../lib/recommendations'
 
@@ -169,12 +166,13 @@ export function BenchmarksExplorePage() {
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-              <input
+              <Input
                 type="text"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Search..."
-                className="pl-8 pr-3 py-2 text-sm rounded bg-surface-2 border border-primary text-primary placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent w-32 sm:w-48 focus:w-64 transition-all"
+                className="pl-8 w-32 sm:w-48 focus:w-64 transition-all"
+                size="md"
               />
             </div>
 

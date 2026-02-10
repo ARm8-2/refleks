@@ -1,6 +1,6 @@
 import { ChevronRight, Star } from 'lucide-react'
 import type { MouseEvent } from 'react'
-import type { Benchmark } from '../../../shared/types/ipc'
+import type { Benchmark } from '../../../shared/types'
 
 interface BenchmarkCardProps {
   benchmark: Benchmark

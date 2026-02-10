@@ -2,11 +2,9 @@ import { Activity, HelpCircle, LayoutGrid, PanelLeft, PanelLeftClose, Settings, 
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { GetVersion } from '../../../wailsjs/go/main/App'
-import { BrowserOpenURL } from '../../../wailsjs/runtime'
 import { DISCORD_SYMBOL, KO_FI_SYMBOL } from '../../assets'
-import { useBenchmarks } from '../../shared/hooks/useBenchmarks'
-import { benchmarkPath } from '../../shared/lib/navigation'
+import { useBenchmarks } from '../../shared/hooks'
+import { benchmarkPath, getVersion, openURL } from '../../shared/lib'
 
 // Widths in pixels
 const COLLAPSED_WIDTH = 52
@@ -79,7 +77,7 @@ function ActionButton({ icon, label, isExpanded, onClick, href }: ActionButtonPr
   const handleClick = (e: React.MouseEvent) => {
     if (href) {
       e.preventDefault()
-      BrowserOpenURL(href)
+      openURL(href)
     } else if (onClick) {
       onClick()
     }
@@ -129,7 +127,7 @@ export function Sidebar({ isCollapsed, isExpanded, onMouseEnter, onMouseLeave, o
   }, [benchmarks, favorites])
 
   useEffect(() => {
-    GetVersion().then(v => setVersion(String(v || ''))).catch(() => { })
+    getVersion().then(v => setVersion(String(v || ''))).catch(() => { })
   }, [])
 
   return (

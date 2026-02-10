@@ -1,5 +1,4 @@
-import type { Session } from '../../../shared/types/domain'
-import type { Benchmark, BenchmarkProgress } from '../../../shared/types/ipc'
+import type { Benchmark, BenchmarkProgress, Session } from '../../../shared/types'
 
 // ---------------------------------------------------------------------------
 // Helpers

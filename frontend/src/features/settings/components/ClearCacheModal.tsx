@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Button } from '../../../shared/components/Button'
-import { Modal } from '../../../shared/components/Modal'
-import { clearCache } from '../../../shared/lib/api'
+import { Button, Modal } from '../../../shared/components'
+import { clearCache } from '../../../shared/lib'
 
 type ClearCacheModalProps = {
   isOpen: boolean
