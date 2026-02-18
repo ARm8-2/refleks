@@ -1,5 +1,4 @@
 export { useAppInitialization } from './useAppInitialization'
 export { BenchmarkProvider, useBenchmarks } from './useBenchmarks'
 export { usePersistedState } from './usePersistedState'
-export { useSidebar } from './useSidebar'
 export { StoreProvider, useStore } from './useStore'

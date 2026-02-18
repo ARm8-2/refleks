@@ -1,14 +1,6 @@
 export const THEMES = [
   'dark',
-  'light',
-  'dracula',
-  'gruvbox',
-  'gruvbox-light',
-  'nord',
-  'ocean',
-  'solarized-dark',
-  'solarized-light',
-  'midnight',
+  'light'
 ] as const
 export type Theme = typeof THEMES[number]
 
@@ -24,6 +16,11 @@ export const FONT_CHANGED_EVENT = 'refleks-font-changed'
 
 const THEME_STORAGE_KEY = 'refleks.theme'
 const FONT_STORAGE_KEY = 'refleks.font'
+
+const THEME_CLASSES: Record<Theme, string | null> = {
+  dark: 'dark',
+  light: null,
+}
 
 export const DEFAULT_THEME: Theme = 'dark'
 export const DEFAULT_FONT: Font = 'montserrat'
@@ -54,10 +51,20 @@ export function getSavedTheme(): Theme {
 }
 
 export function applyTheme(theme: Theme) {
+  if (typeof document === 'undefined') return
   const root = document.documentElement
-  // remove all known theme classes dynamically from list
-  THEMES.forEach(t => root.classList.remove(`theme-${t}`))
-  root.classList.add(`theme-${theme}`)
+  const activeThemeClasses = Object.values(THEME_CLASSES).filter((v): v is string => !!v)
+  if (activeThemeClasses.length > 0) {
+    root.classList.remove(...activeThemeClasses)
+  }
+
+  const nextClass = THEME_CLASSES[theme]
+  if (nextClass) {
+    root.classList.add(nextClass)
+  }
+
+  root.dataset.theme = theme
+
   try {
     window.dispatchEvent(new CustomEvent(THEME_CHANGED_EVENT, { detail: { theme } }))
   } catch {

@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronUp, Download, ExternalLink, Eye, EyeOff, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Button, Checkbox, Dropdown, Input, type DropdownOption } from '../../../shared/components'
+import { Button, Checkbox, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/components'
 import { useStore } from '../../../shared/hooks'
 import {
   FONTS,
@@ -25,10 +25,9 @@ import { SettingsField } from '../components/SettingsField'
 import { SettingsSection } from '../components/SettingsSection'
 
 const MISSING_STR = 'N/A'
-
-const themeOptions: DropdownOption[] = THEMES.map(t => ({ label: t, value: t }))
-const fontOptions: DropdownOption[] = FONTS.map(f => ({ label: f.label, value: f.id }))
-const sessionGapOptions: DropdownOption[] = [5, 10, 15, 20, 30, 45, 60, 90, 120].map(m => ({
+const themeOptions = THEMES.map(t => ({ label: t, value: t }))
+const fontOptions = FONTS.map(f => ({ label: f.label, value: f.id }))
+const sessionGapOptions = [5, 10, 15, 20, 30, 45, 60, 90, 120].map(m => ({
   label: `${m} minutes`,
   value: String(m),
 }))
@@ -131,16 +130,16 @@ export function SettingsPage() {
   if (!settings) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-secondary">Loading settings...</div>
+        <div className="text-muted-foreground">Loading settings...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="flex-1 overflow-auto text-sm">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-surface border-b border-primary px-6 py-4">
-        <h1 className="text-xl font-semibold text-primary">Settings</h1>
+      <div className="sticky top-0 z-10 bg-background px-6 py-4">
+        <h1 className="text-lg font-semibold text-foreground">Settings</h1>
       </div>
 
       {/* Content */}
@@ -148,26 +147,26 @@ export function SettingsPage() {
         {/* Updates */}
         <SettingsSection title="Updates">
           <div className="flex items-center gap-4">
-            <span className="text-secondary text-sm">Current version: <span className="text-primary font-mono">{currentVersion || MISSING_STR}</span></span>
-            <Button onClick={handleCheckUpdate} disabled={checking} variant="secondary" size="sm">
+            <span className="text-muted-foreground text-sm">Current version: <span className="text-foreground font-mono">{currentVersion || MISSING_STR}</span></span>
+            <Button onClick={handleCheckUpdate} disabled={checking} variant="outline" size="sm">
               {checking ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Check for Updates'}
             </Button>
-            {checkError && <span className="text-danger text-sm">{checkError}</span>}
+            {checkError && <span className="text-destructive text-sm">{checkError}</span>}
             {update && !update.hasUpdate && (
-              <span className="text-secondary text-sm">You're on the latest version!</span>
+              <span className="text-muted-foreground text-sm">You're on the latest version!</span>
             )}
           </div>
           {update?.hasUpdate && (
-            <div className="bg-surface-2 rounded-lg p-4 border border-accent/30 space-y-3 mt-2">
+            <div className="bg-card rounded-xl p-4 space-y-3 mt-2">
               <div className="flex items-center gap-2">
-                <span className="text-primary text-sm font-medium">Version {update.latestVersion} available</span>
+                <span className="text-foreground text-sm font-medium">Version {update.latestVersion} available</span>
               </div>
               {update.releaseNotes && (
-                <p className="text-secondary text-xs whitespace-pre-wrap max-h-24 overflow-auto">
+                <p className="text-muted-foreground text-xs whitespace-pre-wrap max-h-24 overflow-auto">
                   {update.releaseNotes}
                 </p>
               )}
-              <Button onClick={() => update.downloadUrl && openURL(update.downloadUrl)} variant="accent" size="sm">
+              <Button onClick={() => update.downloadUrl && openURL(update.downloadUrl)} variant="default" size="sm">
                 <Download className="w-4 h-4 mr-1.5" />
                 Download
               </Button>
@@ -182,50 +181,64 @@ export function SettingsPage() {
               type="text"
               value={settings.statsDir}
               onChange={e => updateField('statsDir', e.target.value)}
-              fullWidth
-              className="max-w-xl"
+              className="w-full max-w-xl"
             />
           </SettingsField>
 
           <SettingsField label="Start with Windows" description="Launch RefleK's when you log in" checkbox>
             <Checkbox
               checked={!!settings.autostartEnabled}
-              onChange={v => handleAutostartChange(v)}
+              onCheckedChange={v => handleAutostartChange(v === true)}
             />
           </SettingsField>
 
           <SettingsField label="Mouse Tracking" description="Record mouse movement during scenarios (Windows only)" checkbox>
             <Checkbox
               checked={!!settings.mouseTrackingEnabled}
-              onChange={v => updateField('mouseTrackingEnabled', v)}
+              onCheckedChange={v => updateField('mouseTrackingEnabled', v === true)}
             />
           </SettingsField>
 
           <SettingsField label="Session Gap" description="Minutes of inactivity before starting a new session">
-            <Dropdown
-              value={String(settings.sessionGapMinutes)}
-              onChange={v => updateField('sessionGapMinutes', parseInt(v, 10))}
-              options={sessionGapOptions}
-            />
+            <Select value={String(settings.sessionGapMinutes)} onValueChange={v => updateField('sessionGapMinutes', parseInt(v, 10))}>
+              <SelectTrigger className="h-8 w-auto min-w-[8rem] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sessionGapOptions.map(o => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </SettingsField>
         </SettingsSection>
 
         {/* Appearance */}
         <SettingsSection title="Appearance">
           <SettingsField label="Theme" description="Color theme for the application">
-            <Dropdown
-              value={settings.theme}
-              onChange={handleThemeChange}
-              options={themeOptions}
-            />
+            <Select value={settings.theme} onValueChange={handleThemeChange}>
+              <SelectTrigger className="h-8 w-auto min-w-[8rem] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {themeOptions.map(o => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </SettingsField>
 
           <SettingsField label="Font" description="Font family for the interface">
-            <Dropdown
-              value={settings.font || FONTS[0].id}
-              onChange={handleFontChange}
-              options={fontOptions}
-            />
+            <Select value={settings.font || FONTS[0].id} onValueChange={handleFontChange}>
+              <SelectTrigger className="h-8 w-auto min-w-[8rem] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {fontOptions.map(o => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </SettingsField>
         </SettingsSection>
 
@@ -233,7 +246,7 @@ export function SettingsPage() {
         <SettingsSection title="Advanced">
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 text-secondary hover:text-primary transition-colors text-sm -mt-1"
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm -mt-1"
           >
             {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             {showAdvanced ? 'Hide advanced settings' : 'Show advanced settings'}
@@ -247,8 +260,7 @@ export function SettingsPage() {
                     type="text"
                     value={settings.steamInstallDir}
                     onChange={e => updateField('steamInstallDir', e.target.value)}
-                    fullWidth
-                    className="max-w-xl"
+                    className="w-full max-w-xl"
                   />
                 </SettingsField>
 
@@ -258,8 +270,7 @@ export function SettingsPage() {
                     value={settings.steamIdOverride || ''}
                     onChange={e => updateField('steamIdOverride', e.target.value || undefined)}
                     placeholder="76561198000000000"
-                    fullWidth
-                    className="max-w-xs font-mono"
+                    className="w-full max-w-xs font-mono"
                   />
                 </SettingsField>
 
@@ -269,8 +280,7 @@ export function SettingsPage() {
                     value={settings.personaNameOverride || ''}
                     onChange={e => updateField('personaNameOverride', e.target.value || undefined)}
                     placeholder="Display name"
-                    fullWidth
-                    className="max-w-xs"
+                    className="w-full max-w-xs"
                   />
                 </SettingsField>
               </SettingsSection>
@@ -281,8 +291,7 @@ export function SettingsPage() {
                     type="text"
                     value={settings.tracesDir}
                     onChange={e => updateField('tracesDir', e.target.value)}
-                    fullWidth
-                    className="max-w-xl"
+                    className="w-full max-w-xl"
                   />
                 </SettingsField>
 
@@ -318,20 +327,19 @@ export function SettingsPage() {
                         value={settings.geminiApiKey || ''}
                         onChange={e => updateField('geminiApiKey', e.target.value || undefined)}
                         placeholder="API key"
-                        fullWidth
-                        className="pr-9 font-mono"
+                        className="w-full pr-9 font-mono"
                       />
                       <button
                         type="button"
                         onClick={() => setShowApiKey(!showApiKey)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary hover:text-primary"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
                         {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                     <button
                       onClick={() => openURL('https://aistudio.google.com/apikey')}
-                      className="flex items-center gap-1 text-accent hover:underline text-xs whitespace-nowrap"
+                      className="flex items-center gap-1 text-primary hover:underline text-xs whitespace-nowrap"
                     >
                       Get key <ExternalLink className="w-3 h-3" />
                     </button>
@@ -343,7 +351,7 @@ export function SettingsPage() {
         </SettingsSection>
 
         {/* Actions Footer */}
-        <div className="flex items-center gap-3 pt-4 border-t border-primary">
+        <div className="flex items-center gap-3 pt-4 border-t border-border">
           <Button variant="ghost" size="sm" onClick={() => setIsResetOpen(true)}>
             Reset
           </Button>
@@ -351,10 +359,10 @@ export function SettingsPage() {
             Clear Cache
           </Button>
           <div className="flex-1" />
-          <Button variant="danger" size="sm" onClick={() => quitApp()}>
+          <Button variant="destructive" size="sm" onClick={() => quitApp()}>
             Quit App
           </Button>
-          <Button variant="accent" size="sm" onClick={handleSave} disabled={saving}>
+          <Button variant="default" size="sm" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Save'}
           </Button>
         </div>

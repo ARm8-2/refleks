@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Modal } from '../../../shared/components'
+import { Button, Checkbox, Label, Modal } from '../../../shared/components'
 import { resetSettings } from '../../../shared/lib'
 
 type ResetSettingsModalProps = {
@@ -50,53 +50,33 @@ export function ResetSettingsModal({ isOpen, onClose, onReset }: ResetSettingsMo
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Reset Settings" width={420} height="auto">
-      <div className="p-4 flex flex-col gap-4">
-        <p className="text-secondary text-sm">
+      <div className="flex flex-col gap-4">
+        <p className="text-muted-foreground text-sm">
           Select which data you want to reset to defaults:
         </p>
-        <div className="flex flex-col gap-2">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={options.config}
-              onChange={() => toggleOption('config')}
-              className="w-4 h-4 rounded border-primary bg-surface-3 text-accent focus:ring-accent"
-            />
-            <span className="text-primary text-sm">Settings &amp; Configuration</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={options.favorites}
-              onChange={() => toggleOption('favorites')}
-              className="w-4 h-4 rounded border-primary bg-surface-3 text-accent focus:ring-accent"
-            />
-            <span className="text-primary text-sm">Favorite Scenarios</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={options.scenarioNotes}
-              onChange={() => toggleOption('scenarioNotes')}
-              className="w-4 h-4 rounded border-primary bg-surface-3 text-accent focus:ring-accent"
-            />
-            <span className="text-primary text-sm">Scenario Notes</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={options.sessionNotes}
-              onChange={() => toggleOption('sessionNotes')}
-              className="w-4 h-4 rounded border-primary bg-surface-3 text-accent focus:ring-accent"
-            />
-            <span className="text-primary text-sm">Session Notes</span>
-          </label>
+        <div className="flex flex-col gap-3">
+          <Label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={options.config} onCheckedChange={() => toggleOption('config')} />
+            <span className="text-sm">Settings &amp; Configuration</span>
+          </Label>
+          <Label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={options.favorites} onCheckedChange={() => toggleOption('favorites')} />
+            <span className="text-sm">Favorite Scenarios</span>
+          </Label>
+          <Label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={options.scenarioNotes} onCheckedChange={() => toggleOption('scenarioNotes')} />
+            <span className="text-sm">Scenario Notes</span>
+          </Label>
+          <Label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox checked={options.sessionNotes} onCheckedChange={() => toggleOption('sessionNotes')} />
+            <span className="text-sm">Session Notes</span>
+          </Label>
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="danger" onClick={handleReset} disabled={loading || !anySelected}>
+          <Button variant="destructive" onClick={handleReset} disabled={loading || !anySelected}>
             {loading ? 'Resetting...' : 'Reset Selected'}
           </Button>
         </div>

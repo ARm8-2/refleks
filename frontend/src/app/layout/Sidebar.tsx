@@ -1,129 +1,38 @@
-import { Activity, HelpCircle, LayoutGrid, PanelLeft, PanelLeftClose, Settings, TrendingUp } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { Activity, HelpCircle, LayoutGrid, PanelLeft, Settings, TrendingUp } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { DISCORD_SYMBOL, KO_FI_SYMBOL } from '../../assets'
+import {
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  Sidebar as SidebarRoot,
+  SidebarSeparator,
+  useSidebar,
+} from '../../shared/components/ui/sidebar'
 import { useBenchmarks } from '../../shared/hooks'
 import { benchmarkPath, getVersion, openURL } from '../../shared/lib'
 
-// Widths in pixels
-const COLLAPSED_WIDTH = 52
-const EXPANDED_WIDTH = 200
-// Item padding (relative to section) to center 20px icon in collapsed state
-// When collapsed: icon should be centered in 52px = (52 - 20) / 2 = 16px from edge
-// Since section has 8px padding, item needs 16 - 8 = 8px padding
-const COLLAPSED_ITEM_PADDING = 8
-const EXPANDED_ITEM_PADDING = 8
-
-interface SidebarProps {
-  isCollapsed: boolean
-  isExpanded: boolean
-  onMouseEnter: () => void
-  onMouseLeave: () => void
-  onToggle: () => void
-}
-
-interface NavItemProps {
-  to: string
-  icon: ReactNode
-  label: string
-  isExpanded: boolean
-  end?: boolean
-}
-
-function NavItem({ to, icon, label, isExpanded, end = false }: NavItemProps) {
-  return (
-    <NavLink
-      to={to}
-      end={end}
-      className={({ isActive }) =>
-        `flex items-center h-9 rounded-lg overflow-hidden
-        ${isActive
-          ? 'bg-accent/15 text-accent'
-          : 'text-secondary hover:bg-surface-3 hover:text-primary'
-        }`
-      }
-      style={{
-        paddingLeft: isExpanded ? EXPANDED_ITEM_PADDING : COLLAPSED_ITEM_PADDING,
-        paddingRight: isExpanded ? EXPANDED_ITEM_PADDING : COLLAPSED_ITEM_PADDING,
-        gap: isExpanded ? 12 : 0,
-        transition: 'padding 200ms ease-out, gap 200ms ease-out, background-color 150ms',
-      }}
-      title={label}
-    >
-      <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">{icon}</span>
-      <span
-        className="whitespace-nowrap text-sm"
-        style={{
-          opacity: isExpanded ? 1 : 0,
-          transition: 'opacity 200ms ease-out',
-        }}
-      >
-        {label}
-      </span>
-    </NavLink>
-  )
-}
-
-interface ActionButtonProps {
-  icon: ReactNode
-  label: string
-  isExpanded: boolean
-  onClick?: () => void
-  href?: string
-}
-
-function ActionButton({ icon, label, isExpanded, onClick, href }: ActionButtonProps) {
-  const handleClick = (e: React.MouseEvent) => {
-    if (href) {
-      e.preventDefault()
-      openURL(href)
-    } else if (onClick) {
-      onClick()
-    }
-  }
-
-  return (
-    <button
-      onClick={handleClick}
-      className="flex items-center h-9 rounded-lg overflow-hidden
-        text-secondary hover:bg-surface-3 hover:text-primary w-full text-left"
-      style={{
-        paddingLeft: isExpanded ? EXPANDED_ITEM_PADDING : COLLAPSED_ITEM_PADDING,
-        paddingRight: isExpanded ? EXPANDED_ITEM_PADDING : COLLAPSED_ITEM_PADDING,
-        gap: isExpanded ? 12 : 0,
-        transition: 'padding 200ms ease-out, gap 200ms ease-out, background-color 150ms',
-      }}
-      title={label}
-    >
-      <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center">{icon}</span>
-      <span
-        className="whitespace-nowrap text-sm"
-        style={{
-          opacity: isExpanded ? 1 : 0,
-          transition: 'opacity 200ms ease-out',
-        }}
-      >
-        {label}
-      </span>
-    </button>
-  )
-}
-
-export function Sidebar({ isCollapsed, isExpanded, onMouseEnter, onMouseLeave, onToggle }: SidebarProps) {
-  const width = isExpanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH
+export function Sidebar() {
   const [version, setVersion] = useState('')
   const { benchmarks, favorites, selectedBenchmark } = useBenchmarks()
   const location = useLocation()
+  const { toggleSidebar } = useSidebar()
 
-  // Show up to 3 favorite benchmarks in the sidebar
   const favBenchmarks = useMemo(() => {
     if (favorites.length === 0 || benchmarks.length === 0) return []
     const byName = new Map(benchmarks.map(b => [b.benchmarkName, b]))
     return favorites
       .map(name => byName.get(name))
       .filter((b): b is NonNullable<typeof b> => !!b)
-      .slice(0, 3)
+      .slice(0, 5) // limit to 5 favorites in sidebar
   }, [benchmarks, favorites])
 
   useEffect(() => {
@@ -131,138 +40,119 @@ export function Sidebar({ isCollapsed, isExpanded, onMouseEnter, onMouseLeave, o
   }, [])
 
   return (
-    <aside
-      className="flex-shrink-0 h-full bg-surface-2 border-r border-primary transition-[width] duration-200 ease-out overflow-hidden"
-      style={{ width }}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
-      {/* Inner container with fixed width to prevent content reflow */}
-      <div className="flex flex-col h-full" style={{ width: EXPANDED_WIDTH }}>
-        {/* Header */}
-        <div className="px-2 border-b border-primary">
-          <div
-            className="flex items-center h-12 overflow-hidden"
-            style={{
-              paddingLeft: isExpanded ? EXPANDED_ITEM_PADDING : COLLAPSED_ITEM_PADDING,
-              paddingRight: isExpanded ? EXPANDED_ITEM_PADDING : COLLAPSED_ITEM_PADDING,
-              gap: isExpanded ? 12 : 0,
-              transition: 'padding 200ms ease-out, gap 200ms ease-out',
-            }}
-          >
-            <button
-              onClick={onToggle}
-              className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded text-secondary hover:text-primary transition-colors"
-              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {isCollapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
-            </button>
-            <span
-              className="font-semibold text-primary whitespace-nowrap text-sm"
-              style={{
-                opacity: isExpanded ? 1 : 0,
-                transition: 'opacity 200ms ease-out',
-              }}
-            >
-              RefleK's
-              {version && <span className="font-normal text-secondary text-xs ml-1.5">v{version}</span>}
-            </span>
-          </div>
-        </div>
+    <SidebarRoot variant="inset" collapsible="icon">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="Toggle Sidebar" onClick={toggleSidebar}>
+              <PanelLeft />
+              <span className="font-semibold">RefleK's</span>
+              {version && <span className="text-xs text-muted-foreground">v{version}</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-        {/* Main navigation */}
-        <nav className="flex-1 flex flex-col gap-1 p-2">
-          <NavItem
-            to="/"
-            icon={<LayoutGrid size={18} />}
-            label="Overview"
-            isExpanded={isExpanded}
-            end
-          />
-          <NavItem
-            to="/history"
-            icon={<TrendingUp size={18} />}
-            label="History"
-            isExpanded={isExpanded}
-          />
-          <NavItem
-            to="/benchmarks"
-            icon={<Activity size={18} />}
-            label="Benchmarks"
-            isExpanded={isExpanded}
-          />
-        </nav>
+      <SidebarContent className="flex flex-col h-full">
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname === '/'} tooltip="Overview">
+                  <NavLink to="/" end>
+                    <LayoutGrid />
+                    <span>Overview</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname.startsWith('/history')} tooltip="History">
+                  <NavLink to="/history">
+                    <TrendingUp />
+                    <span>History</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname.startsWith('/benchmarks')} tooltip="Benchmarks">
+                  <NavLink to="/benchmarks">
+                    <Activity />
+                    <span>Benchmarks</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-        {/* Favorite benchmarks */}
         {favBenchmarks.length > 0 && (
-          <div className="flex flex-col gap-1 p-2 border-t border-primary">
-            {favBenchmarks.map(b => {
-              return (
-                <NavLink
-                  key={b.benchmarkName}
-                  to={benchmarkPath(b.benchmarkName)}
-                  className={() => {
-                    const selected = selectedBenchmark === b.benchmarkName
-                    return `flex items-center h-8 rounded-lg overflow-hidden ${selected ? 'bg-accent/15 text-accent' : 'text-secondary hover:bg-surface-3 hover:text-primary'}`
-                  }}
-                  style={{
-                    paddingLeft: isExpanded ? EXPANDED_ITEM_PADDING : COLLAPSED_ITEM_PADDING,
-                    paddingRight: isExpanded ? EXPANDED_ITEM_PADDING : COLLAPSED_ITEM_PADDING,
-                    gap: isExpanded ? 8 : 0,
-                    transition: 'padding 200ms ease-out, gap 200ms ease-out, background-color 150ms',
-                  }}
-                  title={b.benchmarkName}
-                >
-                  <span
-                    className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border border-primary text-secondary ${isExpanded ? 'shrink-0' : 'inline-block w-[36px] text-center truncate -ml-2'}`}
-                    style={b.color ? { borderColor: b.color, color: b.color } : undefined}
-                    title={b.abbreviation}
-                  >
-                    {b.abbreviation}
-                  </span>
-                  <span
-                    className="whitespace-nowrap text-xs truncate"
-                    style={{
-                      opacity: isExpanded ? 1 : 0,
-                      transition: 'opacity 200ms ease-out',
-                    }}
-                  >
-                    {b.benchmarkName}
-                  </span>
-                </NavLink>
-              )
-            })}
+          <div className="mt-auto">
+            <SidebarGroup>
+              <SidebarGroupLabel>Favorites</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {favBenchmarks.map(b => (
+                    <SidebarMenuItem key={b.benchmarkName}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={selectedBenchmark === b.benchmarkName}
+                        tooltip={b.benchmarkName}
+                        size="sm"
+                        className="group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:mx-auto"
+                      >
+                        <NavLink to={benchmarkPath(b.benchmarkName)}>
+                          <span
+                            className="w-[38px] group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)*0.8)] group-data-[collapsible=icon]:max-w-full py-0.5 rounded text-[10px] font-semibold border border-sidebar-border text-muted-foreground text-center shrink-0 overflow-hidden"
+                            style={b.color ? { borderColor: b.color, color: b.color } : undefined}
+                          >
+                            {b.abbreviation}
+                          </span>
+                          <span className="truncate group-data-[collapsible=icon]:hidden">{b.benchmarkName}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarSeparator />
           </div>
         )}
+      </SidebarContent>
 
-        {/* Bottom actions */}
-        <div className="flex flex-col gap-1 p-2 border-t border-primary">
-          <ActionButton
-            icon={<img src={DISCORD_SYMBOL} alt="Discord" className="w-4 h-4" />}
-            label="Discord"
-            isExpanded={isExpanded}
-            href="https://discord.gg/SFsf4GQhJU"
-          />
-          <ActionButton
-            icon={<HelpCircle size={18} />}
-            label="Help"
-            isExpanded={isExpanded}
-            href="https://refleks-app.com/home/#support"
-          />
-          <ActionButton
-            icon={<img src={KO_FI_SYMBOL} alt="Ko-fi" className="w-4 h-4" />}
-            label="Support"
-            isExpanded={isExpanded}
-            href="https://ko-fi.com/arm8_"
-          />
-          <NavItem
-            to="/settings"
-            icon={<Settings size={18} />}
-            label="Settings"
-            isExpanded={isExpanded}
-          />
-        </div>
-      </div>
-    </aside>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="Discord" onClick={() => openURL('https://discord.gg/SFsf4GQhJU')}>
+              <img src={DISCORD_SYMBOL} alt="" className="size-4 shrink-0" />
+              <span>Discord</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="Help" onClick={() => openURL('https://refleks-app.com/home/#support')}>
+              <HelpCircle />
+              <span>Help</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="Support" onClick={() => openURL('https://ko-fi.com/arm8_')}>
+              <img src={KO_FI_SYMBOL} alt="" className="size-4 shrink-0" />
+              <span>Support</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={location.pathname === '/settings'} tooltip="Settings">
+              <NavLink to="/settings">
+                <Settings />
+                <span>Settings</span>
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+
+      <SidebarRail />
+    </SidebarRoot>
   )
 }

@@ -1,7 +1,7 @@
 import { ChevronDown, Dice5, Search, Sparkles, Star } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Dropdown, Input, Loading, type DropdownOption } from '../../../shared/components'
+import { Input, Loading, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/components'
 import { useBenchmarks, usePersistedState, useStore } from '../../../shared/hooks'
 import type { Benchmark } from '../../../shared/types'
 import { BenchmarkCard } from '../components/BenchmarkCard'
@@ -34,13 +34,13 @@ function getBenchmarkCategory(abbreviation: string): string {
 type SortBy = 'name' | 'abbreviation' | 'date'
 type GroupBy = 'none' | 'abbreviation' | 'category'
 
-const sortOptions: DropdownOption[] = [
+const sortOptions = [
   { label: 'Name', value: 'name' },
   { label: 'Abbreviation', value: 'abbreviation' },
   { label: 'Date Added', value: 'date' },
 ]
 
-const groupOptions: DropdownOption[] = [
+const groupOptions = [
   { label: 'None', value: 'none' },
   { label: 'Abbreviation', value: 'abbreviation' },
   { label: 'Category', value: 'category' },
@@ -156,48 +156,53 @@ export function BenchmarksExplorePage() {
   if (loading) return <Loading />
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="flex-1 overflow-auto text-sm">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-surface border-b border-primary px-6 py-4">
+      <div className="sticky top-0 z-10 bg-background px-6 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold text-primary">Benchmarks</h1>
+          <h1 className="text-lg font-semibold text-foreground">Benchmarks</h1>
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type="text"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Search..."
-                className="pl-8 w-32 sm:w-48 focus:w-64 transition-all"
-                size="md"
+                className="h-9 pl-8 w-32 sm:w-48 focus:w-64 transition-all"
               />
             </div>
 
             {/* Sort */}
-            <Dropdown
-              prefix="Sort: "
-              value={sortBy}
-              onChange={v => setSortBy(v as SortBy)}
-              options={sortOptions}
-              size="md"
-            />
+            <Select value={sortBy} onValueChange={v => setSortBy(v as SortBy)}>
+              <SelectTrigger className="h-9 w-auto min-w-[8rem] text-sm">
+                <SelectValue>{`Sort: ${sortOptions.find(o => o.value === sortBy)?.label}`}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {sortOptions.map(o => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {/* Group */}
-            <Dropdown
-              prefix="Group: "
-              value={groupBy}
-              onChange={v => setGroupBy(v as GroupBy)}
-              options={groupOptions}
-              size="md"
-            />
+            <Select value={groupBy} onValueChange={v => setGroupBy(v as GroupBy)}>
+              <SelectTrigger className="h-9 w-auto min-w-[8rem] text-sm">
+                <SelectValue>{`Group: ${groupOptions.find(o => o.value === groupBy)?.label}`}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {groupOptions.map(o => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {/* Random */}
             <button
               onClick={handleRandom}
-              className="flex items-center gap-1.5 px-3 py-2 rounded bg-surface-2 border border-primary text-sm text-secondary hover:text-primary hover:bg-surface-3 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               title="Open a random benchmark"
             >
               <Dice5 className="w-4 h-4" />
@@ -207,9 +212,9 @@ export function BenchmarksExplorePage() {
             {/* Favorites filter */}
             <button
               onClick={() => setShowFavOnly(v => !v)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded border transition-colors ${showFavOnly
-                ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30'
-                : 'bg-surface-2 border-primary text-secondary hover:text-primary hover:bg-surface-3'
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl transition-colors ${showFavOnly
+                ? 'bg-primary/20 text-primary hover:bg-primary/30'
+                : 'bg-card text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
               title={showFavOnly ? 'Show all benchmarks' : 'Show favorites only'}
             >
@@ -220,9 +225,9 @@ export function BenchmarksExplorePage() {
             {/* Recommendations toggle */}
             <button
               onClick={() => setShowRecs(v => !v)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded border transition-colors ${showRecs
-                ? 'bg-accent/20 border-accent text-accent hover:bg-accent/30'
-                : 'bg-surface-2 border-primary text-secondary hover:text-primary hover:bg-surface-3'
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl transition-colors ${showRecs
+                ? 'bg-primary/20 text-primary hover:bg-primary/30'
+                : 'bg-card text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
               title={showRecs ? 'Hide recommendations' : 'Show recommended benchmarks'}
             >
@@ -238,13 +243,13 @@ export function BenchmarksExplorePage() {
         {/* Recommended benchmarks section */}
         {showRecs && recommendedBenchmarks.length > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-accent mt-1 mb-2 select-none">
+            <div className="flex items-center gap-2 text-sm font-medium text-primary mt-1 mb-2 select-none">
               <Sparkles size={16} />
               <span className="whitespace-nowrap">
                 Recommended{' '}
                 <span className="text-xs opacity-50">({recommendedBenchmarks.length})</span>
               </span>
-              <div className="h-px bg-accent/20 flex-1" />
+              <div className="h-px bg-primary/20 flex-1" />
             </div>
             <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
               {recommendedBenchmarks.map(b => (
@@ -261,7 +266,7 @@ export function BenchmarksExplorePage() {
         )}
 
         {filtered.length === 0 ? (
-          <div className="text-sm text-secondary py-8 text-center">
+          <div className="text-sm text-muted-foreground py-8 text-center">
             {benchmarks.length === 0
               ? 'No benchmarks available.'
               : showFavOnly
@@ -281,7 +286,7 @@ export function BenchmarksExplorePage() {
                 {groupBy !== 'none' && (
                   <button
                     onClick={() => toggleGroup(group)}
-                    className="flex items-center gap-2 text-sm font-medium text-secondary mt-2 mb-2 w-full hover:text-primary transition-colors text-left group/hdr select-none"
+                    className="flex items-center gap-2 text-sm font-medium text-muted-foreground mt-2 mb-2 w-full hover:text-foreground transition-colors text-left group/hdr select-none"
                   >
                     <ChevronDown
                       size={16}

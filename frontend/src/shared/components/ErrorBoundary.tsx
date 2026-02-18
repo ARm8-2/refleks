@@ -27,29 +27,29 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   render() {
     if (this.state.error) {
       return (
-        <div className="min-h-screen bg-surface text-primary flex items-center justify-center p-6">
-          <div className="max-w-xl w-full rounded border border-primary bg-surface-2 p-4 space-y-3 shadow-md">
+        <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+          <div className="max-w-xl w-full rounded-xl bg-card p-4 space-y-3 shadow-md">
             <div className="text-lg font-semibold">Something went wrong.</div>
-            <div className="text-secondary text-sm break-words whitespace-pre-wrap">{this.state.error.message}</div>
+            <div className="text-muted-foreground text-sm break-words whitespace-pre-wrap">{this.state.error.message}</div>
             {this.state.error?.stack && (
-              <div className="text-[11px] text-muted whitespace-pre-wrap bg-surface-3 border border-primary rounded p-2 overflow-auto max-h-48">
+              <div className="text-[11px] text-muted-foreground whitespace-pre-wrap bg-muted border rounded p-2 overflow-auto max-h-48">
                 {this.state.error.stack}
               </div>
             )}
             {this.state.stack && (
-              <div className="text-[11px] text-muted whitespace-pre-wrap bg-surface-3 border border-primary rounded p-2 overflow-auto max-h-48">
+              <div className="text-[11px] text-muted-foreground whitespace-pre-wrap bg-muted border rounded p-2 overflow-auto max-h-48">
                 {this.state.stack}
               </div>
             )}
             <div className="flex gap-2">
               <button
-                className="px-3 py-1.5 rounded bg-accent text-on-accent text-sm"
+                className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90"
                 onClick={() => window.location.reload()}
               >
                 Reload
               </button>
               <button
-                className="px-3 py-1.5 rounded border border-primary text-sm hover:bg-surface-3"
+                className="px-3 py-1.5 rounded-xl bg-card text-muted-foreground text-sm hover:bg-muted hover:text-foreground"
                 onClick={() => this.setState({ error: null })}
               >
                 Dismiss

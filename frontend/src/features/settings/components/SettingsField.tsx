@@ -13,10 +13,10 @@ export function SettingsField({ label, description, children, checkbox = false, 
   if (checkbox) {
     return (
       <div className={`flex flex-col gap-1 ${className}`}>
-        <span className="text-primary text-sm">{label}</span>
+        <span className="text-foreground text-sm">{label}</span>
         <div className="flex items-center gap-2">
           {children}
-          {description && <span className="text-secondary text-xs">{description}</span>}
+          {description && <span className="text-muted-foreground text-xs">{description}</span>}
         </div>
       </div>
     )
@@ -24,8 +24,8 @@ export function SettingsField({ label, description, children, checkbox = false, 
 
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
-      <span className="text-primary text-sm">{label}</span>
-      {description && <span className="text-secondary text-xs">{description}</span>}
+      <span className="text-foreground text-sm">{label}</span>
+      {description && <span className="text-muted-foreground text-xs">{description}</span>}
       {children}
     </div>
   )

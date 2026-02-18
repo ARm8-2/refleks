@@ -1,9 +1,117 @@
-@import './theme.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --radius: 0.5rem;
+
+    /* ── Light theme (default) ─────────────────────────────────── */
+    --background: 220 14% 97%;
+    --foreground: 215 14% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 14% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 14% 14%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 215 6% 42%;
+    --muted: 220 7% 93%;
+    --muted-foreground: 215 6% 58%;
+    --accent: 210 15% 93%;
+    --accent-foreground: 215 14% 14%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 216 12% 84%;
+    --input: 216 12% 84%;
+    --ring: 199 89% 48%;
+    --chart-1: 199 89% 48%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 37 91% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    /* App-specific semantic colors (HSL values, no function wrapper) */
+    --success: 160 84% 39%;
+    --warning: 38 92% 50%;
+    --streak: 25 95% 53%;
+
+    /* Fonts */
+    --font-stack-montserrat: "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-stack-inter: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-stack-jetbrains-mono: "JetBrains Mono", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, monospace;
+    --font-body: var(--font-stack-montserrat);
+    --font-mono: var(--font-stack-jetbrains-mono);
+
+    /* Scrollbar */
+    --scrollbar-size: 10px;
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+    --scrollbar-thumb-active: rgba(0, 0, 0, 0.35);
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 14% 14%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 15% 93%;
+    --sidebar-accent-foreground: 215 14% 14%;
+    --sidebar-border: 216 12% 84%;
+    --sidebar-ring: 199 89% 48%;
+  }
+
+  .dark {
+    --background: 220 14% 7%;
+    --foreground: 0 0% 90%;
+    --card: 220 6% 10%;
+    --card-foreground: 0 0% 90%;
+    --popover: 220 4% 13%;
+    --popover-foreground: 0 0% 90%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 6% 13%;
+    --secondary-foreground: 0 0% 69%;
+    --muted: 220 4% 13%;
+    --muted-foreground: 0 0% 69%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 90%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 217 91% 69%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 37 91% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    /* Scrollbar (dark overrides) */
+    --scrollbar-thumb: rgba(255, 255, 255, 0.08);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.16);
+    --scrollbar-thumb-active: rgba(255, 255, 255, 0.24);
+
+    /* Sidebar */
+    --sidebar-background: 220 6% 10%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 20%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 217 91% 69%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
 
   *,
   *::before,
@@ -14,85 +122,16 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-family: var(--font-body, "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+    font-family: var(--font-body);
   }
 
   body {
     margin: 0;
     min-height: 100vh;
-    font-family: var(--font-body, "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+    font-family: var(--font-body);
   }
 
-
-  /* Explicit font classes for reliable switching across platforms (e.g., WebView2) */
-  /* Small helper for range inputs when you want a white thumb but dark track.
-     Useful for scrub bars where the track stays background and the thumb should
-     be text-primary for better contrast. */
-  /* Range pill: pill-shaped thumb on a thin track, white thumb on dark track */
-  input[type="range"].range-pill {
-
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent;
-    outline: none;
-    cursor: pointer;
-  }
-
-  input[type="range"].range-pill::-webkit-slider-runnable-track {
-    height: var(--range-track-height);
-    border-radius: 9999px;
-    background: var(--range-track-bg);
-  }
-
-  input[type="range"].range-pill::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    box-sizing: border-box;
-    width: var(--range-thumb-width);
-    height: var(--range-thumb-height);
-    border-radius: 9999px;
-    background: var(--range-thumb-bg);
-    border: var(--range-thumb-border) solid var(--border-primary);
-    /* center the thumb relative to the track */
-    margin-top: calc((var(--range-track-height) - var(--range-thumb-height)) / 2);
-    transition: transform 120ms ease, box-shadow 120ms ease;
-  }
-
-  input[type="range"].range-pill:hover::-webkit-slider-thumb,
-  input[type="range"].range-pill:active::-webkit-slider-thumb {
-    transform: scale(1.05);
-  }
-
-  input[type="range"].range-pill:focus-visible::-webkit-slider-thumb {
-    box-shadow: 0 0 0 4px var(--focus-ring);
-  }
-
-  /* Firefox */
-  input[type="range"].range-pill::-moz-range-track {
-    height: var(--range-track-height);
-    border-radius: 9999px;
-    background: var(--range-track-bg);
-  }
-
-  input[type="range"].range-pill::-moz-range-thumb {
-    box-sizing: border-box;
-    width: var(--range-thumb-width);
-    height: var(--range-thumb-height);
-    border-radius: 9999px;
-    background: var(--range-thumb-bg);
-    border: var(--range-thumb-border) solid var(--border-primary);
-    transition: transform 120ms ease, box-shadow 120ms ease;
-    margin-top: calc((var(--range-track-height) - var(--range-thumb-height)) / 2);
-  }
-
-  input[type="range"].range-pill:hover::-moz-range-thumb,
-  input[type="range"].range-pill:active::-moz-range-thumb {
-    transform: scale(1.05);
-  }
-
-  input[type="range"].range-pill:focus-visible::-moz-range-thumb {
-    box-shadow: 0 0 0 4px var(--focus-ring);
-  }
+  /* ── Font classes ──────────────────────────────────────────── */
 
   html.font-montserrat,
   body.font-montserrat {
@@ -109,19 +148,13 @@
     font-family: var(--font-stack-jetbrains-mono) !important;
   }
 
-  /* Fleet-style global scrollbar
-     - Uses CSS variables for easy theming
-     - Works for WebKit/Chromium via ::-webkit-scrollbar and for Firefox via scrollbar-color/width
-     - Add the `.scrollbar-compact` class to elements that should show a smaller scrollbar
-  */
+  /* ── Scrollbar ─────────────────────────────────────────────── */
 
-  /* Firefox */
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
 
-  /* WebKit / Chromium */
   *::-webkit-scrollbar {
     width: var(--scrollbar-size);
     height: var(--scrollbar-size);
@@ -135,16 +168,12 @@
     background-color: var(--scrollbar-thumb);
     border-radius: 9999px;
     border: 2px solid transparent;
-    /* create padding around the thumb */
     background-clip: padding-box;
-    transition: background-color .15s ease, transform .12s ease, opacity .12s ease;
-    opacity: 0.9;
+    transition: background-color .15s ease;
   }
 
   *::-webkit-scrollbar-thumb:hover {
     background-color: var(--scrollbar-thumb-hover);
-    transform: scale(1.02);
-    opacity: 1;
   }
 
   *::-webkit-scrollbar-thumb:active {
@@ -155,16 +184,6 @@
     background: transparent;
   }
 
-  /* Keyboard focus / accessibility accent */
-  *:focus-visible::-webkit-scrollbar-thumb {
-    background-color: var(--scrollbar-accent);
-  }
-
-  *:focus-visible {
-    scrollbar-color: var(--scrollbar-accent) var(--scrollbar-track);
-  }
-
-  /* Compact helper class for tighter UI areas */
   .scrollbar-compact::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -175,66 +194,7 @@
   }
 }
 
-/* Markdown / AI formatting enhancements */
-.markdown-root h1.mk-h1 {
-  font-size: 1.4rem;
-  line-height: 1.25;
-  font-weight: 600;
-  margin: 1.2rem 0 0.75rem;
-}
-
-.markdown-root h2.mk-h2 {
-  font-size: 1.2rem;
-  line-height: 1.3;
-  font-weight: 600;
-  margin: 1.1rem 0 0.6rem;
-}
-
-.markdown-root h3.mk-h3 {
-  font-size: 1.05rem;
-  line-height: 1.35;
-  font-weight: 600;
-  margin: 0.9rem 0 0.5rem;
-}
-
-.markdown-root hr.mk-hr {
-  border: 0;
-  border-top: 1px solid var(--border-primary);
-  margin: 1.1rem 0;
-  opacity: 0.6;
-}
-
-.markdown-root ul.mk-ul,
-.markdown-root ol.mk-ol {
-  margin: 0.4rem 0 0.8rem 1.2rem;
-  padding: 0;
-}
-
-.markdown-root ul.mk-ul li,
-.markdown-root ol.mk-ol li {
-  margin: 0.15rem 0;
-}
-
-.markdown-root ul.mk-ul {
-  list-style: disc;
-}
-
-.markdown-root ol.mk-ol {
-  list-style: decimal;
-}
-
-.markdown-root p {
-  margin: 0.6rem 0;
-}
-
-.markdown-root pre.mk-code {
-  background: var(--bg-tertiary);
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 4px;
-  font-size: 0.75rem;
-  overflow: auto;
-}
+/* ── Fonts ─────────────────────────────────────────────────── */
 
 @font-face {
   font-family: "Montserrat";

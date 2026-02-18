@@ -25,7 +25,7 @@ export function ClearCacheModal({ isOpen, onClose }: ClearCacheModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Clear Cache" width={400} height="auto">
       <div className="p-4 flex flex-col gap-4">
-        <p className="text-secondary text-sm">
+        <p className="text-muted-foreground text-sm">
           This will clear all cached data including parsed stats and computed rankings.
           Your settings and session data will not be affected.
         </p>
@@ -33,7 +33,7 @@ export function ClearCacheModal({ isOpen, onClose }: ClearCacheModalProps) {
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="danger" onClick={handleClear} disabled={loading}>
+          <Button variant="destructive" onClick={handleClear} disabled={loading}>
             {loading ? 'Clearing...' : 'Clear Cache'}
           </Button>
         </div>

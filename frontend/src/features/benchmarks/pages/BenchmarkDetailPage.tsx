@@ -26,21 +26,21 @@ export function BenchmarkDetailPage() {
   const benchmark = name ? getBenchmarkByName(name) : null
 
   return (
-    <div className="flex-1 overflow-auto">
-      <div className="sticky top-0 z-10 bg-surface border-b border-primary px-6 py-4">
+    <div className="flex-1 overflow-auto text-sm">
+      <div className="sticky top-0 z-10 bg-background px-6 py-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={handleBack}>
             <ArrowLeft className="w-4 h-4 mr-1.5" />
             Back
           </Button>
-          <h1 className="text-xl font-semibold text-primary">
+          <h1 className="text-lg font-semibold text-foreground">
             {benchmark?.benchmarkName ?? id}
           </h1>
         </div>
       </div>
       <div className="p-6">
-        <div className="bg-surface-2 rounded-lg border border-primary p-8 text-center">
-          <p className="text-secondary text-sm">Benchmark detail view coming soon.</p>
+        <div className="bg-card rounded-xl p-8 text-center">
+          <p className="text-muted-foreground text-sm">Benchmark detail view coming soon.</p>
         </div>
       </div>
     </div>
