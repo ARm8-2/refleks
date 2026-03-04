@@ -1,24 +1,17 @@
 import { ChartLine, NotebookPen, Play, Settings2 } from 'lucide-react'
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../shared/components'
 import { usePersistedState, useStore } from '../../../../shared/hooks'
 import { getSettings, launchScenario, saveScenarioNote } from '../../../../shared/lib'
 import type { Benchmark, BenchmarkProgress, Settings } from '../../../../shared/types'
 import { useBenchmarkVisibility } from '../../hooks/useBenchmarkVisibility'
-import { useDragScroll } from '../../hooks/useDragScroll'
 import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
 import {
-  ENERGY_COL_WIDTH,
   MISSING_STR,
-  NOTES_COL_WIDTH,
-  PADDING_COL_WIDTH,
-  PLAY_COL_WIDTH,
-  RANK_MIN_WIDTH,
-  RECOMMEND_COL_WIDTH,
-  SCORE_COL_WIDTH,
 } from '../../lib/detailConstants'
 import { cellFill, computeFillColor, formatNumber, getScenarioName } from '../../lib/detailFormatting'
 import { computeRecommendationScores, selectTopPicks, type ScenarioBenchmarkData } from '../../lib/detailRecommendations'
+import { buildLeftColumns, buildRightGridLayout } from '../../lib/detailTableLayout'
 import { RecommendationIndicator } from './RecommendationIndicator'
 import { ScenarioHistoryModal } from './ScenarioHistoryModal'
 import { ScenarioNotesModal } from './ScenarioNotesModal'
@@ -58,7 +51,6 @@ function ToggleChip({ label, enabled, onToggle }: { label: string; enabled: bool
 
 export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: Props) {
   const sessions = useStore(state => state.sessions)
-  const containerRef = useRef<HTMLDivElement>(null)
 
   const storageBase = `refleks.benchmarks.detail.${benchmark.benchmarkName}.progress`
 
@@ -73,10 +65,6 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
   const [notesState, setNotesState] = useState<NotesState>({ open: false, scenario: '', notes: '', sensitivity: '' })
   const [historyState, setHistoryState] = useState<HistoryState>({ open: false, scenario: '' })
 
-  useDragScroll(containerRef, {
-    axis: 'x',
-    skipSelector: 'button, a, input, textarea, select, [role="button"]',
-  })
 
   useEffect(() => {
     getSettings().then(setSettings).catch(() => setSettings(null))
@@ -136,31 +124,18 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
     return false
   }, [categories])
 
-  const leftColumns = useMemo(() => {
-    return [
-      `${Math.round(scenarioWidth)}px`,
-      `${PADDING_COL_WIDTH}px`,
-      showNotesCol ? `${NOTES_COL_WIDTH}px` : null,
-      showRecCol ? `${RECOMMEND_COL_WIDTH}px` : null,
-      showPlayCol ? `${PLAY_COL_WIDTH}px` : null,
-      showHistoryCol ? `${PLAY_COL_WIDTH}px` : null,
-      `${PADDING_COL_WIDTH}px`,
-      `${SCORE_COL_WIDTH}px`,
-    ].filter(Boolean).join(' ')
-  }, [scenarioWidth, showNotesCol, showRecCol, showPlayCol, showHistoryCol])
+  const leftColumns = useMemo(() => buildLeftColumns({
+    scenarioWidth,
+    showNotesCol,
+    showRecCol,
+    showPlayCol,
+    showHistoryCol,
+  }), [scenarioWidth, showNotesCol, showRecCol, showPlayCol, showHistoryCol])
 
-  const rightColumns = useMemo(() => {
-    const columns: string[] = []
-
-    if (visibleRankIndices.length > 0) {
-      columns.push(visibleRankIndices.map(() => `${RANK_MIN_WIDTH}px`).join(' '))
-    }
-
-    if (hasEnergy) columns.push(`${ENERGY_COL_WIDTH}px`)
-
-    if (!columns.length) return `${RANK_MIN_WIDTH}px`
-    return columns.join(' ')
-  }, [visibleRankIndices, hasEnergy])
+  const rightLayout = useMemo(
+    () => buildRightGridLayout(visibleRankIndices.length, hasEnergy),
+    [visibleRankIndices.length, hasEnergy],
+  )
 
   const wantedNames = useMemo(() => {
     const names = new Set<string>()
@@ -230,7 +205,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
   const overallRankName = rankDefs[(progress.overallRank ?? 0) - 1]?.name || MISSING_STR
 
   return (
-    <section className="space-y-3">
+    <section className="relative z-0 isolate space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Progress Tracker</h3>
@@ -248,11 +223,10 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
       </div>
 
       <div
-        ref={containerRef}
-        className="overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden cursor-grab active:cursor-grabbing"
+        className="relative z-0 overflow-x-auto rounded-xl"
       >
         <div className="w-max min-w-full space-y-3 pb-4">
-          <div className="sticky top-0 z-[30] rounded-xl bg-card py-2.5 pr-5">
+          <div className="relative z-[30] rounded-xl bg-card py-2.5 pr-2">
             <div className="flex items-center">
               <div className="sticky left-0 z-20 flex w-[52px] shrink-0 bg-card pl-5" />
               <div className="sticky left-[52px] z-20 flex w-6 shrink-0 bg-card" />
@@ -282,8 +256,8 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
                 </div>
               </div>
 
-              <div className="ml-2">
-                <div className="grid gap-1" style={{ gridTemplateColumns: rightColumns }}>
+              <div className="ml-2 flex-1">
+                <div className="grid gap-1" style={{ gridTemplateColumns: rightLayout.templateColumns, minWidth: rightLayout.minWidth, width: '100%' }}>
                   {visibleRanks.map(rank => (
                     <div
                       key={rank.name}
@@ -304,7 +278,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
           {categories.map(category => {
             const categoryColor = category.color || 'hsl(var(--foreground))'
             return (
-              <div key={category.name} className={`min-w-max rounded-xl bg-card pr-5 ${compactMode ? 'py-3' : 'py-4'}`}>
+              <div key={category.name} className={`min-w-max rounded-xl bg-card pr-2 ${compactMode ? 'py-3' : 'py-4'}`}>
                 <div className="flex">
                   <div className="sticky left-0 z-20 flex w-[52px] shrink-0 items-center justify-center bg-card pl-5 py-2">
                     <span
@@ -423,7 +397,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
                           </div>
 
                           <div className="ml-2 flex-1">
-                            <div className="grid gap-1" style={{ gridTemplateColumns: rightColumns }}>
+                            <div className="grid gap-1" style={{ gridTemplateColumns: rightLayout.templateColumns, minWidth: rightLayout.minWidth, width: '100%' }}>
                               {group.scenarios.map((scenario, scenarioIndex) => {
                                 if (!visibleRankIndices.length && !hasEnergy) {
                                   return (

@@ -42,8 +42,8 @@ export function BenchmarkDetailPage() {
   const favorite = benchmark ? isFavorite(benchmark.benchmarkName) : false
 
   return (
-    <div className="flex-1 overflow-auto text-sm">
-      <div className="sticky top-0 z-10 bg-background px-6 py-4">
+    <div className="flex-1 overflow-auto text-sm isolate">
+      <div className="sticky top-0 z-20 bg-background px-6 py-4">
         <div className="flex flex-wrap items-center gap-2.5 min-w-0">
           <Button variant="ghost" size="sm" onClick={handleBack}>
             <ArrowLeft className="w-4 h-4 mr-1.5" />
