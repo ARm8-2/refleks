@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { cn } from '../lib/utils'
 import {
   Dialog,
   DialogContent,
@@ -30,7 +31,7 @@ export function Modal({
   return (
     <Dialog open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
       <DialogContent
-        className={className}
+        className={cn('rounded-xl border-0 bg-card p-5 shadow-2xl sm:rounded-xl', className)}
         style={{
           width: typeof width === 'number' ? `${width}px` : width,
           maxWidth: typeof width === 'number' ? `${width}px` : width || '95vw',
@@ -40,10 +41,10 @@ export function Modal({
       >
         {(title || headerControls) && (
           <DialogHeader>
-            <div className="flex items-center gap-4">
-              {title && <DialogTitle>{title}</DialogTitle>}
+            <div className="flex items-center justify-between gap-4 pr-7">
+              {title && <DialogTitle className="truncate">{title}</DialogTitle>}
               {headerControls && (
-                <div className="flex items-center gap-2">{headerControls}</div>
+                <div className="flex shrink-0 items-center gap-2">{headerControls}</div>
               )}
             </div>
           </DialogHeader>

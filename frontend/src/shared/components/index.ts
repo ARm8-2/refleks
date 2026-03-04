@@ -17,3 +17,4 @@ export {
 export { ErrorBoundary } from './ErrorBoundary'
 export { Loading } from './Loading'
 export { Modal } from './Modal'
+export { Widget } from './Widget'
