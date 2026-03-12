@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { cn } from '../lib/utils'
 import {
   Dialog,
@@ -28,10 +28,19 @@ export function Modal({
   height,
   className = '',
 }: ModalProps) {
+  const contentRef = useRef<HTMLDivElement>(null)
+
   return (
     <Dialog open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
       <DialogContent
+        ref={contentRef}
         className={cn('rounded-xl border-0 bg-card p-5 shadow-2xl sm:rounded-xl', className)}
+        onOpenAutoFocus={event => {
+          event.preventDefault()
+          requestAnimationFrame(() => {
+            contentRef.current?.focus()
+          })
+        }}
         style={{
           width: typeof width === 'number' ? `${width}px` : width,
           maxWidth: typeof width === 'number' ? `${width}px` : width || '95vw',
