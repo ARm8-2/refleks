@@ -1,20 +1,22 @@
-import { ChartLine, NotebookPen, Play, Settings2 } from 'lucide-react'
-import { Fragment, useEffect, useMemo, useState } from 'react'
+
+import { Settings2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../shared/components'
 import { usePersistedState, useStore } from '../../../../shared/hooks'
 import { getSettings, launchScenario, saveScenarioNote } from '../../../../shared/lib'
-import type { Benchmark, BenchmarkProgress, Settings } from '../../../../shared/types'
+import type { Benchmark, BenchmarkProgress, Settings } from '../../../../shared/types/ipc'
 import { useBenchmarkVisibility } from '../../hooks/useBenchmarkVisibility'
-import { useResizableScenarioColumn } from '../../hooks/useResizableScenarioColumn'
-import {
-  MISSING_STR,
-} from '../../lib/detailConstants'
-import { cellFill, computeFillColor, formatNumber, getScenarioName } from '../../lib/detailFormatting'
+import { formatNumber, getScenarioName } from '../../lib/detailFormatting'
 import { computeRecommendationScores, selectTopPicks, type ScenarioBenchmarkData } from '../../lib/detailRecommendations'
-import { buildLeftColumns, buildRightGridLayout } from '../../lib/detailTableLayout'
-import { RecommendationIndicator } from './RecommendationIndicator'
 import { ScenarioHistoryModal } from './ScenarioHistoryModal'
 import { ScenarioNotesModal } from './ScenarioNotesModal'
+import {
+  buildInfoColumns,
+  getRowClasses,
+  RANK_MIN_COLUMN_WIDTH,
+  ScenarioInfoRow,
+  ScenarioRankCells
+} from './ScenarioRow'
 
 type Props = {
   benchmark: Benchmark
@@ -34,15 +36,18 @@ type HistoryState = {
   scenario: string
 }
 
+const CATEGORY_COLUMN_WIDTH = 52
+const GROUP_COLUMN_WIDTH = 24
+const LEFT_PANEL_PADDING = 16
+
 function ToggleChip({ label, enabled, onToggle }: { label: string; enabled: boolean; onToggle: () => void }) {
   return (
     <button
       type="button"
       onClick={onToggle}
-      className={`rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors ${enabled
-        ? 'border-primary/50 bg-primary/15 text-primary'
-        : 'border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
-        }`}
+      className={enabled
+        ? 'rounded-xl border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary transition-colors'
+        : 'rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
     >
       {label}
     </button>
@@ -60,11 +65,9 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
   const [showPlayCol, setShowPlayCol] = usePersistedState<boolean>(`${storageBase}.showPlay`, true)
   const [showHistoryCol, setShowHistoryCol] = usePersistedState<boolean>(`${storageBase}.showHistory`, true)
   const [showSettings, setShowSettings] = useState(false)
-
   const [settings, setSettings] = useState<Settings | null>(null)
   const [notesState, setNotesState] = useState<NotesState>({ open: false, scenario: '', notes: '', sensitivity: '' })
   const [historyState, setHistoryState] = useState<HistoryState>({ open: false, scenario: '' })
-
 
   useEffect(() => {
     getSettings().then(setSettings).catch(() => setSettings(null))
@@ -95,8 +98,6 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
     setHistoryState({ open: true, scenario })
   }
 
-  const { scenarioWidth, onHandleMouseDown } = useResizableScenarioColumn()
-
   const {
     rankDefs,
     categories,
@@ -111,31 +112,6 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
     visibleRankIndices,
     visibleRanks,
   } = useBenchmarkVisibility({ storagePrefix: storageBase, progress })
-
-  const hasEnergy = useMemo(() => {
-    for (const category of categories) {
-      for (const group of category.groups) {
-        if (group.energy != null) return true
-        for (const scenario of group.scenarios) {
-          if (scenario.energy != null) return true
-        }
-      }
-    }
-    return false
-  }, [categories])
-
-  const leftColumns = useMemo(() => buildLeftColumns({
-    scenarioWidth,
-    showNotesCol,
-    showRecCol,
-    showPlayCol,
-    showHistoryCol,
-  }), [scenarioWidth, showNotesCol, showRecCol, showPlayCol, showHistoryCol])
-
-  const rightLayout = useMemo(
-    () => buildRightGridLayout(visibleRankIndices.length, hasEnergy),
-    [visibleRankIndices.length, hasEnergy],
-  )
 
   const wantedNames = useMemo(() => {
     const names = new Set<string>()
@@ -202,7 +178,37 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
     [recommendationScore, scenarioCategoryMap, categories.length],
   )
 
-  const overallRankName = rankDefs[(progress.overallRank ?? 0) - 1]?.name || MISSING_STR
+  const infoColumns = useMemo(
+    () => buildInfoColumns(showNotesCol, showRecCol, showPlayCol, showHistoryCol),
+    [showNotesCol, showRecCol, showPlayCol, showHistoryCol],
+  )
+
+  const infoGridTemplate = useMemo(
+    () => infoColumns.map(column => `${column.width}px`).join(' '),
+    [infoColumns],
+  )
+
+  const infoGridWidth = useMemo(
+    () => infoColumns.reduce((total, column) => total + column.width, 0),
+    [infoColumns],
+  )
+
+  const rightPanelOffset = CATEGORY_COLUMN_WIDTH + GROUP_COLUMN_WIDTH + LEFT_PANEL_PADDING + infoGridWidth
+  const hasVisibleRanks = visibleRankIndices.length > 0
+  const rightGridTemplate = hasVisibleRanks
+    ? `repeat(${visibleRankIndices.length}, minmax(${RANK_MIN_COLUMN_WIDTH}px, 1fr))`
+    : `minmax(${RANK_MIN_COLUMN_WIDTH}px, 1fr)`
+  const rightGridMinWidth = Math.max(1, visibleRankIndices.length) * RANK_MIN_COLUMN_WIDTH
+  const overallRankName = rankDefs[(progress.overallRank ?? 0) - 1]?.name || '-'
+  const cls = getRowClasses(compactMode)
+  const categoryPaddingClass = compactMode ? 'py-3' : 'py-4'
+  const categorySpacingClass = compactMode ? 'space-y-1.5' : 'space-y-2'
+  const rowSpacingClass = compactMode ? 'space-y-0.5' : 'space-y-1'
+  const labelTextClass = compactMode ? 'text-[10px]' : 'text-[11px]'
+  const rankVisibilityOptions = Array.from({ length: Math.max(1, rankDefs.length) }, (_, index) => index + 1)
+
+  const getRecommendation = (scenarioName: string) => recommendationScore.get(scenarioName) ?? 0
+  const isTopPick = (scenarioName: string) => topPicks.has(scenarioName)
 
   return (
     <section className="relative z-0 isolate space-y-3">
@@ -210,251 +216,175 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
         <div>
           <h3 className="text-sm font-semibold text-foreground">Progress Tracker</h3>
           <p className="text-xs text-muted-foreground">
-            {benchmark.abbreviation} {benchmark.benchmarkName} · {difficultyName} · Overall {overallRankName} · {formatNumber(progress.benchmarkProgress)}%
+            {benchmark.abbreviation} {benchmark.benchmarkName} · {difficultyName} · Overall {overallRankName} · {formatNumber(progress.benchmarkProgress || 0, 0)}%
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <ToggleChip label="Compact" enabled={compactMode} onToggle={() => setCompactMode(value => !value)} />
-          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} title="View settings">
+          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} title="View tracker settings">
             <Settings2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      <div
-        className="relative z-0 overflow-x-auto rounded-xl"
-      >
-        <div className="w-max min-w-full space-y-3 pb-4">
-          <div className="relative z-[30] rounded-xl bg-card py-2.5 pr-2">
+      <div className="relative z-0">
+        <div className="relative z-0 w-full space-y-3 pb-4">
+          <div className="relative mb-3 w-full rounded-xl border border-border/5 bg-card py-2 shadow-sm">
             <div className="flex items-center">
-              <div className="sticky left-0 z-20 flex w-[52px] shrink-0 bg-card pl-5" />
-              <div className="sticky left-[52px] z-20 flex w-6 shrink-0 bg-card" />
-
-              <div className="sticky left-[76px] z-20 shrink-0 bg-card pl-2 pr-2 shadow-[12px_0_12px_-6px_rgba(0,0,0,0.1)]">
-                <div className="grid gap-1" style={{ gridTemplateColumns: leftColumns }}>
-                  <div className="relative select-none text-[11px] uppercase tracking-wide text-muted-foreground" style={{ width: scenarioWidth }}>
-                    <span>Scenario</span>
-                    <div
-                      onMouseDown={onHandleMouseDown}
-                      className="group absolute right-0 top-0 h-full w-2 cursor-col-resize"
-                      role="separator"
-                      aria-orientation="vertical"
-                      aria-label="Resize scenario column"
-                    >
-                      <div className="h-full w-px bg-border group-hover:bg-primary" />
-                    </div>
+              <div className="flex h-[28px] w-[52px] shrink-0 bg-transparent pl-5" />
+              <div className="flex h-[28px] w-6 shrink-0 bg-transparent" />
+              <div className="shrink-0 bg-transparent pl-2 pr-2">
+                <div className="grid h-[28px] items-center" style={{ gridTemplateColumns: infoGridTemplate }}>
+                  <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[11px] uppercase tracking-wide text-muted-foreground">
+                    Scenario
                   </div>
-
                   <div />
                   {showNotesCol && <div />}
                   {showRecCol && <div className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">Rec</div>}
                   {showPlayCol && <div />}
                   {showHistoryCol && <div />}
                   <div />
-                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Score</div>
-                </div>
-              </div>
-
-              <div className="ml-2 flex-1">
-                <div className="grid gap-1" style={{ gridTemplateColumns: rightLayout.templateColumns, minWidth: rightLayout.minWidth, width: '100%' }}>
-                  {visibleRanks.map(rank => (
-                    <div
-                      key={rank.name}
-                      className="text-center text-[11px] uppercase tracking-wide"
-                      style={rank.color ? { color: rank.color } : { color: 'hsl(var(--muted-foreground))' }}
-                    >
-                      {rank.name}
-                    </div>
-                  ))}
-
-                  {hasEnergy && <div className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">Energy</div>}
-                  {!visibleRanks.length && !hasEnergy && <div className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">Details</div>}
+                  <div className="text-right text-[11px] uppercase tracking-wide text-muted-foreground">Score</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {categories.map(category => {
-            const categoryColor = category.color || 'hsl(var(--foreground))'
-            return (
-              <div key={category.name} className={`min-w-max rounded-xl bg-card pr-2 ${compactMode ? 'py-3' : 'py-4'}`}>
-                <div className="flex">
-                  <div className="sticky left-0 z-20 flex w-[52px] shrink-0 items-center justify-center bg-card pl-5 py-2">
-                    <span
-                      className={`font-semibold tracking-wide ${compactMode ? 'text-[10px]' : 'text-[11px]'}`}
-                      style={{
-                        color: categoryColor,
-                        writingMode: 'vertical-rl',
-                        transform: 'rotate(180deg)',
-                      }}
-                    >
-                      {category.name}
-                    </span>
-                  </div>
+          {categories.map(category => (
+            <div key={category.name} className={`relative w-full overflow-hidden rounded-xl border border-border/5 bg-card shadow-sm ${categoryPaddingClass}`}>
+              <div className="flex">
+                <div className="flex w-[52px] shrink-0 items-center justify-center bg-transparent pl-5 py-2">
+                  <span
+                    className={`font-semibold tracking-wide ${labelTextClass}`}
+                    style={{
+                      color: category.color || 'hsl(var(--foreground))',
+                      writingMode: 'vertical-rl',
+                      transform: 'rotate(180deg)',
+                    }}
+                  >
+                    {category.name}
+                  </span>
+                </div>
 
-                  <div className={`flex-1 ${compactMode ? 'space-y-1.5' : 'space-y-3'}`}>
-                    {category.groups.map((group, groupIndex) => {
-                      const groupColor = group.color || 'hsl(var(--foreground))'
+                <div className={`flex-1 ${categorySpacingClass}`}>
+                  {category.groups.map((group, groupIndex) => (
+                    <div key={`${category.name}-${groupIndex}`} className="relative flex">
+                      <div className="flex w-6 shrink-0 items-center justify-center bg-transparent pr-2">
+                        {group.name ? (
+                          <span
+                            className={`font-semibold tracking-wide ${labelTextClass}`}
+                            style={{
+                              color: group.color || 'hsl(var(--foreground))',
+                              writingMode: 'vertical-rl',
+                              transform: 'rotate(180deg)',
+                            }}
+                          >
+                            {group.name}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                            -
+                          </span>
+                        )}
+                      </div>
 
-                      return (
-                        <div key={`${category.name}-${groupIndex}`} className="flex">
-                          <div className="sticky left-[52px] z-20 flex w-6 shrink-0 items-center justify-center bg-card pr-2">
-                            {group.name ? (
-                              <span
-                                className={`font-semibold tracking-wide ${compactMode ? 'text-[10px]' : 'text-[11px]'}`}
-                                style={{
-                                  color: groupColor,
-                                  writingMode: 'vertical-rl',
-                                  transform: 'rotate(180deg)',
-                                }}
-                              >
-                                {group.name}
-                              </span>
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-                                {MISSING_STR}
-                              </span>
-                            )}
-                          </div>
+                      <div className="shrink-0 bg-transparent pl-2 pr-2">
+                        <div className={rowSpacingClass}>
+                          {group.scenarios.map(scenario => {
+                            const recommendation = getRecommendation(scenario.name)
+                            const completedThreshold = Math.max(1, (scenario.thresholds?.length ?? 0) - 1)
+                            const completed = scenario.scenarioRank >= completedThreshold
+                            const hasSavedNote = Boolean(settings?.scenarioNotes?.[scenario.name]?.notes)
 
-                          <div className="sticky left-[76px] z-20 shrink-0 bg-card pl-2 pr-2 shadow-[12px_0_12px_-6px_rgba(0,0,0,0.1)]">
-                            <div className="grid gap-1" style={{ gridTemplateColumns: leftColumns }}>
-                              {group.scenarios.map(scenario => {
-                                const recommendation = recommendationScore.get(scenario.name) ?? 0
-                                const isTopPick = topPicks.has(scenario.name)
-                                const isCompleted = scenario.scenarioRank >= (scenario.thresholds.length - 1)
-                                const rankColor = computeFillColor(scenario.scenarioRank, rankDefs)
-
-                                return (
-                                  <Fragment key={`${scenario.name}-left`}>
-                                    <div className={`${compactMode ? 'text-[11px]' : 'text-[13px]'} min-w-0 flex items-center text-foreground`}>
-                                      <div className="mr-2 h-3 w-1 shrink-0 rounded-full" style={{ backgroundColor: rankColor }} />
-                                      <span className="truncate">{scenario.name}</span>
-                                    </div>
-
-                                    <div />
-
-                                    {showNotesCol && (
-                                      <div className="flex items-center justify-center">
-                                        <button
-                                          type="button"
-                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded-lg border border-transparent transition-colors hover:border-border hover:bg-muted ${settings?.scenarioNotes?.[scenario.name]?.notes ? 'text-primary' : 'text-muted-foreground'}`}
-                                          title="Notes & Sensitivity"
-                                          onClick={() => openNotes(scenario.name)}
-                                        >
-                                          <NotebookPen size={compactMode ? 14 : 16} />
-                                        </button>
-                                      </div>
-                                    )}
-
-                                    {showRecCol && (
-                                      <div className="flex items-center justify-center text-[12px]" title={`Recommendation score: ${recommendation}`}>
-                                        <RecommendationIndicator
-                                          score={recommendation}
-                                          compact={compactMode}
-                                          isTopPick={isTopPick}
-                                          isCompleted={isCompleted}
-                                        />
-                                      </div>
-                                    )}
-
-                                    {showPlayCol && (
-                                      <div className="flex items-center justify-center">
-                                        <button
-                                          type="button"
-                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded-lg border border-transparent text-foreground transition-colors hover:border-border hover:bg-muted`}
-                                          title="Play in Kovaak's"
-                                          onClick={() => launchScenario(scenario.name, 'challenge').catch(() => { })}
-                                        >
-                                          <Play size={compactMode ? 14 : 16} />
-                                        </button>
-                                      </div>
-                                    )}
-
-                                    {showHistoryCol && (
-                                      <div className="flex items-center justify-center">
-                                        <button
-                                          type="button"
-                                          className={`${compactMode ? 'p-0.5' : 'p-1'} rounded-lg border border-transparent text-foreground transition-colors hover:border-border hover:bg-muted`}
-                                          title="Last 10 Scores"
-                                          onClick={() => openHistory(scenario.name)}
-                                        >
-                                          <ChartLine size={compactMode ? 14 : 16} />
-                                        </button>
-                                      </div>
-                                    )}
-
-                                    <div />
-
-                                    <div className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} flex items-center text-foreground`}>
-                                      {formatNumber(scenario.score, 0)}
-                                    </div>
-                                  </Fragment>
-                                )
-                              })}
-                            </div>
-                          </div>
-
-                          <div className="ml-2 flex-1">
-                            <div className="grid gap-1" style={{ gridTemplateColumns: rightLayout.templateColumns, minWidth: rightLayout.minWidth, width: '100%' }}>
-                              {group.scenarios.map((scenario, scenarioIndex) => {
-                                if (!visibleRankIndices.length && !hasEnergy) {
-                                  return (
-                                    <div key={`${scenario.name}-fallback`} className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} flex items-center justify-center rounded-xl bg-background/70 px-3 py-1 text-foreground`}>
-                                      {MISSING_STR}
-                                    </div>
-                                  )
-                                }
-
-                                return (
-                                  <Fragment key={`${scenario.name}-right`}>
-                                    {visibleRankIndices.map(rankIndex => {
-                                      const rank = rankDefs[rankIndex]
-                                      const fill = cellFill(rankIndex, scenario.score, scenario.thresholds)
-                                      const fillColor = computeFillColor(scenario.scenarioRank, rankDefs)
-                                      const value = scenario.thresholds?.[rankIndex + 1]
-
-                                      return (
-                                        <div key={`${scenario.name}-${rank.name}-${rankIndex}`} className={`${compactMode ? 'text-[10px]' : 'text-[12px]'} relative flex items-center justify-center overflow-hidden rounded-xl bg-background/70 px-3 text-center`}>
-                                          <div
-                                            className="absolute inset-y-0 left-0 rounded-l"
-                                            style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }}
-                                          />
-                                          <span className={`relative w-full ${compactMode ? 'py-0.5' : 'py-1'} flex items-center justify-center text-foreground`}>
-                                            {value != null ? formatNumber(value, 0) : MISSING_STR}
-                                          </span>
-                                        </div>
-                                      )
-                                    })}
-
-                                    {hasEnergy && (
-                                      scenario.energy == null && group.energy != null
-                                        ? (
-                                          scenarioIndex === 0 ? (
-                                            <div className="flex items-center justify-center text-[12px] text-foreground" style={{ gridRow: `span ${group.scenarios.length}` }}>
-                                              {formatNumber(Number(group.energy), 0)}
-                                            </div>
-                                          ) : null
-                                        ) : (
-                                          <div className="flex items-center justify-center text-[12px] text-foreground">
-                                            {scenario.energy != null ? formatNumber(Number(scenario.energy), 0) : MISSING_STR}
-                                          </div>
-                                        )
-                                    )}
-                                  </Fragment>
-                                )
-                              })}
-                            </div>
-                          </div>
+                            return (
+                              <ScenarioInfoRow
+                                key={scenario.name}
+                                scenarioName={scenario.name}
+                                score={scenario.score || 0}
+                                gridTemplate={infoGridTemplate}
+                                cls={cls}
+                                showNotesCol={showNotesCol}
+                                showRecCol={showRecCol}
+                                showPlayCol={showPlayCol}
+                                showHistoryCol={showHistoryCol}
+                                hasSavedNote={hasSavedNote}
+                                recommendation={recommendation}
+                                isTopPick={isTopPick(scenario.name)}
+                                completed={completed}
+                                onNotes={() => openNotes(scenario.name)}
+                                onHistory={() => openHistory(scenario.name)}
+                                onPlay={() => launchScenario(scenario.name, 'challenge').catch(() => { })}
+                              />
+                            )
+                          })}
                         </div>
-                      )
-                    })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div
+          className="pointer-events-auto absolute bottom-0 right-0 top-0 z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          style={{ left: rightPanelOffset }}
+        >
+          <div className="min-h-full min-w-full w-max space-y-3 pb-4 pr-2">
+            <div className="relative mb-3 min-w-full border border-transparent py-2 pr-1">
+              <div className="flex h-[28px] items-center">
+                <div className="flex-1">
+                  <div className="grid h-[28px] items-center gap-1" style={{ gridTemplateColumns: rightGridTemplate, minWidth: rightGridMinWidth, width: '100%' }}>
+                    {hasVisibleRanks ? visibleRanks.map((rank, index) => (
+                      <div
+                        key={`${rank.name}-${visibleRankIndices[index]}`}
+                        className="text-center text-[11px] uppercase tracking-wide"
+                        style={{ color: rank.color || 'hsl(var(--muted-foreground))' }}
+                      >
+                        {rank.name}
+                      </div>
+                    )) : (
+                      <div className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">Details</div>
+                    )}
                   </div>
                 </div>
               </div>
-            )
-          })}
+            </div>
+
+            {categories.map(category => (
+              <div key={`${category.name}-right`} className={`min-w-full border border-transparent pr-1 ${categoryPaddingClass}`}>
+                <div className="flex">
+                  <div className={`w-full flex-1 ${categorySpacingClass}`}>
+                    {category.groups.map((group, groupIndex) => (
+                      <div key={`${category.name}-${groupIndex}-right`} className="relative flex">
+                        <div className="flex-1">
+                          <div className={rowSpacingClass}>
+                            {group.scenarios.map(scenario => (
+                              <ScenarioRankCells
+                                key={`${scenario.name}-ranks`}
+                                scenarioName={scenario.name}
+                                score={scenario.score || 0}
+                                scenarioRank={scenario.scenarioRank}
+                                thresholds={scenario.thresholds || []}
+                                rankDefs={rankDefs}
+                                visibleRankIndices={visibleRankIndices}
+                                hasVisibleRanks={hasVisibleRanks}
+                                rightGridTemplate={rightGridTemplate}
+                                rightGridMinWidth={rightGridMinWidth}
+                                cls={cls}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -463,10 +393,22 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-foreground">Feature Columns</h4>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="inline-flex items-center gap-2 text-sm text-foreground"><Checkbox checked={showNotesCol} onCheckedChange={value => setShowNotesCol(Boolean(value))} /> Notes</label>
-              <label className="inline-flex items-center gap-2 text-sm text-foreground"><Checkbox checked={showRecCol} onCheckedChange={value => setShowRecCol(Boolean(value))} /> Recommendations</label>
-              <label className="inline-flex items-center gap-2 text-sm text-foreground"><Checkbox checked={showPlayCol} onCheckedChange={value => setShowPlayCol(Boolean(value))} /> Play</label>
-              <label className="inline-flex items-center gap-2 text-sm text-foreground"><Checkbox checked={showHistoryCol} onCheckedChange={value => setShowHistoryCol(Boolean(value))} /> History</label>
+              <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                <Checkbox checked={showNotesCol} onCheckedChange={value => setShowNotesCol(Boolean(value))} />
+                Notes
+              </label>
+              <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                <Checkbox checked={showRecCol} onCheckedChange={value => setShowRecCol(Boolean(value))} />
+                Recommendations
+              </label>
+              <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                <Checkbox checked={showPlayCol} onCheckedChange={value => setShowPlayCol(Boolean(value))} />
+                Play
+              </label>
+              <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                <Checkbox checked={showHistoryCol} onCheckedChange={value => setShowHistoryCol(Boolean(value))} />
+                History
+              </label>
             </div>
           </div>
 
@@ -485,7 +427,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: Math.max(9, rankDefs.length) }, (_, index) => index + 1).map(count => (
+                    {rankVisibilityOptions.map(count => (
                       <SelectItem key={count} value={String(count)}>{count}</SelectItem>
                     ))}
                   </SelectContent>
@@ -500,17 +442,18 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
                 const hiddenManually = manuallyHidden.has(index)
                 const hiddenAutomatically = autoHidden.has(index)
                 const visible = !(hiddenManually || hiddenAutomatically)
+
                 return (
                   <button
                     type="button"
                     key={`${rank.name}-${index}`}
                     disabled={hiddenAutomatically}
                     onClick={() => toggleManualRank(index)}
-                    className={`rounded-xl border px-2.5 py-1 text-xs font-medium transition-colors ${visible
-                      ? 'border-primary/40 bg-primary/15 text-primary'
-                      : 'border-border bg-card text-muted-foreground'} ${hiddenAutomatically ? 'cursor-not-allowed opacity-50' : 'hover:bg-muted'}`}
-                    style={rank.color ? { color: visible ? rank.color : undefined, borderColor: visible ? rank.color : undefined } : undefined}
-                    title={hiddenAutomatically ? 'Hidden automatically (all scenarios are past this rank)' : undefined}
+                    className={visible
+                      ? 'rounded-xl border border-primary/40 bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-muted'
+                      : 'rounded-xl border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50'}
+                    style={rank.color && visible ? { color: rank.color, borderColor: rank.color } : undefined}
+                    title={hiddenAutomatically ? 'Hidden automatically because every scenario is already past this rank' : undefined}
                   >
                     {rank.name}
                   </button>
@@ -538,3 +481,5 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
     </section>
   )
 }
+
+export default BenchmarkProgressTable
