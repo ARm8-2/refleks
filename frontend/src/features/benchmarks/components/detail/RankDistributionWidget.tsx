@@ -119,7 +119,7 @@ export function RankDistributionWidget({ progress }: Props) {
 
   const renderBody = (expanded: boolean) => {
     if (totalScenarios === 0) {
-      return <div className="rounded-xl bg-muted/40 p-4 text-sm text-muted-foreground">No data.</div>
+      return <div className="rounded-xl bg-muted-strong p-4 text-sm text-muted-foreground">No data.</div>
     }
 
     const donutSize = expanded ? 'h-[200px] w-[200px]' : 'h-[160px] w-[160px]'
@@ -140,7 +140,7 @@ export function RankDistributionWidget({ progress }: Props) {
 
         <div className="space-y-2">
           {segments.map(segment => (
-            <div key={segment.label} className="rounded-xl bg-muted/35 px-3 py-2 text-sm">
+            <div key={segment.label} className="rounded-xl bg-muted-soft px-3 py-2 text-sm">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: segment.color }} />

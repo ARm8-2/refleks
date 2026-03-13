@@ -99,13 +99,13 @@ export function StrengthWidget({ progress }: Props) {
 
   const renderBody = (expanded: boolean) => {
     if (rows.length === 0) {
-      return <div className="rounded-xl bg-muted/40 p-4 text-sm text-muted-foreground">No data.</div>
+      return <div className="rounded-xl bg-muted-strong p-4 text-sm text-muted-foreground">No data.</div>
     }
 
     return (
       <div className={expanded ? 'space-y-3 max-h-[66vh] overflow-auto pr-1' : 'space-y-2.5 max-h-[320px] overflow-auto pr-1'}>
         {rows.map(row => (
-          <div key={row.label} className="rounded-xl bg-muted/35 p-3">
+          <div key={row.label} className="rounded-xl bg-muted-soft p-3">
             <div className="flex items-center justify-between gap-3 text-sm">
               <div className={`font-medium text-foreground truncate ${expanded ? 'text-sm' : ''}`}>{row.label}</div>
               <div className="text-xs text-muted-foreground">{row.rankName} · Avg {formatNumber(row.avgScore, 1)}</div>

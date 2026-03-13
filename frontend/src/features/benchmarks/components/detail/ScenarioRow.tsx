@@ -204,7 +204,7 @@ export function ScenarioRankCells({
         return (
           <div
             key={`${scenarioName}-${rank.name}-${rankIndex}`}
-            className={`relative flex items-center justify-center overflow-hidden rounded-md bg-background/70 px-3 text-center text-[11px] ${cls.rankCellHeightClass}`}
+            className={`relative flex items-center justify-center overflow-hidden rounded-md bg-background-panel px-3 text-center text-[11px] ${cls.rankCellHeightClass}`}
           >
             <div
               className="absolute inset-y-0 left-0"
@@ -216,7 +216,7 @@ export function ScenarioRankCells({
           </div>
         )
       }) : (
-        <div className={`flex items-center justify-center rounded-md bg-background/70 px-3 text-center text-[11px] text-muted-foreground ${cls.rankCellHeightClass}`}>
+        <div className={`flex items-center justify-center rounded-md bg-background-panel px-3 text-center text-[11px] text-muted-foreground ${cls.rankCellHeightClass}`}>
           -
         </div>
       )}

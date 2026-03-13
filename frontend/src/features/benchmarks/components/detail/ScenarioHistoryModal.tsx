@@ -68,7 +68,7 @@ export function ScenarioHistoryModal({ isOpen, onClose, scenarioName }: Props) {
         {loading && <Loading />}
 
         {!loading && error && (
-          <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+          <div className="rounded-xl border border-destructive-border bg-destructive-soft p-4 text-sm text-destructive">
             {error}
           </div>
         )}
@@ -95,7 +95,7 @@ export function ScenarioHistoryModal({ isOpen, onClose, scenarioName }: Props) {
             </div>
 
             <div className="rounded-xl border border-border bg-card p-4">
-              <div className="h-[190px] w-full overflow-hidden rounded-xl bg-muted/40 px-2 py-2">
+              <div className="h-[190px] w-full overflow-hidden rounded-xl bg-muted-strong px-2 py-2">
                 <svg viewBox="0 0 600 180" className="h-full w-full" preserveAspectRatio="none" role="img" aria-label="Score trend">
                   <defs>
                     <linearGradient id="scoreFill" x1="0" y1="0" x2="0" y2="1">

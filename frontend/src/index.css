@@ -32,6 +32,29 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
+    /* Semantic UI colors */
+    --background-panel: 220 14% 97% / 0.7;
+    --card-hover: 0 0% 100% / 0.85;
+    --muted-soft: 220 7% 93% / 0.35;
+    --muted-strong: 220 7% 93% / 0.4;
+    --border-subtle: 216 12% 84% / 0.05;
+    --border-soft: 216 12% 84% / 0.1;
+    --border-muted: 216 12% 84% / 0.2;
+    --border-strong: 216 12% 84% / 0.5;
+    --border-emphasis: 216 12% 84% / 0.7;
+    --primary-faint: 199 89% 48% / 0.1;
+    --primary-soft: 199 89% 48% / 0.15;
+    --primary-muted: 199 89% 48% / 0.2;
+    --primary-emphasis: 199 89% 48% / 0.3;
+    --primary-border: 199 89% 48% / 0.4;
+    --primary-border-strong: 199 89% 48% / 0.5;
+    --primary-hover: 199 89% 48% / 0.9;
+    --secondary-hover: 220 14% 96% / 0.8;
+    --destructive-soft: 0 84% 60% / 0.1;
+    --destructive-border: 0 84% 60% / 0.4;
+    --destructive-hover: 0 84% 60% / 0.9;
+    --overlay: 0 0% 0% / 0.8;
+
     /* App-specific semantic colors (HSL values, no function wrapper) */
     --success: 160 84% 39%;
     --warning: 38 92% 50%;
@@ -54,6 +77,7 @@
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 215 14% 14%;
+    --sidebar-foreground-muted: 215 14% 14% / 0.7;
     --sidebar-primary: 199 89% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 15% 93%;
@@ -88,6 +112,29 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
+    /* Semantic UI colors */
+    --background-panel: 220 14% 7% / 0.7;
+    --card-hover: 220 6% 10% / 0.85;
+    --muted-soft: 220 4% 13% / 0.35;
+    --muted-strong: 220 4% 13% / 0.4;
+    --border-subtle: 0 0% 20% / 0.05;
+    --border-soft: 0 0% 20% / 0.1;
+    --border-muted: 0 0% 20% / 0.2;
+    --border-strong: 0 0% 20% / 0.5;
+    --border-emphasis: 0 0% 20% / 0.7;
+    --primary-faint: 217 91% 60% / 0.1;
+    --primary-soft: 217 91% 60% / 0.15;
+    --primary-muted: 217 91% 60% / 0.2;
+    --primary-emphasis: 217 91% 60% / 0.3;
+    --primary-border: 217 91% 60% / 0.4;
+    --primary-border-strong: 217 91% 60% / 0.5;
+    --primary-hover: 217 91% 60% / 0.9;
+    --secondary-hover: 220 6% 13% / 0.8;
+    --destructive-soft: 0 84% 60% / 0.1;
+    --destructive-border: 0 84% 60% / 0.4;
+    --destructive-hover: 0 84% 60% / 0.9;
+    --overlay: 0 0% 0% / 0.8;
+
     /* Scrollbar (dark overrides) */
     --scrollbar-thumb: rgba(255, 255, 255, 0.08);
     --scrollbar-thumb-hover: rgba(255, 255, 255, 0.16);
@@ -96,6 +143,7 @@
     /* Sidebar */
     --sidebar-background: 220 6% 10%;
     --sidebar-foreground: 0 0% 90%;
+    --sidebar-foreground-muted: 0 0% 90% / 0.7;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 20%;

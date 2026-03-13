@@ -24,8 +24,8 @@ export function Modal({
   title,
   children,
   headerControls,
-  width,
-  height,
+  width = '90%',
+  height = '90%',
   className = '',
 }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null)

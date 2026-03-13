@@ -43,7 +43,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             )}
             <div className="flex gap-2">
               <button
-                className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90"
+                className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-sm hover:bg-primary-hover"
                 onClick={() => window.location.reload()}
               >
                 Reload

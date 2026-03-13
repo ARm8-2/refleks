@@ -1,4 +1,8 @@
 import { BenchmarkOverviewWidget } from '../components/BenchmarkOverviewWidget'
+import {
+  CurrentScenarioAttemptsWidget,
+  CurrentScenarioSessionAverageWidget,
+} from '../components/CurrentScenarioTrendWidgets'
 
 export function OverviewPage() {
   return (
@@ -10,14 +14,9 @@ export function OverviewPage() {
       <div className="grid min-w-0 gap-6 p-6">
         <BenchmarkOverviewWidget />
 
-        <div className="min-w-0 rounded-xl bg-card p-6">
-          <h2 className="text-lg font-medium mb-4">Recent Sessions</h2>
-          <p className="text-muted-foreground">Your recent training sessions will appear here.</p>
-        </div>
-
-        <div className="min-w-0 rounded-xl bg-card p-6">
-          <h2 className="text-lg font-medium mb-4">Quick Stats</h2>
-          <p className="text-muted-foreground">Training statistics and insights will be displayed here.</p>
+        <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-2">
+          <CurrentScenarioSessionAverageWidget />
+          <CurrentScenarioAttemptsWidget />
         </div>
       </div>
     </div>

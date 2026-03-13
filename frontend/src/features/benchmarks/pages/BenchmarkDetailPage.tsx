@@ -96,7 +96,7 @@ export function BenchmarkDetailPage() {
 
       <div className="p-6 space-y-5">
         {!benchmark && (
-          <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+          <div className="rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-sm">
             Benchmark not found.
           </div>
         )}
@@ -104,7 +104,7 @@ export function BenchmarkDetailPage() {
         {benchmark && progressLoading && <Loading />}
 
         {benchmark && !progressLoading && error && (
-          <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+          <div className="rounded-xl border border-destructive-border bg-destructive-soft p-4 text-sm text-destructive">
             {error}
           </div>
         )}
@@ -125,7 +125,7 @@ export function BenchmarkDetailPage() {
         )}
 
         {benchmark && !progressLoading && !error && !progress && (
-          <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+          <div className="rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-sm">
             No progress data available yet for this difficulty.
           </div>
         )}

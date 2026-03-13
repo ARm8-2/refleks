@@ -46,7 +46,7 @@ function ToggleChip({ label, enabled, onToggle }: { label: string; enabled: bool
       type="button"
       onClick={onToggle}
       className={enabled
-        ? 'rounded-xl border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary transition-colors'
+        ? 'rounded-xl border border-primary-border-strong bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary transition-colors'
         : 'rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
     >
       {label}
@@ -230,7 +230,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
 
       <div className="relative z-0">
         <div className="relative z-0 w-full space-y-3 pb-4">
-          <div className="relative mb-3 w-full rounded-xl border border-border/5 bg-card py-2 shadow-sm">
+          <div className="relative mb-3 w-full rounded-xl bg-card py-2 shadow-sm">
             <div className="flex items-center">
               <div className="flex h-[28px] w-[52px] shrink-0 bg-transparent pl-5" />
               <div className="flex h-[28px] w-6 shrink-0 bg-transparent" />
@@ -252,9 +252,9 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
           </div>
 
           {categories.map(category => (
-            <div key={category.name} className={`relative w-full overflow-hidden rounded-xl border border-border/5 bg-card shadow-sm ${categoryPaddingClass}`}>
+            <div key={category.name} className={`relative w-full overflow-hidden rounded-xl bg-card shadow-sm ${categoryPaddingClass}`}>
               <div className="flex">
-                <div className="flex w-[52px] shrink-0 items-center justify-center bg-transparent pl-5 py-2">
+                <div className="flex w-[52px] shrink-0 items-center justify-center bg-transparent pl-5">
                   <span
                     className={`font-semibold tracking-wide ${labelTextClass}`}
                     style={{
@@ -333,7 +333,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
           style={{ left: rightPanelOffset }}
         >
           <div className="min-h-full min-w-full w-max space-y-3 pb-4 pr-2">
-            <div className="relative mb-3 min-w-full border border-transparent py-2 pr-1">
+            <div className="relative mb-3 min-w-full py-2 pr-1">
               <div className="flex h-[28px] items-center">
                 <div className="flex-1">
                   <div className="grid h-[28px] items-center gap-1" style={{ gridTemplateColumns: rightGridTemplate, minWidth: rightGridMinWidth, width: '100%' }}>
@@ -354,7 +354,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
             </div>
 
             {categories.map(category => (
-              <div key={`${category.name}-right`} className={`min-w-full border border-transparent pr-1 ${categoryPaddingClass}`}>
+              <div key={`${category.name}-right`} className={`min-w-full pr-1 ${categoryPaddingClass}`}>
                 <div className="flex">
                   <div className={`w-full flex-1 ${categorySpacingClass}`}>
                     {category.groups.map((group, groupIndex) => (
@@ -450,7 +450,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
                     disabled={hiddenAutomatically}
                     onClick={() => toggleManualRank(index)}
                     className={visible
-                      ? 'rounded-xl border border-primary/40 bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-muted'
+                      ? 'rounded-xl border border-primary-border bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-muted'
                       : 'rounded-xl border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50'}
                     style={rank.color && visible ? { color: rank.color, borderColor: rank.color } : undefined}
                     title={hiddenAutomatically ? 'Hidden automatically because every scenario is already past this rank' : undefined}

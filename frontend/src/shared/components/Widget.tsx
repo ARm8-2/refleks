@@ -29,8 +29,8 @@ export function Widget({
   modalHeaderActions,
   modalTitle,
   modalContent,
-  modalWidth = '90%',
-  modalHeight = '90%',
+  modalWidth,
+  modalHeight,
   modalClassName,
   modalContentClassName,
 }: WidgetProps) {
@@ -54,7 +54,7 @@ export function Widget({
       <section
         className={cn(
           'rounded-xl bg-card p-5',
-          canExpand && 'cursor-pointer transition-colors hover:bg-card/85',
+          canExpand && 'cursor-pointer transition-colors hover:bg-card-hover',
           className,
         )}
         onClick={canExpand ? () => setOpen(true) : undefined}
@@ -104,7 +104,7 @@ export function Widget({
           headerControls={modalHeaderActions ?? headerActions}
           width={modalWidth}
           height={modalHeight}
-          className={cn('rounded-xl border-border/70 bg-card shadow-xl', modalClassName)}
+          className={cn('rounded-xl bg-card shadow-xl', modalClassName)}
         >
           <div className={cn('h-full min-h-0 overflow-auto px-6 pb-6', modalContentClassName)}>{modalContent}</div>
         </Modal>

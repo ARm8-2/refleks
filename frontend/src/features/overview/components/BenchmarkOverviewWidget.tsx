@@ -39,7 +39,7 @@ function ToggleChip({ label, enabled, onToggle }: { label: string; enabled: bool
       type="button"
       onClick={onToggle}
       className={enabled
-        ? 'rounded-xl border border-primary/50 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary transition-colors'
+        ? 'rounded-xl border border-primary-border-strong bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary transition-colors'
         : 'rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
     >
       {label}
@@ -207,7 +207,7 @@ export function BenchmarkOverviewWidget() {
 
   if (!benchmark) {
     return (
-      <div className="min-w-0 rounded-xl border border-border/5 bg-card px-6 py-5 shadow-sm flex items-center justify-between gap-4">
+      <div className="min-w-0 rounded-xl bg-card px-6 py-5 shadow-sm flex items-center justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold text-foreground mb-0.5">Benchmark Overview</h2>
           <p className="text-xs text-muted-foreground">No benchmark selected yet. Pick one to track your progress here.</p>
@@ -221,7 +221,7 @@ export function BenchmarkOverviewWidget() {
 
   if (!progress) {
     return (
-      <div className="min-w-0 rounded-xl border border-border/5 bg-card p-6 shadow-sm">
+      <div className="min-w-0 rounded-xl bg-card p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-foreground mb-1">
           {benchmark.abbreviation} {benchmark.benchmarkName}
         </h2>
@@ -231,9 +231,9 @@ export function BenchmarkOverviewWidget() {
   }
 
   return (
-    <div className="min-w-0 rounded-xl border border-border/5 bg-card shadow-sm overflow-hidden">
+    <div className="min-w-0 rounded-xl bg-card shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-3 pb-2.5 border-b border-border/10">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-3 pb-2.5">
         <div>
           <h2 className="text-sm font-semibold text-foreground">
             {benchmark.abbreviation} {benchmark.benchmarkName}
@@ -313,7 +313,7 @@ export function BenchmarkOverviewWidget() {
 
             {/* Divider — extends to widget edge minus matching right padding (pr-4 = pl-4 of outer container) */}
             <div className="h-[17px] flex items-center pr-4">
-              <div className="h-px w-full bg-border/20" />
+              <div className="h-px w-full bg-border" />
             </div>
 
             {/* Recommended scenarios section */}
@@ -482,7 +482,7 @@ export function BenchmarkOverviewWidget() {
                     disabled={hiddenAutomatically}
                     onClick={() => toggleManualRank(index)}
                     className={visible
-                      ? 'rounded-xl border border-primary/40 bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-muted'
+                      ? 'rounded-xl border border-primary-border bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-muted'
                       : 'rounded-xl border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50'}
                     style={rank.color && visible ? { color: rank.color, borderColor: rank.color } : undefined}
                     title={hiddenAutomatically ? 'Hidden automatically because every scenario is already past this rank' : undefined}

@@ -213,7 +213,7 @@ export function BenchmarksExplorePage() {
             <button
               onClick={() => setShowFavOnly(v => !v)}
               className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl transition-colors ${showFavOnly
-                ? 'bg-primary/20 text-primary hover:bg-primary/30'
+                ? 'bg-primary-muted text-primary hover:bg-primary-emphasis'
                 : 'bg-card text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
               title={showFavOnly ? 'Show all benchmarks' : 'Show favorites only'}
@@ -226,7 +226,7 @@ export function BenchmarksExplorePage() {
             <button
               onClick={() => setShowRecs(v => !v)}
               className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl transition-colors ${showRecs
-                ? 'bg-primary/20 text-primary hover:bg-primary/30'
+                ? 'bg-primary-muted text-primary hover:bg-primary-emphasis'
                 : 'bg-card text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
               title={showRecs ? 'Hide recommendations' : 'Show recommended benchmarks'}
@@ -249,7 +249,7 @@ export function BenchmarksExplorePage() {
                 Recommended{' '}
                 <span className="text-xs opacity-50">({recommendedBenchmarks.length})</span>
               </span>
-              <div className="h-px bg-primary/20 flex-1" />
+              <div className="h-px bg-primary-muted flex-1" />
             </div>
             <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
               {recommendedBenchmarks.map(b => (
@@ -296,7 +296,7 @@ export function BenchmarksExplorePage() {
                       {group}{' '}
                       <span className="text-xs opacity-50">({items.length})</span>
                     </span>
-                    <div className="h-px bg-primary/10 flex-1 group-hover/hdr:bg-primary/20 transition-colors" />
+                    <div className="h-px bg-primary-faint flex-1 group-hover/hdr:bg-primary-muted transition-colors" />
                   </button>
                 )}
 
