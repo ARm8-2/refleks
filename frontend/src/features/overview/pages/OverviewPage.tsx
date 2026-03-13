@@ -1,5 +1,4 @@
-
-import { OverviewScenarioWidget } from '../components/OverviewScenarioWidget'
+import { BenchmarkOverviewWidget } from '../components/BenchmarkOverviewWidget'
 
 export function OverviewPage() {
   return (
@@ -9,9 +8,7 @@ export function OverviewPage() {
       </div>
 
       <div className="grid min-w-0 gap-6 p-6">
-        <div className="min-w-0">
-          <OverviewScenarioWidget />
-        </div>
+        <BenchmarkOverviewWidget />
 
         <div className="min-w-0 rounded-xl bg-card p-6">
           <h2 className="text-lg font-medium mb-4">Recent Sessions</h2>
