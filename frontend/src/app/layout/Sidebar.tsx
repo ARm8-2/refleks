@@ -1,30 +1,121 @@
 import { Activity, HelpCircle, LayoutGrid, PanelLeft, Settings, TrendingUp } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { DISCORD_SYMBOL, KO_FI_SYMBOL } from '../../assets'
-import {
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-  Sidebar as SidebarRoot,
-  SidebarSeparator,
-  useSidebar,
-} from '../../shared/components/ui/sidebar'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../shared/components/ui/tooltip'
 import { useBenchmarks } from '../../shared/hooks'
-import { benchmarkPath, getVersion, openURL } from '../../shared/lib'
+import { benchmarkPath, cn, getVersion, openURL } from '../../shared/lib'
 
-export function Sidebar() {
+type SidebarProps = {
+  open: boolean
+  onToggle: () => void
+}
+
+type SidebarItemProps = {
+  active?: boolean
+  icon: ReactNode
+  label: string
+  onClick?: () => void
+  open: boolean
+  to?: string
+  trailing?: ReactNode
+}
+
+function SidebarItem({ active = false, icon, label, onClick, open, to, trailing }: SidebarItemProps) {
+  const collapsed = !open
+  const className = cn(
+    'flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+    active && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground',
+    collapsed && 'justify-center px-0',
+  )
+
+  const content = (
+    <>
+      <span className="flex size-[18px] shrink-0 items-center justify-center [&_svg]:size-[18px] [&_svg]:shrink-0">
+        {icon}
+      </span>
+      {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+      {!collapsed && trailing}
+    </>
+  )
+
+  const item = to ? (
+    <NavLink to={to} end={to === '/'} onClick={onClick} className={className}>
+      {content}
+    </NavLink>
+  ) : (
+    <button type="button" onClick={onClick} className={className}>
+      {content}
+    </button>
+  )
+
+  if (!collapsed) {
+    return item
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{item}</TooltipTrigger>
+      <TooltipContent side="right" align="center">
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+type SidebarFavoriteItemProps = {
+  abbreviation: string
+  active: boolean
+  color?: string
+  label: string
+  open: boolean
+  to: string
+}
+
+function SidebarFavoriteItem({ abbreviation, active, color, label, open, to }: SidebarFavoriteItemProps) {
+  const collapsed = !open
+  const pill = (
+    <span
+      className="w-[38px] rounded py-0.5 text-center text-[10px] font-semibold text-muted-foreground"
+      style={color ? { border: `1px solid ${color}`, color } : { border: '1px solid hsl(var(--sidebar-border))' }}
+    >
+      {abbreviation}
+    </span>
+  )
+
+  const item = (
+    <NavLink
+      to={to}
+      className={cn(
+        'flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+        active && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground',
+        collapsed && 'justify-center px-0',
+      )}
+    >
+      {pill}
+      {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+    </NavLink>
+  )
+
+  if (!collapsed) {
+    return item
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{item}</TooltipTrigger>
+      <TooltipContent side="right" align="center">
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+export function Sidebar({ open, onToggle }: SidebarProps) {
   const [version, setVersion] = useState('')
-  const { benchmarks, favorites, selectedBenchmark } = useBenchmarks()
+  const { benchmarks, favorites } = useBenchmarks()
   const location = useLocation()
-  const { toggleSidebar } = useSidebar()
+  const collapsed = !open
 
   const favBenchmarks = useMemo(() => {
     if (favorites.length === 0 || benchmarks.length === 0) return []
@@ -40,119 +131,98 @@ export function Sidebar() {
   }, [])
 
   return (
-    <SidebarRoot variant="inset" collapsible="icon">
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Toggle Sidebar" onClick={toggleSidebar}>
-              <PanelLeft />
-              <span className="font-semibold">RefleK's</span>
-              {version && <span className="text-xs text-muted-foreground">v{version}</span>}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+    <TooltipProvider delayDuration={0}>
+      <aside className="flex h-full min-h-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground">
+        <div className="p-2">
+          <SidebarItem
+            icon={<PanelLeft />}
+            label="RefleK's"
+            onClick={onToggle}
+            open={open}
+            trailing={version ? <span className="text-xs text-muted-foreground">v{version}</span> : null}
+          />
+        </div>
 
-      <SidebarContent className="flex flex-col h-full">
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === '/'} tooltip="Overview">
-                  <NavLink to="/" end>
-                    <LayoutGrid />
-                    <span>Overview</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname.startsWith('/history')} tooltip="History">
-                  <NavLink to="/history">
-                    <TrendingUp />
-                    <span>History</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname.startsWith('/benchmarks')} tooltip="Benchmarks">
-                  <NavLink to="/benchmarks">
-                    <Activity />
-                    <span>Benchmarks</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 pb-2">
+          <nav aria-label="Primary" className="flex flex-col gap-1">
+            <SidebarItem
+              active={location.pathname === '/'}
+              icon={<LayoutGrid />}
+              label="Overview"
+              open={open}
+              to="/"
+            />
+            <SidebarItem
+              active={location.pathname.startsWith('/history')}
+              icon={<TrendingUp />}
+              label="History"
+              open={open}
+              to="/history"
+            />
+            <SidebarItem
+              active={location.pathname.startsWith('/benchmarks')}
+              icon={<Activity />}
+              label="Benchmarks"
+              open={open}
+              to="/benchmarks"
+            />
+          </nav>
 
-        {favBenchmarks.length > 0 && (
-          <div className="mt-auto">
-            <SidebarGroup>
-              <SidebarGroupLabel>Favorites</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className="pl-1">
-                  {favBenchmarks.map(b => (
-                    <SidebarMenuItem key={b.benchmarkName} className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-                      <SidebarMenuButton
-                        asChild
-                        isActive={selectedBenchmark === b.benchmarkName}
-                        tooltip={b.benchmarkName}
-                        size="sm"
-                        className="group-data-[collapsible=icon]:!h-auto group-data-[collapsible=icon]:!w-auto group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:!overflow-visible group-data-[collapsible=icon]:!rounded group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:mx-auto"
-                      >
-                        <NavLink to={benchmarkPath(b.benchmarkName)}>
-                          <span
-                            className="w-[38px] py-0.5 rounded text-[10px] font-semibold border border-sidebar-border text-muted-foreground text-center shrink-0 overflow-hidden"
-                            style={b.color ? { borderColor: b.color, color: b.color } : undefined}
-                          >
-                            {b.abbreviation}
-                          </span>
-                          <span className="truncate group-data-[collapsible=icon]:hidden">{b.benchmarkName}</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+          {favBenchmarks.length > 0 && (
+            <section className="mt-auto flex flex-col gap-2 pt-4">
+              <div className="h-px" />
+              {!collapsed && <p className="px-2 text-xs font-medium text-sidebar-foreground-muted">Favorites</p>}
+              <div className="flex flex-col gap-1">
+                {favBenchmarks.map(benchmark => {
+                  const path = benchmarkPath(benchmark.benchmarkName)
 
-            <SidebarSeparator/>
-          </div>
-        )}
-      </SidebarContent>
+                  return (
+                    <SidebarFavoriteItem
+                      key={benchmark.benchmarkName}
+                      abbreviation={benchmark.abbreviation}
+                      active={location.pathname === path}
+                      color={benchmark.color}
+                      label={benchmark.benchmarkName}
+                      open={open}
+                      to={path}
+                    />
+                  )
+                })}
+              </div>
+            </section>
+          )}
+        </div>
 
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Discord" onClick={() => openURL('https://discord.gg/SFsf4GQhJU')}>
-              <img src={DISCORD_SYMBOL} alt="" className="size-[18px] shrink-0" />
-              <span>Discord</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Help" onClick={() => openURL('https://refleks-app.com/home/#support')}>
-              <HelpCircle />
-              <span>Help</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Support" onClick={() => openURL('https://ko-fi.com/arm8_')}>
-              <img src={KO_FI_SYMBOL} alt="" className="size-[18px] shrink-0" />
-              <span>Support</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={location.pathname === '/settings'} tooltip="Settings">
-              <NavLink to="/settings">
-                <Settings />
-                <span>Settings</span>
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-
-      <SidebarRail />
-    </SidebarRoot>
+        <div className="border-t border-sidebar-border p-2">
+          <nav aria-label="Secondary" className="flex flex-col gap-1">
+            <SidebarItem
+              icon={<img src={DISCORD_SYMBOL} alt="" className="size-[18px] shrink-0" />}
+              label="Discord"
+              onClick={() => openURL('https://discord.gg/SFsf4GQhJU')}
+              open={open}
+            />
+            <SidebarItem
+              icon={<HelpCircle />}
+              label="Help"
+              onClick={() => openURL('https://refleks-app.com/home/#support')}
+              open={open}
+            />
+            <SidebarItem
+              icon={<img src={KO_FI_SYMBOL} alt="" className="size-[18px] shrink-0" />}
+              label="Support"
+              onClick={() => openURL('https://ko-fi.com/arm8_')}
+              open={open}
+            />
+            <SidebarItem
+              active={location.pathname === '/settings'}
+              icon={<Settings />}
+              label="Settings"
+              open={open}
+              to="/settings"
+            />
+          </nav>
+        </div>
+      </aside>
+    </TooltipProvider>
   )
 }
