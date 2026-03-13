@@ -90,19 +90,19 @@ export function Sidebar() {
             <SidebarGroup>
               <SidebarGroupLabel>Favorites</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarMenu className="pl-1">
                   {favBenchmarks.map(b => (
-                    <SidebarMenuItem key={b.benchmarkName}>
+                    <SidebarMenuItem key={b.benchmarkName} className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
                       <SidebarMenuButton
                         asChild
                         isActive={selectedBenchmark === b.benchmarkName}
                         tooltip={b.benchmarkName}
                         size="sm"
-                        className="group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:mx-auto"
+                        className="group-data-[collapsible=icon]:!h-auto group-data-[collapsible=icon]:!w-auto group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:!overflow-visible group-data-[collapsible=icon]:!rounded group-data-[collapsible=icon]:!justify-center group-data-[collapsible=icon]:mx-auto"
                       >
                         <NavLink to={benchmarkPath(b.benchmarkName)}>
                           <span
-                            className="w-[38px] group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)*0.8)] group-data-[collapsible=icon]:max-w-full py-0.5 rounded text-[10px] font-semibold border border-sidebar-border text-muted-foreground text-center shrink-0 overflow-hidden"
+                            className="w-[38px] py-0.5 rounded text-[10px] font-semibold border border-sidebar-border text-muted-foreground text-center shrink-0 overflow-hidden"
                             style={b.color ? { borderColor: b.color, color: b.color } : undefined}
                           >
                             {b.abbreviation}
@@ -116,7 +116,7 @@ export function Sidebar() {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            <SidebarSeparator />
+            <SidebarSeparator/>
           </div>
         )}
       </SidebarContent>
@@ -125,7 +125,7 @@ export function Sidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Discord" onClick={() => openURL('https://discord.gg/SFsf4GQhJU')}>
-              <img src={DISCORD_SYMBOL} alt="" className="size-4 shrink-0" />
+              <img src={DISCORD_SYMBOL} alt="" className="size-[18px] shrink-0" />
               <span>Discord</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -137,7 +137,7 @@ export function Sidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Support" onClick={() => openURL('https://ko-fi.com/arm8_')}>
-              <img src={KO_FI_SYMBOL} alt="" className="size-4 shrink-0" />
+              <img src={KO_FI_SYMBOL} alt="" className="size-[18px] shrink-0" />
               <span>Support</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
