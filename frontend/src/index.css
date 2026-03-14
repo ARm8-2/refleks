@@ -7,7 +7,7 @@
     --radius: 0.5rem;
 
     /* ── Light theme (default) ─────────────────────────────────── */
-    --background: #f6f7f8;
+    --background: #f7f7f7;
     --foreground: #1f2329;
     --card: #ffffff;
     --card-foreground: #1f2329;
@@ -87,7 +87,7 @@
   }
 
   .dark {
-    --background: #0f1114;
+    --background: #111111;
     --foreground: #e6e6e6;
     --card: #18191b;
     --card-foreground: #e6e6e6;
@@ -99,7 +99,7 @@
     --secondary-foreground: #b0b0b0;
     --muted: #202122;
     --muted-foreground: #b0b0b0;
-    --accent: #333333;
+    --accent: #252525;
     --accent-foreground: #e6e6e6;
     --destructive: #ef4343;
     --destructive-foreground: #ffffff;
