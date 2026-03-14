@@ -99,13 +99,13 @@ export function StrengthWidget({ progress }: Props) {
 
   const renderBody = (expanded: boolean) => {
     if (rows.length === 0) {
-      return <div className="rounded-xl bg-muted-strong p-4 text-sm text-muted-foreground">No data.</div>
+      return <div className="rounded-xl bg-secondary p-4 text-sm text-muted-foreground">No data.</div>
     }
 
     return (
-      <div className={expanded ? 'space-y-3 max-h-[66vh] overflow-auto pr-1' : 'space-y-2.5 max-h-[320px] overflow-auto pr-1'}>
+      <div className={expanded ? 'space-y-3 overflow-auto pr-1' : 'space-y-2.5 max-h-[320px] overflow-auto pr-1'}>
         {rows.map(row => (
-          <div key={row.label} className="rounded-xl bg-muted-soft p-3">
+          <div key={row.label} className="rounded-xl bg-secondary p-3">
             <div className="flex items-center justify-between gap-3 text-sm">
               <div className={`font-medium text-foreground truncate ${expanded ? 'text-sm' : ''}`}>{row.label}</div>
               <div className="text-xs text-muted-foreground">{row.rankName} · Avg {formatNumber(row.avgScore, 1)}</div>
@@ -131,7 +131,7 @@ export function StrengthWidget({ progress }: Props) {
       description={`${levelLabel}-level progress toward max rank.`}
       headerActions={(
         <Select value={level} onValueChange={value => setLevel(value as StrengthLevel)}>
-          <SelectTrigger className="h-8 min-w-[130px] w-auto px-2 text-xs">
+          <SelectTrigger className="h-8 min-w-[130px] w-auto px-2 text-xs bg-secondary">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
