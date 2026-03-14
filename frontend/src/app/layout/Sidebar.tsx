@@ -76,8 +76,8 @@ function SidebarFavoriteItem({ abbreviation, active, color, label, open, to }: S
   const collapsed = !open
   const pill = (
     <span
-      className="w-[38px] rounded py-0.5 text-center text-[10px] font-semibold text-muted-foreground"
-      style={color ? { border: `1px solid ${color}`, color } : { border: '1px solid hsl(var(--sidebar-border))' }}
+      className="w-[38px] rounded border border-sidebar-border py-0.5 text-center text-[10px] font-semibold text-muted-foreground"
+      style={color ? { borderColor: color, color } : undefined}
     >
       {abbreviation}
     </span>

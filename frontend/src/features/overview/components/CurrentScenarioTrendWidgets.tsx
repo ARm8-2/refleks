@@ -9,14 +9,14 @@ import { TrendPoint, useCurrentScenarioHistory } from '../hooks/useCurrentScenar
 const sessionAverageChartConfig: ChartConfig = {
   score: {
     label: 'Average score',
-    color: 'hsl(var(--chart-1))',
+    color: 'var(--chart-1)',
   },
 }
 
 const attemptChartConfig: ChartConfig = {
   score: {
     label: 'Score',
-    color: 'hsl(var(--chart-2))',
+    color: 'var(--chart-2)',
   },
 }
 

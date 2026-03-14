@@ -256,9 +256,9 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
               <div className="flex">
                 <div className="flex w-[52px] shrink-0 items-center justify-center bg-transparent pl-5">
                   <span
-                    className={`font-semibold tracking-wide ${labelTextClass}`}
+                    className={`font-semibold tracking-wide text-foreground ${labelTextClass}`}
                     style={{
-                      color: category.color || 'hsl(var(--foreground))',
+                      ...(category.color ? { color: category.color } : {}),
                       writingMode: 'vertical-rl',
                       transform: 'rotate(180deg)',
                     }}
@@ -273,9 +273,9 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
                       <div className="flex w-6 shrink-0 items-center justify-center bg-transparent pr-2">
                         {group.name ? (
                           <span
-                            className={`font-semibold tracking-wide ${labelTextClass}`}
+                            className={`font-semibold tracking-wide text-foreground ${labelTextClass}`}
                             style={{
-                              color: group.color || 'hsl(var(--foreground))',
+                              ...(group.color ? { color: group.color } : {}),
                               writingMode: 'vertical-rl',
                               transform: 'rotate(180deg)',
                             }}
@@ -340,8 +340,8 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
                     {hasVisibleRanks ? visibleRanks.map((rank, index) => (
                       <div
                         key={`${rank.name}-${visibleRankIndices[index]}`}
-                        className="text-center text-[11px] uppercase tracking-wide"
-                        style={{ color: rank.color || 'hsl(var(--muted-foreground))' }}
+                        className="text-center text-[11px] uppercase tracking-wide text-muted-foreground"
+                        style={rank.color ? { color: rank.color } : undefined}
                       >
                         {rank.name}
                       </div>

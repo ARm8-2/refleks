@@ -361,8 +361,8 @@ export function BenchmarkOverviewWidget() {
                 return (
                   <div
                     key={`${rank.name}-${rankIndex}`}
-                    className="text-center text-[11px] uppercase tracking-wide"
-                    style={{ color: rank.color || 'hsl(var(--muted-foreground))' }}
+                    className="text-center text-[11px] uppercase tracking-wide text-muted-foreground"
+                    style={rank.color ? { color: rank.color } : undefined}
                   >
                     {rank.name}
                   </div>

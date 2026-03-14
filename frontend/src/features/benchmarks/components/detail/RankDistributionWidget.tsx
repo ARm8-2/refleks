@@ -18,7 +18,7 @@ type Segment = {
 type ScopeLevel = 'all' | 'category' | 'subcategory'
 
 function buildConicGradient(segments: Segment[]): string {
-  if (!segments.length) return 'hsl(var(--muted))'
+  if (!segments.length) return 'var(--muted)'
 
   let cursor = 0
   const stops = segments
@@ -87,7 +87,7 @@ export function RankDistributionWidget({ progress }: Props) {
       counts.push({
         label: 'Below R1',
         count: belowR1,
-        color: 'hsl(var(--muted-foreground))',
+        color: 'var(--muted-foreground)',
         percent: 0,
       })
     }
@@ -96,7 +96,7 @@ export function RankDistributionWidget({ progress }: Props) {
       counts.push({
         label: rank.name,
         count: rankCounts[index],
-        color: rank.color || 'hsl(var(--primary))',
+        color: rank.color || 'var(--primary)',
         percent: 0,
       })
     })

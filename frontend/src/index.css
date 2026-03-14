@@ -7,58 +7,58 @@
     --radius: 0.5rem;
 
     /* ── Light theme (default) ─────────────────────────────────── */
-    --background: 220 14% 97%;
-    --foreground: 215 14% 14%;
-    --card: 0 0% 100%;
-    --card-foreground: 215 14% 14%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 14% 14%;
-    --primary: 199 89% 48%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 215 6% 42%;
-    --muted: 220 7% 93%;
-    --muted-foreground: 215 6% 58%;
-    --accent: 210 15% 93%;
-    --accent-foreground: 215 14% 14%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 216 12% 84%;
-    --input: 216 12% 84%;
-    --ring: 199 89% 48%;
-    --chart-1: 199 89% 48%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 37 91% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: #f6f7f8;
+    --foreground: #1f2329;
+    --card: #ffffff;
+    --card-foreground: #1f2329;
+    --popover: #ffffff;
+    --popover-foreground: #1f2329;
+    --primary: #0da2e7;
+    --primary-foreground: #ffffff;
+    --secondary: #f3f4f6;
+    --secondary-foreground: #656a72;
+    --muted: #ecedee;
+    --muted-foreground: #8d939a;
+    --accent: #eaedf0;
+    --accent-foreground: #1f2329;
+    --destructive: #ef4343;
+    --destructive-foreground: #ffffff;
+    --border: #d1d5db;
+    --input: #d1d5db;
+    --ring: #0da2e7;
+    --chart-1: #0da2e7;
+    --chart-2: #2eb88a;
+    --chart-3: #f5a524;
+    --chart-4: #af57db;
+    --chart-5: #e23670;
 
     /* Semantic UI colors */
-    --background-panel: 220 14% 97% / 0.7;
-    --card-hover: 0 0% 100% / 0.85;
-    --muted-soft: 220 7% 93% / 0.35;
-    --muted-strong: 220 7% 93% / 0.4;
-    --border-subtle: 216 12% 84% / 0.05;
-    --border-soft: 216 12% 84% / 0.1;
-    --border-muted: 216 12% 84% / 0.2;
-    --border-strong: 216 12% 84% / 0.5;
-    --border-emphasis: 216 12% 84% / 0.7;
-    --primary-faint: 199 89% 48% / 0.1;
-    --primary-soft: 199 89% 48% / 0.15;
-    --primary-muted: 199 89% 48% / 0.2;
-    --primary-emphasis: 199 89% 48% / 0.3;
-    --primary-border: 199 89% 48% / 0.4;
-    --primary-border-strong: 199 89% 48% / 0.5;
-    --primary-hover: 199 89% 48% / 0.9;
-    --secondary-hover: 220 14% 96% / 0.8;
-    --destructive-soft: 0 84% 60% / 0.1;
-    --destructive-border: 0 84% 60% / 0.4;
-    --destructive-hover: 0 84% 60% / 0.9;
-    --overlay: 0 0% 0% / 0.8;
+    --background-panel: #f6f7f8b3;
+    --card-hover: #ffffffd9;
+    --muted-soft: #ecedee59;
+    --muted-strong: #ecedee66;
+    --border-subtle: #d1d5db0d;
+    --border-soft: #d1d5db1a;
+    --border-muted: #d1d5db33;
+    --border-strong: #d1d5db80;
+    --border-emphasis: #d1d5dbb3;
+    --primary-faint: #0da2e71a;
+    --primary-soft: #0da2e726;
+    --primary-muted: #0da2e733;
+    --primary-emphasis: #0da2e74d;
+    --primary-border: #0da2e766;
+    --primary-border-strong: #0da2e780;
+    --primary-hover: #0da2e7e6;
+    --secondary-hover: #f3f4f6cc;
+    --destructive-soft: #ef43431a;
+    --destructive-border: #ef434366;
+    --destructive-hover: #ef4343e6;
+    --overlay: #000000cc;
 
-    /* App-specific semantic colors (HSL values, no function wrapper) */
-    --success: 160 84% 39%;
-    --warning: 38 92% 50%;
-    --streak: 25 95% 53%;
+    /* App-specific semantic colors */
+    --success: #10b77f;
+    --warning: #f59f0a;
+    --streak: #f97415;
 
     /* Fonts */
     --font-stack-montserrat: "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -69,96 +69,96 @@
 
     /* Scrollbar */
     --scrollbar-size: 10px;
-    --scrollbar-track: transparent;
-    --scrollbar-thumb: rgba(0, 0, 0, 0.15);
-    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
-    --scrollbar-thumb-active: rgba(0, 0, 0, 0.35);
+    --scrollbar-track: #00000000;
+    --scrollbar-thumb: #00000026;
+    --scrollbar-thumb-hover: #00000040;
+    --scrollbar-thumb-active: #00000059;
 
     /* Sidebar */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 14% 14%;
-    --sidebar-foreground-muted: 215 14% 14% / 0.7;
-    --sidebar-primary: 199 89% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 15% 93%;
-    --sidebar-accent-foreground: 215 14% 14%;
-    --sidebar-border: 216 12% 84%;
-    --sidebar-ring: 199 89% 48%;
+    --sidebar-background: #ffffff;
+    --sidebar-foreground: #1f2329;
+    --sidebar-foreground-muted: #1f2329b3;
+    --sidebar-primary: #0da2e7;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #eaedf0;
+    --sidebar-accent-foreground: #1f2329;
+    --sidebar-border: #d1d5db;
+    --sidebar-ring: #0da2e7;
   }
 
   .dark {
-    --background: 220 14% 7%;
-    --foreground: 0 0% 90%;
-    --card: 220 6% 10%;
-    --card-foreground: 0 0% 90%;
-    --popover: 220 4% 13%;
-    --popover-foreground: 0 0% 90%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 6% 13%;
-    --secondary-foreground: 0 0% 69%;
-    --muted: 220 4% 13%;
-    --muted-foreground: 0 0% 69%;
-    --accent: 0 0% 20%;
-    --accent-foreground: 0 0% 90%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 217 91% 69%;
-    --chart-1: 217 91% 60%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 37 91% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: #0f1114;
+    --foreground: #e6e6e6;
+    --card: #18191b;
+    --card-foreground: #e6e6e6;
+    --popover: #202122;
+    --popover-foreground: #e6e6e6;
+    --primary: #3c83f6;
+    --primary-foreground: #ffffff;
+    --secondary: #1f2023;
+    --secondary-foreground: #b0b0b0;
+    --muted: #202122;
+    --muted-foreground: #b0b0b0;
+    --accent: #333333;
+    --accent-foreground: #e6e6e6;
+    --destructive: #ef4343;
+    --destructive-foreground: #ffffff;
+    --border: #333333;
+    --input: #333333;
+    --ring: #689ff8;
+    --chart-1: #3c83f6;
+    --chart-2: #2eb88a;
+    --chart-3: #f5a524;
+    --chart-4: #af57db;
+    --chart-5: #e23670;
 
     /* Semantic UI colors */
-    --background-panel: 220 14% 7% / 0.7;
-    --card-hover: 220 6% 10% / 0.85;
-    --muted-soft: 220 4% 13% / 0.35;
-    --muted-strong: 220 4% 13% / 0.4;
-    --border-subtle: 0 0% 20% / 0.05;
-    --border-soft: 0 0% 20% / 0.1;
-    --border-muted: 0 0% 20% / 0.2;
-    --border-strong: 0 0% 20% / 0.5;
-    --border-emphasis: 0 0% 20% / 0.7;
-    --primary-faint: 217 91% 60% / 0.1;
-    --primary-soft: 217 91% 60% / 0.15;
-    --primary-muted: 217 91% 60% / 0.2;
-    --primary-emphasis: 217 91% 60% / 0.3;
-    --primary-border: 217 91% 60% / 0.4;
-    --primary-border-strong: 217 91% 60% / 0.5;
-    --primary-hover: 217 91% 60% / 0.9;
-    --secondary-hover: 220 6% 13% / 0.8;
-    --destructive-soft: 0 84% 60% / 0.1;
-    --destructive-border: 0 84% 60% / 0.4;
-    --destructive-hover: 0 84% 60% / 0.9;
-    --overlay: 0 0% 0% / 0.8;
+    --background-panel: #0f1114b3;
+    --card-hover: #18191bd9;
+    --muted-soft: #20212259;
+    --muted-strong: #20212266;
+    --border-subtle: #3333330d;
+    --border-soft: #3333331a;
+    --border-muted: #33333333;
+    --border-strong: #33333380;
+    --border-emphasis: #333333b3;
+    --primary-faint: #3c83f61a;
+    --primary-soft: #3c83f626;
+    --primary-muted: #3c83f633;
+    --primary-emphasis: #3c83f64d;
+    --primary-border: #3c83f666;
+    --primary-border-strong: #3c83f680;
+    --primary-hover: #3c83f6e6;
+    --secondary-hover: #1f2023cc;
+    --destructive-soft: #ef43431a;
+    --destructive-border: #ef434366;
+    --destructive-hover: #ef4343e6;
+    --overlay: #000000cc;
 
     /* Scrollbar (dark overrides) */
-    --scrollbar-thumb: rgba(255, 255, 255, 0.08);
-    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.16);
-    --scrollbar-thumb-active: rgba(255, 255, 255, 0.24);
+    --scrollbar-thumb: #ffffff14;
+    --scrollbar-thumb-hover: #ffffff29;
+    --scrollbar-thumb-active: #ffffff3d;
 
     /* Sidebar */
-    --sidebar-background: 220 6% 10%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-foreground-muted: 0 0% 90% / 0.7;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 20%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 217 91% 69%;
+    --sidebar-background: #18191b;
+    --sidebar-foreground: #e6e6e6;
+    --sidebar-foreground-muted: #e6e6e6b3;
+    --sidebar-primary: #3c83f6;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #333333;
+    --sidebar-accent-foreground: #e6e6e6;
+    --sidebar-border: #333333;
+    --sidebar-ring: #689ff8;
   }
 
   * {
-    border-color: hsl(var(--border));
+    border-color: var(--border);
   }
 
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background-color: var(--background);
+    color: var(--foreground);
   }
 
   *,

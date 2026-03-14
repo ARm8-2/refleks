@@ -44,7 +44,7 @@ export function StrengthWidget({ progress }: Props) {
         label,
         percent,
         avgScore,
-        color: rankDefs[rankIndex]?.color || color || 'hsl(var(--primary))',
+        color: rankDefs[rankIndex]?.color || color || 'var(--primary)',
         rankName: rankDefs[rankIndex]?.name || 'Unranked',
       }
     }
@@ -55,7 +55,7 @@ export function StrengthWidget({ progress }: Props) {
         data.push(
           buildRow(
             category.name,
-            category.color || 'hsl(var(--primary))',
+            category.color || 'var(--primary)',
             category.groups.flatMap(group => group.scenarios),
           ),
         )
@@ -66,7 +66,7 @@ export function StrengthWidget({ progress }: Props) {
           data.push(
             buildRow(
               group.name ? `${category.name}: ${group.name}` : category.name,
-              group.color || category.color || 'hsl(var(--primary))',
+              group.color || category.color || 'var(--primary)',
               group.scenarios,
             ),
           )
@@ -79,7 +79,7 @@ export function StrengthWidget({ progress }: Props) {
             data.push(
               buildRow(
                 scenario.name,
-                category.color || 'hsl(var(--primary))',
+                category.color || 'var(--primary)',
                 [scenario],
               ),
             )

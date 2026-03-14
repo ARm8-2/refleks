@@ -29,7 +29,7 @@ export function getScenarioName(input: ScenarioRecord | { fileName?: string; sta
 export function computeFillColor(
   achievedRank: number | undefined | null,
   rankDefs: Array<{ color?: string }>,
-  fallback = 'hsl(var(--muted-foreground))',
+  fallback = 'var(--muted-foreground)',
 ): string {
   const achieved = Number(achievedRank || 0)
   if (!achieved || achieved <= 0) return fallback
