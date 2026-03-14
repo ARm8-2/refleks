@@ -102,7 +102,7 @@ function readScenarioScore(item: { stats?: Record<string, unknown> }): number {
 }
 
 function readScenarioTimestamp(item: { stats?: Record<string, unknown> }): number {
-  const raw = item.stats?.['Challenge Start']
+  const raw = item.stats?.['Date Played']
   if (!raw) return 0
 
   const timestamp = Date.parse(String(raw))

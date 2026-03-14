@@ -187,7 +187,7 @@ function groupSessions(items: ScenarioRecord[], gapMinutes = 30, notes: Record<s
 }
 
 function endTs(it: ScenarioRecord): number {
-  const raw = it.stats?.['Challenge Start']
+  const raw = it.stats?.['Date Played']
   if (!raw) return 0
   return Date.parse(String(raw)) || 0
 }
