@@ -50,6 +50,7 @@
 
 html {
   scroll-behavior: smooth;
+  overscroll-behavior-y: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -62,6 +63,7 @@ html {
 body {
   background-color: var(--bg-primary);
   font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overscroll-behavior-y: none;
 }
 
 /* Ensure content layers above any overlays */
