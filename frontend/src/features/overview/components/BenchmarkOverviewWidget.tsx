@@ -184,7 +184,7 @@ export function BenchmarkOverviewWidget() {
   const recommendedScenarios = useMemo((): ProgressScenario[] => {
     const currentName = currentScenario?.name
     return allScenarios
-      .filter(s => s.name !== currentName && (recommendationScore.get(s.name) ?? 0) >= 1)
+      .filter(s => s.name !== currentName && (recommendationScore.get(s.name) ?? 0) >= 7)
       .sort((a, b) => (recommendationScore.get(b.name) ?? 0) - (recommendationScore.get(a.name) ?? 0))
       .slice(0, 5)
   }, [allScenarios, currentScenario, recommendationScore])
