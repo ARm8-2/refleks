@@ -1,6 +1,6 @@
 import { Activity, HelpCircle, LayoutGrid, PanelLeft, Settings, TrendingUp } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { DISCORD_SYMBOL, KO_FI_SYMBOL } from '../../assets'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../shared/components/ui/tooltip'
 import { useBenchmarks } from '../../shared/hooks'
@@ -69,10 +69,10 @@ type SidebarFavoriteItemProps = {
   color?: string
   label: string
   open: boolean
-  to: string
+  onClick: () => void
 }
 
-function SidebarFavoriteItem({ abbreviation, active, color, label, open, to }: SidebarFavoriteItemProps) {
+function SidebarFavoriteItem({ abbreviation, active, color, label, open, onClick }: SidebarFavoriteItemProps) {
   const collapsed = !open
   const pill = (
     <span
@@ -84,8 +84,9 @@ function SidebarFavoriteItem({ abbreviation, active, color, label, open, to }: S
   )
 
   const item = (
-    <NavLink
-      to={to}
+    <button
+      type="button"
+      onClick={onClick}
       className={cn(
         'flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring',
         active && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground',
@@ -94,7 +95,7 @@ function SidebarFavoriteItem({ abbreviation, active, color, label, open, to }: S
     >
       {pill}
       {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
-    </NavLink>
+    </button>
   )
 
   if (!collapsed) {
@@ -113,8 +114,9 @@ function SidebarFavoriteItem({ abbreviation, active, color, label, open, to }: S
 
 export function Sidebar({ open, onToggle }: SidebarProps) {
   const [version, setVersion] = useState('')
-  const { benchmarks, favorites } = useBenchmarks()
+  const { benchmarks, favorites, selectBenchmark, selectedBenchmark } = useBenchmarks()
   const location = useLocation()
+  const navigate = useNavigate()
   const collapsed = !open
 
   const favBenchmarks = useMemo(() => {
@@ -123,7 +125,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
     return favorites
       .map(name => byName.get(name))
       .filter((b): b is NonNullable<typeof b> => !!b)
-      .slice(0, 5) // limit to 5 favorites in sidebar
+      .slice(0, 8) // limit to 8 favorites in sidebar
   }, [benchmarks, favorites])
 
   useEffect(() => {
@@ -174,17 +176,21 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
               {!collapsed && <p className="px-2 text-xs font-medium text-sidebar-foreground-muted">Favorites</p>}
               <div className="flex flex-col gap-1">
                 {favBenchmarks.map(benchmark => {
-                  const path = benchmarkPath(benchmark.benchmarkName)
-
+                  const onBenchmarksPage = location.pathname.startsWith('/benchmarks')
                   return (
                     <SidebarFavoriteItem
                       key={benchmark.benchmarkName}
                       abbreviation={benchmark.abbreviation}
-                      active={location.pathname === path}
+                      active={selectedBenchmark === benchmark.benchmarkName}
                       color={benchmark.color}
                       label={benchmark.benchmarkName}
                       open={open}
-                      to={path}
+                      onClick={() => {
+                        selectBenchmark(benchmark.benchmarkName)
+                        if (onBenchmarksPage) {
+                          navigate(benchmarkPath(benchmark.benchmarkName))
+                        }
+                      }}
                     />
                   )
                 })}
