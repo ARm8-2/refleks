@@ -1,14 +1,16 @@
-import { Clock3, Flame, Gamepad2, Gauge, Minus, Pencil, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react'
+import { Clock3, Flame, Gamepad2, Gauge, Minus, Pencil, Plus, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Area, AreaChart } from 'recharts'
 import { Widget } from '../../../shared/components'
 import type { ChartConfig } from '../../../shared/components/ui/chart'
 import { ChartContainer } from '../../../shared/components/ui/chart'
+import { usePersistedState } from '../../../shared/hooks'
 import { cn } from '../../../shared/lib'
 import { useDailyPlaytime } from '../hooks/useDailyPlaytime'
 import { useRecentSessionSnapshot, type SnapshotTone } from '../hooks/useRecentSessionSnapshot'
 
-// ─── Small metric widgets ────────────────────────────────────────────
+const SESSION_TARGET_STORAGE_KEY = 'refleks.overview.sessionProgress.targetRuns'
+
 
 export function SessionLengthWidget() {
   const { currentSession, sessionLengthLabel, sessionLengthDetail } = useRecentSessionSnapshot()
@@ -66,7 +68,6 @@ export function SessionPerformanceWidget() {
   )
 }
 
-// ─── Session progress (radial chart with phases) ────────────────────
 
 export function SessionProgressWidget() {
   const {
@@ -77,13 +78,12 @@ export function SessionProgressWidget() {
     peakStart,
     peakEnd,
     diminishingReturnsAt,
-    sessionsAnalyzed,
   } = useRecentSessionSnapshot()
 
-  const [customTarget, setCustomTarget] = useState<number | null>(() => {
-    const stored = localStorage.getItem('refleks:sessionTarget')
-    return stored ? Number(stored) : null
-  })
+  const [customTarget, setCustomTarget] = usePersistedState<number | null>(
+    SESSION_TARGET_STORAGE_KEY,
+    null,
+  )
   const [editing, setEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -92,22 +92,29 @@ export function SessionProgressWidget() {
 
   const saveTarget = useCallback((value: number | null) => {
     setCustomTarget(value)
-    if (value !== null) {
-      localStorage.setItem('refleks:sessionTarget', String(value))
-    } else {
-      localStorage.removeItem('refleks:sessionTarget')
-    }
     setEditing(false)
-  }, [])
+  }, [setCustomTarget])
+
+  const commitTarget = useCallback((rawValue: string) => {
+    const parsed = parseInt(rawValue, 10)
+    saveTarget(Number.isFinite(parsed) && parsed > 0 ? parsed : null)
+  }, [saveTarget])
+
+  const adjustPendingTarget = useCallback((delta: number) => {
+    if (!inputRef.current) return
+
+    const parsed = parseInt(inputRef.current.value, 10)
+    const currentValue = Number.isFinite(parsed) ? parsed : targetRuns
+    inputRef.current.value = String(Math.max(1, currentValue + delta))
+  }, [targetRuns])
 
   const handleEditKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      const parsed = parseInt(e.currentTarget.value, 10)
-      saveTarget(Number.isFinite(parsed) && parsed > 0 ? parsed : null)
+      commitTarget(e.currentTarget.value)
     } else if (e.key === 'Escape') {
       setEditing(false)
     }
-  }, [saveTarget])
+  }, [commitTarget])
 
   useEffect(() => {
     if (editing) inputRef.current?.focus()
@@ -163,15 +170,37 @@ export function SessionProgressWidget() {
       headerActions={
         <div className="flex items-center gap-1.5">
           {editing ? (
-            <input
-              ref={inputRef}
-              type="number"
-              min={1}
-              defaultValue={targetRuns}
-              className="w-14 rounded border border-border bg-background px-1.5 py-0.5 text-xs text-foreground outline-none focus:border-primary"
-              onKeyDown={handleEditKeyDown}
-              onBlur={() => setEditing(false)}
-            />
+            <div className="flex items-center overflow-hidden rounded bg-secondary">
+              <button
+                type="button"
+                className="flex h-5 w-5 items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground"
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  adjustPendingTarget(-1)
+                }}
+              >
+                <Minus className="h-2.5 w-2.5" />
+              </button>
+              <input
+                ref={inputRef}
+                type="number"
+                min={1}
+                defaultValue={targetRuns}
+                className="w-8 border-x border-border bg-secondary py-0.5 text-center text-xs text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                onKeyDown={handleEditKeyDown}
+                onBlur={(e) => commitTarget(e.currentTarget.value)}
+              />
+              <button
+                type="button"
+                className="flex h-5 w-5 items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground"
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  adjustPendingTarget(1)
+                }}
+              >
+                <Plus className="h-2.5 w-2.5" />
+              </button>
+            </div>
           ) : (
             <>
               <span className="text-xs text-muted-foreground">
@@ -247,7 +276,6 @@ export function SessionProgressWidget() {
   )
 }
 
-// ─── Playtime history sparkline ─────────────────────────────────────
 
 const playtimeConfig: ChartConfig = {
   minutes: { label: 'Playtime', color: 'var(--chart-1)' },
@@ -257,6 +285,8 @@ export function PlaytimeHistoryWidget() {
   const points = useDailyPlaytime(7)
   const hasData = points.some(p => p.minutes > 0)
   const totalMinutes = points.reduce((sum, p) => sum + p.minutes, 0)
+  // When all values are 0, use a small baseline so the flat line sits above the bottom with visible underglow
+  const chartData = hasData ? points : points.map(p => ({ ...p, minutes: 0.5 }))
 
   return (
     <Widget
@@ -267,10 +297,10 @@ export function PlaytimeHistoryWidget() {
       ) : null}
     >
       <ChartContainer config={playtimeConfig} className="aspect-auto h-[44px] w-full">
-        <AreaChart data={points} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>
+        <AreaChart data={chartData} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>
           <defs>
             <linearGradient id="playtimeFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-minutes)" stopOpacity={0.3} />
+              <stop offset="0%" stopColor="var(--color-minutes)" stopOpacity={0.35} />
               <stop offset="100%" stopColor="var(--color-minutes)" stopOpacity={0.05} />
             </linearGradient>
           </defs>
@@ -288,7 +318,6 @@ export function PlaytimeHistoryWidget() {
   )
 }
 
-// ─── Shared helpers ─────────────────────────────────────────────────
 
 function MetricWidget({
   icon: Icon,
