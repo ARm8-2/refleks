@@ -99,7 +99,7 @@ export function HistorySessionOverview({ session, sessions, sessionRuns, selecte
             </button>
 
             {scenarioGridExpanded && scenarioSummaries.length > 3 && (
-              <div className="relative mt-2">
+              <div className="relative mt-2 w-full max-w-sm">
                 <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={scenarioQuery}
