@@ -1,4 +1,4 @@
-import type { Session } from '../../../shared/types'
+import type { Session } from '@/shared/types'
 import { getScenarioName } from './detailFormatting'
 
 export type ScenarioBenchmarkData = {

@@ -1,4 +1,4 @@
-import type { Benchmark, BenchmarkProgress, Session } from '../../../shared/types'
+import type { Benchmark, BenchmarkProgress, Session } from '@/shared/types'
 
 // ---------------------------------------------------------------------------
 // Helpers

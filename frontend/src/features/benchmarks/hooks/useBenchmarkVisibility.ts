@@ -1,6 +1,6 @@
+import { usePersistedState } from '@/shared/hooks'
+import type { BenchmarkProgress } from '@/shared/types'
 import { useMemo } from 'react'
-import { usePersistedState } from '../../../shared/hooks'
-import type { BenchmarkProgress } from '../../../shared/types'
 import { autoHiddenRanks } from '../lib/detailVisibility'
 
 type Options = {

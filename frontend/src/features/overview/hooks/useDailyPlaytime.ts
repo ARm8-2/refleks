@@ -1,5 +1,5 @@
+import { useStore } from '@/shared/hooks'
 import { useMemo } from 'react'
-import { useStore } from '../../../shared/hooks'
 
 export type DailyPlaytimePoint = {
   day: string

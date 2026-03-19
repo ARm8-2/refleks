@@ -25,7 +25,7 @@ import {
   StartWatcher as _StartWatcher,
   StopWatcher as _StopWatcher,
   UpdateSettings as _UpdateSettings
-} from '../../../wailsjs/go/main/App'
+} from '@wails/go/main/App'
 import type { Benchmark, BenchmarkProgress, KovaaksLastScore, ScenarioRecord, Settings, UpdateInfo } from '../types/ipc'
 
 // Typed wrappers around Wails-generated bindings with normalized results
@@ -150,7 +150,7 @@ export async function clearCache(): Promise<void> {
 }
 
 // Runtime helpers
-export { BrowserOpenURL as openURL } from '../../../wailsjs/runtime'
+export { BrowserOpenURL as openURL } from '@wails/runtime'
 
 export async function getScenarioTrace(fileName: string): Promise<string> {
   // Direct call to avoid build errors before Wails regenerates bindings

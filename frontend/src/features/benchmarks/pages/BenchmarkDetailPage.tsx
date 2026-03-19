@@ -1,6 +1,3 @@
-import { ArrowLeft, Play, Star } from 'lucide-react'
-import { useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
 import {
   Button,
   Loading,
@@ -9,9 +6,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../../shared/components'
-import { useBenchmarks } from '../../../shared/hooks'
-import { launchPlaylist } from '../../../shared/lib'
+} from '@/shared/components'
+import { useBenchmarks } from '@/shared/hooks'
+import { launchPlaylist } from '@/shared/lib'
+import { ArrowLeft, Play, Star } from 'lucide-react'
+import { useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { BenchmarkProgressTable } from '../components/detail/BenchmarkProgressTable'
 import { RankDistributionWidget } from '../components/detail/RankDistributionWidget'
 import { StrengthWidget } from '../components/detail/StrengthWidget'

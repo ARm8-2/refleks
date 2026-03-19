@@ -1,8 +1,8 @@
+import { Button, Input, Popover, PopoverContent, PopoverTrigger } from '@/shared/components'
+import { cn } from '@/shared/lib'
+import type { Session } from '@/shared/types'
 import { ArrowUpDown, CalendarRange, Check, ListFilter, PanelLeftClose, PanelLeftOpen, Search, Trophy } from 'lucide-react'
 import { useCallback } from 'react'
-import { Button, Input, Popover, PopoverContent, PopoverTrigger } from '../../../shared/components'
-import { cn } from '../../../shared/lib'
-import type { Session } from '../../../shared/types/domain'
 import type { SessionSortKey } from '../hooks/useHistoryPageState'
 import {
   formatCompactDate,

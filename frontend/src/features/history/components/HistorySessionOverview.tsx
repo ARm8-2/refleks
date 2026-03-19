@@ -1,12 +1,12 @@
+import { Input, Widget } from '@/shared/components'
+import type { ChartConfig } from '@/shared/components/ui/chart'
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
+import { cn } from '@/shared/lib'
+import type { Session } from '@/shared/types'
 import { ChevronDown, ChevronUp, Clock3, Gamepad2, Layers3, Minus, Search, TrendingDown, TrendingUp, Trophy } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useId, useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { Input, Widget } from '../../../shared/components'
-import type { ChartConfig } from '../../../shared/components/ui/chart'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../../../shared/components/ui/chart'
-import { cn } from '../../../shared/lib'
-import type { Session } from '../../../shared/types/domain'
 import type { HistoryRun, ScenarioSummary, ScenarioTrendPoint } from '../lib/historyModels'
 import {
   buildSessionScenarioSummaries,

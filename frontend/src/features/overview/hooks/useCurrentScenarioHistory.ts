@@ -1,6 +1,6 @@
+import { getScenarioName } from '@/features/benchmarks/lib/detailFormatting'
+import { useStore } from '@/shared/hooks'
 import { useMemo } from 'react'
-import { useStore } from '../../../shared/hooks'
-import { getScenarioName } from '../../benchmarks/lib/detailFormatting'
 
 const shortDateFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',

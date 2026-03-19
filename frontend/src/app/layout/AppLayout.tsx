@@ -1,7 +1,7 @@
+import { useAppInitialization } from '@/shared/hooks'
+import { cn } from '@/shared/lib'
 import { useCallback, useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import { useAppInitialization } from '../../shared/hooks'
-import { cn } from '../../shared/lib'
 import { Sidebar } from './Sidebar'
 
 const SIDEBAR_OPEN_KEY = 'refleks.sidebar.open'

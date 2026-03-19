@@ -1,5 +1,5 @@
+import { usePersistedState, useStore } from '@/shared/hooks'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { usePersistedState, useStore } from '../../../shared/hooks'
 import { buildHistoryRuns, matchRunSearch, matchSessionSearch, readSessionDurationMs } from '../lib/historyModels'
 
 export type RunSortKey = 'default' | 'score-desc' | 'score-asc' | 'accuracy-desc' | 'scenario'

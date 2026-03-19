@@ -1,7 +1,7 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Widget } from '@/shared/components'
+import { usePersistedState } from '@/shared/hooks'
+import type { BenchmarkProgress } from '@/shared/types'
 import { useMemo } from 'react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Widget } from '../../../../shared/components'
-import { usePersistedState } from '../../../../shared/hooks'
-import type { BenchmarkProgress } from '../../../../shared/types'
 import { formatNumber, normalizedRankProgress } from '../../lib/detailFormatting'
 
 type Props = {

@@ -1,9 +1,9 @@
+import { formatNumber } from '@/features/benchmarks/lib/detailFormatting'
+import { Widget } from '@/shared/components'
+import type { ChartConfig } from '@/shared/components/ui/chart'
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
 import { useId } from 'react'
 import { Area, AreaChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { Widget } from '../../../shared/components'
-import type { ChartConfig } from '../../../shared/components/ui/chart'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../../../shared/components/ui/chart'
-import { formatNumber } from '../../benchmarks/lib/detailFormatting'
 import { TrendPoint, useCurrentScenarioHistory } from '../hooks/useCurrentScenarioHistory'
 
 const sessionAverageChartConfig: ChartConfig = {

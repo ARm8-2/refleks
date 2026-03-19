@@ -1,9 +1,9 @@
+import { Input, Loading, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
+import { useBenchmarks, usePersistedState, useStore } from '@/shared/hooks'
+import type { Benchmark } from '@/shared/types'
 import { ChevronDown, Dice5, Search, Sparkles, Star } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Input, Loading, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/components'
-import { useBenchmarks, usePersistedState, useStore } from '../../../shared/hooks'
-import type { Benchmark } from '../../../shared/types'
 import { BenchmarkCard } from '../components/BenchmarkCard'
 import { getRecommendedBenchmarks } from '../lib/recommendations'
 

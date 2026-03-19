@@ -1,8 +1,7 @@
+import { getScenarioName } from '@/features/benchmarks/lib/detailFormatting'
+import { useStore } from '@/shared/hooks'
+import type { ScenarioRecord, Session } from '@/shared/types'
 import { useMemo } from 'react'
-import { useStore } from '../../../shared/hooks'
-import type { Session } from '../../../shared/types/domain'
-import type { ScenarioRecord } from '../../../shared/types/ipc'
-import { getScenarioName } from '../../benchmarks/lib/detailFormatting'
 
 const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',

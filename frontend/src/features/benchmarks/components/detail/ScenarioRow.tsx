@@ -1,5 +1,5 @@
+import type { RankDef } from '@/shared/types'
 import { ChartLine, NotebookPen, Play } from 'lucide-react'
-import type { RankDef } from '../../../../shared/types/ipc'
 import { cellFill, computeFillColor, formatNumber } from '../../lib/detailFormatting'
 import { RecommendationIndicator } from './RecommendationIndicator'
 

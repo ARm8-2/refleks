@@ -1,5 +1,5 @@
+import { EventsOn } from '@wails/runtime'
 import { useEffect } from 'react'
-import { EventsOn } from '../../../wailsjs/runtime'
 import { getRecentScenarios, getSettings } from '../lib/api'
 import { useStore } from './useStore'
 

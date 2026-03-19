@@ -1,4 +1,4 @@
-export { getScenarioName } from '../../../shared/lib'
+export { getScenarioName } from '@/shared/lib'
 import { MISSING_STR } from './detailConstants'
 
 export function formatNumber(value: unknown, decimals = 2, trimTrailingZeros = true): string {

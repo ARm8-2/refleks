@@ -1,23 +1,23 @@
-import { Settings2 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/components'
-import { useBenchmarks, usePersistedState, useStore } from '../../../shared/hooks'
-import { getSettings, launchScenario, saveScenarioNote } from '../../../shared/lib'
-import type { ProgressScenario, Settings } from '../../../shared/types/ipc'
-import { ScenarioHistoryModal } from '../../benchmarks/components/detail/ScenarioHistoryModal'
-import { ScenarioNotesModal } from '../../benchmarks/components/detail/ScenarioNotesModal'
+import { ScenarioHistoryModal } from '@/features/benchmarks/components/detail/ScenarioHistoryModal'
+import { ScenarioNotesModal } from '@/features/benchmarks/components/detail/ScenarioNotesModal'
 import {
   buildInfoColumns,
   getRowClasses,
   RANK_MIN_COLUMN_WIDTH,
   ScenarioInfoRow,
   ScenarioRankCells,
-} from '../../benchmarks/components/detail/ScenarioRow'
-import { useBenchmarkDetailProgress } from '../../benchmarks/hooks/useBenchmarkDetailProgress'
-import { useBenchmarkVisibility } from '../../benchmarks/hooks/useBenchmarkVisibility'
-import { formatNumber, getScenarioName } from '../../benchmarks/lib/detailFormatting'
-import { computeRecommendationScores, selectTopPicks, type ScenarioBenchmarkData } from '../../benchmarks/lib/detailRecommendations'
+} from '@/features/benchmarks/components/detail/ScenarioRow'
+import { useBenchmarkDetailProgress } from '@/features/benchmarks/hooks/useBenchmarkDetailProgress'
+import { useBenchmarkVisibility } from '@/features/benchmarks/hooks/useBenchmarkVisibility'
+import { formatNumber, getScenarioName } from '@/features/benchmarks/lib/detailFormatting'
+import { computeRecommendationScores, selectTopPicks, type ScenarioBenchmarkData } from '@/features/benchmarks/lib/detailRecommendations'
+import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
+import { useBenchmarks, usePersistedState, useStore } from '@/shared/hooks'
+import { getSettings, launchScenario, saveScenarioNote } from '@/shared/lib'
+import type { ProgressScenario, Settings } from '@/shared/types'
+import { Settings2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const LEFT_PANEL_PADDING = 16
 

@@ -1,7 +1,5 @@
-import { ChevronDown, ChevronUp, Download, ExternalLink, Eye, EyeOff, RefreshCw } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { Button, Checkbox, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../shared/components'
-import { useStore } from '../../../shared/hooks'
+import { Button, Checkbox, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
+import { useStore } from '@/shared/hooks'
 import {
   FONTS,
   THEMES,
@@ -17,8 +15,10 @@ import {
   updateSettings,
   type Font,
   type Theme,
-} from '../../../shared/lib'
-import type { Settings, UpdateInfo } from '../../../shared/types'
+} from '@/shared/lib'
+import type { Settings, UpdateInfo } from '@/shared/types'
+import { ChevronDown, ChevronUp, Download, ExternalLink, Eye, EyeOff, RefreshCw } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { ClearCacheModal } from '../components/ClearCacheModal'
 import { ResetSettingsModal } from '../components/ResetSettingsModal'
 import { SettingsField } from '../components/SettingsField'

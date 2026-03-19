@@ -1,8 +1,8 @@
+import { usePersistedState } from '@/shared/hooks'
+import { getBenchmarkProgress } from '@/shared/lib'
+import type { Benchmark, BenchmarkProgress } from '@/shared/types'
+import { EventsOn } from '@wails/runtime'
 import { useEffect, useMemo, useState } from 'react'
-import { EventsOn } from '../../../../wailsjs/runtime'
-import { usePersistedState } from '../../../shared/hooks'
-import { getBenchmarkProgress } from '../../../shared/lib'
-import type { Benchmark, BenchmarkProgress } from '../../../shared/types'
 
 type State = {
   progress: BenchmarkProgress | null

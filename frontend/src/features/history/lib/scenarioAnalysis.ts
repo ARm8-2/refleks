@@ -1,4 +1,4 @@
-import type { ScenarioRecord } from '../../../shared/types/ipc'
+import type { ScenarioRecord } from '@/shared/types'
 
 /* ─── Types ─── */
 

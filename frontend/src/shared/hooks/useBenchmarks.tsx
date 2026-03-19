@@ -1,6 +1,6 @@
+import { EventsOn } from '@wails/runtime'
 import type { ReactNode } from 'react'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { EventsOn } from '../../../wailsjs/runtime'
 import {
   getAllBenchmarkProgresses,
   getBenchmarkProgress,

@@ -1,10 +1,10 @@
+import { DISCORD_SYMBOL, KO_FI_SYMBOL } from '@/assets'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip'
+import { useBenchmarks } from '@/shared/hooks'
+import { benchmarkPath, cn, getVersion, openURL } from '@/shared/lib'
 import { Activity, HelpCircle, LayoutGrid, PanelLeft, Settings, TrendingUp } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { DISCORD_SYMBOL, KO_FI_SYMBOL } from '../../assets'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../shared/components/ui/tooltip'
-import { useBenchmarks } from '../../shared/hooks'
-import { benchmarkPath, cn, getVersion, openURL } from '../../shared/lib'
 
 type SidebarProps = {
   open: boolean
@@ -88,7 +88,7 @@ function SidebarFavoriteItem({ abbreviation, active, color, label, open, onClick
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+        'flex h-6 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring',
         active && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground',
         collapsed && 'justify-center px-0',
       )}
@@ -174,7 +174,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
             <section className="mt-auto flex flex-col gap-2 pt-4">
               <div className="h-px" />
               {!collapsed && <p className="px-2 text-xs font-medium text-sidebar-foreground-muted">Favorites</p>}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 {favBenchmarks.map(benchmark => {
                   const onBenchmarksPage = location.pathname.startsWith('/benchmarks')
                   return (

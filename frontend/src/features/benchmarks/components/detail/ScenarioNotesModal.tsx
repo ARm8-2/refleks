@@ -1,6 +1,6 @@
+import { Button, Modal } from '@/shared/components'
 import { Copy, Save } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Button, Modal } from '../../../../shared/components'
 
 type Props = {
   isOpen: boolean

@@ -1,7 +1,7 @@
+import { Loading, Modal } from '@/shared/components'
+import { getLastScenarioScores } from '@/shared/lib'
+import type { KovaaksLastScore } from '@/shared/types'
 import { useEffect, useMemo, useState } from 'react'
-import { Loading, Modal } from '../../../../shared/components'
-import { getLastScenarioScores } from '../../../../shared/lib'
-import type { KovaaksLastScore } from '../../../../shared/types'
 import { formatNumber } from '../../lib/detailFormatting'
 
 type Props = {

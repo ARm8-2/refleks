@@ -1,6 +1,5 @@
-import { getScenarioName, readScenarioAccuracy, readScenarioDurationMs, readScenarioScore, readScenarioTimestamp } from '../../../shared/lib'
-import type { Session } from '../../../shared/types/domain'
-import type { ScenarioRecord, StatKey } from '../../../shared/types/ipc'
+import { getScenarioName, readScenarioAccuracy, readScenarioDurationMs, readScenarioScore, readScenarioTimestamp } from '@/shared/lib'
+import type { ScenarioRecord, Session, StatKey } from '@/shared/types'
 
 const sessionFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
