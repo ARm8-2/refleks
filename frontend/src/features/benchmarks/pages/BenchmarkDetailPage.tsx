@@ -94,7 +94,7 @@ export function BenchmarkDetailPage() {
         </div>
       </div>
 
-      <div className="p-6 space-y-5">
+      <div className="p-6 space-y-1">
         {!benchmark && (
           <div className="rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-sm">
             Benchmark not found.

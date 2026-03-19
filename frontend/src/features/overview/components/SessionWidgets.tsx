@@ -1,7 +1,7 @@
 import { Clock3, Flame, Gamepad2, Gauge, Minus, Pencil, Plus, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Area, AreaChart } from 'recharts'
-import { Widget } from '../../../shared/components'
+import { InfoTooltip, Widget } from '../../../shared/components'
 import type { ChartConfig } from '../../../shared/components/ui/chart'
 import { ChartContainer } from '../../../shared/components/ui/chart'
 import { usePersistedState } from '../../../shared/hooks'
@@ -229,8 +229,8 @@ export function SessionProgressWidget() {
         </div>
       }
     >
-      <div className="flex items-center gap-4">
-        <div className="relative aspect-square h-[180px] shrink-0">
+      <div className="relative mx-auto w-fit">
+        <div className="relative aspect-square h-[140px] shrink-0">
           <svg viewBox="0 0 200 200" className="h-full w-full">
             {/* Background ring */}
             <circle cx={cx} cy={cy} r={(outerR + innerR) / 2} fill="none" stroke="var(--muted)" strokeWidth={outerR - innerR} />
@@ -248,28 +248,38 @@ export function SessionProgressWidget() {
             )}
 
             {/* Center text */}
-            <text x={cx} y={cy - 6} textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-2xl font-bold">
+            <text x={cx} y={cy - 10} textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-2xl font-bold">
               {currentRuns}
             </text>
-            <text x={cx} y={cy + 14} textAnchor="middle" dominantBaseline="middle" className="fill-muted-foreground text-[11px]">
+            <text x={cx} y={cy + 8} textAnchor="middle" dominantBaseline="middle" className="fill-muted-foreground text-[11px]">
               / {targetRuns} target
+            </text>
+            <text x={cx} y={cy + 22} textAnchor="middle" dominantBaseline="middle" className="fill-muted-foreground text-[10px]">
+              {pct}%
             </text>
           </svg>
         </div>
 
-        <div className="flex flex-1 flex-col gap-2">
-          <div className="rounded-lg bg-secondary px-3 py-2">
-            <div className="text-[11px] text-muted-foreground">Progress</div>
-            <div className="text-base font-semibold text-foreground">{pct}%</div>
-          </div>
-          <div className="rounded-lg bg-secondary px-3 py-2">
-            <div className="text-[11px] text-muted-foreground">Warm-up</div>
-            <div className="text-base font-semibold text-foreground">1–{warmupRuns}</div>
-          </div>
-          <div className="rounded-lg bg-secondary px-3 py-2">
-            <div className="text-[11px] text-muted-foreground">Peak zone</div>
-            <div className="text-base font-semibold text-foreground">{peakStart}–{peakEnd}</div>
-          </div>
+        <div className="absolute bottom-0 right-0">
+          <InfoTooltip side="left">
+            <div className="space-y-1.5 text-[11px]">
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: 'rgb(245 159 10 / 0.6)' }} />
+                <span className="text-popover-foreground/70">Warm-up</span>
+                <span className="ml-auto font-medium text-popover-foreground">1–{warmupRuns}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: 'rgb(16 183 127 / 0.6)' }} />
+                <span className="text-popover-foreground/70">Peak</span>
+                <span className="ml-auto font-medium text-popover-foreground">{peakStart}–{peakEnd}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: 'rgb(239 68 68 / 0.5)' }} />
+                <span className="text-popover-foreground/70">Diminishing</span>
+                <span className="ml-auto font-medium text-popover-foreground">{diminishingReturnsAt}+</span>
+              </div>
+            </div>
+          </InfoTooltip>
         </div>
       </div>
     </Widget>

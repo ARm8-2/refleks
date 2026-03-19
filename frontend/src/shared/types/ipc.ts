@@ -5,10 +5,92 @@ export type MousePoint = {
   buttons?: number
 }
 
+/**
+ * Known stat keys from Kovaak's CSV stats files.
+ *
+ * All fields are optional because different scenarios/game versions
+ * may produce different subsets. The index signature allows for any
+ * additional keys that future game versions may introduce.
+ */
+export interface ScenarioStats {
+  // Overview
+  'Score'?: number
+  'Kills'?: number
+  'Deaths'?: number
+  'Accuracy'?: number
+  'Hit Count'?: number
+  'Miss Count'?: number
+
+  // Damage
+  'Damage Done'?: number
+  'Damage Taken'?: number
+  'Total Overshots'?: number
+
+  // Timing
+  'Fight Time'?: number
+  'Time Remaining'?: number
+  'Avg TTK'?: number
+  'Real Avg TTK'?: number
+  'Duration'?: number
+  'Scenario Time'?: number
+  'Time'?: number
+  'Challenge Start'?: string
+  'Pause Count'?: number
+  'Pause Duration'?: number
+
+  // Controls
+  'Sens Scale'?: string
+  'Sens Increment'?: number
+  'Horiz Sens'?: number
+  'Vert Sens'?: number
+  'DPI'?: number
+  'cm/360'?: number
+
+  // Display
+  'FOV'?: number
+  'FOVScale'?: string
+  'Resolution'?: string
+  'Resolution Scale'?: number
+  'Hide Gun'?: string
+  'Crosshair'?: string
+  'Crosshair Scale'?: number
+  'Crosshair Color'?: string
+
+  // Technical
+  'Input Lag'?: number
+  'Max FPS (config)'?: number
+  'Avg FPS'?: number
+
+  // Game information
+  'Scenario'?: string
+  'Hash'?: string
+  'Game Version'?: string
+  'Date Played'?: string
+  'Distance Traveled'?: number
+  'MBS Points'?: number
+
+  // Additional
+  'Midairs'?: number
+  'Midaired'?: number
+  'Directs'?: number
+  'Directed'?: number
+  'Reloads'?: number
+  'Avg Target Scale'?: number
+  'Avg Time Dilation'?: number
+
+  // Index signature for unknown/future stats
+  [key: string]: string | number | undefined
+}
+
+/** Union of all known stat keys. Use to type-check stat key references at compile time. */
+export type StatKey = keyof {
+  [K in keyof ScenarioStats as string extends K ? never : K]: unknown
+}
+
 export interface ScenarioRecord {
   filePath: string
   fileName: string
-  stats: Record<string, any>
+  stats: ScenarioStats
   events: string[][]
   mouseTrace?: Array<MousePoint>
   traceData?: string

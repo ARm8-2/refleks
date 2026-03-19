@@ -1,4 +1,4 @@
-import type { ScenarioRecord } from '../../../shared/types'
+export { getScenarioName } from '../../../shared/lib'
 import { MISSING_STR } from './detailConstants'
 
 export function formatNumber(value: unknown, decimals = 2, trimTrailingZeros = true): string {
@@ -11,19 +11,6 @@ export function formatNumber(value: unknown, decimals = 2, trimTrailingZeros = t
     maximumFractionDigits: decimals,
     useGrouping: true,
   }).format(number)
-}
-
-export function getScenarioName(input: ScenarioRecord | { fileName?: string; stats?: Record<string, any> }): string {
-  const stats = (input as any).stats as Record<string, any> | undefined
-  const direct = stats?.['Scenario']
-  if (typeof direct === 'string' && direct.trim().length > 0) return direct
-
-  const fileName = (input as any).fileName as string | undefined
-  if (typeof fileName === 'string' && fileName.includes(' - ')) {
-    return fileName.split(' - ')[0]
-  }
-
-  return String(direct ?? fileName ?? '')
 }
 
 export function computeFillColor(

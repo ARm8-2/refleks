@@ -1,22 +1,115 @@
 
+import { HistoryRunDetailPane } from '../components/HistoryRunDetailPane'
+import { HistoryRunList } from '../components/HistoryRunList'
+import { HistorySessionOverview } from '../components/HistorySessionOverview'
+import { HistorySessionSidebar } from '../components/HistorySessionSidebar'
+import { useHistoryPageState } from '../hooks/useHistoryPageState'
+
 export function HistoryPage() {
+  const {
+    sessions,
+    filteredSessions,
+    selectedSession,
+    selectedSessionId,
+    setSelectedSessionId,
+    sessionQuery,
+    setSessionQuery,
+    sessionListCollapsed,
+    setSessionListCollapsed,
+    sessionSort,
+    setSessionSort,
+    sessionFilterPb,
+    setSessionFilterPb,
+    runQuery,
+    setRunQuery,
+    sessionRuns,
+    filteredSessionRuns,
+    runInspectorOpen,
+    setRunInspectorOpen,
+    runListCollapsed,
+    setRunListCollapsed,
+    runSort,
+    setRunSort,
+    runFilterPb,
+    setRunFilterPb,
+    inspectorTab,
+    setInspectorTab,
+    selectedScenario,
+    setSelectedScenario,
+    primaryRun,
+    compareRun,
+    pbRunForPrimary,
+    globalPbByScenario,
+    selectRun,
+    compareRunWithPrimary,
+    comparePb,
+    clearPrimaryRun,
+    clearComparison,
+  } = useHistoryPageState()
+
   return (
-    <div className="flex-1 overflow-auto text-sm">
-      <div className="sticky top-0 z-10 bg-background px-6 py-4">
-        <h1 className="text-lg font-semibold">History</h1>
-      </div>
+    <div className="flex flex-1 flex-col overflow-hidden text-sm">
+      <div className="flex min-h-0 flex-1 gap-3 overflow-hidden p-4 xl:p-5">
+        <HistorySessionSidebar
+          sessions={filteredSessions}
+          selectedSessionId={selectedSessionId}
+          collapsed={sessionListCollapsed}
+          query={sessionQuery}
+          onQueryChange={setSessionQuery}
+          onSelectSession={setSelectedSessionId}
+          onToggleCollapsed={() => setSessionListCollapsed(v => !v)}
+          sort={sessionSort}
+          onSortChange={setSessionSort}
+          filterPb={sessionFilterPb}
+          onFilterPbChange={setSessionFilterPb}
+        />
 
-      <div className="p-6 grid gap-6">
-        {/* Placeholder content - will be replaced with actual progress tracking components */}
-        <div className="bg-card rounded-xl p-6">
-          <h2 className="text-lg font-medium mb-4">Skill Progress</h2>
-          <p className="text-muted-foreground">Track your improvement over time across different skills.</p>
+        {/* Main content area: session overview or inspector */}
+        <div className="min-h-0 min-w-0 flex-1">
+          {runInspectorOpen ? (
+            <HistoryRunDetailPane
+              primaryRun={primaryRun}
+              compareRun={compareRun}
+              activeTab={inspectorTab}
+              onTabChange={setInspectorTab}
+              onClose={() => setRunInspectorOpen(false)}
+              onClearPrimaryRun={clearPrimaryRun}
+              onClearComparison={clearComparison}
+              isPrimaryPb={!!primaryRun && !!pbRunForPrimary && primaryRun.id === pbRunForPrimary.id}
+              onComparePb={comparePb}
+            />
+          ) : (
+            <HistorySessionOverview
+              session={selectedSession}
+              sessions={sessions}
+              sessionRuns={sessionRuns}
+              selectedScenario={selectedScenario}
+              onSelectScenario={setSelectedScenario}
+              onSelectRun={selectRun}
+              globalPbByScenario={globalPbByScenario}
+            />
+          )}
         </div>
 
-        <div className="bg-card rounded-xl p-6">
-          <h2 className="text-lg font-medium mb-4">Progress Charts</h2>
-          <p className="text-muted-foreground">Visualize your training progress with detailed charts.</p>
-        </div>
+        <HistoryRunList
+          session={selectedSession}
+          runs={filteredSessionRuns}
+          query={runQuery}
+          primaryRun={primaryRun}
+          compareRun={compareRun}
+          collapsed={runListCollapsed}
+          inspectorOpen={runInspectorOpen}
+          selectedScenario={selectedScenario}
+          onQueryChange={setRunQuery}
+          onToggleCollapsed={() => setRunListCollapsed(v => !v)}
+          onToggleInspector={() => setRunInspectorOpen(v => !v)}
+          onSelectRun={selectRun}
+          onCompareRun={compareRunWithPrimary}
+          sort={runSort}
+          onSortChange={setRunSort}
+          filterPb={runFilterPb}
+          onFilterPbChange={setRunFilterPb}
+        />
       </div>
     </div>
   )

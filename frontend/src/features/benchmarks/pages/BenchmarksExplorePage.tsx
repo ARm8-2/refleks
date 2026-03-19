@@ -239,7 +239,7 @@ export function BenchmarksExplorePage() {
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-4">
         {/* Recommended benchmarks section */}
         {showRecs && recommendedBenchmarks.length > 0 && (
           <div className="space-y-2">
