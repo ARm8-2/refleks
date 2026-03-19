@@ -15,6 +15,8 @@ export {
 } from './ui/select'
 
 export { ErrorBoundary } from './ErrorBoundary'
+export { InfoTooltip } from './InfoTooltip'
 export { Loading } from './Loading'
 export { Modal } from './Modal'
+export { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 export { Widget } from './Widget'
