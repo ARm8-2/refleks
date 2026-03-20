@@ -356,24 +356,6 @@ export namespace models {
 		}
 	}
 	
-	export class MousePoint {
-	    ts: number;
-	    x: number;
-	    y: number;
-	    buttons?: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new MousePoint(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.ts = source["ts"];
-	        this.x = source["x"];
-	        this.y = source["y"];
-	        this.buttons = source["buttons"];
-	    }
-	}
 	
 	
 	
@@ -397,8 +379,6 @@ export namespace models {
 	    fileName: string;
 	    stats: Record<string, any>;
 	    events: string[][];
-	    mouseTrace?: MousePoint[];
-	    traceData?: string;
 	    hasTrace: boolean;
 	
 	    static createFrom(source: any = {}) {
@@ -411,28 +391,8 @@ export namespace models {
 	        this.fileName = source["fileName"];
 	        this.stats = source["stats"];
 	        this.events = source["events"];
-	        this.mouseTrace = this.convertValues(source["mouseTrace"], MousePoint);
-	        this.traceData = source["traceData"];
 	        this.hasTrace = source["hasTrace"];
 	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
 	}
 	export class SessionNote {
 	    name: string;
@@ -453,7 +413,6 @@ export namespace models {
 	    steamIdOverride?: string;
 	    personaNameOverride?: string;
 	    statsDir: string;
-	    tracesDir: string;
 	    sessionGapMinutes: number;
 	    theme: string;
 	    font?: string;
@@ -475,7 +434,6 @@ export namespace models {
 	        this.steamIdOverride = source["steamIdOverride"];
 	        this.personaNameOverride = source["personaNameOverride"];
 	        this.statsDir = source["statsDir"];
-	        this.tracesDir = source["tracesDir"];
 	        this.sessionGapMinutes = source["sessionGapMinutes"];
 	        this.theme = source["theme"];
 	        this.font = source["font"];

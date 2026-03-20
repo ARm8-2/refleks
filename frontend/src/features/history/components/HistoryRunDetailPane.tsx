@@ -844,23 +844,13 @@ function useTraceData(run: HistoryRun | null) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const hasTrace = !!run && (run.item.hasTrace || (run.item.mouseTrace != null && run.item.mouseTrace.length > 0))
+  const hasTrace = !!run && !!run.item.hasTrace
   const fileName = run?.item.fileName ?? null
-  const inlineTrace = run?.item.mouseTrace
-  const traceData = run?.item.traceData
   const flagHasTrace = run?.item.hasTrace ?? false
 
   useEffect(() => {
     setPoints(null)
     setError(null)
-    if (inlineTrace && inlineTrace.length > 0) {
-      setPoints(inlineTrace)
-      return
-    }
-    if (traceData) {
-      setPoints(decodeTrace(traceData))
-      return
-    }
     if (!flagHasTrace || !fileName) return
 
     let cancelled = false
@@ -875,7 +865,7 @@ function useTraceData(run: HistoryRun | null) {
       .catch(() => { if (!cancelled) setError('Failed to load trace data') })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [fileName, flagHasTrace, inlineTrace, traceData])
+  }, [fileName, flagHasTrace])
 
   return { points, loading, error, hasTrace, resolution: String(run?.item.stats?.Resolution ?? '') }
 }

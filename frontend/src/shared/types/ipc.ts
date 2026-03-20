@@ -92,8 +92,6 @@ export interface ScenarioRecord {
   fileName: string
   stats: ScenarioStats
   events: string[][]
-  mouseTrace?: Array<MousePoint>
-  traceData?: string
   hasTrace?: boolean
 }
 
@@ -153,7 +151,6 @@ export interface Settings {
   steamIdOverride?: string
   personaNameOverride?: string
   statsDir: string
-  tracesDir: string
   sessionGapMinutes: number
   theme: Theme
   font: Font

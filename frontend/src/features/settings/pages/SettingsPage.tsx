@@ -285,15 +285,6 @@ export function SettingsPage() {
               </SettingsSection>
 
               <SettingsSection title="Mouse Traces">
-                <SettingsField label="Traces Directory">
-                  <Input
-                    type="text"
-                    value={settings.tracesDir}
-                    onChange={e => updateField('tracesDir', e.target.value)}
-                    className="w-full max-w-xl"
-                  />
-                </SettingsField>
-
                 <SettingsField label="Buffer Duration" description="Minutes of mouse data to keep in memory">
                   <Input
                     type="number"

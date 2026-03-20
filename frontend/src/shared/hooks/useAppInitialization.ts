@@ -47,8 +47,9 @@ export function useAppInitialization() {
     })
 
     const offWatcher = EventsOn('watcher:started', (_data: any) => {
-      // Clear current scenarios so re-parsed existing files don't duplicate entries
-      setScenarios([])
+      getRecentScenarios()
+        .then((arr) => { setScenarios(arr) })
+        .catch((err: unknown) => console.warn('GetRecentScenarios on watcher start failed:', err))
       resetNew()
     })
 
