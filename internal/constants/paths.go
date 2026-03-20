@@ -20,7 +20,6 @@ const (
 	// If set, this overrides the default stats directory (useful in dev containers)
 	EnvStatsDirVar = "REFLEKS_STATS_DIR"
 	// If set, this overrides the stored Gemini API key for AI insights
-	EnvGeminiAPIKeyVar = "REFLEKS_GEMINI_API_KEY"
 
 	// Conventional, explicit filename for release assets. Keep in sync with build/windows/installer/project.nsi
 	// Result example: "refleks-0.3.0-windows-amd64-installer.exe"

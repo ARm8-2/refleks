@@ -15,7 +15,6 @@ type Settings struct {
 	MouseBufferMinutes   int                     `json:"mouseBufferMinutes"`
 	MaxExistingOnStart   int                     `json:"maxExistingOnStart"`
 	AutostartEnabled     bool                    `json:"autostartEnabled"`
-	GeminiAPIKey         string                  `json:"geminiApiKey,omitempty"`
 	ScenarioNotes        map[string]ScenarioNote `json:"scenarioNotes,omitempty"`
 	SessionNotes         map[string]SessionNote  `json:"sessionNotes,omitempty"`
 }

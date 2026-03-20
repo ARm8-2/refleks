@@ -8,7 +8,6 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"refleks/internal/ai"
 	"refleks/internal/autostart"
 	"refleks/internal/benchmarks"
 	"refleks/internal/cache"
@@ -26,7 +25,6 @@ import (
 type App struct {
 	ctx            context.Context
 	trackingSvc    *tracking.Service
-	aiSvc          *ai.Service
 	settingsSvc    *appsettings.Service
 	benchmarkSvc   *benchmarks.Service
 	scenarioSvc    *scenarios.Service
@@ -72,9 +70,6 @@ func (a *App) startup(ctx context.Context) {
 
 	// Initialize Tracking Service (coordinates Watcher + Mouse)
 	a.trackingSvc = tracking.NewService(a.ctx, a.settingsSvc, a.benchmarkSvc, a.tracesSvc)
-
-	// Initialize AI Service
-	a.aiSvc = ai.NewService(a.ctx, a.settingsSvc)
 
 	// Initialize Autostart Service
 	a.autostartSvc = autostart.NewService()
@@ -206,7 +201,6 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		newSettings.MouseTrackingEnabled = defaults.MouseTrackingEnabled
 		newSettings.MouseBufferMinutes = defaults.MouseBufferMinutes
 		newSettings.MaxExistingOnStart = defaults.MaxExistingOnStart
-		newSettings.GeminiAPIKey = defaults.GeminiAPIKey
 		newSettings.AutostartEnabled = defaults.AutostartEnabled
 
 		// Sync autostart state
@@ -289,25 +283,6 @@ func (a *App) DownloadAndInstallUpdate(version string) error {
 		time.Sleep(1 * time.Second)
 		runtime.Quit(a.ctx)
 	}()
-	return nil
-}
-
-// --- AI Insights (Sessions) ---
-
-// GenerateSessionInsights starts a streaming AI analysis for the provided session records.
-func (a *App) GenerateSessionInsights(sessionId string, records []models.ScenarioRecord, prompt string, options models.AIOptions) (string, error) {
-	if sessionId == "" {
-		sessionId = "session"
-	}
-	reqID := a.aiSvc.NewRequestID()
-	// Pass options directly (models.AIOptions) into the AI service.
-	a.aiSvc.GenerateSessionInsights(reqID, sessionId, records, prompt, options)
-	return reqID, nil
-}
-
-// CancelSessionInsights cancels a running AI stream by requestId.
-func (a *App) CancelSessionInsights(requestId string) error {
-	a.aiSvc.Cancel(requestId)
 	return nil
 }
 

@@ -13,10 +13,4 @@ const (
 	EventWatcherStarted  = "watcher:started"
 	EventScenarioAdded   = "scenario:added"
 	EventScenarioUpdated = "scenario:updated"
-
-	// AI events
-	EventAISessionStart = "ai:session:start"
-	EventAISessionDelta = "ai:session:delta"
-	EventAISessionDone  = "ai:session:done"
-	EventAISessionError = "ai:session:error"
 )
