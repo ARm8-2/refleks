@@ -6,7 +6,6 @@ type Settings struct {
 	SteamIDOverride      string                  `json:"steamIdOverride,omitempty"`
 	PersonaNameOverride  string                  `json:"personaNameOverride,omitempty"`
 	StatsDir             string                  `json:"statsDir"`
-	TracesDir            string                  `json:"tracesDir"`
 	SessionGapMinutes    int                     `json:"sessionGapMinutes"`
 	Theme                string                  `json:"theme"`
 	Font                 string                  `json:"font,omitempty"`

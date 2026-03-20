@@ -28,7 +28,6 @@ func Default() models.Settings {
 	return models.Settings{
 		SteamInstallDir:      constants.DefaultWindowsSteamInstallDir,
 		StatsDir:             DefaultStatsDir(),
-		TracesDir:            DefaultTracesDirString(),
 		SessionGapMinutes:    constants.DefaultSessionGapMinutes,
 		Theme:                constants.DefaultTheme,
 		Font:                 constants.DefaultFont,
@@ -46,9 +45,6 @@ func Sanitize(s models.Settings) models.Settings {
 	}
 	if s.StatsDir == "" {
 		s.StatsDir = DefaultStatsDir()
-	}
-	if strings.TrimSpace(s.TracesDir) == "" {
-		s.TracesDir = DefaultTracesDirString()
 	}
 	if s.SessionGapMinutes <= 0 {
 		s.SessionGapMinutes = constants.DefaultSessionGapMinutes
@@ -94,25 +90,6 @@ func EnsureConfigDir() (string, error) {
 		return "", err
 	}
 	return base, nil
-}
-
-// DefaultTracesDirString returns the default traces directory as a concrete path string.
-func DefaultTracesDirString() string {
-	base, err := GetConfigDir()
-	if err != nil {
-		// Fallback to relative subdir if home/config cannot be determined
-		return filepath.ToSlash(constants.TracesSubdirName)
-	}
-	return filepath.ToSlash(filepath.Join(base, constants.TracesSubdirName))
-}
-
-// DefaultTracesDir returns the resolved default traces directory ($HOME/.refleks/traces).
-func DefaultTracesDir() (string, error) {
-	base, err := GetConfigDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(base, constants.TracesSubdirName), nil
 }
 
 // ExpandPathPlaceholders normalizes a path string for the current OS. No placeholders are supported.

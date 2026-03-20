@@ -1,10 +1,6 @@
 package constants
 
 const (
-	// DefaultRecentCap bounds how many recent scenarios we retain in memory when
-	// no explicit limit is set in configuration.
-	DefaultRecentCap = 500
-
 	// Default UI/analysis values
 	DefaultSessionGapMinutes  = 20
 	DefaultTheme              = "dark"

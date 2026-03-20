@@ -1,4 +1,4 @@
-package parser
+package runs
 
 import (
 	"bufio"
@@ -12,10 +12,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 )
 
 var (
-	// Example: "Air Tracking 180 - Challenge - 2025.09.09-16.57.00 Stats.csv"
 	filenameRe = regexp.MustCompile(`^(?P<name>.+?)\s-\s.*?-\s(?P<dt>\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})\sStats\.csv$`)
 	dtLayout   = "2006.01.02-15.04.05"
 )
@@ -43,7 +45,6 @@ func ParseFilename(filename string) (FilenameInfo, error) {
 }
 
 // ParseStatsFile parses a Kovaak's CSV stats file into events and stats map.
-// The file format contains a CSV section (events/kill rows) followed by a key-value section separated by ":,".
 func ParseStatsFile(path string) (events [][]string, stats map[string]any, err error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -51,12 +52,11 @@ func ParseStatsFile(path string) (events [][]string, stats map[string]any, err e
 	}
 	defer f.Close()
 
-	wrapped, werr := WrapReaderWithUTF8(f)
+	wrapped, werr := wrapReaderWithUTF8(f)
 	if werr != nil {
 		return nil, nil, werr
 	}
 
-	// We'll read line by line to detect the transition from CSV to key-value section.
 	r := bufio.NewReader(wrapped)
 	var csvLines [][]string
 	var kvLines []string
@@ -68,40 +68,30 @@ func ParseStatsFile(path string) (events [][]string, stats map[string]any, err e
 			if len(line) == 0 {
 				break
 			}
-			// otherwise, process last line then break after loop
 		} else if readErr != nil {
 			return nil, nil, readErr
 		}
 		trimmed := strings.TrimRight(line, "\r\n")
 		if len(trimmed) == 0 {
-			// skip pure empty lines but preserve section state
 			if errors.Is(readErr, io.EOF) {
 				break
 			}
 			continue
 		}
 
-		// Heuristic: key-value lines contain ":," separator; CSV lines are comma-separated values
 		if !isKV && strings.Contains(trimmed, ":,") {
 			isKV = true
 		}
 		if isKV {
 			kvLines = append(kvLines, trimmed)
 		} else {
-			// Accumulate CSV raw line to be parsed via encoding/csv for robustness
-			// Use a temporary csv.Reader
 			rec, perr := parseCSVLine(trimmed)
 			if perr != nil {
 				return nil, nil, perr
 			}
-			// Only keep per-kill event rows. Kovaak's files may contain additional CSV tables
-			// (e.g., weapon summary) that should not be included in the events. We treat a row
-			// as an event when the first column is a numeric kill index and (optionally) the
-			// second column looks like a time-of-day.
 			if isKillEventRow(rec) {
 				csvLines = append(csvLines, rec)
 			}
-			// Otherwise, ignore non-event CSV rows (headers, summaries, etc.).
 		}
 
 		if errors.Is(readErr, io.EOF) {
@@ -109,7 +99,6 @@ func ParseStatsFile(path string) (events [][]string, stats map[string]any, err e
 		}
 	}
 
-	// Parse kv lines into a map[string]any
 	statsMap := make(map[string]any, len(kvLines))
 	for _, l := range kvLines {
 		parts := strings.SplitN(l, ":,", 2)
@@ -118,7 +107,6 @@ func ParseStatsFile(path string) (events [][]string, stats map[string]any, err e
 		}
 		key := strings.TrimSpace(parts[0])
 		val := strings.TrimSpace(parts[1])
-		// Try to coerce to int or float if applicable; otherwise keep as string
 		if i, ierr := strconv.Atoi(val); ierr == nil {
 			statsMap[key] = i
 			continue
@@ -149,8 +137,6 @@ func isInt(s string) bool {
 	return err == nil
 }
 
-// isKillEventRow returns true if the CSV record appears to be a per-kill event row.
-// Expectation: first field is an integer index, second field is a time-of-day like 17:56:30.198
 func isKillEventRow(rec []string) bool {
 	if len(rec) < 2 {
 		return false
@@ -158,25 +144,64 @@ func isKillEventRow(rec []string) bool {
 	if !isInt(rec[0]) {
 		return false
 	}
-	// Optional sanity check: time-of-day in HH:MM:SS(.fraction)?
 	s := strings.TrimSpace(rec[1])
-	if len(s) < 7 { // too short to be HH:MM:SS
+	if len(s) < 7 {
 		return false
 	}
-	// Fast path without regex: check separators and digits
-	// HH:MM:SS prefix
 	if len(s) < 8 {
 		return false
 	}
 	if !(s[2] == ':' && s[5] == ':') {
 		return false
 	}
-	for i, ch := range []byte{s[0], s[1], s[3], s[4], s[6], s[7]} {
+	for _, ch := range []byte{s[0], s[1], s[3], s[4], s[6], s[7]} {
 		if ch < '0' || ch > '9' {
-			_ = i
 			return false
 		}
 	}
-	// Optional fractional seconds allowed but not required
 	return true
+}
+
+func wrapReaderWithUTF8(r io.Reader) (io.Reader, error) {
+	br := bufio.NewReader(r)
+
+	b, _ := br.Peek(3)
+	if len(b) >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF {
+		_, _ = br.Discard(3)
+		return br, nil
+	}
+	if len(b) >= 2 {
+		if b[0] == 0xFF && b[1] == 0xFE {
+			_, _ = br.Discard(2)
+			return transform.NewReader(br, unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()), nil
+		}
+		if b[0] == 0xFE && b[1] == 0xFF {
+			_, _ = br.Discard(2)
+			return transform.NewReader(br, unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewDecoder()), nil
+		}
+	}
+
+	peek, _ := br.Peek(512)
+	if len(peek) > 0 {
+		countEven := 0
+		countOdd := 0
+		for i := 0; i < len(peek); i++ {
+			if peek[i] == 0 {
+				if i%2 == 0 {
+					countEven++
+				} else {
+					countOdd++
+				}
+			}
+		}
+		if countEven+countOdd > len(peek)/8 {
+			little := countOdd > countEven
+			if little {
+				return transform.NewReader(br, unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()), nil
+			}
+			return transform.NewReader(br, unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewDecoder()), nil
+		}
+	}
+
+	return br, nil
 }

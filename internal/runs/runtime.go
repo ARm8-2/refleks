@@ -1,4 +1,4 @@
-package tracking
+package runs
 
 import (
 	"context"
@@ -10,53 +10,49 @@ import (
 	"refleks/internal/benchmarks"
 	"refleks/internal/constants"
 	"refleks/internal/models"
-	"refleks/internal/mouse"
 	"refleks/internal/process"
+	"refleks/internal/runs/mouse"
 	appsettings "refleks/internal/settings"
-	"refleks/internal/traces"
 	"refleks/internal/watcher"
 )
 
-// Service coordinates mouse and watcher services.
-type Service struct {
+// RuntimeService coordinates watcher and mouse tracking around the run store.
+type RuntimeService struct {
 	ctx             context.Context
 	watcher         *watcher.Watcher
 	mouse           mouse.Provider
 	settingsSvc     *appsettings.Service
 	benchmarkSvc    *benchmarks.Service
-	tracesSvc       *traces.Service
+	runStore        *Store
 	procWatcher     *process.Watcher
 	procWatcherStop context.CancelFunc
 }
 
-// NewService constructs and wires the subservices.
-func NewService(ctx context.Context, settingsSvc *appsettings.Service, benchmarkSvc *benchmarks.Service, tracesSvc *traces.Service) *Service {
-	svc := &Service{
+// NewRuntimeService constructs the runtime orchestration service for runs.
+func NewRuntimeService(ctx context.Context, settingsSvc *appsettings.Service, benchmarkSvc *benchmarks.Service, runStore *Store) *RuntimeService {
+	svc := &RuntimeService{
 		ctx:          ctx,
 		settingsSvc:  settingsSvc,
 		benchmarkSvc: benchmarkSvc,
-		tracesSvc:    tracesSvc,
+		runStore:     runStore,
 	}
 
 	settings := settingsSvc.Get()
 
-	// Mouse provider initialization
 	svc.mouse = mouse.New(constants.DefaultMouseSampleHz)
 	svc.mouse.SetBufferDuration(time.Duration(settings.MouseBufferMinutes) * time.Minute)
 	if settings.MouseTrackingEnabled {
 		svc.startMouseProcessWatcher()
 	}
 
-	// Initialize Watcher with default/current settings
 	defaultCfg := models.WatcherConfig{
-		Path:                 settings.StatsDir,
-		SessionGap:           time.Duration(settings.SessionGapMinutes) * time.Minute,
-		PollInterval:         time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
-		ParseExistingOnStart: true,
-		ParseExistingLimit:   settings.MaxExistingOnStart,
+		Path:               settings.StatsDir,
+		SessionGap:         time.Duration(settings.SessionGapMinutes) * time.Minute,
+		PollInterval:       time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
+		ParseExistingLimit: settings.MaxExistingOnStart,
 	}
 
-	svc.watcher = watcher.New(ctx, defaultCfg, tracesSvc)
+	svc.watcher = watcher.New(ctx, defaultCfg, runStore)
 	svc.watcher.SetMouseProvider(svc.mouse)
 	svc.watcher.SetOnScenarioParsed(func(rec models.ScenarioRecord) {
 		benchmarkSvc.CheckAndRefreshIfNeeded(rec)
@@ -73,8 +69,7 @@ func NewService(ctx context.Context, settingsSvc *appsettings.Service, benchmark
 	return svc
 }
 
-// StartWatcher starts the watcher using the stored settings and mouse provider.
-func (s *Service) StartWatcher(path string) error {
+func (s *RuntimeService) StartWatcher(path string) error {
 	current := s.settingsSvc.Get()
 	if path != "" {
 		current.StatsDir = path
@@ -84,23 +79,20 @@ func (s *Service) StartWatcher(path string) error {
 		current = s.settingsSvc.Get()
 	}
 
-	// Configure watcher
 	finalPath := current.StatsDir
 	if finalPath == "" {
 		finalPath = appsettings.DefaultStatsDir()
 	}
 
 	cfg := models.WatcherConfig{
-		Path:                 finalPath,
-		SessionGap:           time.Duration(current.SessionGapMinutes) * time.Minute,
-		PollInterval:         time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
-		ParseExistingOnStart: true,
-		ParseExistingLimit:   current.MaxExistingOnStart,
+		Path:               finalPath,
+		SessionGap:         time.Duration(current.SessionGapMinutes) * time.Minute,
+		PollInterval:       time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
+		ParseExistingLimit: current.MaxExistingOnStart,
 	}
 
 	if s.watcher == nil {
-		// Should have been initialized in NewService, but just in case
-		s.watcher = watcher.New(s.ctx, cfg, s.tracesSvc)
+		s.watcher = watcher.New(s.ctx, cfg, s.runStore)
 		s.watcher.SetMouseProvider(s.mouse)
 		s.watcher.SetOnScenarioParsed(func(rec models.ScenarioRecord) {
 			s.benchmarkSvc.CheckAndRefreshIfNeeded(rec)
@@ -119,55 +111,44 @@ func (s *Service) StartWatcher(path string) error {
 	return nil
 }
 
-// StopWatcher stops the watcher.
-func (s *Service) StopWatcher() error {
+func (s *RuntimeService) StopWatcher() error {
 	if s.watcher == nil {
 		return nil
 	}
 	return s.watcher.Stop()
 }
 
-// GetRecent returns recent scenarios.
-func (s *Service) GetRecent(limit int) []models.ScenarioRecord {
+func (s *RuntimeService) GetRecent(limit int) []models.ScenarioRecord {
 	if s.watcher == nil {
 		return nil
 	}
 	return s.watcher.GetRecent(limit)
 }
 
-// IsWatcherRunning indicates if the watcher loop is active.
-func (s *Service) IsWatcherRunning() bool {
+func (s *RuntimeService) IsWatcherRunning() bool {
 	if s.watcher == nil {
 		return false
 	}
 	return s.watcher.IsRunning()
 }
 
-// UpdateSettings applies the given settings object, persists it, and updates
-// sub-services (mouse, watcher, traces) to reflect the change.
-func (s *Service) UpdateSettings(newS models.Settings) error {
+func (s *RuntimeService) UpdateSettings(newS models.Settings) error {
 	return s.OverwriteSettings(newS)
 }
 
-// OverwriteSettings applies the given settings object exactly as provided.
-func (s *Service) OverwriteSettings(newS models.Settings) error {
+func (s *RuntimeService) OverwriteSettings(newS models.Settings) error {
 	prevSettings := s.settingsSvc.Get()
 
-	// Persist new settings
 	if err := s.settingsSvc.Update(newS); err != nil {
 		return err
 	}
-
-	// Re-fetch sanitized settings
 	newS = s.settingsSvc.Get()
 
-	// Apply to mouse provider
 	if s.mouse == nil {
 		s.mouse = mouse.New(constants.DefaultMouseSampleHz)
 	}
 	s.mouse.SetBufferDuration(time.Duration(newS.MouseBufferMinutes) * time.Minute)
 
-	// Handle mouse tracking state change
 	if newS.MouseTrackingEnabled != prevSettings.MouseTrackingEnabled {
 		if newS.MouseTrackingEnabled {
 			s.startMouseProcessWatcher()
@@ -176,43 +157,29 @@ func (s *Service) OverwriteSettings(newS models.Settings) error {
 		}
 	}
 
-	// Determine if we need to restart the watcher
 	needsWatcherRestart := true
-	// Only restart if core watcher config changed
 	if prevSettings.StatsDir == newS.StatsDir &&
 		prevSettings.SessionGapMinutes == newS.SessionGapMinutes &&
 		prevSettings.MaxExistingOnStart == newS.MaxExistingOnStart {
 		needsWatcherRestart = false
 	}
 
-	// Ensure watcher reflects latest settings
 	if err := s.updateWatcher(newS, needsWatcherRestart); err != nil {
 		return err
-	}
-
-	// Apply traces directory override
-	tracesDir := appsettings.ExpandPathPlaceholders(newS.TracesDir)
-	s.tracesSvc.SetBaseDir(tracesDir)
-
-	prevTraces := prevSettings.TracesDir
-	if s.watcher != nil && appsettings.ExpandPathPlaceholders(prevTraces) != tracesDir {
-		n := s.watcher.ReloadTraces()
-		runtime.LogInfof(s.ctx, "reloaded traces for %d scenarios after tracesDir change", n)
 	}
 	return nil
 }
 
-// updateWatcher handles restarting or reconfiguring the watcher based on settings changes.
-func (s *Service) updateWatcher(newS models.Settings, needsRestart bool) error {
+func (s *RuntimeService) updateWatcher(newS models.Settings, needsRestart bool) error {
 	if s.watcher == nil {
 		return nil
 	}
+
 	cfg := models.WatcherConfig{
-		Path:                 newS.StatsDir,
-		SessionGap:           time.Duration(newS.SessionGapMinutes) * time.Minute,
-		PollInterval:         time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
-		ParseExistingOnStart: true,
-		ParseExistingLimit:   newS.MaxExistingOnStart,
+		Path:               newS.StatsDir,
+		SessionGap:         time.Duration(newS.SessionGapMinutes) * time.Minute,
+		PollInterval:       time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
+		ParseExistingLimit: newS.MaxExistingOnStart,
 	}
 
 	if needsRestart {
@@ -222,7 +189,6 @@ func (s *Service) updateWatcher(newS models.Settings, needsRestart bool) error {
 				return err
 			}
 			s.watcher.Clear()
-			// Mouse provider is already set on s.watcher
 			if err := s.watcher.Start(); err != nil {
 				runtime.LogErrorf(s.ctx, "Watcher restart error: %v", err)
 				return err
@@ -238,11 +204,11 @@ func (s *Service) updateWatcher(newS models.Settings, needsRestart bool) error {
 			_ = s.watcher.UpdateConfig(cfg)
 		}
 	}
+
 	return nil
 }
 
-// SaveScenarioNote updates the note and sensitivity for a specific scenario.
-func (s *Service) SaveScenarioNote(scenario, notes, sens string) error {
+func (s *RuntimeService) SaveScenarioNote(scenario, notes, sens string) error {
 	current := s.settingsSvc.Get()
 	if current.ScenarioNotes == nil {
 		current.ScenarioNotes = make(map[string]models.ScenarioNote)
@@ -254,8 +220,7 @@ func (s *Service) SaveScenarioNote(scenario, notes, sens string) error {
 	return s.settingsSvc.Update(current)
 }
 
-// SaveSessionNote updates the name and notes for a specific session.
-func (s *Service) SaveSessionNote(sessionID, name, notes string) error {
+func (s *RuntimeService) SaveSessionNote(sessionID, name, notes string) error {
 	current := s.settingsSvc.Get()
 	if current.SessionNotes == nil {
 		current.SessionNotes = make(map[string]models.SessionNote)
@@ -267,11 +232,9 @@ func (s *Service) SaveSessionNote(sessionID, name, notes string) error {
 	return s.settingsSvc.Update(current)
 }
 
-// startMouseProcessWatcher starts the process watcher that controls mouse tracking.
-// Mouse tracking only runs when Kovaak's (FPSAimTrainer.exe) is running.
-func (s *Service) startMouseProcessWatcher() {
+func (s *RuntimeService) startMouseProcessWatcher() {
 	if s.procWatcherStop != nil {
-		return // Already running
+		return
 	}
 
 	ctx, cancel := context.WithCancel(s.ctx)
@@ -279,7 +242,6 @@ func (s *Service) startMouseProcessWatcher() {
 
 	s.procWatcher = process.NewWatcher(constants.KovaaksProcessName,
 		func() {
-			// Kovaak's started - start mouse tracking
 			if err := s.mouse.Start(); err != nil {
 				runtime.LogWarningf(s.ctx, "mouse tracker start failed: %v", err)
 			} else {
@@ -287,7 +249,6 @@ func (s *Service) startMouseProcessWatcher() {
 			}
 		},
 		func() {
-			// Kovaak's stopped - stop mouse tracking
 			s.mouse.Stop()
 			runtime.LogInfo(s.ctx, "mouse tracker stopped (process exited)")
 		},
@@ -295,15 +256,13 @@ func (s *Service) startMouseProcessWatcher() {
 	go s.procWatcher.Start(ctx)
 }
 
-// stopMouseProcessWatcher stops the process watcher and ensures mouse tracking is stopped.
-func (s *Service) stopMouseProcessWatcher() {
+func (s *RuntimeService) stopMouseProcessWatcher() {
 	if s.procWatcherStop != nil {
 		s.procWatcherStop()
 		s.procWatcherStop = nil
 	}
 	s.procWatcher = nil
 
-	// Ensure mouse tracking is stopped
 	if s.mouse != nil && s.mouse.Enabled() {
 		s.mouse.Stop()
 		runtime.LogInfo(s.ctx, "mouse tracker stopped (tracking disabled)")

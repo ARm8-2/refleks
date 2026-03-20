@@ -3,8 +3,8 @@ package constants
 const (
 	// Settings + paths
 	// Name of the app config folder in the user's home directory
-	ConfigDirName    = ".refleks"
-	TracesSubdirName = "traces"
+	ConfigDirName  = ".refleks"
+	RunsSubdirName = "runs"
 
 	// Default Kovaak's stats directory on Windows
 	DefaultWindowsKovaaksStatsDir = `C:\\Program Files (x86)\\Steam\\steamapps\\common\\FPSAimTrainer\\FPSAimTrainer\\stats`
