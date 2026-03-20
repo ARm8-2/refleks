@@ -17,7 +17,7 @@ import {
   type Theme,
 } from '@/shared/lib'
 import type { Settings, UpdateInfo } from '@/shared/types'
-import { ChevronDown, ChevronUp, Download, ExternalLink, Eye, EyeOff, RefreshCw } from 'lucide-react'
+import { ChevronDown, ChevronUp, Download, RefreshCw } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { ClearCacheModal } from '../components/ClearCacheModal'
 import { ResetSettingsModal } from '../components/ResetSettingsModal'
@@ -47,7 +47,6 @@ export function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [isResetOpen, setIsResetOpen] = useState(false)
   const [isClearCacheOpen, setIsClearCacheOpen] = useState(false)
-  const [showApiKey, setShowApiKey] = useState(false)
 
   useEffect(() => {
     getSettings().then(setSettings).catch(() => { })
@@ -315,35 +314,6 @@ export function SettingsPage() {
                     max={100}
                     className="w-20 text-center"
                   />
-                </SettingsField>
-              </SettingsSection>
-
-              <SettingsSection title="AI Features">
-                <SettingsField label="Gemini API Key" description="For AI-powered session insights">
-                  <div className="flex items-center gap-2 max-w-md">
-                    <div className="relative flex-1">
-                      <Input
-                        type={showApiKey ? 'text' : 'password'}
-                        value={settings.geminiApiKey || ''}
-                        onChange={e => updateField('geminiApiKey', e.target.value || undefined)}
-                        placeholder="API key"
-                        className="w-full pr-9 font-mono"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowApiKey(!showApiKey)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    <button
-                      onClick={() => openURL('https://aistudio.google.com/apikey')}
-                      className="flex items-center gap-1 text-primary hover:underline text-xs whitespace-nowrap"
-                    >
-                      Get key <ExternalLink className="w-3 h-3" />
-                    </button>
-                  </div>
                 </SettingsField>
               </SettingsSection>
             </div>

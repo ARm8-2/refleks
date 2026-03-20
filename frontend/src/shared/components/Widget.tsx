@@ -53,7 +53,7 @@ export function Widget({
     <>
       <section
         className={cn(
-          'rounded-xl bg-card p-5',
+          'flex flex-col rounded-xl bg-card p-5',
           canExpand && 'cursor-pointer transition-colors hover:bg-card-hover',
           className,
         )}
@@ -62,13 +62,13 @@ export function Widget({
         role={canExpand ? 'button' : undefined}
         tabIndex={canExpand ? 0 : undefined}
       >
-        <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+            {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {headerActions && (
               <div
                 className="flex items-center gap-2"
@@ -82,18 +82,18 @@ export function Widget({
             {canExpand && (
               <button
                 type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="-my-0.5 inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 title="Open widget"
                 aria-label="Open widget"
                 onClick={handleExpandClick}
               >
-                <Maximize2 className="h-4 w-4" />
+                <Maximize2 className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
         </div>
 
-        <div className={contentClassName}>{children}</div>
+        <div className={cn('flex-1 min-h-0', contentClassName)}>{children}</div>
       </section>
 
       {canExpand && (

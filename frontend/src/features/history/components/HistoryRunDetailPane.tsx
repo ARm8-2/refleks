@@ -2,15 +2,18 @@ import { Button, Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
 import { usePersistedState } from '@/shared/hooks'
-import { cn } from '@/shared/lib'
+import { cn, getScenarioTrace } from '@/shared/lib'
 import type { StatKey } from '@/shared/types'
+import type { MousePoint } from '@/shared/types/ipc'
 import { ArrowRightLeft, Columns2, Layers, PanelRightClose, PinOff, Rows2, Trophy } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, Scatter, ScatterChart, XAxis, YAxis } from 'recharts'
+import { decodeTrace } from '../lib/decodeTrace'
 import type { HistoryRun } from '../lib/historyModels'
 import { buildRunStats, formatDurationLabel, formatNumber, formatPercent, formatRunTimestamp, formatScore, formatSessionTitle } from '../lib/historyModels'
 import { computeScenarioAnalysis, type ScenarioAnalysis } from '../lib/scenarioAnalysis'
+import { TraceReplay } from './TraceReplay'
 
 export type InspectorTab = 'stats' | 'analysis' | 'trace'
 
@@ -78,12 +81,12 @@ export function HistoryRunDetailPane({
               vs PB
             </Button>
           )}
-          {compareRun && activeTab === 'analysis' && (
+          {compareRun && (activeTab === 'analysis' || activeTab === 'trace') && (
             <Button
               variant={overlay ? 'secondary' : 'ghost'}
               size="sm"
               onClick={() => setOverlay(o => !o)}
-              title={overlay ? 'Show charts side by side' : 'Overlay both runs on the same charts'}
+              title={overlay ? 'Show side by side' : 'Overlay both runs'}
             >
               {overlay
                 ? <><Columns2 className="mr-1 h-3.5 w-3.5" />Side by side</>
@@ -109,7 +112,10 @@ export function HistoryRunDetailPane({
           <p className="text-sm text-muted-foreground">Select a run to inspect</p>
         </div>
       ) : (
-        <div className="scrollbar-compact min-h-0 flex-1 overflow-y-auto p-5 pt-2 space-y-4">
+        <div className={cn(
+          'min-h-0 flex-1',
+          activeTab === 'trace' ? 'flex flex-col p-3 pt-1' : 'scrollbar-compact overflow-y-auto p-5 pt-2 space-y-4',
+        )}>
           {activeTab === 'stats' && (
             <StatsTab
               primaryRun={primaryRun}
@@ -129,6 +135,7 @@ export function HistoryRunDetailPane({
             <TraceTab
               primaryRun={primaryRun}
               compareRun={compareRun}
+              overlay={overlay}
             />
           )}
         </div>
@@ -830,40 +837,88 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   )
 }
 
-/* ─── Trace tab (placeholder) ─── */
+/* ─── Trace tab ─── */
 
-function TraceTab({ primaryRun, compareRun }: { primaryRun: HistoryRun; compareRun: HistoryRun | null }) {
-  return (
-    <div className={cn('grid gap-3', compareRun && 'xl:grid-cols-2')}>
-      <TraceCard run={primaryRun} label={compareRun ? 'Pinned' : 'Selected'} />
-      {compareRun && <TraceCard run={compareRun} label="Compare" />}
-    </div>
-  )
+function useTraceData(run: HistoryRun | null) {
+  const [points, setPoints] = useState<MousePoint[] | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const hasTrace = !!run && (run.item.hasTrace || (run.item.mouseTrace != null && run.item.mouseTrace.length > 0))
+  const fileName = run?.item.fileName ?? null
+  const inlineTrace = run?.item.mouseTrace
+  const traceData = run?.item.traceData
+  const flagHasTrace = run?.item.hasTrace ?? false
+
+  useEffect(() => {
+    setPoints(null)
+    setError(null)
+    if (inlineTrace && inlineTrace.length > 0) {
+      setPoints(inlineTrace)
+      return
+    }
+    if (traceData) {
+      setPoints(decodeTrace(traceData))
+      return
+    }
+    if (!flagHasTrace || !fileName) return
+
+    let cancelled = false
+    setLoading(true)
+    getScenarioTrace(fileName)
+      .then(b64 => {
+        if (cancelled) return
+        const decoded = decodeTrace(b64)
+        setPoints(decoded.length > 0 ? decoded : null)
+        if (decoded.length === 0) setError('Trace file was empty')
+      })
+      .catch(() => { if (!cancelled) setError('Failed to load trace data') })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [fileName, flagHasTrace, inlineTrace, traceData])
+
+  return { points, loading, error, hasTrace, resolution: String(run?.item.stats?.Resolution ?? '') }
 }
 
-function TraceCard({ run, label }: { run: HistoryRun; label: string }) {
-  const hasTrace = run.item.hasTrace || (run.item.mouseTrace && run.item.mouseTrace.length > 0)
+function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: HistoryRun; compareRun: HistoryRun | null; overlay: boolean }) {
+  const primary = useTraceData(primaryRun)
+  const compare = useTraceData(compareRun)
+
+  if (!primary.hasTrace) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="text-sm text-muted-foreground">No mouse trace data. Enable mouse tracking in settings to record traces.</p>
+      </div>
+    )
+  }
+
+  if (primary.loading || compare.loading) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading trace…</p>
+      </div>
+    )
+  }
+
+  if (primary.error || !primary.points || primary.points.length === 0) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <p className="text-sm text-muted-foreground">{primary.error ?? 'No trace data available'}</p>
+      </div>
+    )
+  }
+
+  const hasCompare = compare.points != null && compare.points.length > 0
 
   return (
-    <div className="rounded-xl bg-secondary p-4 space-y-3">
-      <div>
-        <div className="text-xs text-muted-foreground">{label}</div>
-        <div className="mt-1 font-medium text-foreground">{run.scenarioName}</div>
-      </div>
-      {hasTrace ? (
-        <div className="rounded-lg bg-card p-3">
-          <div className="text-xs text-muted-foreground">
-            {run.item.mouseTrace ? `${run.item.mouseTrace.length} trace points` : 'Trace data available'}
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Mouse movement visualization coming soon.
-          </p>
-        </div>
-      ) : (
-        <div className="rounded-lg bg-card p-3 text-sm text-muted-foreground">
-          No mouse trace data for this run. Enable mouse tracking in settings to record traces.
-        </div>
-      )}
+    <div className="min-h-0 flex-1">
+      <TraceReplay
+        points={primary.points}
+        resolution={primary.resolution || undefined}
+        comparePoints={hasCompare ? compare.points! : undefined}
+        compareResolution={hasCompare ? (compare.resolution || undefined) : undefined}
+        layout={hasCompare && !overlay ? 'split' : 'overlay'}
+      />
     </div>
   )
 }

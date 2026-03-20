@@ -1,59 +1,156 @@
 import { InfoTooltip, Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
-import { ChartContainer } from '@/shared/components/ui/chart'
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
 import { usePersistedState } from '@/shared/hooks'
 import { cn } from '@/shared/lib'
-import { Clock3, Flame, Gamepad2, Gauge, Minus, Pencil, Plus, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { Area, AreaChart } from 'recharts'
+import { Activity, Clock3, Crosshair, Flame, Gamepad2, Gauge, Minus, Pencil, Plus, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { Area, AreaChart, CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
 import { useDailyPlaytime } from '../hooks/useDailyPlaytime'
 import { useRecentSessionSnapshot, type SnapshotTone } from '../hooks/useRecentSessionSnapshot'
 
 const SESSION_TARGET_STORAGE_KEY = 'refleks.overview.sessionProgress.targetRuns'
 
 
-export function SessionLengthWidget() {
-  const { currentSession, sessionLengthLabel, sessionLengthDetail } = useRecentSessionSnapshot()
-  if (!currentSession) return <EmptyMetricWidget icon={Clock3} label="Session length" />
+/* ─── Session & Playtime (merged) ─── */
+
+export function SessionTimeWidget() {
+  const { currentSession, sessionLengthLabel, sessionLengthDetail, activePlaytimeLabel, activePlaytimeDetail } = useRecentSessionSnapshot()
+  if (!currentSession) return <EmptyMetricWidget icon={Clock3} label="Session & Playtime" />
 
   return (
-    <MetricWidget icon={Clock3} label="Session length" value={sessionLengthLabel} detail={sessionLengthDetail} />
+    <Widget
+      title={<span className="inline-flex items-center gap-1.5"><Clock3 className="h-3.5 w-3.5" />Session & Playtime</span>}
+      className="px-4 py-3"
+    >
+      <div className="flex items-baseline gap-2">
+        <span className="text-lg font-semibold text-foreground">{sessionLengthLabel}</span>
+        <span className="text-xs text-muted-foreground">{sessionLengthDetail}</span>
+      </div>
+      <div className="mt-1 flex items-baseline gap-2">
+        <Gamepad2 className="h-3 w-3 text-muted-foreground" />
+        <span className="text-sm font-medium text-foreground">{activePlaytimeLabel}</span>
+        <span className="text-xs text-muted-foreground">{activePlaytimeDetail}</span>
+      </div>
+    </Widget>
   )
 }
 
-export function ActivePlaytimeWidget() {
-  const { currentSession, activePlaytimeLabel, activePlaytimeDetail } = useRecentSessionSnapshot()
-  if (!currentSession) return <EmptyMetricWidget icon={Gamepad2} label="Active playtime" />
+/* ─── Streak & Daily Playtime (merged) ─── */
 
-  return (
-    <MetricWidget icon={Gamepad2} label="Active playtime" value={activePlaytimeLabel} detail={activePlaytimeDetail} />
-  )
+const playtimeConfig: ChartConfig = {
+  minutes: { label: 'Playtime', color: 'var(--chart-3)' },
 }
 
-export function DailyStreakWidget() {
+export function StreakPlaytimeWidget() {
   const { currentSession, streakLabel, streakDetail } = useRecentSessionSnapshot()
-  if (!currentSession) return <EmptyMetricWidget icon={Flame} label="Daily streak" />
+  const points = useDailyPlaytime(7)
+  const hasData = points.some(p => p.minutes > 0)
+  const chartData = hasData ? points : points.map(p => ({ ...p, minutes: 0.5 }))
+
+  if (!currentSession) return <EmptyMetricWidget icon={Flame} label="Streak & Playtime" />
 
   return (
-    <MetricWidget
-      icon={Flame}
-      label="Daily streak"
-      value={streakLabel}
-      detail={streakDetail}
-      accentClassName="text-[color:var(--streak)]"
-    />
+    <Widget
+      title={<span className="inline-flex items-center gap-1.5"><Flame className="h-3.5 w-3.5 text-[color:var(--streak)]" />Streak & Playtime</span>}
+      className="px-4 py-3"
+    >
+      <div className="flex items-baseline gap-2">
+        <span className="text-lg font-semibold text-[color:var(--streak)]">{streakLabel}</span>
+        <span className="text-xs text-muted-foreground">{streakDetail}</span>
+      </div>
+      <ChartContainer config={playtimeConfig} className="mt-0.5 aspect-auto h-[28px] w-full">
+        <AreaChart data={chartData} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>
+          <defs>
+            <linearGradient id="streakPlaytimeFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-minutes)" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="var(--color-minutes)" stopOpacity={0.05} />
+            </linearGradient>
+          </defs>
+          <Area
+            isAnimationActive={false}
+            type="monotone"
+            dataKey="minutes"
+            stroke="var(--color-minutes)"
+            fill="url(#streakPlaytimeFill)"
+            strokeWidth={2}
+          />
+        </AreaChart>
+      </ChartContainer>
+    </Widget>
   )
 }
+
+/* ─── Last Run: Score & Accuracy ─── */
+
+export function LastRunWidget() {
+  const { currentSession, lastRunScore, lastRunAccuracy, lastRunScoreTrend, lastRunAccTrend, lastRunScenario, recentScores } = useRecentSessionSnapshot()
+  if (!currentSession) return <EmptyMetricWidget icon={Activity} label="Last Run" />
+
+  if (lastRunScore === null && lastRunAccuracy === null) {
+    return (
+      <Widget
+        title={<span className="inline-flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" />Last Run</span>}
+        className="px-4 py-3"
+      >
+        <div className="text-lg font-semibold text-muted-foreground">--</div>
+        <div className="mt-0.5 text-xs text-muted-foreground">No score data</div>
+      </Widget>
+    )
+  }
+
+  return (
+    <Widget
+      title={<span className="inline-flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" />Last Run</span>}
+      className="px-4 py-3"
+      headerActions={
+        lastRunScenario ? <span className="max-w-[120px] truncate text-[11px] text-muted-foreground" title={lastRunScenario}>{lastRunScenario}</span> : null
+      }
+    >
+      <div className="flex items-center gap-4">
+        {lastRunScore !== null && (
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-lg font-semibold text-foreground">{formatScore(lastRunScore)}</span>
+            <TrendIndicator trend={lastRunScoreTrend} />
+          </div>
+        )}
+        {lastRunAccuracy !== null && (
+          <div className="flex items-baseline gap-1.5">
+            <Crosshair className="h-3 w-3 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">{lastRunAccuracy.toFixed(1)}%</span>
+            <TrendIndicator trend={lastRunAccTrend} />
+          </div>
+        )}
+      </div>
+      <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+        <span>{lastRunScoreTrend !== null ? 'Trend: last 40% vs first 60%' : 'Score & accuracy'}</span>
+        {recentScores.length > 0 && <span className="ml-auto tabular-nums">{recentScores.length} {recentScores.length === 1 ? 'run' : 'runs'}</span>}
+      </div>
+    </Widget>
+  )
+}
+
+function TrendIndicator({ trend }: { trend: 'up' | 'down' | 'flat' | null }) {
+  if (!trend || trend === 'flat') return null
+  if (trend === 'up') return <TrendingUp className="h-3.5 w-3.5 text-[color:var(--success)]" />
+  return <TrendingDown className="h-3.5 w-3.5 text-[color:var(--warning)]" />
+}
+
+function formatScore(score: number): string {
+  return score >= 1000 ? `${(score / 1000).toFixed(1)}k` : score.toFixed(0)
+}
+
+/* ─── Session Performance (compact) ─── */
 
 export function SessionPerformanceWidget() {
   const { currentSession, statusTone, performanceValue, performanceDetail, statusLabel } = useRecentSessionSnapshot()
-  if (!currentSession) return <EmptyMetricWidget icon={Gauge} label="Session performance" />
+  if (!currentSession) return <EmptyMetricWidget icon={Gauge} label="Performance" />
 
   const StatusIcon = getStatusIcon(statusTone)
 
   return (
     <Widget
-      title={<span className="inline-flex items-center gap-1.5"><Gauge className={cn('h-3.5 w-3.5', getPerformanceAccent(statusTone))} />Session performance</span>}
+      title={<span className="inline-flex items-center gap-1.5"><Gauge className={cn('h-3.5 w-3.5', getPerformanceAccent(statusTone))} />Performance</span>}
       className="px-4 py-3"
       headerActions={
         <span className={cn('inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold', getToneBadgeClasses(statusTone))}>
@@ -229,8 +326,8 @@ export function SessionProgressWidget() {
         </div>
       }
     >
-      <div className="relative mx-auto w-fit">
-        <div className="relative aspect-square h-[140px] shrink-0">
+      <div className="relative mx-auto flex flex-1 items-center justify-center">
+        <div className="relative aspect-square w-full max-w-[160px] shrink-0">
           <svg viewBox="0 0 200 200" className="h-full w-full">
             {/* Background ring */}
             <circle cx={cx} cy={cy} r={(outerR + innerR) / 2} fill="none" stroke="var(--muted)" strokeWidth={outerR - innerR} />
@@ -286,72 +383,141 @@ export function SessionProgressWidget() {
   )
 }
 
+/* ─── Recent Scores Widget ─── */
 
-const playtimeConfig: ChartConfig = {
-  minutes: { label: 'Playtime', color: 'var(--chart-1)' },
+const recentScoresConfig: ChartConfig = {
+  score: { label: 'Score', color: 'var(--chart-2)' },
 }
 
-export function PlaytimeHistoryWidget() {
-  const points = useDailyPlaytime(7)
-  const hasData = points.some(p => p.minutes > 0)
-  const totalMinutes = points.reduce((sum, p) => sum + p.minutes, 0)
-  // When all values are 0, use a small baseline so the flat line sits above the bottom with visible underglow
-  const chartData = hasData ? points : points.map(p => ({ ...p, minutes: 0.5 }))
+export function RecentScoresWidget() {
+  const { currentSession, recentScores, recentScoresScenario, recentScoresSessionBest, recentScoresPb } = useRecentSessionSnapshot()
+  const [runCount, setRunCount] = useState(10)
+  const [showSessionBest, setShowSessionBest] = useState(true)
+  const [showPb, setShowPb] = useState(false)
 
-  return (
-    <Widget
-      title="Playtime (7d)"
-      className="px-4 py-3"
-      headerActions={hasData ? (
-        <span className="text-xs font-medium text-foreground">{formatMinutes(totalMinutes)}</span>
-      ) : null}
-    >
-      <ChartContainer config={playtimeConfig} className="aspect-auto h-[44px] w-full">
-        <AreaChart data={chartData} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>
-          <defs>
-            <linearGradient id="playtimeFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-minutes)" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="var(--color-minutes)" stopOpacity={0.05} />
-            </linearGradient>
-          </defs>
-          <Area
-            isAnimationActive={false}
-            type="monotone"
-            dataKey="minutes"
-            stroke="var(--color-minutes)"
-            fill="url(#playtimeFill)"
-            strokeWidth={2}
-          />
-        </AreaChart>
+  const compactData = useMemo(() => recentScores.slice(-10), [recentScores])
+  const expandedData = useMemo(() => {
+    const sliced = runCount >= recentScores.length ? recentScores : recentScores.slice(-runCount)
+    // Re-index for display
+    return sliced.map((s, i) => ({ ...s, index: i + 1 }))
+  }, [recentScores, runCount])
+
+  if (!currentSession || recentScores.length === 0) {
+    return (
+      <Widget title="Recent Scores" className="px-4 py-3">
+        <div className="flex h-full items-center justify-center rounded-xl bg-muted-strong p-4 text-sm text-muted-foreground">
+          Play a scenario to see recent scores here.
+        </div>
+      </Widget>
+    )
+  }
+
+  const runCountOptions = [10, 20, 50]
+
+  function renderReferenceLines() {
+    return (
+      <>
+        {showSessionBest && recentScoresSessionBest !== null && (
+          <ReferenceLine y={recentScoresSessionBest} stroke="var(--chart-3)" strokeDasharray="6 3" strokeWidth={1.5} />
+        )}
+        {showPb && recentScoresPb !== null && (
+          <ReferenceLine y={recentScoresPb} stroke="var(--chart-1)" strokeDasharray="6 3" strokeWidth={1.5} />
+        )}
+      </>
+    )
+  }
+
+  function renderCompactChart() {
+    return (
+      <ChartContainer config={recentScoresConfig} className="aspect-auto w-full h-full min-h-[140px]">
+        <LineChart data={compactData} margin={{ top: 6, right: 6, left: 0, bottom: 0 }}>
+          <YAxis tickLine={false} axisLine={false} tickMargin={8} width={36} tickFormatter={v => formatScoreCompact(v)} domain={['dataMin - 50', 'auto']} />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          {renderReferenceLines()}
+          <Line isAnimationActive={false} type="monotone" dataKey="score" stroke="var(--color-score)" strokeWidth={2} dot={{ r: 2.5, strokeWidth: 0, fill: 'var(--color-score)' }} activeDot={{ r: 4 }} />
+        </LineChart>
       </ChartContainer>
-    </Widget>
+    )
+  }
+
+  function renderExpandedChart() {
+    return (
+      <ChartContainer config={recentScoresConfig} className="aspect-auto w-full h-[360px]">
+        <LineChart data={expandedData} margin={{ top: 12, right: 12, left: 6, bottom: 0 }}>
+          <CartesianGrid vertical={false} strokeDasharray="3 3" />
+          <XAxis dataKey="index" tickLine={false} axisLine={false} tickMargin={8} />
+          <YAxis tickLine={false} axisLine={false} tickMargin={8} width={56} tickFormatter={v => formatScoreCompact(v)} domain={['dataMin - 50', 'auto']} />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          {showSessionBest && recentScoresSessionBest !== null && (
+            <ReferenceLine y={recentScoresSessionBest} stroke="var(--chart-3)" strokeDasharray="6 3" strokeWidth={1.5} label={{ value: `SB: ${formatScoreCompact(recentScoresSessionBest)}`, position: 'right', fill: 'var(--chart-3)', fontSize: 11 }} />
+          )}
+          {showPb && recentScoresPb !== null && (
+            <ReferenceLine y={recentScoresPb} stroke="var(--chart-1)" strokeDasharray="6 3" strokeWidth={1.5} label={{ value: `PB: ${formatScoreCompact(recentScoresPb)}`, position: 'right', fill: 'var(--chart-1)', fontSize: 11 }} />
+          )}
+          <Line isAnimationActive={false} type="monotone" dataKey="score" stroke="var(--color-score)" strokeWidth={2} dot={{ r: 2.5, strokeWidth: 0, fill: 'var(--color-score)' }} activeDot={{ r: 4 }} />
+        </LineChart>
+      </ChartContainer>
+    )
+  }
+
+  const modalControls = (
+    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 rounded-xl bg-secondary p-1">
+        {runCountOptions.map(n => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => setRunCount(n)}
+            className={cn(
+              'rounded-xl px-3 py-1.5 text-sm font-medium transition-colors',
+              runCount === n
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {`Last ${n}`}
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center gap-0.5 rounded-xl bg-secondary p-1">
+        <button
+          type="button"
+          onClick={() => setShowSessionBest(v => !v)}
+          className={cn(
+            'flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors',
+            showSessionBest ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+          )}
+        >
+          Session Best
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowPb(v => !v)}
+          className={cn(
+            'flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors',
+            showPb ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+          )}
+        >
+          PB
+        </button>
+      </div>
+    </div>
   )
-}
 
-
-function MetricWidget({
-  icon: Icon,
-  label,
-  value,
-  detail,
-  accentClassName,
-}: {
-  icon: LucideIcon
-  label: string
-  value: string
-  detail: string
-  accentClassName?: string
-}) {
   return (
     <Widget
-      title={<span className="inline-flex items-center gap-1.5"><Icon className={cn('h-3.5 w-3.5', accentClassName)} />{label}</span>}
+      title="Recent Scores"
       className="px-4 py-3"
+      modalTitle={recentScoresScenario || 'Recent Scores'}
+      modalHeaderActions={modalControls}
+      modalContent={renderExpandedChart()}
+      contentClassName="flex flex-col h-full"
     >
-      <div className={cn('text-lg font-semibold text-foreground', accentClassName)}>{value}</div>
-      <div className="mt-0.5 text-xs text-muted-foreground">{detail}</div>
+      {renderCompactChart()}
     </Widget>
   )
 }
+
 
 function EmptyMetricWidget({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
@@ -402,4 +568,10 @@ function formatMinutes(minutes: number): string {
   if (h === 0) return `${m}m`
   if (m === 0) return `${h}h`
   return `${h}h ${m}m`
+}
+
+function formatScoreCompact(score: number): string {
+  if (score >= 10000) return `${(score / 1000).toFixed(1)}k`
+  if (score >= 1000) return `${(score / 1000).toFixed(1)}k`
+  return score.toFixed(0)
 }

@@ -1,19 +1,5 @@
 export namespace models {
 	
-	export class AIOptions {
-	    maxRunsPerScenario: number;
-	    systemPersona: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new AIOptions(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.maxRunsPerScenario = source["maxRunsPerScenario"];
-	        this.systemPersona = source["systemPersona"];
-	    }
-	}
 	export class BenchmarkSubcategory {
 	    subcategoryName: string;
 	    scenarioCount: number;
@@ -476,7 +462,6 @@ export namespace models {
 	    mouseBufferMinutes: number;
 	    maxExistingOnStart: number;
 	    autostartEnabled: boolean;
-	    geminiApiKey?: string;
 	    scenarioNotes?: Record<string, ScenarioNote>;
 	    sessionNotes?: Record<string, SessionNote>;
 	
@@ -499,7 +484,6 @@ export namespace models {
 	        this.mouseBufferMinutes = source["mouseBufferMinutes"];
 	        this.maxExistingOnStart = source["maxExistingOnStart"];
 	        this.autostartEnabled = source["autostartEnabled"];
-	        this.geminiApiKey = source["geminiApiKey"];
 	        this.scenarioNotes = this.convertValues(source["scenarioNotes"], ScenarioNote, true);
 	        this.sessionNotes = this.convertValues(source["sessionNotes"], SessionNote, true);
 	    }

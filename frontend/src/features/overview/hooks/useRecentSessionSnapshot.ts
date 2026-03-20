@@ -47,6 +47,17 @@ export type RecentSessionSnapshot = {
   peakEnd: number
   diminishingReturnsAt: number
   sessionsAnalyzed: number
+  // Last run stats
+  lastRunScenario: string
+  lastRunScore: number | null
+  lastRunAccuracy: number | null
+  lastRunScoreTrend: 'up' | 'down' | 'flat' | null
+  lastRunAccTrend: 'up' | 'down' | 'flat' | null
+  // Recent scores for chart
+  recentScores: { index: number; score: number }[]
+  recentScoresScenario: string
+  recentScoresSessionBest: number | null
+  recentScoresPb: number | null
 }
 
 type PerformanceRead = {
@@ -85,6 +96,15 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
         peakEnd: 10,
         diminishingReturnsAt: 12,
         sessionsAnalyzed: 0,
+        lastRunScenario: '',
+        lastRunScore: null,
+        lastRunAccuracy: null,
+        lastRunScoreTrend: null,
+        lastRunAccTrend: null,
+        recentScores: [],
+        recentScoresScenario: '',
+        recentScoresSessionBest: null,
+        recentScoresPb: null,
       }
     }
 
@@ -98,6 +118,8 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
     const performance = readPerformance(currentSession, sessions.slice(1))
     const recommendation = recommendSessionLength(sessions)
     const currentRuns = currentSession.items.length
+    const lastRunStats = computeLastRunStats(currentSession)
+    const recentScoresData = computeRecentScores(currentSession, sessions)
 
     return {
       currentSession,
@@ -122,8 +144,98 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
       peakEnd: recommendation.peakPerformanceWindow[1],
       diminishingReturnsAt: recommendation.diminishingReturnsAt,
       sessionsAnalyzed: recommendation.sessionsAnalyzed,
+      lastRunScenario: lastRunStats.scenario,
+      lastRunScore: lastRunStats.score,
+      lastRunAccuracy: lastRunStats.accuracy,
+      lastRunScoreTrend: lastRunStats.scoreTrend,
+      lastRunAccTrend: lastRunStats.accTrend,
+      recentScores: recentScoresData.scores,
+      recentScoresScenario: recentScoresData.scenario,
+      recentScoresSessionBest: recentScoresData.sessionBest,
+      recentScoresPb: recentScoresData.pb,
     }
   }, [isInSession, sessions])
+}
+
+function computeLastRunStats(session: Session) {
+  const empty = { scenario: '', score: null as number | null, accuracy: null as number | null, scoreTrend: null as 'up' | 'down' | 'flat' | null, accTrend: null as 'up' | 'down' | 'flat' | null }
+  if (session.items.length === 0) return empty
+
+  // Last run is the most recently played (items are ordered newest-first typically)
+  const lastItem = session.items[0]
+  const scenario = getScenarioName(lastItem).trim()
+  const score = readScenarioScore(lastItem)
+  const accuracy = Number(lastItem.stats?.['Accuracy'] ?? 0)
+
+  const result = {
+    scenario,
+    score: score > 0 ? score : null,
+    accuracy: Number.isFinite(accuracy) && accuracy > 0 ? accuracy : null,
+    scoreTrend: null as 'up' | 'down' | 'flat' | null,
+    accTrend: null as 'up' | 'down' | 'flat' | null,
+  }
+
+  // Find all runs of same scenario in this session for trend
+  const sameScenarioRuns = session.items.filter(item => getScenarioName(item).trim() === scenario)
+  if (sameScenarioRuns.length < 3) return result
+
+  // Runs are newest-first, reverse so index 0 = earliest
+  const ordered = [...sameScenarioRuns].reverse()
+  const splitAt = Math.round(ordered.length * 0.6)
+  const earlyRuns = ordered.slice(0, splitAt)
+  const lateRuns = ordered.slice(splitAt)
+  if (earlyRuns.length === 0 || lateRuns.length === 0) return result
+
+  const earlyScores = earlyRuns.map(readScenarioScore).filter(s => s > 0)
+  const lateScores = lateRuns.map(readScenarioScore).filter(s => s > 0)
+  if (earlyScores.length > 0 && lateScores.length > 0) {
+    const earlyAvg = earlyScores.reduce((a, b) => a + b, 0) / earlyScores.length
+    const lateAvg = lateScores.reduce((a, b) => a + b, 0) / lateScores.length
+    const delta = earlyAvg > 0 ? (lateAvg - earlyAvg) / earlyAvg : 0
+    result.scoreTrend = delta > 0.02 ? 'up' : delta < -0.02 ? 'down' : 'flat'
+  }
+
+  const earlyAccs = earlyRuns.map(r => Number(r.stats?.['Accuracy'] ?? 0)).filter(a => Number.isFinite(a) && a > 0)
+  const lateAccs = lateRuns.map(r => Number(r.stats?.['Accuracy'] ?? 0)).filter(a => Number.isFinite(a) && a > 0)
+  if (earlyAccs.length > 0 && lateAccs.length > 0) {
+    const earlyAvg = earlyAccs.reduce((a, b) => a + b, 0) / earlyAccs.length
+    const lateAvg = lateAccs.reduce((a, b) => a + b, 0) / lateAccs.length
+    const delta = earlyAvg > 0 ? (lateAvg - earlyAvg) / earlyAvg : 0
+    result.accTrend = delta > 0.01 ? 'up' : delta < -0.01 ? 'down' : 'flat'
+  }
+
+  return result
+}
+
+function computeRecentScores(session: Session, allSessions: Session[]) {
+  const empty = { scores: [] as { index: number; score: number }[], scenario: '', sessionBest: null as number | null, pb: null as number | null }
+  if (session.items.length === 0) return empty
+
+  const lastScenario = getScenarioName(session.items[0]).trim()
+  if (!lastScenario) return empty
+
+  // Collect all runs of this scenario in session (items are newest-first), reverse for chronological order
+  const runs = session.items
+    .filter(item => getScenarioName(item).trim() === lastScenario)
+    .reverse()
+
+  const scores = runs
+    .map((item, i) => ({ index: i + 1, score: readScenarioScore(item) }))
+    .filter(s => s.score > 0)
+
+  const sessionBest = scores.length > 0 ? Math.max(...scores.map(s => s.score)) : null
+
+  // Compute PB across all sessions
+  let pb: number | null = null
+  for (const s of allSessions) {
+    for (const item of s.items) {
+      if (getScenarioName(item).trim() !== lastScenario) continue
+      const score = readScenarioScore(item)
+      if (score > 0 && (pb === null || score > pb)) pb = score
+    }
+  }
+
+  return { scores, scenario: lastScenario, sessionBest, pb }
 }
 
 function calculateActivityStats(currentSession: Session, allSessions: Session[]) {

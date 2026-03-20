@@ -1,9 +1,7 @@
 import {
-  CancelSessionInsights as _CancelSessionInsights,
   CheckForUpdates as _CheckForUpdates,
   ClearCache as _ClearCache,
   DownloadAndInstallUpdate as _DownloadAndInstallUpdate,
-  GenerateSessionInsights as _GenerateSessionInsights,
   GetAllBenchmarkProgresses as _GetAllBenchmarkProgresses,
   GetBenchmarkProgress as _GetBenchmarkProgress,
   GetBenchmarks as _GetBenchmarks,
@@ -134,15 +132,6 @@ export async function launchScenario(name: string, mode: string = 'challenge'): 
 // Launch a Kovaak's playlist via Steam deeplink using a sharecode
 export async function launchPlaylist(sharecode: string): Promise<void> {
   await _LaunchKovaaksPlaylist(String(sharecode || ''))
-}
-
-export async function generateSessionInsights(sessionId: string, records: ScenarioRecord[], prompt: string, options: any): Promise<string> {
-  const reqId = await _GenerateSessionInsights(String(sessionId || 'session'), records as any, String(prompt || ''), options as any)
-  return String(reqId || '')
-}
-
-export async function cancelSessionInsights(requestId: string): Promise<void> {
-  await _CancelSessionInsights(String(requestId || ''))
 }
 
 export async function clearCache(): Promise<void> {
