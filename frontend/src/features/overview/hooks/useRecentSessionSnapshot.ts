@@ -54,10 +54,11 @@ export type RecentSessionSnapshot = {
   lastRunScoreTrend: 'up' | 'down' | 'flat' | null
   lastRunAccTrend: 'up' | 'down' | 'flat' | null
   // Recent scores for chart
-  recentScores: { index: number; score: number }[]
+  recentScores: { index: number; score: number; inCurrentSession: boolean }[]
   recentScoresScenario: string
   recentScoresSessionBest: number | null
   recentScoresPb: number | null
+  recentScoresSessionStartIndex: number | null
 }
 
 type PerformanceRead = {
@@ -105,6 +106,7 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
         recentScoresScenario: '',
         recentScoresSessionBest: null,
         recentScoresPb: null,
+        recentScoresSessionStartIndex: null,
       }
     }
 
@@ -153,6 +155,7 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
       recentScoresScenario: recentScoresData.scenario,
       recentScoresSessionBest: recentScoresData.sessionBest,
       recentScoresPb: recentScoresData.pb,
+      recentScoresSessionStartIndex: recentScoresData.sessionStartIndex,
     }
   }, [isInSession, sessions])
 }
@@ -208,34 +211,62 @@ function computeLastRunStats(session: Session) {
 }
 
 function computeRecentScores(session: Session, allSessions: Session[]) {
-  const empty = { scores: [] as { index: number; score: number }[], scenario: '', sessionBest: null as number | null, pb: null as number | null }
+  const empty = {
+    scores: [] as { index: number; score: number; inCurrentSession: boolean }[],
+    scenario: '',
+    sessionBest: null as number | null,
+    pb: null as number | null,
+    sessionStartIndex: null as number | null,
+  }
   if (session.items.length === 0) return empty
 
   const lastScenario = getScenarioName(session.items[0]).trim()
   if (!lastScenario) return empty
 
-  // Collect all runs of this scenario in session (items are newest-first), reverse for chronological order
-  const runs = session.items
-    .filter(item => getScenarioName(item).trim() === lastScenario)
-    .reverse()
-
-  const scores = runs
-    .map((item, i) => ({ index: i + 1, score: readScenarioScore(item) }))
-    .filter(s => s.score > 0)
-
-  const sessionBest = scores.length > 0 ? Math.max(...scores.map(s => s.score)) : null
-
-  // Compute PB across all sessions
-  let pb: number | null = null
-  for (const s of allSessions) {
-    for (const item of s.items) {
+  const allScenarioRuns: Array<{ ts: number; score: number; inCurrentSession: boolean }> = []
+  for (const candidateSession of allSessions) {
+    for (const item of candidateSession.items) {
       if (getScenarioName(item).trim() !== lastScenario) continue
       const score = readScenarioScore(item)
-      if (score > 0 && (pb === null || score > pb)) pb = score
+      if (score <= 0) continue
+      allScenarioRuns.push({
+        ts: readScenarioTimestamp(item),
+        score,
+        inCurrentSession: candidateSession.id === session.id,
+      })
     }
   }
 
-  return { scores, scenario: lastScenario, sessionBest, pb }
+  if (allScenarioRuns.length === 0) return empty
+
+  // Oldest -> newest so trend lines and run index are intuitive.
+  allScenarioRuns.sort((left, right) => {
+    const byTs = left.ts - right.ts
+    if (byTs !== 0) return byTs
+    return left.score - right.score
+  })
+
+  const scores = allScenarioRuns.map((run, i) => ({
+    index: i + 1,
+    score: run.score,
+    inCurrentSession: run.inCurrentSession,
+  }))
+
+  const sessionScores = allScenarioRuns
+    .filter(run => run.inCurrentSession)
+    .map(run => run.score)
+  const sessionBest = sessionScores.length > 0 ? Math.max(...sessionScores) : null
+
+  const pb = Math.max(...allScenarioRuns.map(run => run.score))
+  const sessionStart = scores.find(point => point.inCurrentSession)
+
+  return {
+    scores,
+    scenario: lastScenario,
+    sessionBest,
+    pb,
+    sessionStartIndex: sessionStart?.index ?? null,
+  }
 }
 
 function calculateActivityStats(currentSession: Session, allSessions: Session[]) {

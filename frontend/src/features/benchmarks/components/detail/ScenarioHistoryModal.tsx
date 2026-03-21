@@ -1,34 +1,37 @@
 import { Loading, Modal } from '@/shared/components'
+import type { ChartConfig } from '@/shared/components/ui/chart'
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
 import { getLastScenarioScores } from '@/shared/lib'
-import type { KovaaksLastScore } from '@/shared/types'
+import type { KovaaksLastScore, RankDef } from '@/shared/types'
 import { useEffect, useMemo, useState } from 'react'
+import { CartesianGrid, Line, LineChart, ReferenceArea, XAxis, YAxis } from 'recharts'
 import { formatNumber } from '../../lib/detailFormatting'
 
 type Props = {
   isOpen: boolean
   onClose: () => void
   scenarioName: string
+  thresholds: number[]
+  rankDefs: RankDef[]
 }
 
-type Point = { x: number; y: number }
-
-function buildSparklinePoints(scores: number[], width: number, height: number): Point[] {
-  if (scores.length === 0) return []
-
-  const max = Math.max(...scores)
-  const min = Math.min(...scores)
-  const range = Math.max(1, max - min)
-  const xStep = scores.length > 1 ? width / (scores.length - 1) : width
-
-  return scores.map((score, index) => {
-    const x = xStep * index
-    const normalized = (score - min) / range
-    const y = height - normalized * height
-    return { x, y }
-  })
+type TrendPoint = {
+  run: number
+  score: number
+  dateLabel: string
 }
 
-export function ScenarioHistoryModal({ isOpen, onClose, scenarioName }: Props) {
+type RankBand = {
+  y1: number
+  y2: number
+  color: string
+}
+
+const chartConfig: ChartConfig = {
+  score: { label: 'Score', color: 'var(--chart-2)' },
+}
+
+export function ScenarioHistoryModal({ isOpen, onClose, scenarioName, thresholds, rankDefs }: Props) {
   const [scores, setScores] = useState<KovaaksLastScore[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -49,22 +52,44 @@ export function ScenarioHistoryModal({ isOpen, onClose, scenarioName }: Props) {
   }, [isOpen, scenarioName])
 
   const sorted = useMemo(() => [...scores].reverse(), [scores])
-  const numericScores = useMemo(() => sorted.map(score => Number(score.attributes?.score || 0)), [sorted])
 
-  const points = useMemo(() => buildSparklinePoints(numericScores, 600, 180), [numericScores])
+  const trendData = useMemo<TrendPoint[]>(() => {
+    return sorted.map((entry, index) => {
+      const rawDate = entry.attributes?.challengeStart
+      const date = rawDate ? new Date(rawDate) : null
+      const dateLabel = date && !Number.isNaN(date.getTime())
+        ? date.toLocaleString()
+        : (rawDate || 'Unknown')
 
-  const path = useMemo(() => {
-    if (!points.length) return ''
-    return points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
-  }, [points])
+      return {
+        run: index + 1,
+        score: Number(entry.attributes?.score || 0),
+        dateLabel,
+      }
+    })
+  }, [sorted])
+
+  const numericScores = useMemo(
+    () => trendData.map(point => point.score).filter(score => Number.isFinite(score) && score > 0),
+    [trendData],
+  )
 
   const high = numericScores.length ? Math.max(...numericScores) : 0
   const low = numericScores.length ? Math.min(...numericScores) : 0
   const latest = numericScores.length ? numericScores[numericScores.length - 1] : 0
 
+  const scoreDomain = useMemo(
+    () => buildScoreDomain(numericScores, thresholds),
+    [numericScores, thresholds],
+  )
+
+  const rankBands = useMemo(() => {
+    return buildRankBands(thresholds, rankDefs, scoreDomain)
+  }, [rankDefs, scoreDomain, thresholds])
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Last 10 Scores · ${scenarioName}`} width={900} height="auto">
-      <div className="px-6 pb-6 space-y-4">
+    <Modal isOpen={isOpen} onClose={onClose} title={`Scenario History · ${scenarioName}`} width={980} height="auto">
+      <div className="space-y-3 px-4 pb-4">
         {loading && <Loading />}
 
         {!loading && error && (
@@ -73,80 +98,131 @@ export function ScenarioHistoryModal({ isOpen, onClose, scenarioName }: Props) {
           </div>
         )}
 
-        {!loading && !error && sorted.length === 0 && (
+        {!loading && !error && trendData.length === 0 && (
           <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">No scores found.</div>
         )}
 
-        {!loading && !error && sorted.length > 0 && (
+        {!loading && !error && trendData.length > 0 && (
           <>
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl border border-border bg-card p-3">
+              <div className="rounded-xl bg-secondary p-3">
                 <div className="text-xs text-muted-foreground">Latest</div>
                 <div className="text-lg font-semibold text-foreground">{formatNumber(latest, 0)}</div>
               </div>
-              <div className="rounded-xl border border-border bg-card p-3">
+              <div className="rounded-xl bg-secondary p-3">
                 <div className="text-xs text-muted-foreground">Highest</div>
                 <div className="text-lg font-semibold text-success">{formatNumber(high, 0)}</div>
               </div>
-              <div className="rounded-xl border border-border bg-card p-3">
+              <div className="rounded-xl bg-secondary p-3">
                 <div className="text-xs text-muted-foreground">Lowest</div>
                 <div className="text-lg font-semibold text-foreground">{formatNumber(low, 0)}</div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-border bg-card p-4">
-              <div className="h-[190px] w-full overflow-hidden rounded-xl bg-muted-strong px-2 py-2">
-                <svg viewBox="0 0 600 180" className="h-full w-full" preserveAspectRatio="none" role="img" aria-label="Score trend">
-                  <defs>
-                    <linearGradient id="scoreFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.35" />
-                      <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.02" />
-                    </linearGradient>
-                  </defs>
+            <ChartContainer config={chartConfig} className="aspect-auto h-[360px] w-full">
+              <LineChart data={trendData} margin={{ top: 2, right: 6, left: 0, bottom: 0 }}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis dataKey="run" hide />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={6}
+                  width={46}
+                  domain={scoreDomain}
+                  tickFormatter={value => formatNumber(value, 0)}
+                />
 
-                  {path && (
-                    <>
-                      <path d={`${path} L 600 180 L 0 180 Z`} fill="url(#scoreFill)" />
-                      <path d={path} fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </>
-                  )}
-                </svg>
-              </div>
-            </div>
+                {rankBands.map((band, index) => (
+                  <ReferenceArea
+                    key={`rank-band-${index}`}
+                    y1={band.y1}
+                    y2={band.y2}
+                    fill={band.color}
+                    fillOpacity={0.16}
+                    strokeOpacity={0}
+                    ifOverflow="extendDomain"
+                  />
+                ))}
 
-            <div className="rounded-xl border border-border bg-card">
-              <div className="max-h-[240px] overflow-auto">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-card">
-                    <tr className="border-b border-border">
-                      <th className="px-3 py-2 text-left text-muted-foreground font-medium">Date</th>
-                      <th className="px-3 py-2 text-right text-muted-foreground font-medium">Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sorted.map(item => {
-                      const dateRaw = item.attributes?.challengeStart
-                      const date = dateRaw ? new Date(dateRaw) : null
-                      const dateLabel = date && !Number.isNaN(date.getTime())
-                        ? date.toLocaleString()
-                        : (dateRaw || 'Unknown')
-
-                      return (
-                        <tr key={item.id} className="border-b border-border last:border-b-0">
-                          <td className="px-3 py-2 text-foreground">{dateLabel}</td>
-                          <td className="px-3 py-2 text-right font-medium text-foreground">
-                            {formatNumber(item.attributes?.score, 0)}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      labelFormatter={(_, payload) => payload?.[0]?.payload?.dateLabel ?? null}
+                    />
+                  }
+                />
+                <Line
+                  isAnimationActive={false}
+                  type="monotone"
+                  dataKey="score"
+                  stroke="var(--color-score)"
+                  strokeWidth={2.5}
+                  dot={{ r: 2.5, fill: 'var(--color-score)', strokeWidth: 0 }}
+                  activeDot={{ r: 4.5 }}
+                />
+              </LineChart>
+            </ChartContainer>
           </>
         )}
       </div>
     </Modal>
   )
+}
+
+function buildScoreDomain(scores: number[], thresholds: number[]): [number, number] {
+  const scoreValues = scores.filter(value => Number.isFinite(value) && value > 0)
+  if (scoreValues.length === 0) return [0, 1]
+
+  const scoreMin = Math.min(...scoreValues)
+  const scoreMax = Math.max(...scoreValues)
+  const scoreSpan = Math.max(1, scoreMax - scoreMin)
+
+  const sortedStops = thresholds
+    .filter(value => Number.isFinite(value) && value >= 0)
+    .sort((a, b) => a - b)
+
+  // Anchor to nearby thresholds but keep the range score-focused.
+  const lowerStop = [...sortedStops].reverse().find(stop => stop <= scoreMin)
+  const upperStop = sortedStops.find(stop => stop >= scoreMax)
+
+  let baseMin = lowerStop ?? scoreMin
+  let baseMax = upperStop ?? scoreMax
+  const baseSpan = Math.max(1, baseMax - baseMin)
+  if (baseSpan > scoreSpan * 3) {
+    baseMin = scoreMin
+    baseMax = scoreMax
+  }
+
+  const pad = Math.max(1, Math.round(Math.max(1, baseMax - baseMin) * 0.12))
+  const min = Math.max(0, Math.floor(baseMin - pad))
+  const max = Math.ceil(baseMax + pad)
+  return max > min ? [min, max] : [Math.max(0, min - 1), min + 1]
+}
+
+function buildRankBands(thresholds: number[], rankDefs: RankDef[], domain: [number, number]): RankBand[] {
+  const [domainMin, domainMax] = domain
+  const stops = thresholds
+    .filter(value => Number.isFinite(value) && value >= 0)
+    .sort((a, b) => a - b)
+
+  if (stops.length < 2 || rankDefs.length === 0 || domainMax <= domainMin) return []
+
+  const bands: RankBand[] = []
+  const maxIndex = Math.min(rankDefs.length, stops.length - 1)
+
+  for (let index = 0; index < maxIndex; index += 1) {
+    const rawStart = stops[index]
+    const rawEnd = index === maxIndex - 1 ? domainMax : stops[index + 1]
+    const y1 = Math.max(domainMin, rawStart)
+    const y2 = Math.min(domainMax, rawEnd)
+    if (y2 <= y1) continue
+
+    bands.push({
+      y1,
+      y2,
+      color: rankDefs[index]?.color || 'var(--chart-3)',
+    })
+  }
+
+  return bands
 }

@@ -31,6 +31,7 @@ type NotesState = {
 type HistoryState = {
   open: boolean
   scenario: string
+  thresholds: number[]
 }
 
 function ToggleChip({ label, enabled, onToggle }: { label: string; enabled: boolean; onToggle: () => void }) {
@@ -56,7 +57,7 @@ export function BenchmarkOverviewWidget() {
 
   const [settings, setSettings] = useState<Settings | null>(null)
   const [notesState, setNotesState] = useState<NotesState>({ open: false, scenario: '', notes: '', sensitivity: '' })
-  const [historyState, setHistoryState] = useState<HistoryState>({ open: false, scenario: '' })
+  const [historyState, setHistoryState] = useState<HistoryState>({ open: false, scenario: '', thresholds: [] })
   const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => {
@@ -301,7 +302,7 @@ export function BenchmarkOverviewWidget() {
                   isTopPick={topPicks.has(currentScenario.name)}
                   completed={currentScenario.scenarioRank >= Math.max(1, (currentScenario.thresholds?.length ?? 0) - 1)}
                   onNotes={() => openNotes(currentScenario.name)}
-                  onHistory={() => setHistoryState({ open: true, scenario: currentScenario.name })}
+                  onHistory={() => setHistoryState({ open: true, scenario: currentScenario.name, thresholds: currentScenario.thresholds || [] })}
                   onPlay={() => launchScenario(currentScenario.name, 'challenge').catch(() => { })}
                 />
               ) : (
@@ -339,7 +340,7 @@ export function BenchmarkOverviewWidget() {
                     isTopPick={topPicks.has(scenario.name)}
                     completed={scenario.scenarioRank >= Math.max(1, (scenario.thresholds?.length ?? 0) - 1)}
                     onNotes={() => openNotes(scenario.name)}
-                    onHistory={() => setHistoryState({ open: true, scenario: scenario.name })}
+                    onHistory={() => setHistoryState({ open: true, scenario: scenario.name, thresholds: scenario.thresholds || [] })}
                     onPlay={() => launchScenario(scenario.name, 'challenge').catch(() => { })}
                   />
                 ))
@@ -509,6 +510,8 @@ export function BenchmarkOverviewWidget() {
         isOpen={historyState.open}
         onClose={() => setHistoryState(prev => ({ ...prev, open: false }))}
         scenarioName={historyState.scenario}
+        thresholds={historyState.thresholds}
+        rankDefs={rankDefs}
       />
     </div>
   )

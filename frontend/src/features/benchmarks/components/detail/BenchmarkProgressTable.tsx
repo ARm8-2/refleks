@@ -34,6 +34,7 @@ type NotesState = {
 type HistoryState = {
   open: boolean
   scenario: string
+  thresholds: number[]
 }
 
 const CATEGORY_COLUMN_WIDTH = 52
@@ -67,7 +68,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
   const [showSettings, setShowSettings] = useState(false)
   const [settings, setSettings] = useState<Settings | null>(null)
   const [notesState, setNotesState] = useState<NotesState>({ open: false, scenario: '', notes: '', sensitivity: '' })
-  const [historyState, setHistoryState] = useState<HistoryState>({ open: false, scenario: '' })
+  const [historyState, setHistoryState] = useState<HistoryState>({ open: false, scenario: '', thresholds: [] })
 
   useEffect(() => {
     getSettings().then(setSettings).catch(() => setSettings(null))
@@ -94,8 +95,8 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
     }) as Settings)
   }
 
-  const openHistory = (scenario: string) => {
-    setHistoryState({ open: true, scenario })
+  const openHistory = (scenario: string, thresholds: number[]) => {
+    setHistoryState({ open: true, scenario, thresholds })
   }
 
   const {
@@ -313,7 +314,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
                                 isTopPick={isTopPick(scenario.name)}
                                 completed={completed}
                                 onNotes={() => openNotes(scenario.name)}
-                                onHistory={() => openHistory(scenario.name)}
+                                onHistory={() => openHistory(scenario.name, scenario.thresholds || [])}
                                 onPlay={() => launchScenario(scenario.name, 'challenge').catch(() => { })}
                               />
                             )
@@ -477,6 +478,8 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
         isOpen={historyState.open}
         onClose={() => setHistoryState(previous => ({ ...previous, open: false }))}
         scenarioName={historyState.scenario}
+        thresholds={historyState.thresholds}
+        rankDefs={rankDefs}
       />
     </section>
   )

@@ -170,8 +170,12 @@ export function buildSessionScenarioTrendPoints(
   scenarioName: string,
   runs: HistoryRun[],
 ): ScenarioTrendPoint[] {
-  return runs
+  const scenarioRuns = runs
     .filter(run => run.scenarioName === scenarioName)
+    .slice()
+    .reverse()
+
+  return scenarioRuns
     .map((run, i) => ({
       label: run.playedAt > 0 ? compactDateFormatter.format(run.playedAt) : `#${i + 1}`,
       fullLabel: run.playedAt > 0 ? sessionFormatter.format(run.playedAt) : `Attempt #${i + 1}`,

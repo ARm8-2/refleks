@@ -233,6 +233,7 @@ function ScenarioTrendChart({
 }) {
   const chartId = useId().replace(/:/g, '')
   const hasAccuracy = points.some(p => p.accuracy != null && p.accuracy > 0)
+  const scoreDomain = useMemo(() => buildScoreDomain(points.map(point => point.score)), [points])
 
   const handleChartClick = (state: { activeTooltipIndex?: number } | null) => {
     if (!state || state.activeTooltipIndex == null) return
@@ -255,6 +256,7 @@ function ScenarioTrendChart({
             tickMargin={8}
             width={56}
             tickFormatter={v => formatNumber(v, 0)}
+            domain={scoreDomain}
           />
           {hasAccuracy && (
             <YAxis
@@ -313,4 +315,22 @@ function ScenarioTrendChart({
       {chart(false)}
     </Widget>
   )
+}
+
+function buildScoreDomain(scores: number[]): [number, number] {
+  const values = scores.filter(value => Number.isFinite(value) && value > 0)
+  if (values.length === 0) return [0, 1]
+
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  if (min === max) {
+    const pad = Math.max(1, Math.round(max * 0.04))
+    return [Math.max(0, Math.floor(min - pad)), Math.ceil(max + pad)]
+  }
+
+  const span = max - min
+  const pad = Math.max(1, Math.round(span * 0.18))
+  const lower = Math.max(0, Math.floor(min - pad))
+  const upper = Math.ceil(max + pad)
+  return upper > lower ? [lower, upper] : [Math.max(0, lower - 1), lower + 1]
 }
