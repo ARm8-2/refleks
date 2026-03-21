@@ -1,7 +1,8 @@
 import { Button, Checkbox, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
-import { useStore } from '@/shared/hooks'
+import { usePersistedState, useStore } from '@/shared/hooks'
 import {
   FONTS,
+  STORAGE_KEYS,
   THEMES,
   checkForUpdates,
   getSettings,
@@ -36,7 +37,7 @@ export function SettingsPage() {
   const setSessionNotes = useStore(s => s.setSessionNotes)
 
   const [settings, setSettings] = useState<Settings | null>(null)
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [showAdvanced, setShowAdvanced] = usePersistedState(STORAGE_KEYS.settingsShowAdvanced, false)
   const saveQueueRef = useRef(Promise.resolve())
 
   // Updates state

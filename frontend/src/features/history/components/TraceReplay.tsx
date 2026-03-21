@@ -1,7 +1,7 @@
 import { Modal } from '@/shared/components'
 import { Slider } from '@/shared/components/ui/slider'
 import { usePersistedState } from '@/shared/hooks'
-import { cn } from '@/shared/lib'
+import { cn, STORAGE_KEYS } from '@/shared/lib'
 import type { MousePoint } from '@/shared/types/ipc'
 import {
   Crosshair,
@@ -95,12 +95,12 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
   const panRafRef = useRef<number | null>(null)
 
   // Persisted options
-  const [speed, setSpeed] = usePersistedState('refleks.trace.speed', SPEED_DEFAULT)
-  const [trailMode, setTrailMode] = usePersistedState<TrailMode>('refleks.trace.trail', 'all')
-  const [autoFollow, setAutoFollow] = usePersistedState('refleks.trace.follow', false)
-  const [clickMode, setClickMode] = usePersistedState<ClickMode>('refleks.trace.clicks', 'down')
-  const [zoom, setZoom] = usePersistedState('refleks.trace.zoom', 1)
-  const [syncByTime, setSyncByTime] = usePersistedState('refleks.trace.syncByTime', false)
+  const [speed, setSpeed] = usePersistedState(STORAGE_KEYS.traceSpeed, SPEED_DEFAULT)
+  const [trailMode, setTrailMode] = usePersistedState<TrailMode>(STORAGE_KEYS.traceTrail, 'all')
+  const [autoFollow, setAutoFollow] = usePersistedState(STORAGE_KEYS.traceFollow, false)
+  const [clickMode, setClickMode] = usePersistedState<ClickMode>(STORAGE_KEYS.traceClicks, 'down')
+  const [zoom, setZoom] = usePersistedState(STORAGE_KEYS.traceZoom, 1)
+  const [syncByTime, setSyncByTime] = usePersistedState(STORAGE_KEYS.traceSyncByTime, false)
 
   const autoFollowRef = useRef(autoFollow)
   useEffect(() => { autoFollowRef.current = autoFollow }, [autoFollow])

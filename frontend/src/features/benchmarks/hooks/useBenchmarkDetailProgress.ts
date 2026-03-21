@@ -1,8 +1,10 @@
 import { usePersistedState } from '@/shared/hooks'
-import { getBenchmarkProgress } from '@/shared/lib'
+import { benchmarkDetailDifficultyStorageKey, getBenchmarkProgress } from '@/shared/lib'
 import type { Benchmark, BenchmarkProgress } from '@/shared/types'
 import { EventsOn } from '@wails/runtime'
 import { useEffect, useMemo, useState } from 'react'
+
+const REFRESH_DEBOUNCE_MS = 700
 
 type State = {
   progress: BenchmarkProgress | null
@@ -12,10 +14,21 @@ type State = {
   setDifficultyIndex: (value: number) => void
 }
 
+type BenchmarkProgressUpdatedEvent = {
+  id: number
+  progress: BenchmarkProgress
+}
+
+function isBenchmarkProgressUpdatedEvent(data: unknown): data is BenchmarkProgressUpdatedEvent {
+  if (!data || typeof data !== 'object') return false
+
+  const candidate = data as { id?: unknown; progress?: unknown }
+  return typeof candidate.id === 'number' && candidate.progress !== undefined
+}
+
 export function useBenchmarkDetailProgress(benchmark: Benchmark | undefined): State {
-  const benchmarkName = benchmark?.benchmarkName ?? 'unknown'
   const [difficultyIndex, setDifficultyIndex] = usePersistedState<number>(
-    `refleks.benchmarks.detail.${benchmarkName}.difficulty`,
+    benchmarkDetailDifficultyStorageKey(benchmark?.benchmarkName),
     0,
   )
 
@@ -35,8 +48,9 @@ export function useBenchmarkDetailProgress(benchmark: Benchmark | undefined): St
     [benchmark, safeIndex],
   )
 
+  const benchmarkId = selectedDifficulty?.kovaaksBenchmarkId ?? null
+
   useEffect(() => {
-    const benchmarkId = selectedDifficulty?.kovaaksBenchmarkId
     if (!benchmarkId) {
       setProgress(null)
       setLoading(false)
@@ -64,9 +78,9 @@ export function useBenchmarkDetailProgress(benchmark: Benchmark | undefined): St
       if (!cancelled) setLoading(false)
     })
 
-    const offRealtime = EventsOn('benchmark:progress:updated', (data: any) => {
-      if (cancelled || !data || data.id !== benchmarkId || !data.progress) return
-      setProgress(data.progress as BenchmarkProgress)
+    const offRealtime = EventsOn('benchmark:progress:updated', (data: unknown) => {
+      if (cancelled || !isBenchmarkProgressUpdatedEvent(data) || data.id !== benchmarkId) return
+      setProgress(data.progress)
       setError(null)
     })
 
@@ -75,7 +89,7 @@ export function useBenchmarkDetailProgress(benchmark: Benchmark | undefined): St
       if (timeout) clearTimeout(timeout)
       timeout = setTimeout(() => {
         void refreshProgress()
-      }, 700)
+      }, REFRESH_DEBOUNCE_MS)
     }
 
     const offScenarioAdded = EventsOn('scenario:added', () => triggerRefresh())
@@ -89,7 +103,7 @@ export function useBenchmarkDetailProgress(benchmark: Benchmark | undefined): St
       try { offScenarioAdded() } catch { }
       try { offScenarioUpdated() } catch { }
     }
-  }, [selectedDifficulty])
+  }, [benchmarkId])
 
   return {
     progress,

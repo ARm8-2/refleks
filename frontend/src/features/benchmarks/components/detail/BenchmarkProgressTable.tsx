@@ -1,7 +1,13 @@
 
 import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
 import { usePersistedState, useStore } from '@/shared/hooks'
-import { getSettings, launchScenario, saveScenarioNote } from '@/shared/lib'
+import {
+  benchmarkDetailProgressStorageBase,
+  benchmarkDetailProgressStorageKey,
+  getSettings,
+  launchScenario,
+  saveScenarioNote,
+} from '@/shared/lib'
 import type { Benchmark, BenchmarkProgress, Settings } from '@/shared/types'
 import { Settings2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
@@ -58,13 +64,13 @@ function ToggleChip({ label, enabled, onToggle }: { label: string; enabled: bool
 export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: Props) {
   const sessions = useStore(state => state.sessions)
 
-  const storageBase = `refleks.benchmarks.detail.${benchmark.benchmarkName}.progress`
+  const storageBase = benchmarkDetailProgressStorageBase(benchmark.benchmarkName)
 
-  const [compactMode, setCompactMode] = usePersistedState<boolean>(`${storageBase}.compact`, false)
-  const [showNotesCol, setShowNotesCol] = usePersistedState<boolean>(`${storageBase}.showNotes`, true)
-  const [showRecCol, setShowRecCol] = usePersistedState<boolean>(`${storageBase}.showRec`, true)
-  const [showPlayCol, setShowPlayCol] = usePersistedState<boolean>(`${storageBase}.showPlay`, true)
-  const [showHistoryCol, setShowHistoryCol] = usePersistedState<boolean>(`${storageBase}.showHistory`, true)
+  const [compactMode, setCompactMode] = usePersistedState<boolean>(benchmarkDetailProgressStorageKey(benchmark.benchmarkName, 'compact'), false)
+  const [showNotesCol, setShowNotesCol] = usePersistedState<boolean>(benchmarkDetailProgressStorageKey(benchmark.benchmarkName, 'showNotes'), true)
+  const [showRecCol, setShowRecCol] = usePersistedState<boolean>(benchmarkDetailProgressStorageKey(benchmark.benchmarkName, 'showRec'), true)
+  const [showPlayCol, setShowPlayCol] = usePersistedState<boolean>(benchmarkDetailProgressStorageKey(benchmark.benchmarkName, 'showPlay'), true)
+  const [showHistoryCol, setShowHistoryCol] = usePersistedState<boolean>(benchmarkDetailProgressStorageKey(benchmark.benchmarkName, 'showHistory'), true)
   const [showSettings, setShowSettings] = useState(false)
   const [settings, setSettings] = useState<Settings | null>(null)
   const [notesState, setNotesState] = useState<NotesState>({ open: false, scenario: '', notes: '', sensitivity: '' })

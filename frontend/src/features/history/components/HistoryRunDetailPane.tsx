@@ -1,6 +1,6 @@
 import { Button } from '@/shared/components'
 import { usePersistedState } from '@/shared/hooks'
-import { cn } from '@/shared/lib'
+import { cn, STORAGE_KEYS } from '@/shared/lib'
 import { Columns2, Layers, PanelRightClose, Rows2, Trophy } from 'lucide-react'
 import type { HistoryRun } from '../lib/historyModels'
 import { INSPECTOR_TABS, type InspectorTab } from '../lib/inspectorTabs'
@@ -34,7 +34,7 @@ export function HistoryRunDetailPane({
   isPrimaryPb,
   onComparePb,
 }: Props) {
-  const [overlay, setOverlay] = usePersistedState('refleks.history.analysisOverlay', false)
+  const [overlay, setOverlay] = usePersistedState(STORAGE_KEYS.historyAnalysisOverlay, false)
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-card">

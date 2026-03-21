@@ -1,4 +1,5 @@
 import { usePersistedState } from '@/shared/hooks'
+import { benchmarkDetailVisibilityStorageKey } from '@/shared/lib'
 import type { BenchmarkProgress } from '@/shared/types'
 import { useMemo } from 'react'
 import { autoHiddenRanks } from '../lib/detailVisibility'
@@ -8,13 +9,15 @@ type Options = {
   progress: BenchmarkProgress | null
 }
 
+const DEFAULT_VISIBLE_RANK_COUNT = 4
+
 export function useBenchmarkVisibility({ storagePrefix, progress }: Options) {
   const rankDefs = progress?.ranks || []
   const categories = progress?.categories || []
 
-  const [autoHideCleared, setAutoHideCleared] = usePersistedState<boolean>(`${storagePrefix}.autoHide`, false)
-  const [visibleRankCount, setVisibleRankCount] = usePersistedState<number>(`${storagePrefix}.visibleCount`, 4)
-  const [manuallyHiddenArray, setManuallyHiddenArray] = usePersistedState<number[]>(`${storagePrefix}.manualHidden`, [])
+  const [autoHideCleared, setAutoHideCleared] = usePersistedState<boolean>(benchmarkDetailVisibilityStorageKey(storagePrefix, 'autoHide'), false)
+  const [visibleRankCount, setVisibleRankCount] = usePersistedState<number>(benchmarkDetailVisibilityStorageKey(storagePrefix, 'visibleCount'), DEFAULT_VISIBLE_RANK_COUNT)
+  const [manuallyHiddenArray, setManuallyHiddenArray] = usePersistedState<number[]>(benchmarkDetailVisibilityStorageKey(storagePrefix, 'manualHidden'), [])
 
   const manuallyHidden = useMemo(() => new Set(manuallyHiddenArray), [manuallyHiddenArray])
 

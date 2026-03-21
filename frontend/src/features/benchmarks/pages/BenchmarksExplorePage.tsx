@@ -1,5 +1,6 @@
 import { Input, Loading, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
 import { useBenchmarks, usePersistedState, useStore } from '@/shared/hooks'
+import { STORAGE_KEYS } from '@/shared/lib'
 import type { Benchmark } from '@/shared/types'
 import { ChevronDown, Dice5, Search, Sparkles, Star } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
@@ -52,26 +53,16 @@ const groupOptions = [
 
 export function BenchmarksExplorePage() {
   const navigate = useNavigate()
-  const { benchmarks, loading, isFavorite, toggleFavorite, progressMap, loadAllProgress, selectedBenchmark } = useBenchmarks()
+  const { benchmarks, loading, isFavorite, toggleFavorite, progressMap, loadAllProgress } = useBenchmarks()
   const sessions = useStore(s => s.sessions)
 
-  // Redirect to last-viewed benchmark if returning from another page
-  useEffect(() => {
-    if (selectedBenchmark) {
-      navigate(`/benchmarks/${encodeURIComponent(selectedBenchmark)}`, { replace: true })
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Don't render explore content while redirecting
-  if (selectedBenchmark) return null
-
   // Persisted page-level UI state
-  const [query, setQuery] = usePersistedState('refleks.benchmarks.query', '')
-  const [showFavOnly, setShowFavOnly] = usePersistedState('refleks.benchmarks.favOnly', false)
-  const [showRecs, setShowRecs] = usePersistedState('refleks.benchmarks.showRecs', false)
-  const [sortBy, setSortBy] = usePersistedState<SortBy>('refleks.benchmarks.sortBy', 'abbreviation')
-  const [groupBy, setGroupBy] = usePersistedState<GroupBy>('refleks.benchmarks.groupBy', 'category')
-  const [collapsedGroups, setCollapsedGroups] = usePersistedState<Record<string, boolean>>('refleks.benchmarks.collapsed', {})
+  const [query, setQuery] = usePersistedState(STORAGE_KEYS.benchmarksQuery, '')
+  const [showFavOnly, setShowFavOnly] = usePersistedState(STORAGE_KEYS.benchmarksFavOnly, false)
+  const [showRecs, setShowRecs] = usePersistedState(STORAGE_KEYS.benchmarksShowRecs, false)
+  const [sortBy, setSortBy] = usePersistedState<SortBy>(STORAGE_KEYS.benchmarksSortBy, 'abbreviation')
+  const [groupBy, setGroupBy] = usePersistedState<GroupBy>(STORAGE_KEYS.benchmarksGroupBy, 'category')
+  const [collapsedGroups, setCollapsedGroups] = usePersistedState<Record<string, boolean>>(STORAGE_KEYS.benchmarksCollapsed, {})
 
   const toggleGroup = (group: string) =>
     setCollapsedGroups(prev => ({ ...prev, [group]: !prev[group] }))

@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useCallback, useRef, useState } from 'react'
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from 'react'
 
 function readStorage<T>(key: string, fallback: T): T {
   try {
@@ -22,14 +22,17 @@ function readStorage<T>(key: string, fallback: T): T {
 export function usePersistedState<T>(key: string, defaultValue: T): [T, Dispatch<SetStateAction<T>>] {
   const [value, rawSetValue] = useState<T>(() => readStorage(key, defaultValue))
   const keyRef = useRef(key)
+  const defaultValueRef = useRef(defaultValue)
 
-  // When the key changes (rare – e.g. dynamic key from props), re-read from the new key
-  let currentValue = value
-  if (keyRef.current !== key) {
+  defaultValueRef.current = defaultValue
+
+  // When the key changes (rare – e.g. dynamic key from props), re-read from the new key.
+  // Keep this in an effect to avoid scheduling state updates during render.
+  useEffect(() => {
+    if (keyRef.current === key) return
     keyRef.current = key
-    currentValue = readStorage(key, defaultValue)
-    rawSetValue(currentValue)
-  }
+    rawSetValue(readStorage(key, defaultValueRef.current))
+  }, [key])
 
   // Wrap setter: persist synchronously inside the state updater so the value
   // written to localStorage is always consistent with React state.
@@ -43,5 +46,5 @@ export function usePersistedState<T>(key: string, defaultValue: T): [T, Dispatch
     })
   }, [])
 
-  return [currentValue, setValue]
+  return [value, setValue]
 }

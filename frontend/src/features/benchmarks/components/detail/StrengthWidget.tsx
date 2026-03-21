@@ -1,5 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Widget } from '@/shared/components'
 import { usePersistedState } from '@/shared/hooks'
+import { STORAGE_KEYS } from '@/shared/lib'
 import type { BenchmarkProgress } from '@/shared/types'
 import { useMemo } from 'react'
 import { formatNumber, normalizedRankProgress } from '../../lib/detailFormatting'
@@ -19,7 +20,7 @@ type StrengthRow = {
 type StrengthLevel = 'category' | 'subcategory' | 'scenario'
 
 export function StrengthWidget({ progress }: Props) {
-  const [level, setLevel] = usePersistedState<StrengthLevel>('refleks.benchmarks.detail.strength.level', 'category')
+  const [level, setLevel] = usePersistedState<StrengthLevel>(STORAGE_KEYS.benchmarksDetailStrengthLevel, 'category')
 
   const rows = useMemo<StrengthRow[]>(() => {
     const rankDefs = progress.ranks || []

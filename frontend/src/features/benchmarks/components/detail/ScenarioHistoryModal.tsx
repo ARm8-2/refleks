@@ -1,7 +1,7 @@
 import { Loading, Modal } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
-import { getLastScenarioScores } from '@/shared/lib'
+import { buildThresholdAnchoredScoreDomain, getLastScenarioScores } from '@/shared/lib'
 import type { KovaaksLastScore, RankDef } from '@/shared/types'
 import { useEffect, useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, ReferenceArea, XAxis, YAxis } from 'recharts'
@@ -79,7 +79,7 @@ export function ScenarioHistoryModal({ isOpen, onClose, scenarioName, thresholds
   const latest = numericScores.length ? numericScores[numericScores.length - 1] : 0
 
   const scoreDomain = useMemo(
-    () => buildScoreDomain(numericScores, thresholds),
+    () => buildThresholdAnchoredScoreDomain(numericScores, thresholds),
     [numericScores, thresholds],
   )
 
@@ -167,36 +167,6 @@ export function ScenarioHistoryModal({ isOpen, onClose, scenarioName, thresholds
       </div>
     </Modal>
   )
-}
-
-function buildScoreDomain(scores: number[], thresholds: number[]): [number, number] {
-  const scoreValues = scores.filter(value => Number.isFinite(value) && value > 0)
-  if (scoreValues.length === 0) return [0, 1]
-
-  const scoreMin = Math.min(...scoreValues)
-  const scoreMax = Math.max(...scoreValues)
-  const scoreSpan = Math.max(1, scoreMax - scoreMin)
-
-  const sortedStops = thresholds
-    .filter(value => Number.isFinite(value) && value >= 0)
-    .sort((a, b) => a - b)
-
-  // Anchor to nearby thresholds but keep the range score-focused.
-  const lowerStop = [...sortedStops].reverse().find(stop => stop <= scoreMin)
-  const upperStop = sortedStops.find(stop => stop >= scoreMax)
-
-  let baseMin = lowerStop ?? scoreMin
-  let baseMax = upperStop ?? scoreMax
-  const baseSpan = Math.max(1, baseMax - baseMin)
-  if (baseSpan > scoreSpan * 3) {
-    baseMin = scoreMin
-    baseMax = scoreMax
-  }
-
-  const pad = Math.max(1, Math.round(Math.max(1, baseMax - baseMin) * 0.12))
-  const min = Math.max(0, Math.floor(baseMin - pad))
-  const max = Math.ceil(baseMax + pad)
-  return max > min ? [min, max] : [Math.max(0, min - 1), min + 1]
 }
 
 function buildRankBands(thresholds: number[], rankDefs: RankDef[], domain: [number, number]): RankBand[] {

@@ -148,11 +148,11 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 pb-2">
           <nav aria-label="Primary" className="flex flex-col gap-1">
             <SidebarItem
-              active={location.pathname === '/'}
+              active={location.pathname === '/' || location.pathname.startsWith('/overview')}
               icon={<LayoutGrid />}
               label="Overview"
               open={open}
-              to="/"
+              to="/overview"
             />
             <SidebarItem
               active={location.pathname.startsWith('/history')}

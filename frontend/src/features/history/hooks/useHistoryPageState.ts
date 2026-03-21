@@ -1,4 +1,5 @@
 import { usePersistedState, useStore } from '@/shared/hooks'
+import { STORAGE_KEYS } from '@/shared/lib'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { buildHistoryRuns, matchRunSearch, matchSessionSearch, readSessionDurationMs } from '../lib/historyModels'
 import type { InspectorTab } from '../lib/inspectorTabs'
@@ -6,38 +7,23 @@ import type { InspectorTab } from '../lib/inspectorTabs'
 export type RunSortKey = 'default' | 'score-desc' | 'score-asc' | 'accuracy-desc' | 'scenario'
 export type SessionSortKey = 'newest' | 'oldest' | 'most-runs' | 'longest'
 
-const SELECTED_SESSION_KEY = 'refleks.history.selectedSessionId'
-const SESSION_QUERY_KEY = 'refleks.history.sessionQuery'
-const SESSION_COLLAPSED_KEY = 'refleks.history.sessionListCollapsed'
-const RUN_QUERY_KEY = 'refleks.history.runQuery'
-const RUN_INSPECTOR_OPEN_KEY = 'refleks.history.runInspectorOpen'
-const RUN_LIST_COLLAPSED_KEY = 'refleks.history.runListCollapsed'
-const INSPECTOR_TAB_KEY = 'refleks.history.inspectorTab'
-const SELECTED_SCENARIO_KEY = 'refleks.history.selectedScenario'
-const PRIMARY_RUN_KEY = 'refleks.history.primaryRunId'
-const COMPARE_RUN_KEY = 'refleks.history.compareRunId'
-const RUN_SORT_KEY = 'refleks.history.runSort'
-const RUN_FILTER_PB_KEY = 'refleks.history.runFilterPb'
-const SESSION_SORT_KEY = 'refleks.history.sessionSort'
-const SESSION_FILTER_PB_KEY = 'refleks.history.sessionFilterPb'
-
 export function useHistoryPageState() {
   const sessions = useStore(state => state.sessions)
 
-  const [selectedSessionId, setSelectedSessionId] = usePersistedState<string | null>(SELECTED_SESSION_KEY, null)
-  const [sessionQuery, setSessionQuery] = usePersistedState(SESSION_QUERY_KEY, '')
-  const [sessionListCollapsed, setSessionListCollapsed] = usePersistedState(SESSION_COLLAPSED_KEY, false)
-  const [runQuery, setRunQuery] = usePersistedState(RUN_QUERY_KEY, '')
-  const [runInspectorOpen, setRunInspectorOpen] = usePersistedState(RUN_INSPECTOR_OPEN_KEY, false)
-  const [runListCollapsed, setRunListCollapsed] = usePersistedState(RUN_LIST_COLLAPSED_KEY, false)
-  const [inspectorTab, setInspectorTab] = usePersistedState<InspectorTab>(INSPECTOR_TAB_KEY, 'stats')
-  const [selectedScenario, setSelectedScenario] = usePersistedState<string | null>(SELECTED_SCENARIO_KEY, null)
-  const [primaryRunId, setPrimaryRunId] = usePersistedState<string | null>(PRIMARY_RUN_KEY, null)
-  const [compareRunId, setCompareRunId] = usePersistedState<string | null>(COMPARE_RUN_KEY, null)
-  const [runSort, setRunSort] = usePersistedState<RunSortKey>(RUN_SORT_KEY, 'default')
-  const [runFilterPb, setRunFilterPb] = usePersistedState(RUN_FILTER_PB_KEY, false)
-  const [sessionSort, setSessionSort] = usePersistedState<SessionSortKey>(SESSION_SORT_KEY, 'newest')
-  const [sessionFilterPb, setSessionFilterPb] = usePersistedState(SESSION_FILTER_PB_KEY, false)
+  const [selectedSessionId, setSelectedSessionId] = usePersistedState<string | null>(STORAGE_KEYS.historySelectedSessionId, null)
+  const [sessionQuery, setSessionQuery] = usePersistedState(STORAGE_KEYS.historySessionQuery, '')
+  const [sessionListCollapsed, setSessionListCollapsed] = usePersistedState(STORAGE_KEYS.historySessionListCollapsed, false)
+  const [runQuery, setRunQuery] = usePersistedState(STORAGE_KEYS.historyRunQuery, '')
+  const [runInspectorOpen, setRunInspectorOpen] = usePersistedState(STORAGE_KEYS.historyRunInspectorOpen, false)
+  const [runListCollapsed, setRunListCollapsed] = usePersistedState(STORAGE_KEYS.historyRunListCollapsed, false)
+  const [inspectorTab, setInspectorTab] = usePersistedState<InspectorTab>(STORAGE_KEYS.historyInspectorTab, 'stats')
+  const [selectedScenario, setSelectedScenario] = usePersistedState<string | null>(STORAGE_KEYS.historySelectedScenario, null)
+  const [primaryRunId, setPrimaryRunId] = usePersistedState<string | null>(STORAGE_KEYS.historyPrimaryRunId, null)
+  const [compareRunId, setCompareRunId] = usePersistedState<string | null>(STORAGE_KEYS.historyCompareRunId, null)
+  const [runSort, setRunSort] = usePersistedState<RunSortKey>(STORAGE_KEYS.historyRunSort, 'default')
+  const [runFilterPb, setRunFilterPb] = usePersistedState(STORAGE_KEYS.historyRunFilterPb, false)
+  const [sessionSort, setSessionSort] = usePersistedState<SessionSortKey>(STORAGE_KEYS.historySessionSort, 'newest')
+  const [sessionFilterPb, setSessionFilterPb] = usePersistedState(STORAGE_KEYS.historySessionFilterPb, false)
 
   const allRuns = useMemo(() => buildHistoryRuns(sessions), [sessions])
   const runsById = useMemo(() => new Map(allRuns.map(run => [run.id, run])), [allRuns])
@@ -143,7 +129,6 @@ export function useHistoryPageState() {
       list = list.filter(s => pbSessionIds.has(s.id))
     }
 
-    if (sessionSort === 'newest' && !sessionFilterPb) return list
     if (sessionSort === 'newest') return list
 
     const sorted = [...list]

@@ -7,6 +7,9 @@ import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'rec
 import { useRecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
 import { buildScoreDomain, formatScoreCompact } from './shared'
 
+const RECENT_SCORE_RUN_COUNT_OPTIONS = [10, 20, 50] as const
+const REFERENCE_LABEL_OVERLAP_RATIO = 0.08
+
 const recentScoresConfig: ChartConfig = {
   score: { label: 'Score', color: 'var(--chart-2)' },
 }
@@ -72,8 +75,6 @@ export function RecentScoresWidget() {
     )
   }
 
-  const runCountOptions = [10, 20, 50]
-
   const renderScoreDot = (props: { cx?: number; cy?: number; payload?: { inCurrentSession?: boolean } }): ReactElement => {
     const hasPosition = typeof props.cx === 'number' && typeof props.cy === 'number'
     const isCurrentSession = props.payload?.inCurrentSession === true
@@ -129,7 +130,7 @@ export function RecentScoresWidget() {
       showPb &&
       recentScoresSessionBest !== null &&
       recentScoresPb !== null &&
-      Math.abs(recentScoresSessionBest - recentScoresPb) <= domainSpan * 0.08
+      Math.abs(recentScoresSessionBest - recentScoresPb) <= domainSpan * REFERENCE_LABEL_OVERLAP_RATIO
 
     const pbAboveSb = personalBestScore >= sessionBestScore
 
@@ -184,7 +185,7 @@ export function RecentScoresWidget() {
   const modalControls = (
     <div className="flex items-center gap-2">
       <div className="flex items-center gap-1 rounded-xl bg-secondary p-1">
-        {runCountOptions.map(n => (
+        {RECENT_SCORE_RUN_COUNT_OPTIONS.map(n => (
           <button
             key={n}
             type="button"

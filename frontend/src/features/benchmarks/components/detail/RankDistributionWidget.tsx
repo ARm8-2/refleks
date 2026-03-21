@@ -1,5 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Widget } from '@/shared/components'
 import { usePersistedState } from '@/shared/hooks'
+import { STORAGE_KEYS } from '@/shared/lib'
 import type { BenchmarkProgress } from '@/shared/types'
 import { useEffect, useMemo } from 'react'
 import { formatNumber } from '../../lib/detailFormatting'
@@ -34,9 +35,9 @@ function buildConicGradient(segments: Segment[]): string {
 }
 
 export function RankDistributionWidget({ progress }: Props) {
-  const [scopeLevel, setScopeLevel] = usePersistedState<ScopeLevel>('refleks.benchmarks.detail.rankDistribution.scope', 'all')
-  const [categoryIndex, setCategoryIndex] = usePersistedState<number>('refleks.benchmarks.detail.rankDistribution.categoryIndex', 0)
-  const [subcategoryIndex, setSubcategoryIndex] = usePersistedState<number>('refleks.benchmarks.detail.rankDistribution.subcategoryIndex', 0)
+  const [scopeLevel, setScopeLevel] = usePersistedState<ScopeLevel>(STORAGE_KEYS.benchmarksDetailRankDistributionScope, 'all')
+  const [categoryIndex, setCategoryIndex] = usePersistedState<number>(STORAGE_KEYS.benchmarksDetailRankDistributionCategoryIndex, 0)
+  const [subcategoryIndex, setSubcategoryIndex] = usePersistedState<number>(STORAGE_KEYS.benchmarksDetailRankDistributionSubcategoryIndex, 0)
 
   const categories = progress.categories || []
   const safeCategoryIndex = Math.max(0, Math.min(Math.max(0, categories.length - 1), categoryIndex))

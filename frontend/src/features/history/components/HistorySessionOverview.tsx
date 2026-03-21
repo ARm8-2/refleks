@@ -1,11 +1,12 @@
 import { Input, Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
-import { cn } from '@/shared/lib'
+import { usePersistedState } from '@/shared/hooks'
+import { buildScoreDomain, cn, STORAGE_KEYS } from '@/shared/lib'
 import type { Session } from '@/shared/types'
 import { ChevronDown, ChevronUp, Clock3, Gamepad2, Layers3, Minus, Search, TrendingDown, TrendingUp, Trophy } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useId, useMemo, useState } from 'react'
+import { useId, useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import type { HistoryRun, ScenarioSummary, ScenarioTrendPoint } from '../lib/historyModels'
 import {
@@ -32,8 +33,8 @@ type Props = {
 }
 
 export function HistorySessionOverview({ session, sessions, sessionRuns, selectedScenario, onSelectScenario, onSelectRun, globalPbByScenario }: Props) {
-  const [scenarioGridExpanded, setScenarioGridExpanded] = useState(false)
-  const [scenarioQuery, setScenarioQuery] = useState('')
+  const [scenarioGridExpanded, setScenarioGridExpanded] = usePersistedState(STORAGE_KEYS.historyScenarioGridExpanded, false)
+  const [scenarioQuery, setScenarioQuery] = usePersistedState(STORAGE_KEYS.historyScenarioQuery, '')
 
   const scenarioSummaries = useMemo(
     () => (session ? buildSessionScenarioSummaries(session, sessions) : []),
@@ -315,22 +316,4 @@ function ScenarioTrendChart({
       {chart(false)}
     </Widget>
   )
-}
-
-function buildScoreDomain(scores: number[]): [number, number] {
-  const values = scores.filter(value => Number.isFinite(value) && value > 0)
-  if (values.length === 0) return [0, 1]
-
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  if (min === max) {
-    const pad = Math.max(1, Math.round(max * 0.04))
-    return [Math.max(0, Math.floor(min - pad)), Math.ceil(max + pad)]
-  }
-
-  const span = max - min
-  const pad = Math.max(1, Math.round(span * 0.18))
-  const lower = Math.max(0, Math.floor(min - pad))
-  const upper = Math.ceil(max + pad)
-  return upper > lower ? [lower, upper] : [Math.max(0, lower - 1), lower + 1]
 }

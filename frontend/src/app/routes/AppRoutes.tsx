@@ -1,7 +1,8 @@
 import { AppLayout } from '@/app/layout'
 import { Loading } from '@/shared/components'
+import { readLastRoute } from '@/shared/lib/navigation'
 import { lazy, Suspense } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 
 // Lazy load feature pages for code splitting
 const OverviewPage = lazy(() => import('@/features/overview').then(m => ({ default: m.OverviewPage })))
@@ -10,12 +11,21 @@ const BenchmarksExplorePage = lazy(() => import('@/features/benchmarks').then(m 
 const BenchmarkDetailPage = lazy(() => import('@/features/benchmarks').then(m => ({ default: m.BenchmarkDetailPage })))
 const SettingsPage = lazy(() => import('@/features/settings').then(m => ({ default: m.SettingsPage })))
 
+function IndexRoute() {
+  const lastRoute = readLastRoute()
+  if (lastRoute && lastRoute !== '/') {
+    return <Navigate to={lastRoute} replace />
+  }
+  return <OverviewPage />
+}
+
 export function AppRoutes() {
   return (
     <Suspense fallback={<Loading />}>
       <Routes>
         <Route path="/" element={<AppLayout />}>
-          <Route index element={<OverviewPage />} />
+          <Route index element={<IndexRoute />} />
+          <Route path="overview" element={<OverviewPage />} />
           <Route path="history" element={<HistoryPage />} />
           <Route path="benchmarks" element={<BenchmarksExplorePage />} />
           <Route path="benchmarks/:id" element={<BenchmarkDetailPage />} />

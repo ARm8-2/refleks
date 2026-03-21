@@ -1,10 +1,9 @@
 import { InfoTooltip, Widget } from '@/shared/components'
 import { usePersistedState } from '@/shared/hooks'
+import { STORAGE_KEYS } from '@/shared/lib'
 import { Minus, Pencil, Plus } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { useRecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
-
-const SESSION_TARGET_STORAGE_KEY = 'refleks.overview.sessionProgress.targetRuns'
 
 export function SessionProgressWidget() {
   const {
@@ -18,7 +17,7 @@ export function SessionProgressWidget() {
   } = useRecentSessionSnapshot()
 
   const [customTarget, setCustomTarget] = usePersistedState<number | null>(
-    SESSION_TARGET_STORAGE_KEY,
+    STORAGE_KEYS.overviewSessionProgressTargetRuns,
     null,
   )
   const [editing, setEditing] = useState(false)

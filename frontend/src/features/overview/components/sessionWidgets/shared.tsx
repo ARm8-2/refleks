@@ -1,4 +1,5 @@
 import { Widget } from '@/shared/components';
+import { buildScoreDomain as buildSharedScoreDomain } from '@/shared/lib';
 import { Gauge, Minus, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react';
 import type { SnapshotTone } from '../../hooks/useRecentSessionSnapshot';
 
@@ -61,19 +62,5 @@ export function getPerformanceAccent(tone: SnapshotTone): string {
 }
 
 export function buildScoreDomain(scores: number[], referenceScores: number[] = []): [number, number] {
-  const values = [...scores, ...referenceScores].filter(value => Number.isFinite(value) && value > 0)
-  if (values.length === 0) return [0, 1]
-
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  if (min === max) {
-    const pad = Math.max(1, Math.round(max * 0.04))
-    return [Math.max(0, Math.floor(min - pad)), Math.ceil(max + pad)]
-  }
-
-  const span = max - min
-  const pad = Math.max(1, Math.round(span * 0.18))
-  const lower = Math.max(0, Math.floor(min - pad))
-  const upper = Math.ceil(max + pad)
-  return upper > lower ? [lower, upper] : [Math.max(0, lower - 1), lower + 1]
+  return buildSharedScoreDomain(scores, referenceScores)
 }

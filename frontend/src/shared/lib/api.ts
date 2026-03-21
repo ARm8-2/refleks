@@ -9,6 +9,7 @@ import {
   GetFavoriteBenchmarks as _GetFavoriteBenchmarks,
   GetLastScenarioScores as _GetLastScenarioScores,
   GetRecentScenarios as _GetRecentScenarios,
+  GetScenarioTrace as _GetScenarioTrace,
   GetSettings as _GetSettings,
   GetVersion as _GetVersion,
   LaunchKovaaksPlaylist as _LaunchKovaaksPlaylist,
@@ -65,7 +66,7 @@ export async function getDefaultSettings(): Promise<Settings> {
 }
 
 export async function updateSettings(payload: Settings): Promise<void> {
-  await _UpdateSettings(payload as any)
+  await _UpdateSettings(payload as unknown as Parameters<typeof _UpdateSettings>[0])
 }
 
 export async function resetSettings(config: boolean, favorites: boolean, scenarioNotes: boolean, sessionNotes: boolean): Promise<void> {
@@ -142,6 +143,5 @@ export async function clearCache(): Promise<void> {
 export { BrowserOpenURL as openURL } from '@wails/runtime'
 
 export async function getScenarioTrace(fileName: string): Promise<string> {
-  // Direct call to avoid build errors before Wails regenerates bindings
-  return await (window as any).go.main.App.GetScenarioTrace(fileName)
+  return await _GetScenarioTrace(fileName)
 }

@@ -9,7 +9,9 @@ import {
   refreshAllBenchmarkProgresses,
   setFavoriteBenchmarks,
 } from '../lib/api'
+import { STORAGE_KEYS } from '../lib/storageKeys'
 import type { Benchmark, BenchmarkProgress } from '../types/ipc'
+import { usePersistedState } from './usePersistedState'
 
 // ---------------------------------------------------------------------------
 // Context shape
@@ -51,7 +53,7 @@ export function BenchmarkProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<string[]>([])
   const [progressMap, setProgressMap] = useState<Record<number, BenchmarkProgress>>({})
   const [loading, setLoading] = useState(true)
-  const [selectedBenchmark, setSelectedBenchmark] = useState<string | null>(null)
+  const [selectedBenchmark, setSelectedBenchmark] = usePersistedState<string | null>(STORAGE_KEYS.benchmarksSelected, null)
 
   // Derived: fast lookup by benchmarkName (unique)
   const benchmarkIndex = useMemo(() => {
@@ -86,6 +88,14 @@ export function BenchmarkProvider({ children }: { children: ReactNode }) {
     })
     return () => { try { off() } catch { /* ignore */ } }
   }, [])
+
+  // Keep persisted selection in sync with available benchmarks.
+  useEffect(() => {
+    if (!selectedBenchmark) return
+    if (benchmarks.length === 0) return
+    if (benchmarkIndex.has(selectedBenchmark)) return
+    setSelectedBenchmark(null)
+  }, [benchmarkIndex, benchmarks.length, selectedBenchmark, setSelectedBenchmark])
 
   // ---- Actions ----
 

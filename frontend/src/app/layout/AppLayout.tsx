@@ -1,26 +1,19 @@
-import { useAppInitialization } from '@/shared/hooks'
-import { cn } from '@/shared/lib'
-import { useCallback, useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { useAppInitialization, usePersistedState } from '@/shared/hooks'
+import { cn, STORAGE_KEYS } from '@/shared/lib'
+import { writeLastRoute } from '@/shared/lib/navigation'
+import { useEffect } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
-
-const SIDEBAR_OPEN_KEY = 'refleks.sidebar.open'
 
 export function AppLayout() {
   useAppInitialization()
+  const location = useLocation()
 
-  const [desktopOpen, setDesktopOpenState] = useState(() => {
-    const saved = localStorage.getItem(SIDEBAR_OPEN_KEY)
-    return saved !== 'false' // default open
-  })
+  const [desktopOpen, setDesktopOpen] = usePersistedState<boolean>(STORAGE_KEYS.sidebarOpen, true)
 
-  const setDesktopOpen = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
-    setDesktopOpenState(prev => {
-      const next = typeof value === 'function' ? value(prev) : value
-      localStorage.setItem(SIDEBAR_OPEN_KEY, String(next))
-      return next
-    })
-  }, [])
+  useEffect(() => {
+    writeLastRoute(location.pathname)
+  }, [location.pathname])
 
   return (
     <div className="flex h-svh gap-2 bg-sidebar p-3 overflow-hidden">

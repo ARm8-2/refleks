@@ -1,3 +1,5 @@
+import { STORAGE_KEYS } from './storageKeys'
+
 export const THEMES = [
   'dark',
   'light'
@@ -14,8 +16,8 @@ export type Font = typeof FONTS[number]['id']
 export const THEME_CHANGED_EVENT = 'refleks-theme-changed'
 export const FONT_CHANGED_EVENT = 'refleks-font-changed'
 
-const THEME_STORAGE_KEY = 'refleks.theme'
-const FONT_STORAGE_KEY = 'refleks.font'
+const THEME_STORAGE_KEY = STORAGE_KEYS.theme
+const FONT_STORAGE_KEY = STORAGE_KEYS.font
 
 const THEME_CLASSES: Record<Theme, string | null> = {
   dark: 'dark',
