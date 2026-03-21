@@ -4,7 +4,6 @@ import {
   FONTS,
   THEMES,
   checkForUpdates,
-  getDefaultSettings,
   getSettings,
   getVersion,
   openURL,
@@ -18,7 +17,7 @@ import {
 } from '@/shared/lib'
 import type { Settings, UpdateInfo } from '@/shared/types'
 import { ChevronDown, ChevronUp, Download, RefreshCw } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ClearCacheModal } from '../components/ClearCacheModal'
 import { ResetSettingsModal } from '../components/ResetSettingsModal'
 import { SettingsField } from '../components/SettingsField'
@@ -38,13 +37,13 @@ export function SettingsPage() {
 
   const [settings, setSettings] = useState<Settings | null>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const saveQueueRef = useRef(Promise.resolve())
 
   // Updates state
   const [currentVersion, setCurrentVersion] = useState<string>('')
   const [update, setUpdate] = useState<UpdateInfo | null>(null)
   const [checking, setChecking] = useState<boolean>(false)
   const [checkError, setCheckError] = useState<string>('')
-  const [saving, setSaving] = useState(false)
   const [isResetOpen, setIsResetOpen] = useState(false)
   const [isClearCacheOpen, setIsClearCacheOpen] = useState(false)
 
@@ -55,8 +54,28 @@ export function SettingsPage() {
       .catch(() => setCurrentVersion(''))
   }, [])
 
-  const updateField = <K extends keyof Settings>(key: K, value: Settings[K]) => {
-    setSettings(prev => prev ? { ...prev, [key]: value } : null)
+  const queueSettingsSave = (next: Settings) => {
+    saveQueueRef.current = saveQueueRef.current
+      .then(async () => {
+        await updateSettings(next)
+        setSessionGap(next.sessionGapMinutes)
+        setSessionNotes(next.sessionNotes ?? {})
+      })
+      .catch((error: unknown) => {
+        console.error('Save error:', error)
+        alert('Failed to save settings')
+      })
+  }
+
+  const updateField = <K extends keyof Settings>(key: K, value: Settings[K], persist = false) => {
+    setSettings(prev => {
+      if (!prev) return null
+      const next = { ...prev, [key]: value }
+      if (persist) {
+        queueSettingsSave(next)
+      }
+      return next
+    })
   }
 
   const handleAutostartChange = async (enabled: boolean) => {
@@ -72,13 +91,13 @@ export function SettingsPage() {
   const handleThemeChange = (value: string) => {
     const theme = value as Theme
     setTheme(theme)
-    updateField('theme', theme)
+    updateField('theme', theme, true)
   }
 
   const handleFontChange = (value: string) => {
     const font = value as Font
     setFont(font)
-    updateField('font', font)
+    updateField('font', font, true)
   }
 
   const handleCheckUpdate = async () => {
@@ -94,33 +113,20 @@ export function SettingsPage() {
     }
   }
 
-  const handleSave = async () => {
-    if (!settings) return
-    setSaving(true)
-    try {
-      await updateSettings(settings)
-      setSessionGap(settings.sessionGapMinutes)
-      if (settings.sessionNotes) {
-        const notes: Record<string, { name: string; notes: string }> = {}
-        for (const [key, val] of Object.entries(settings.sessionNotes)) {
-          notes[key] = { name: val.name, notes: val.notes }
-        }
-        setSessionNotes(notes)
-      }
-    } catch (e) {
-      console.error('Save error:', e)
-      alert('Failed to save settings')
-    } finally {
-      setSaving(false)
+  const handleEnterCommit = () => {
+    if (settings) {
+      queueSettingsSave(settings)
     }
   }
 
   const handleReset = async () => {
     try {
-      const defaults = await getDefaultSettings()
-      setSettings(defaults)
-      setTheme(defaults.theme)
-      if (defaults.font) setFont(defaults.font)
+      const current = await getSettings()
+      setSettings(current)
+      setTheme(current.theme)
+      if (current.font) setFont(current.font)
+      setSessionGap(current.sessionGapMinutes)
+      setSessionNotes(current.sessionNotes ?? {})
     } catch (e) {
       console.error('Reset error:', e)
     }
@@ -180,6 +186,7 @@ export function SettingsPage() {
               type="text"
               value={settings.statsDir}
               onChange={e => updateField('statsDir', e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
               className="w-full max-w-xl"
             />
           </SettingsField>
@@ -194,12 +201,12 @@ export function SettingsPage() {
           <SettingsField label="Mouse Tracking" description="Record mouse movement during scenarios (Windows only)" checkbox>
             <Checkbox
               checked={!!settings.mouseTrackingEnabled}
-              onCheckedChange={v => updateField('mouseTrackingEnabled', v === true)}
+              onCheckedChange={v => updateField('mouseTrackingEnabled', v === true, true)}
             />
           </SettingsField>
 
           <SettingsField label="Session Gap" description="Minutes of inactivity before starting a new session">
-            <Select value={String(settings.sessionGapMinutes)} onValueChange={v => updateField('sessionGapMinutes', parseInt(v, 10))}>
+            <Select value={String(settings.sessionGapMinutes)} onValueChange={v => updateField('sessionGapMinutes', parseInt(v, 10), true)}>
               <SelectTrigger className="h-8 w-auto min-w-[8rem] text-xs">
                 <SelectValue />
               </SelectTrigger>
@@ -259,6 +266,7 @@ export function SettingsPage() {
                     type="text"
                     value={settings.steamInstallDir}
                     onChange={e => updateField('steamInstallDir', e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
                     className="w-full max-w-xl"
                   />
                 </SettingsField>
@@ -268,6 +276,7 @@ export function SettingsPage() {
                     type="text"
                     value={settings.steamIdOverride || ''}
                     onChange={e => updateField('steamIdOverride', e.target.value || undefined)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
                     placeholder="76561198000000000"
                     className="w-full max-w-xs font-mono"
                   />
@@ -278,6 +287,7 @@ export function SettingsPage() {
                     type="text"
                     value={settings.personaNameOverride || ''}
                     onChange={e => updateField('personaNameOverride', e.target.value || undefined)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
                     placeholder="Display name"
                     className="w-full max-w-xs"
                   />
@@ -290,20 +300,25 @@ export function SettingsPage() {
                     type="number"
                     value={settings.mouseBufferMinutes}
                     onChange={e => updateField('mouseBufferMinutes', parseInt(e.target.value, 10) || 5)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
                     min={1}
                     max={60}
                     className="w-20 text-center"
                   />
                 </SettingsField>
 
-                <SettingsField label="Max Files on Start" description="Trace files to load at startup">
+                <SettingsField label="Recent Runs Limit" description="Max recent runs to load and convert (newest first)">
                   <Input
                     type="number"
-                    value={settings.maxExistingOnStart}
-                    onChange={e => updateField('maxExistingOnStart', parseInt(e.target.value, 10) || 10)}
-                    min={0}
-                    max={100}
-                    className="w-20 text-center"
+                    value={settings.recentRunsLimit}
+                    onChange={e => {
+                      const next = parseInt(e.target.value, 10)
+                      updateField('recentRunsLimit', Number.isFinite(next) && next > 0 ? next : settings.recentRunsLimit)
+                    }}
+                    onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
+                    min={50}
+                    max={10000}
+                    className="w-24 text-center"
                   />
                 </SettingsField>
               </SettingsSection>
@@ -322,9 +337,6 @@ export function SettingsPage() {
           <div className="flex-1" />
           <Button variant="destructive" size="sm" onClick={() => quitApp()}>
             Quit App
-          </Button>
-          <Button variant="default" size="sm" onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </div>

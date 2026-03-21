@@ -20,4 +20,6 @@ type Provider interface {
 	Enabled() bool
 	// GetRange returns a copy of samples in [start, end]. Returns empty slice when disabled.
 	GetRange(start, end time.Time) []models.MousePoint
+	// GetRunMetadata returns source-device metadata for samples in [start, end].
+	GetRunMetadata(start, end time.Time) models.MouseRunMetadata
 }

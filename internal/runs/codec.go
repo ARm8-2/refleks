@@ -28,6 +28,7 @@ type RunRecord struct {
 	Stats      map[string]any
 	Events     [][]string
 	MouseTrace []models.MousePoint
+	Env        models.RunEnvironment
 }
 
 func writeRecord(w io.Writer, rec RunRecord) error {
@@ -47,7 +48,10 @@ func writeRecord(w io.Writer, rec RunRecord) error {
 	if err := writeEvents(w, rec.Events); err != nil {
 		return err
 	}
-	return writeMouseTrace(w, rec.MouseTrace)
+	if err := writeMouseTrace(w, rec.MouseTrace); err != nil {
+		return err
+	}
+	return writeRunEnvironment(w, rec.Env)
 }
 
 func readRecordFile(path string) (RunRecord, error) {
@@ -93,11 +97,17 @@ func readRecordFile(path string) (RunRecord, error) {
 		return RunRecord{}, err
 	}
 
+	env, err := readRunEnvironment(f)
+	if err != nil {
+		return RunRecord{}, err
+	}
+
 	return RunRecord{
 		FileName:   fileName,
 		Stats:      stats,
 		Events:     events,
 		MouseTrace: trace,
+		Env:        env,
 	}, nil
 }
 
@@ -357,4 +367,194 @@ func readMouseTrace(r io.Reader) ([]models.MousePoint, error) {
 		trace[i] = p
 	}
 	return trace, nil
+}
+
+func writeRunEnvironment(w io.Writer, env models.RunEnvironment) error {
+	if err := writeString(w, env.AppVersion); err != nil {
+		return err
+	}
+	if err := writeString(w, env.OS); err != nil {
+		return err
+	}
+	if err := writeString(w, env.Arch); err != nil {
+		return err
+	}
+	if err := writeString(w, env.OSVersion); err != nil {
+		return err
+	}
+	if err := writeString(w, env.Hostname); err != nil {
+		return err
+	}
+
+	if err := writeString(w, env.CPUName); err != nil {
+		return err
+	}
+	if err := binary.Write(w, binary.LittleEndian, env.CPUCores); err != nil {
+		return err
+	}
+	if err := writeString(w, env.GPUName); err != nil {
+		return err
+	}
+	if err := binary.Write(w, binary.LittleEndian, env.RAMTotalMB); err != nil {
+		return err
+	}
+
+	if err := binary.Write(w, binary.LittleEndian, env.DisplayHz); err != nil {
+		return err
+	}
+	if err := binary.Write(w, binary.LittleEndian, env.ScreenWidth); err != nil {
+		return err
+	}
+	if err := binary.Write(w, binary.LittleEndian, env.ScreenHeight); err != nil {
+		return err
+	}
+	var isWindowed uint8
+	if env.IsWindowed {
+		isWindowed = 1
+	}
+	if err := binary.Write(w, binary.LittleEndian, isWindowed); err != nil {
+		return err
+	}
+
+	if err := writeString(w, env.MouseName); err != nil {
+		return err
+	}
+	if err := writeString(w, env.MouseVID); err != nil {
+		return err
+	}
+	if err := writeString(w, env.MousePID); err != nil {
+		return err
+	}
+	if err := writeString(w, env.MouseMI); err != nil {
+		return err
+	}
+	if err := writeString(w, env.MouseBackend); err != nil {
+		return err
+	}
+
+	if err := binary.Write(w, binary.LittleEndian, env.TracePoints); err != nil {
+		return err
+	}
+	if err := binary.Write(w, binary.LittleEndian, env.TraceDuration); err != nil {
+		return err
+	}
+	if err := binary.Write(w, binary.LittleEndian, env.SampleRate); err != nil {
+		return err
+	}
+	return nil
+}
+
+func readRunEnvironment(r io.Reader) (models.RunEnvironment, error) {
+	appVersion, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+	osName, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+	arch, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+	osVersion, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+	hostname, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+
+	cpuName, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+	var cpuCores int32
+	if err := binary.Read(r, binary.LittleEndian, &cpuCores); err != nil {
+		return models.RunEnvironment{}, err
+	}
+	gpuName, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+	var ramTotalMB int32
+	if err := binary.Read(r, binary.LittleEndian, &ramTotalMB); err != nil {
+		return models.RunEnvironment{}, err
+	}
+
+	var displayHz float64
+	if err := binary.Read(r, binary.LittleEndian, &displayHz); err != nil {
+		return models.RunEnvironment{}, err
+	}
+	var screenWidth int32
+	if err := binary.Read(r, binary.LittleEndian, &screenWidth); err != nil {
+		return models.RunEnvironment{}, err
+	}
+	var screenHeight int32
+	if err := binary.Read(r, binary.LittleEndian, &screenHeight); err != nil {
+		return models.RunEnvironment{}, err
+	}
+	var isWindowed uint8
+	if err := binary.Read(r, binary.LittleEndian, &isWindowed); err != nil {
+		return models.RunEnvironment{}, err
+	}
+
+	mouseName, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+	mouseVID, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+	mousePID, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+	mouseMI, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+	mouseBackend, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+
+	var tracePoints int32
+	if err := binary.Read(r, binary.LittleEndian, &tracePoints); err != nil {
+		return models.RunEnvironment{}, err
+	}
+	var traceDuration float64
+	if err := binary.Read(r, binary.LittleEndian, &traceDuration); err != nil {
+		return models.RunEnvironment{}, err
+	}
+	var sampleRate int32
+	if err := binary.Read(r, binary.LittleEndian, &sampleRate); err != nil {
+		return models.RunEnvironment{}, err
+	}
+
+	return models.RunEnvironment{
+		AppVersion:    appVersion,
+		OS:            osName,
+		Arch:          arch,
+		OSVersion:     osVersion,
+		Hostname:      hostname,
+		CPUName:       cpuName,
+		CPUCores:      cpuCores,
+		GPUName:       gpuName,
+		RAMTotalMB:    ramTotalMB,
+		DisplayHz:     displayHz,
+		ScreenWidth:   screenWidth,
+		ScreenHeight:  screenHeight,
+		IsWindowed:    isWindowed == 1,
+		MouseName:     mouseName,
+		MouseVID:      mouseVID,
+		MousePID:      mousePID,
+		MouseMI:       mouseMI,
+		MouseBackend:  mouseBackend,
+		TracePoints:   tracePoints,
+		TraceDuration: traceDuration,
+		SampleRate:    sampleRate,
+	}, nil
 }

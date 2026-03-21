@@ -6,66 +6,34 @@ import type { ScenarioRecord } from '../types/ipc'
 
 type State = {
   sessions: Session[]
-  newScenarios: number
   sessionGapMinutes: number
   sessionNotes: Record<string, { name: string; notes: string }>
 }
 
 type Action =
   | { type: 'set'; items: ScenarioRecord[] }
-  | { type: 'add'; item: ScenarioRecord }
-  | { type: 'update'; item: ScenarioRecord }
-  | { type: 'incNew' }
-  | { type: 'resetNew' }
   | { type: 'setGap'; minutes: number }
   | { type: 'setSessionNotes'; notes: Record<string, { name: string; notes: string }> }
   | { type: 'updateSessionNote'; id: string; name: string; notes: string }
 
-const initial: State = { sessions: [], newScenarios: 0, sessionGapMinutes: 30, sessionNotes: {} }
-
-// Helper to extract all scenarios from sessions (newest first)
-function getAllScenariosFromSessions(sessions: Session[]): ScenarioRecord[] {
-  return sessions.flatMap(s => s.items)
-}
+const initial: State = { sessions: [], sessionGapMinutes: 30, sessionNotes: {} }
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'set':
       return { ...state, sessions: groupSessions(action.items ?? [], state.sessionGapMinutes, state.sessionNotes) }
-    case 'add': {
-      // Get current scenarios, prepend new one, regroup
-      const currentScenarios = getAllScenariosFromSessions(state.sessions)
-      const next = [action.item, ...currentScenarios]
-      return { ...state, sessions: groupSessions(next, state.sessionGapMinutes, state.sessionNotes) }
-    }
-    case 'update': {
-      const currentScenarios = getAllScenariosFromSessions(state.sessions)
-      const idx = currentScenarios.findIndex(s => s.filePath === action.item.filePath)
-      if (idx === -1) {
-        // if unknown, prepend without incrementing newScenarios
-        const next = [action.item, ...currentScenarios]
-        return { ...state, sessions: groupSessions(next, state.sessionGapMinutes, state.sessionNotes) }
-      }
-      const next = [...currentScenarios]
-      next[idx] = action.item
-      return { ...state, sessions: groupSessions(next, state.sessionGapMinutes, state.sessionNotes) }
-    }
-    case 'incNew':
-      return { ...state, newScenarios: state.newScenarios + 1 }
-    case 'resetNew':
-      return { ...state, newScenarios: 0 }
     case 'setGap': {
-      const currentScenarios = getAllScenariosFromSessions(state.sessions)
+      const currentScenarios = state.sessions.flatMap(s => s.items)
       const gap = Math.max(1, Math.floor(action.minutes))
       return { ...state, sessionGapMinutes: gap, sessions: groupSessions(currentScenarios, gap, state.sessionNotes) }
     }
     case 'setSessionNotes': {
-      const currentScenarios = getAllScenariosFromSessions(state.sessions)
+      const currentScenarios = state.sessions.flatMap(s => s.items)
       return { ...state, sessionNotes: action.notes, sessions: groupSessions(currentScenarios, state.sessionGapMinutes, action.notes) }
     }
     case 'updateSessionNote': {
       const nextNotes = { ...state.sessionNotes, [action.id]: { name: action.name, notes: action.notes } }
-      const currentScenarios = getAllScenariosFromSessions(state.sessions)
+      const currentScenarios = state.sessions.flatMap(s => s.items)
       return { ...state, sessionNotes: nextNotes, sessions: groupSessions(currentScenarios, state.sessionGapMinutes, nextNotes) }
     }
     default:
@@ -75,10 +43,6 @@ function reducer(state: State, action: Action): State {
 
 type Ctx = State & {
   setScenarios: (items: ScenarioRecord[]) => void
-  addScenario: (item: ScenarioRecord) => void
-  updateScenario: (item: ScenarioRecord) => void
-  incNew: () => void
-  resetNew: () => void
   setSessionGap: (minutes: number) => void
   setSessionNotes: (notes: Record<string, { name: string; notes: string }>) => void
   saveSessionNote: (id: string, name: string, notes: string) => Promise<void>
@@ -92,10 +56,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   // Stable callbacks so consumers can safely depend on their identity
   const setScenarios = useCallback((items: ScenarioRecord[]) => dispatch({ type: 'set', items }), [dispatch])
-  const addScenario = useCallback((item: ScenarioRecord) => dispatch({ type: 'add', item }), [dispatch])
-  const updateScenario = useCallback((item: ScenarioRecord) => dispatch({ type: 'update', item }), [dispatch])
-  const incNew = useCallback(() => dispatch({ type: 'incNew' }), [dispatch])
-  const resetNew = useCallback(() => dispatch({ type: 'resetNew' }), [dispatch])
   const setSessionGap = useCallback((minutes: number) => dispatch({ type: 'setGap', minutes }), [dispatch])
   const setSessionNotes = useCallback((notes: Record<string, { name: string; notes: string }>) => dispatch({ type: 'setSessionNotes', notes }), [dispatch])
 
@@ -116,15 +76,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Ctx>(() => ({
     ...state,
     setScenarios,
-    addScenario,
-    updateScenario,
-    incNew,
-    resetNew,
     setSessionGap,
     setSessionNotes,
     saveSessionNote: saveSessionNoteAction,
     isInSession,
-  }), [state, setScenarios, addScenario, updateScenario, incNew, resetNew, setSessionGap, setSessionNotes, saveSessionNoteAction, isInSession])
+  }), [state, setScenarios, setSessionGap, setSessionNotes, saveSessionNoteAction, isInSession])
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>
 }
 
@@ -138,8 +94,11 @@ export function useStore<T>(selector: (s: Ctx) => T): T {
 function groupSessions(items: ScenarioRecord[], gapMinutes = 30, notes: Record<string, { name: string; notes: string }> = {}): Session[] {
   if (!Array.isArray(items) || items.length === 0) return []
 
-  // Optimization: Items are maintained in sorted order (newest first) by the store.
-  const sorted = items
+  const sorted = [...items].sort((a, b) => {
+    const diff = endTs(b) - endTs(a)
+    if (diff !== 0) return diff
+    return a.filePath.localeCompare(b.filePath)
+  })
 
   const groups: ScenarioRecord[][] = []
   let currentGroup: ScenarioRecord[] = []
@@ -169,8 +128,13 @@ function groupSessions(items: ScenarioRecord[], gapMinutes = 30, notes: Record<s
 
   if (currentGroup.length) groups.push(currentGroup)
 
-  return groups.map((g) => {
-    const timestamps = g.map(endTs)
+  const sessions = groups.map((group) => {
+    const items = [...group].sort((a, b) => {
+      const diff = endTs(b) - endTs(a)
+      if (diff !== 0) return diff
+      return a.filePath.localeCompare(b.filePath)
+    })
+    const timestamps = items.map(endTs)
     const minTs = Math.min(...timestamps)
     const maxTs = Math.max(...timestamps)
     const id = `session-${minTs}`
@@ -179,11 +143,16 @@ function groupSessions(items: ScenarioRecord[], gapMinutes = 30, notes: Record<s
       id,
       start: new Date(minTs).toISOString(),
       end: new Date(maxTs).toISOString(),
-      items: g,
+      items,
       name: savedNote?.name,
       notes: savedNote?.notes,
+      sortTs: maxTs,
     }
   })
+
+  sessions.sort((a, b) => b.sortTs - a.sortTs || a.id.localeCompare(b.id))
+
+  return sessions.map(({ sortTs: _sortTs, ...session }) => session)
 }
 
 function endTs(it: ScenarioRecord): number {

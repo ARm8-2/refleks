@@ -3,7 +3,9 @@
 package mouse
 
 import (
+	"regexp"
 	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -24,6 +26,9 @@ type trackerWin struct {
 	running bool
 	buf     []models.MousePoint
 	bufDur  time.Duration
+	// device ID aligned with each point in buf
+	pointDeviceIDs []uint32
+	currentDevice  uint32
 
 	// window thread state
 	doneCh   chan struct{}
@@ -50,6 +55,17 @@ type trackerWin struct {
 	workerDone chan struct{}
 	// last time we pruned the buffer (rate-limit pruning)
 	lastPrune time.Time
+
+	deviceMu       sync.RWMutex
+	deviceByHandle map[uintptr]uint32
+	deviceByID     []deviceInfo
+}
+
+type deviceInfo struct {
+	name string
+	vid  string
+	pid  string
+	mi   string
 }
 
 // New returns a new Windows mouse tracker using Raw Input.
@@ -77,6 +93,12 @@ func (t *trackerWin) Start() error {
 	t.wakeCh = make(chan struct{}, 1)
 	t.workerDone = make(chan struct{})
 	t.lastPrune = time.Now()
+	t.pointDeviceIDs = t.pointDeviceIDs[:0]
+	t.currentDevice = 0
+	t.deviceMu.Lock()
+	t.deviceByHandle = make(map[uintptr]uint32)
+	t.deviceByID = []deviceInfo{{}}
+	t.deviceMu.Unlock()
 	t.mu.Unlock()
 	go t.eventLoop()
 	go t.winLoop()
@@ -127,6 +149,7 @@ func (t *trackerWin) SetBufferDuration(d time.Duration) {
 		// Compact underlying slice only when start grows large to avoid frequent copies
 		if t.start > 2048 {
 			t.buf = append([]models.MousePoint(nil), t.buf[t.start:]...)
+			t.pointDeviceIDs = append([]uint32(nil), t.pointDeviceIDs[t.start:]...)
 			t.start = 0
 		}
 	}
@@ -161,32 +184,92 @@ func (t *trackerWin) GetRange(start, end time.Time) []models.MousePoint {
 	return out
 }
 
+func (t *trackerWin) GetRunMetadata(start, end time.Time) models.MouseRunMetadata {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	if len(t.buf) == 0 || len(t.pointDeviceIDs) == 0 {
+		return models.MouseRunMetadata{Backend: "rawinput", SampleRateHz: int32(constants.DefaultMouseSampleHz)}
+	}
+
+	startMs := start.UnixMilli()
+	endMs := end.UnixMilli()
+	counts := map[uint32]int{}
+
+	for i := t.start; i < len(t.buf); i++ {
+		p := t.buf[i]
+		if p.TS < startMs {
+			continue
+		}
+		if p.TS > endMs {
+			break
+		}
+		if i >= len(t.pointDeviceIDs) {
+			break
+		}
+		id := t.pointDeviceIDs[i]
+		if id == 0 {
+			continue
+		}
+		counts[id]++
+	}
+
+	var bestID uint32
+	bestCount := 0
+	for id, c := range counts {
+		if c > bestCount {
+			bestID = id
+			bestCount = c
+		}
+	}
+	if bestID == 0 {
+		return models.MouseRunMetadata{Backend: "rawinput", SampleRateHz: int32(constants.DefaultMouseSampleHz)}
+	}
+
+	t.deviceMu.RLock()
+	info := deviceInfo{}
+	if int(bestID) < len(t.deviceByID) {
+		info = t.deviceByID[bestID]
+	}
+	t.deviceMu.RUnlock()
+
+	return models.MouseRunMetadata{
+		Backend:         "rawinput",
+		DeviceName:      info.name,
+		VendorID:        info.vid,
+		ProductID:       info.pid,
+		InterfaceNumber: info.mi,
+		SampleRateHz:    int32(constants.DefaultMouseSampleHz),
+	}
+}
+
 // --- Windows interop ---
 
 var (
-	user32                   = syscall.NewLazyDLL("user32.dll")
-	kernel32                 = syscall.NewLazyDLL("kernel32.dll")
-	procRegisterClassExW     = user32.NewProc("RegisterClassExW")
-	procUnregisterClassW     = user32.NewProc("UnregisterClassW")
-	procCreateWindowExW      = user32.NewProc("CreateWindowExW")
-	procDestroyWindow        = user32.NewProc("DestroyWindow")
-	procDefWindowProcW       = user32.NewProc("DefWindowProcW")
-	procGetMessageW          = user32.NewProc("GetMessageW")
-	procTranslateMessage     = user32.NewProc("TranslateMessage")
-	procDispatchMessageW     = user32.NewProc("DispatchMessageW")
-	procPostThreadMessageW   = user32.NewProc("PostThreadMessageW")
-	procGetCurrentThreadId   = kernel32.NewProc("GetCurrentThreadId")
-	procGetModuleHandleW     = kernel32.NewProc("GetModuleHandleW")
-	procRegisterRawInputDevs = user32.NewProc("RegisterRawInputDevices")
-	procGetRawInputData      = user32.NewProc("GetRawInputData")
+	user32                     = syscall.NewLazyDLL("user32.dll")
+	kernel32                   = syscall.NewLazyDLL("kernel32.dll")
+	procRegisterClassExW       = user32.NewProc("RegisterClassExW")
+	procUnregisterClassW       = user32.NewProc("UnregisterClassW")
+	procCreateWindowExW        = user32.NewProc("CreateWindowExW")
+	procDestroyWindow          = user32.NewProc("DestroyWindow")
+	procDefWindowProcW         = user32.NewProc("DefWindowProcW")
+	procGetMessageW            = user32.NewProc("GetMessageW")
+	procTranslateMessage       = user32.NewProc("TranslateMessage")
+	procDispatchMessageW       = user32.NewProc("DispatchMessageW")
+	procPostThreadMessageW     = user32.NewProc("PostThreadMessageW")
+	procGetCurrentThreadId     = kernel32.NewProc("GetCurrentThreadId")
+	procGetModuleHandleW       = kernel32.NewProc("GetModuleHandleW")
+	procRegisterRawInputDevs   = user32.NewProc("RegisterRawInputDevices")
+	procGetRawInputData        = user32.NewProc("GetRawInputData")
+	procGetRawInputDeviceInfoW = user32.NewProc("GetRawInputDeviceInfoW")
 )
 
 const (
 	WM_INPUT = 0x00FF
 	WM_QUIT  = 0x0012
 
-	RID_INPUT     = 0x10000003
-	RIM_TYPEMOUSE = 0
+	RID_INPUT       = 0x10000003
+	RIM_TYPEMOUSE   = 0
+	RIDI_DEVICENAME = 0x20000007
 
 	RIDEV_REMOVE    = 0x00000001
 	RIDEV_INPUTSINK = 0x00000100
@@ -255,11 +338,17 @@ type RAWMOUSE struct {
 // rawEvent is a lightweight representation of parsed raw input passed from
 // the window thread to the background worker to do accumulation and buffering.
 type rawEvent struct {
-	dx    int32
-	dy    int32
-	flags uint16
-	ts    time.Time
+	dx       int32
+	dy       int32
+	flags    uint16
+	deviceID uint32
 }
+
+var (
+	vidRegex = regexp.MustCompile(`(?i)VID_([0-9A-F]{4})`)
+	pidRegex = regexp.MustCompile(`(?i)PID_([0-9A-F]{4})`)
+	miRegex  = regexp.MustCompile(`(?i)MI_([0-9A-F]{2})`)
+)
 
 // Global tracker for window proc routing (single instance)
 var currentTracker *trackerWin
@@ -408,6 +497,7 @@ func (t *trackerWin) handleRawInput(lparam uintptr) {
 	// Use relative motion deltas (unclipped) and button flags
 	dx := mouse.LLastX
 	dy := mouse.LLastY
+	deviceID := t.resolveDeviceID(hdr.HDevice)
 	// The RAWMOUSE union places either ulButtons (32-bit) or two USHORTs for
 	// usButtonFlags/usButtonData. Read the low WORD of UlButtons to get usButtonFlags.
 	ulButtons := mouse.UlButtons
@@ -423,7 +513,7 @@ func (t *trackerWin) handleRawInput(lparam uintptr) {
 	// Always signal wake to avoid race conditions where the worker sleeps
 	// thinking the buffer is empty while we are writing to it.
 	// The overhead of a non-blocking select is negligible compared to the risk of stalling.
-	t.rb[write&t.rbMask] = rawEvent{dx: dx, dy: dy, flags: flags}
+	t.rb[write&t.rbMask] = rawEvent{dx: dx, dy: dy, flags: flags, deviceID: deviceID}
 	atomic.StoreUint32(&t.rbWrite, write+1)
 	if t.wakeCh != nil {
 		select {
@@ -431,6 +521,68 @@ func (t *trackerWin) handleRawInput(lparam uintptr) {
 		default:
 		}
 	}
+}
+
+func (t *trackerWin) resolveDeviceID(handle uintptr) uint32 {
+	if handle == 0 {
+		return 0
+	}
+
+	t.deviceMu.RLock()
+	if id, ok := t.deviceByHandle[handle]; ok {
+		t.deviceMu.RUnlock()
+		return id
+	}
+	t.deviceMu.RUnlock()
+
+	name := getRawInputDeviceName(handle)
+	vid, pid, mi := parseVIDPIDMI(name)
+
+	t.deviceMu.Lock()
+	defer t.deviceMu.Unlock()
+	if id, ok := t.deviceByHandle[handle]; ok {
+		return id
+	}
+	id := uint32(len(t.deviceByID))
+	t.deviceByHandle[handle] = id
+	t.deviceByID = append(t.deviceByID, deviceInfo{name: name, vid: vid, pid: pid, mi: mi})
+	return id
+}
+
+func getRawInputDeviceName(handle uintptr) string {
+	var size uint32
+	r1, _, _ := procGetRawInputDeviceInfoW.Call(handle, RIDI_DEVICENAME, 0, uintptr(unsafe.Pointer(&size)))
+	if r1 == 0xFFFFFFFF || size == 0 {
+		return ""
+	}
+
+	buf := make([]uint16, size)
+	r2, _, _ := procGetRawInputDeviceInfoW.Call(
+		handle,
+		RIDI_DEVICENAME,
+		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(unsafe.Pointer(&size)),
+	)
+	if r2 == 0xFFFFFFFF {
+		return ""
+	}
+	return strings.TrimSpace(syscall.UTF16ToString(buf))
+}
+
+func parseVIDPIDMI(deviceName string) (string, string, string) {
+	vid := ""
+	pid := ""
+	mi := ""
+	if m := vidRegex.FindStringSubmatch(deviceName); len(m) == 2 {
+		vid = strings.ToUpper(m[1])
+	}
+	if m := pidRegex.FindStringSubmatch(deviceName); len(m) == 2 {
+		pid = strings.ToUpper(m[1])
+	}
+	if m := miRegex.FindStringSubmatch(deviceName); len(m) == 2 {
+		mi = strings.ToUpper(m[1])
+	}
+	return vid, pid, mi
 }
 
 // eventLoop consumes parsed raw input events and performs accumulation and
@@ -452,6 +604,9 @@ func (t *trackerWin) eventLoop() {
 			ev := t.rb[read&t.rbMask]
 
 			t.mu.Lock()
+			if ev.deviceID != 0 {
+				t.currentDevice = ev.deviceID
+			}
 			changed := false
 			if ev.dx != 0 || ev.dy != 0 {
 				t.vx += ev.dx
@@ -474,6 +629,7 @@ func (t *trackerWin) eventLoop() {
 			if changed {
 				now := time.Now()
 				t.buf = append(t.buf, models.MousePoint{TS: now.UnixMilli(), X: t.vx, Y: t.vy, Buttons: int32(t.buttons)})
+				t.pointDeviceIDs = append(t.pointDeviceIDs, t.currentDevice)
 				// prune occasionally
 				if time.Since(t.lastPrune) > time.Second || (len(t.buf)-t.start) > 16384 {
 					cutoff := now.Add(-t.bufDur).UnixMilli()
@@ -485,6 +641,7 @@ func (t *trackerWin) eventLoop() {
 						t.start = j
 						if t.start > 2048 {
 							t.buf = append([]models.MousePoint(nil), t.buf[t.start:]...)
+							t.pointDeviceIDs = append([]uint32(nil), t.pointDeviceIDs[t.start:]...)
 							t.start = 0
 						}
 					}

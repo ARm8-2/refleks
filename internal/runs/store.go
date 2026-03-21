@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"refleks/internal/constants"
 	"refleks/internal/models"
@@ -124,6 +123,7 @@ func (s *Store) LoadRecentScenarios(limit int) ([]models.ScenarioRecord, error) 
 			FileName: r.FileName,
 			Stats:    r.Stats,
 			Events:   r.Events,
+			Env:      r.Env,
 			HasTrace: len(r.MouseTrace) > 0,
 		})
 	}
@@ -143,8 +143,9 @@ func (s *Store) LoadRecent(limit int) ([]RunRecord, error) {
 	}
 
 	type wrapped struct {
-		rec RunRecord
-		ts  int64
+		path string
+		name string
+		ts   int64
 	}
 	all := make([]wrapped, 0, len(entries))
 
@@ -157,17 +158,12 @@ func (s *Store) LoadRecent(limit int) ([]RunRecord, error) {
 		}
 
 		path := filepath.Join(dir, e.Name())
-		rec, err := readRecordFile(path)
-		if err != nil {
-			continue
-		}
-		rec.FilePath = path
-		all = append(all, wrapped{rec: rec, ts: scenarioTimestamp(rec, path)})
+		all = append(all, wrapped{path: path, name: e.Name(), ts: scenarioTimestampFromFileName(e.Name(), path)})
 	}
 
 	sort.Slice(all, func(i, j int) bool {
 		if all[i].ts == all[j].ts {
-			return all[i].rec.FileName < all[j].rec.FileName
+			return all[i].name < all[j].name
 		}
 		return all[i].ts < all[j].ts
 	})
@@ -178,20 +174,20 @@ func (s *Store) LoadRecent(limit int) ([]RunRecord, error) {
 
 	out := make([]RunRecord, 0, len(all))
 	for _, v := range all {
-		out = append(out, v.rec)
+		rec, err := readRecordFile(v.path)
+		if err != nil {
+			continue
+		}
+		rec.FilePath = v.path
+		out = append(out, rec)
 	}
 	return out, nil
 }
 
-func scenarioTimestamp(rec RunRecord, path string) int64 {
-	if rec.Stats != nil {
-		if raw, ok := rec.Stats["Date Played"]; ok {
-			if s, ok := raw.(string); ok {
-				if t, err := time.Parse(time.RFC3339, s); err == nil {
-					return t.UnixMilli()
-				}
-			}
-		}
+func scenarioTimestampFromFileName(fileName, path string) int64 {
+	base := strings.TrimSuffix(fileName, ".refleks") + ".csv"
+	if info, err := ParseFilename(base); err == nil {
+		return info.DatePlayed.UnixMilli()
 	}
 	if fi, err := os.Stat(path); err == nil {
 		return fi.ModTime().UnixMilli()

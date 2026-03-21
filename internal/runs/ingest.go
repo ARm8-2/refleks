@@ -5,8 +5,7 @@ import (
 	"time"
 
 	"refleks/internal/models"
-	"refleks/internal/sens"
-	"refleks/internal/util"
+	"refleks/internal/runs/environment"
 )
 
 // IngestScenario parses a KovaaK's stats CSV, enriches it, persists it, and returns the stored record.
@@ -24,10 +23,10 @@ func (s *Store) IngestScenario(fullPath string, mouse models.MouseTraceProvider)
 
 	var hit, miss float64
 	if v, ok := stats["Hit Count"]; ok {
-		hit = util.ToFloat(v)
+		hit = toFloat(v)
 	}
 	if v, ok := stats["Miss Count"]; ok {
-		miss = util.ToFloat(v)
+		miss = toFloat(v)
 	}
 	if denom := hit + miss; denom > 0 {
 		stats["Accuracy"] = hit / denom
@@ -58,7 +57,7 @@ func (s *Store) IngestScenario(fullPath string, mouse models.MouseTraceProvider)
 		}
 	}
 
-	if cm, _ := sens.Cm360FromStats(stats); true {
+	if cm, ok := cm360FromStats(stats); ok {
 		stats["cm/360"] = cm
 	}
 
@@ -86,6 +85,7 @@ func (s *Store) IngestScenario(fullPath string, mouse models.MouseTraceProvider)
 		Stats:      rec.Stats,
 		Events:     rec.Events,
 		MouseTrace: trace,
+		Env:        environment.CollectRunEnvironment(mouse, start, end, len(trace)),
 	})
 	if err != nil {
 		return models.ScenarioRecord{}, err

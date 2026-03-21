@@ -23,3 +23,6 @@ func (t *trackerNoop) Stop()                                             {}
 func (t *trackerNoop) SetBufferDuration(d time.Duration)                 { t.bufDur = d }
 func (t *trackerNoop) Enabled() bool                                     { return false }
 func (t *trackerNoop) GetRange(start, end time.Time) []models.MousePoint { return nil }
+func (t *trackerNoop) GetRunMetadata(start, end time.Time) models.MouseRunMetadata {
+	return models.MouseRunMetadata{}
+}

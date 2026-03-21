@@ -5,8 +5,37 @@ type ScenarioRecord struct {
 	FileName string         `json:"fileName"`
 	Stats    map[string]any `json:"stats"`
 	Events   [][]string     `json:"events"`
+	Env      RunEnvironment `json:"env"`
 	// HasTrace indicates whether the run's .refleks payload contains mouse trace points.
 	HasTrace bool `json:"hasTrace"`
+}
+
+type RunEnvironment struct {
+	AppVersion string `json:"appVersion"`
+	OS         string `json:"os"`
+	Arch       string `json:"arch"`
+	OSVersion  string `json:"osVersion"`
+	Hostname   string `json:"hostname"`
+
+	CPUName    string `json:"cpuName"`
+	CPUCores   int32  `json:"cpuCores"`
+	GPUName    string `json:"gpuName"`
+	RAMTotalMB int32  `json:"ramTotalMB"`
+
+	DisplayHz    float64 `json:"displayHz"`
+	ScreenWidth  int32   `json:"screenWidth"`
+	ScreenHeight int32   `json:"screenHeight"`
+	IsWindowed   bool    `json:"isWindowed"`
+
+	MouseName    string `json:"mouseName"`
+	MouseVID     string `json:"mouseVid"`
+	MousePID     string `json:"mousePid"`
+	MouseMI      string `json:"mouseMi"`
+	MouseBackend string `json:"mouseBackend"`
+
+	TracePoints   int32   `json:"tracePoints"`
+	TraceDuration float64 `json:"traceDuration"`
+	SampleRate    int32   `json:"sampleRate"`
 }
 
 type MousePoint struct {

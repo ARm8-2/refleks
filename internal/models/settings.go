@@ -7,12 +7,12 @@ type Settings struct {
 	PersonaNameOverride  string                  `json:"personaNameOverride,omitempty"`
 	StatsDir             string                  `json:"statsDir"`
 	SessionGapMinutes    int                     `json:"sessionGapMinutes"`
+	RecentRunsLimit      int                     `json:"recentRunsLimit"`
 	Theme                string                  `json:"theme"`
 	Font                 string                  `json:"font,omitempty"`
 	FavoriteBenchmarks   []string                `json:"favoriteBenchmarks,omitempty"`
 	MouseTrackingEnabled bool                    `json:"mouseTrackingEnabled"`
 	MouseBufferMinutes   int                     `json:"mouseBufferMinutes"`
-	MaxExistingOnStart   int                     `json:"maxExistingOnStart"`
 	AutostartEnabled     bool                    `json:"autostartEnabled"`
 	ScenarioNotes        map[string]ScenarioNote `json:"scenarioNotes,omitempty"`
 	SessionNotes         map[string]SessionNote  `json:"sessionNotes,omitempty"`

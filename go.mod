@@ -6,6 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/wailsapp/wails/v2 v2.10.2
+	github.com/yusufpapurcu/wmi v1.2.4
 	golang.org/x/sys v0.37.0
 	golang.org/x/text v0.30.0
 )

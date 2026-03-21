@@ -46,10 +46,10 @@ func NewRuntimeService(ctx context.Context, settingsSvc *appsettings.Service, be
 	}
 
 	defaultCfg := models.WatcherConfig{
-		Path:               settings.StatsDir,
-		SessionGap:         time.Duration(settings.SessionGapMinutes) * time.Minute,
-		PollInterval:       time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
-		ParseExistingLimit: settings.MaxExistingOnStart,
+		Path:            settings.StatsDir,
+		SessionGap:      time.Duration(settings.SessionGapMinutes) * time.Minute,
+		PollInterval:    time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
+		RecentRunsLimit: settings.RecentRunsLimit,
 	}
 
 	svc.watcher = watcher.New(ctx, defaultCfg, runStore)
@@ -85,10 +85,10 @@ func (s *RuntimeService) StartWatcher(path string) error {
 	}
 
 	cfg := models.WatcherConfig{
-		Path:               finalPath,
-		SessionGap:         time.Duration(current.SessionGapMinutes) * time.Minute,
-		PollInterval:       time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
-		ParseExistingLimit: current.MaxExistingOnStart,
+		Path:            finalPath,
+		SessionGap:      time.Duration(current.SessionGapMinutes) * time.Minute,
+		PollInterval:    time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
+		RecentRunsLimit: current.RecentRunsLimit,
 	}
 
 	if s.watcher == nil {
@@ -119,10 +119,29 @@ func (s *RuntimeService) StopWatcher() error {
 }
 
 func (s *RuntimeService) GetRecent(limit int) []models.ScenarioRecord {
-	if s.watcher == nil {
+	if s.runStore == nil {
 		return nil
 	}
-	return s.watcher.GetRecent(limit)
+	maxLimit := constants.DefaultRecentRunsLimit
+	if s.settingsSvc != nil {
+		configuredLimit := s.settingsSvc.Get().RecentRunsLimit
+		if configuredLimit > 0 {
+			maxLimit = configuredLimit
+		}
+	}
+	if limit <= 0 || limit > maxLimit {
+		limit = maxLimit
+	}
+	records, err := s.runStore.LoadRecentScenarios(limit)
+	if err != nil {
+		runtime.LogWarningf(s.ctx, "failed to load recent runs: %v", err)
+		return nil
+	}
+
+	for i, j := 0, len(records)-1; i < j; i, j = i+1, j-1 {
+		records[i], records[j] = records[j], records[i]
+	}
+	return records
 }
 
 func (s *RuntimeService) IsWatcherRunning() bool {
@@ -160,7 +179,7 @@ func (s *RuntimeService) OverwriteSettings(newS models.Settings) error {
 	needsWatcherRestart := true
 	if prevSettings.StatsDir == newS.StatsDir &&
 		prevSettings.SessionGapMinutes == newS.SessionGapMinutes &&
-		prevSettings.MaxExistingOnStart == newS.MaxExistingOnStart {
+		prevSettings.RecentRunsLimit == newS.RecentRunsLimit {
 		needsWatcherRestart = false
 	}
 
@@ -176,10 +195,10 @@ func (s *RuntimeService) updateWatcher(newS models.Settings, needsRestart bool) 
 	}
 
 	cfg := models.WatcherConfig{
-		Path:               newS.StatsDir,
-		SessionGap:         time.Duration(newS.SessionGapMinutes) * time.Minute,
-		PollInterval:       time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
-		ParseExistingLimit: newS.MaxExistingOnStart,
+		Path:            newS.StatsDir,
+		SessionGap:      time.Duration(newS.SessionGapMinutes) * time.Minute,
+		PollInterval:    time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
+		RecentRunsLimit: newS.RecentRunsLimit,
 	}
 
 	if needsRestart {

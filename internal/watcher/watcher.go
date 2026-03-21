@@ -5,6 +5,8 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -21,12 +23,11 @@ type Watcher struct {
 	cfg     models.WatcherConfig
 	mu      sync.RWMutex
 	running bool
+	gen     uint64
 	stopCh  chan struct{}
 	seen    map[string]struct{} // full file path set
-
-	recent []models.ScenarioRecord
-	mouse  models.MouseTraceProvider
-	runSvc RunStore
+	mouse   models.MouseTraceProvider
+	runSvc  RunStore
 
 	OnScenarioParsed func(models.ScenarioRecord)
 }
@@ -64,6 +65,8 @@ func (w *Watcher) Start() error {
 		return nil
 	}
 	w.running = true
+	w.gen++
+	currentGen := w.gen
 	w.mu.Unlock()
 
 	// Do not create the directory if it doesn't exist. Just log and continue.
@@ -75,9 +78,22 @@ func (w *Watcher) Start() error {
 		}
 	}
 
-	w.loadRecentRuns()
-	w.markExistingStatsSeen()
+	existing := w.snapshotExistingStats()
+	w.markExistingStatsSeen(existing)
 	runtime.EventsEmit(w.ctx, constants.EventWatcherStarted, map[string]string{"path": w.cfg.Path})
+
+	convert := existing
+	max := w.cfg.RecentRunsLimit
+	if max <= 0 {
+		max = constants.DefaultRecentRunsLimit
+	}
+	if max > 0 && len(convert) > max {
+		convert = convert[:max]
+	}
+
+	if len(convert) > 0 {
+		go w.catchUpExisting(convert, currentGen)
+	}
 
 	go w.loop()
 	return nil
@@ -92,6 +108,7 @@ func (w *Watcher) Stop() error {
 	}
 	close(w.stopCh)
 	w.running = false
+	w.gen++
 	w.stopCh = make(chan struct{})
 	return nil
 }
@@ -106,7 +123,6 @@ func (w *Watcher) SetOnScenarioParsed(fn func(models.ScenarioRecord)) {
 func (w *Watcher) Clear() {
 	w.mu.Lock()
 	w.seen = make(map[string]struct{})
-	w.recent = nil
 	w.mu.Unlock()
 }
 
@@ -150,82 +166,93 @@ func (w *Watcher) scanOnce() error {
 			continue
 		}
 
-		if w.runSvc.Exists(name) {
-			w.mu.Lock()
-			w.seen[full] = struct{}{}
-			w.mu.Unlock()
-			continue
-		}
-		rec, err := w.runSvc.IngestScenario(full, w.mouse)
-		if err != nil {
-			runtime.LogErrorf(w.ctx, "parse error for %s: %v", full, err)
-			continue
-		}
-
-		w.mu.Lock()
-		w.seen[full] = struct{}{}
-		w.recent = append(w.recent, rec)
-		w.mu.Unlock()
-
-		if w.OnScenarioParsed != nil {
-			w.OnScenarioParsed(rec)
-		}
-
-		// Emit a flat ScenarioRecord to simplify the IPC contract.
-		runtime.EventsEmit(w.ctx, constants.EventScenarioAdded, rec)
+		w.ingestStatsFile(full, name, false)
 	}
 	return nil
 }
 
-func (w *Watcher) loadRecentRuns() {
-	records, err := w.runSvc.LoadRecentScenarios(w.cfg.ParseExistingLimit)
-	if err != nil {
-		runtime.LogWarningf(w.ctx, "failed to load .refleks runs: %v", err)
-		return
-	}
-
-	w.mu.Lock()
-	w.recent = records
-	w.mu.Unlock()
-}
-
-func (w *Watcher) markExistingStatsSeen() {
+func (w *Watcher) snapshotExistingStats() []string {
 	if strings.TrimSpace(w.cfg.Path) == "" {
-		return
+		return nil
 	}
 
 	entries, err := os.ReadDir(w.cfg.Path)
 	if err != nil {
-		return
+		runtime.LogWarningf(w.ctx, "failed to read watch path for catch-up: %v", err)
+		return nil
 	}
 
-	w.mu.Lock()
-	defer w.mu.Unlock()
+	files := make([]string, 0, len(entries))
 	for _, e := range entries {
 		if e.IsDir() || !isKovaaksStatsFile(e.Name()) {
 			continue
 		}
-		w.seen[filepath.Join(w.cfg.Path, e.Name())] = struct{}{}
+		files = append(files, filepath.Join(w.cfg.Path, e.Name()))
+	}
+	sort.Slice(files, func(i, j int) bool {
+		return existingStatsTimestamp(files[i]) > existingStatsTimestamp(files[j])
+	})
+	return files
+}
+
+func (w *Watcher) markExistingStatsSeen(files []string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for _, full := range files {
+		w.seen[full] = struct{}{}
 	}
 }
 
-// GetRecent returns up to limit most recent scenarios.
-func (w *Watcher) GetRecent(limit int) []models.ScenarioRecord {
+func (w *Watcher) catchUpExisting(files []string, gen uint64) {
+	if len(files) == 0 {
+		return
+	}
+	for _, full := range files {
+		if !w.isGenerationCurrent(gen) {
+			return
+		}
+		w.ingestStatsFile(full, filepath.Base(full), true)
+	}
+}
+
+func (w *Watcher) ingestStatsFile(fullPath, name string, force bool) {
+	w.mu.RLock()
+	_, known := w.seen[fullPath]
+	mouse := w.mouse
+	onParsed := w.OnScenarioParsed
+	w.mu.RUnlock()
+	if known && !force {
+		return
+	}
+
+	if w.runSvc.Exists(name) {
+		w.mu.Lock()
+		w.seen[fullPath] = struct{}{}
+		w.mu.Unlock()
+		return
+	}
+
+	rec, err := w.runSvc.IngestScenario(fullPath, mouse)
+	if err != nil {
+		runtime.LogErrorf(w.ctx, "parse error for %s: %v", fullPath, err)
+		return
+	}
+
+	w.mu.Lock()
+	w.seen[fullPath] = struct{}{}
+	w.mu.Unlock()
+
+	if onParsed != nil {
+		onParsed(rec)
+	}
+
+	runtime.EventsEmit(w.ctx, constants.EventScenarioAdded, rec)
+}
+
+func (w *Watcher) isGenerationCurrent(gen uint64) bool {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
-	total := len(w.recent)
-	if total == 0 {
-		return nil
-	}
-	if limit <= 0 || limit > total {
-		limit = total
-	}
-	out := make([]models.ScenarioRecord, limit)
-	// Return most-recent-first: copy from the end backwards
-	for i := 0; i < limit; i++ {
-		out[i] = w.recent[total-1-i]
-	}
-	return out
+	return w.gen == gen && w.running
 }
 
 // IsRunning indicates if the watcher loop is active.
@@ -250,4 +277,33 @@ func (w *Watcher) UpdateConfig(cfg models.WatcherConfig) error {
 func isKovaaksStatsFile(name string) bool {
 	lower := strings.ToLower(name)
 	return strings.HasSuffix(lower, " stats.csv")
+}
+
+func existingStatsTimestamp(path string) int64 {
+	base := filepath.Base(path)
+	if info, ok := parseStatsFilenameTimestamp(base); ok {
+		return info
+	}
+	if fi, statErr := os.Stat(path); statErr == nil {
+		return fi.ModTime().UnixMilli()
+	}
+	return 0
+}
+
+var statsFilenameRe = regexp.MustCompile(`^(?P<name>.+?)\s-\s.*?\s-\s(?P<dt>\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})\sStats\.csv$`)
+
+func parseStatsFilenameTimestamp(filename string) (int64, bool) {
+	candidate := filename
+	if strings.HasSuffix(strings.ToLower(candidate), ".refleks") {
+		candidate = strings.TrimSuffix(candidate, ".refleks") + ".csv"
+	}
+	m := statsFilenameRe.FindStringSubmatch(candidate)
+	if m == nil {
+		return 0, false
+	}
+	t, err := time.ParseInLocation("2006.01.02-15.04.05", m[2], time.Local)
+	if err != nil {
+		return 0, false
+	}
+	return t.UnixMilli(), true
 }

@@ -1,6 +1,7 @@
 import { usePersistedState, useStore } from '@/shared/hooks'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { buildHistoryRuns, matchRunSearch, matchSessionSearch, readSessionDurationMs } from '../lib/historyModels'
+import type { InspectorTab } from '../lib/inspectorTabs'
 
 export type RunSortKey = 'default' | 'score-desc' | 'score-asc' | 'accuracy-desc' | 'scenario'
 export type SessionSortKey = 'newest' | 'oldest' | 'most-runs' | 'longest'
@@ -29,7 +30,7 @@ export function useHistoryPageState() {
   const [runQuery, setRunQuery] = usePersistedState(RUN_QUERY_KEY, '')
   const [runInspectorOpen, setRunInspectorOpen] = usePersistedState(RUN_INSPECTOR_OPEN_KEY, false)
   const [runListCollapsed, setRunListCollapsed] = usePersistedState(RUN_LIST_COLLAPSED_KEY, false)
-  const [inspectorTab, setInspectorTab] = usePersistedState<'stats' | 'analysis' | 'trace'>(INSPECTOR_TAB_KEY, 'stats')
+  const [inspectorTab, setInspectorTab] = usePersistedState<InspectorTab>(INSPECTOR_TAB_KEY, 'stats')
   const [selectedScenario, setSelectedScenario] = usePersistedState<string | null>(SELECTED_SCENARIO_KEY, null)
   const [primaryRunId, setPrimaryRunId] = usePersistedState<string | null>(PRIMARY_RUN_KEY, null)
   const [compareRunId, setCompareRunId] = usePersistedState<string | null>(COMPARE_RUN_KEY, null)

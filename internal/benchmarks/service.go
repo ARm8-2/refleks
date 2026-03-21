@@ -18,7 +18,6 @@ import (
 	"refleks/internal/models"
 	"refleks/internal/settings"
 	"refleks/internal/steam"
-	"refleks/internal/util"
 )
 
 //go:embed benchmarks_data.json
@@ -239,7 +238,7 @@ func (s *Service) CheckAndRefreshIfNeeded(rec models.ScenarioRecord) {
 	if !ok {
 		return
 	}
-	score := util.ToFloat(scoreVal)
+	score := toFloat(scoreVal)
 
 	s.mu.Lock()
 	if len(s.progressCache) == 0 {

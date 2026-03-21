@@ -92,7 +92,36 @@ export interface ScenarioRecord {
   fileName: string
   stats: ScenarioStats
   events: string[][]
-  hasTrace?: boolean
+  env: RunEnvironment
+  hasTrace: boolean
+}
+
+export interface RunEnvironment {
+  appVersion: string
+  os: string
+  arch: string
+  osVersion: string
+  hostname: string
+
+  cpuName: string
+  cpuCores: number
+  gpuName: string
+  ramTotalMB: number
+
+  displayHz: number
+  screenWidth: number
+  screenHeight: number
+  isWindowed: boolean
+
+  mouseName: string
+  mouseVid: string
+  mousePid: string
+  mouseMi: string
+  mouseBackend: string
+
+  tracePoints: number
+  traceDuration: number
+  sampleRate: number
 }
 
 export interface BenchmarkDifficulty {
@@ -152,12 +181,12 @@ export interface Settings {
   personaNameOverride?: string
   statsDir: string
   sessionGapMinutes: number
+  recentRunsLimit: number
   theme: Theme
   font: Font
   favoriteBenchmarks?: string[]
   mouseTrackingEnabled?: boolean
   mouseBufferMinutes?: number
-  maxExistingOnStart?: number
   autostartEnabled?: boolean
   scenarioNotes?: Record<string, ScenarioNote>
   sessionNotes?: Record<string, SessionNote>

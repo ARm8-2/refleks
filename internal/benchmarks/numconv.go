@@ -1,13 +1,11 @@
-package util
+package benchmarks
 
 import (
 	"strconv"
 	"strings"
 )
 
-// ToFloat attempts to coerce various numeric representations to float64.
-// Supports int types, float types, and decimal strings. Non-numeric values return 0.
-func ToFloat(v any) float64 {
+func toFloat(v any) float64 {
 	switch t := v.(type) {
 	case int:
 		return float64(t)

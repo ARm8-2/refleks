@@ -29,11 +29,11 @@ func Default() models.Settings {
 		SteamInstallDir:      constants.DefaultWindowsSteamInstallDir,
 		StatsDir:             DefaultStatsDir(),
 		SessionGapMinutes:    constants.DefaultSessionGapMinutes,
+		RecentRunsLimit:      constants.DefaultRecentRunsLimit,
 		Theme:                constants.DefaultTheme,
 		Font:                 constants.DefaultFont,
 		MouseTrackingEnabled: false,
 		MouseBufferMinutes:   constants.DefaultMouseBufferMinutes,
-		MaxExistingOnStart:   constants.DefaultMaxExistingOnStart,
 		AutostartEnabled:     false,
 	}
 }
@@ -49,6 +49,9 @@ func Sanitize(s models.Settings) models.Settings {
 	if s.SessionGapMinutes <= 0 {
 		s.SessionGapMinutes = constants.DefaultSessionGapMinutes
 	}
+	if s.RecentRunsLimit <= 0 {
+		s.RecentRunsLimit = constants.DefaultRecentRunsLimit
+	}
 	if strings.TrimSpace(s.Theme) == "" {
 		s.Theme = constants.DefaultTheme
 	}
@@ -57,9 +60,6 @@ func Sanitize(s models.Settings) models.Settings {
 	}
 	if s.MouseBufferMinutes <= 0 {
 		s.MouseBufferMinutes = constants.DefaultMouseBufferMinutes
-	}
-	if s.MaxExistingOnStart <= 0 {
-		s.MaxExistingOnStart = constants.DefaultMaxExistingOnStart
 	}
 	if s.ScenarioNotes == nil {
 		s.ScenarioNotes = make(map[string]models.ScenarioNote)
