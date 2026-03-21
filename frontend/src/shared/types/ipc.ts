@@ -183,7 +183,8 @@ export interface Settings {
   personaNameOverride?: string
   statsDir: string
   sessionGapMinutes: number
-  recentRunsLimit: number
+  recentRunsDays: number
+  recentRunsMinCount: number
   theme: Theme
   font: Font
   favoriteBenchmarks?: string[]

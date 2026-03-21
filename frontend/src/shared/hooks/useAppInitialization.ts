@@ -3,7 +3,8 @@ import { startTransition, useCallback, useEffect, useRef } from 'react'
 import { getRecentScenarios, getSettings } from '../lib/api'
 import { useStore } from './useStore'
 
-const DEFAULT_RECENT_RUNS_LIMIT = 1000
+const DEFAULT_PROGRESSIVE_FETCH_LIMIT = 1000
+const FETCH_ALL_LIMIT = 0
 const PROGRESSIVE_BATCH_LIMITS = [8, 16, 32, 64, 128, 256, 512]
 const PROGRESSIVE_BATCH_DELAYS_MS = [50, 70, 100, 140, 200, 280, 360]
 
@@ -18,20 +19,13 @@ export function useAppInitialization() {
   const refreshDirty = useRef(false)
   const loadedCount = useRef(0)
   const hasLoadedAll = useRef(false)
-  const maxRecentRuns = useRef(DEFAULT_RECENT_RUNS_LIMIT)
 
   const sleep = useCallback((ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)), [])
 
-  const normalizeRecentRunsLimit = useCallback((value: unknown): number => {
-    const n = typeof value === 'number' ? value : Number(value)
-    if (!Number.isFinite(n) || n <= 0) return DEFAULT_RECENT_RUNS_LIMIT
-    return Math.floor(n)
-  }, [])
-
   const buildBatchPlan = useCallback((minimumCount: number): number[] => {
-    const maxLimit = maxRecentRuns.current
+    const maxLimit = DEFAULT_PROGRESSIVE_FETCH_LIMIT
     if (hasLoadedAll.current) {
-      return [maxLimit]
+      return [FETCH_ALL_LIMIT]
     }
 
     const floor = Math.max(0, minimumCount)
@@ -50,6 +44,9 @@ export function useAppInitialization() {
     if (maxLimit > floor && !plan.includes(maxLimit)) {
       plan.push(maxLimit)
     }
+    if (!plan.includes(FETCH_ALL_LIMIT)) {
+      plan.push(FETCH_ALL_LIMIT)
+    }
     return plan
   }, [])
 
@@ -64,7 +61,7 @@ export function useAppInitialization() {
         if (seq !== refreshSeq.current) return
 
         loadedCount.current = arr.length
-        if (limit >= maxRecentRuns.current) {
+        if (limit === FETCH_ALL_LIMIT) {
           hasLoadedAll.current = true
         }
 
@@ -77,6 +74,10 @@ export function useAppInitialization() {
 
         if (limit > 0 && arr.length < limit) {
           hasLoadedAll.current = true
+          break
+        }
+
+        if (limit === FETCH_ALL_LIMIT) {
           break
         }
 
@@ -129,15 +130,6 @@ export function useAppInitialization() {
         if (s) {
           if (typeof s.sessionGapMinutes === 'number') setSessionGap(s.sessionGapMinutes)
           if (s.sessionNotes) setSessionNotes(s.sessionNotes)
-          const nextMax = normalizeRecentRunsLimit(s.recentRunsLimit)
-          if (nextMax !== maxRecentRuns.current) {
-            maxRecentRuns.current = nextMax
-            hasLoadedAll.current = false
-            if (loadedCount.current > nextMax) {
-              loadedCount.current = nextMax
-            }
-            requestRefresh(40)
-          }
         }
       })
       .catch(() => { })
@@ -146,14 +138,13 @@ export function useAppInitialization() {
       refreshRunning.current = false
       hasLoadedAll.current = false
       loadedCount.current = 0
-      maxRecentRuns.current = DEFAULT_RECENT_RUNS_LIMIT
       if (refreshTimer.current) {
         clearTimeout(refreshTimer.current)
         refreshTimer.current = null
       }
       refreshDirty.current = false
     }
-  }, [normalizeRecentRunsLimit, requestRefresh, setSessionGap, setSessionNotes])
+  }, [requestRefresh, setSessionGap, setSessionNotes])
 
   // Subscriptions effect: keep separate so it can cleanup/re-subscribe if handlers change
   useEffect(() => {

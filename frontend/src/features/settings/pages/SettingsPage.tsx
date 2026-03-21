@@ -308,17 +308,32 @@ export function SettingsPage() {
                   />
                 </SettingsField>
 
-                <SettingsField label="Recent Runs Limit" description="Max recent runs to load and convert (newest first)">
+                <SettingsField label="Recent Runs Window (Days)" description="Only runs from the last N days are loaded and shown">
                   <Input
                     type="number"
-                    value={settings.recentRunsLimit}
+                    value={settings.recentRunsDays}
                     onChange={e => {
                       const next = parseInt(e.target.value, 10)
-                      updateField('recentRunsLimit', Number.isFinite(next) && next > 0 ? next : settings.recentRunsLimit)
+                      updateField('recentRunsDays', Number.isFinite(next) && next > 0 ? next : settings.recentRunsDays)
                     }}
                     onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
-                    min={50}
-                    max={10000}
+                    min={1}
+                    max={3650}
+                    className="w-24 text-center"
+                  />
+                </SettingsField>
+
+                <SettingsField label="Recent Runs Minimum Count" description="If the day window has too few runs, include older runs until this minimum is reached">
+                  <Input
+                    type="number"
+                    value={settings.recentRunsMinCount}
+                    onChange={e => {
+                      const next = parseInt(e.target.value, 10)
+                      updateField('recentRunsMinCount', Number.isFinite(next) && next > 0 ? next : settings.recentRunsMinCount)
+                    }}
+                    onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
+                    min={1}
+                    max={50000}
                     className="w-24 text-center"
                   />
                 </SettingsField>

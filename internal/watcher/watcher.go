@@ -79,20 +79,12 @@ func (w *Watcher) Start() error {
 	}
 
 	existing := w.snapshotExistingStats()
+	existing = w.filterStatsWithinDays(existing)
 	w.markExistingStatsSeen(existing)
 	runtime.EventsEmit(w.ctx, constants.EventWatcherStarted, map[string]string{"path": w.cfg.Path})
 
-	convert := existing
-	max := w.cfg.RecentRunsLimit
-	if max <= 0 {
-		max = constants.DefaultRecentRunsLimit
-	}
-	if max > 0 && len(convert) > max {
-		convert = convert[:max]
-	}
-
-	if len(convert) > 0 {
-		go w.catchUpExisting(convert, currentGen)
+	if len(existing) > 0 {
+		go w.catchUpExisting(existing, currentGen)
 	}
 
 	go w.loop()
@@ -193,6 +185,42 @@ func (w *Watcher) snapshotExistingStats() []string {
 		return existingStatsTimestamp(files[i]) > existingStatsTimestamp(files[j])
 	})
 	return files
+}
+
+func (w *Watcher) filterStatsWithinDays(files []string) []string {
+	days := w.cfg.RecentRunsDays
+	minCount := w.cfg.RecentRunsMinCount
+	if days <= 0 {
+		days = constants.DefaultRecentRunsDays
+	}
+	if minCount <= 0 {
+		minCount = constants.DefaultRecentRunsMinCount
+	}
+	if days <= 0 {
+		if minCount > 0 && len(files) > minCount {
+			return files[:minCount]
+		}
+		return files
+	}
+
+	cutoff := time.Now().AddDate(0, 0, -days).UnixMilli()
+	out := make([]string, 0, len(files))
+	for _, full := range files {
+		if existingStatsTimestamp(full) >= cutoff {
+			out = append(out, full)
+		}
+	}
+
+	if minCount > 0 && len(out) < minCount {
+		want := minCount
+		if want > len(files) {
+			want = len(files)
+		}
+		if want > len(out) {
+			return files[:want]
+		}
+	}
+	return out
 }
 
 func (w *Watcher) markExistingStatsSeen(files []string) {

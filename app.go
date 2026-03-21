@@ -190,7 +190,8 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		newSettings.SteamInstallDir = defaults.SteamInstallDir
 		newSettings.StatsDir = defaults.StatsDir
 		newSettings.SessionGapMinutes = defaults.SessionGapMinutes
-		newSettings.RecentRunsLimit = defaults.RecentRunsLimit
+		newSettings.RecentRunsDays = defaults.RecentRunsDays
+		newSettings.RecentRunsMinCount = defaults.RecentRunsMinCount
 		newSettings.Theme = defaults.Theme
 		newSettings.Font = defaults.Font
 		newSettings.MouseTrackingEnabled = defaults.MouseTrackingEnabled

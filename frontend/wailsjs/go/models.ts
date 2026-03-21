@@ -490,7 +490,8 @@ export namespace models {
 	    personaNameOverride?: string;
 	    statsDir: string;
 	    sessionGapMinutes: number;
-	    recentRunsLimit: number;
+	    recentRunsDays: number;
+	    recentRunsMinCount: number;
 	    theme: string;
 	    font?: string;
 	    favoriteBenchmarks?: string[];
@@ -511,7 +512,8 @@ export namespace models {
 	        this.personaNameOverride = source["personaNameOverride"];
 	        this.statsDir = source["statsDir"];
 	        this.sessionGapMinutes = source["sessionGapMinutes"];
-	        this.recentRunsLimit = source["recentRunsLimit"];
+	        this.recentRunsDays = source["recentRunsDays"];
+	        this.recentRunsMinCount = source["recentRunsMinCount"];
 	        this.theme = source["theme"];
 	        this.font = source["font"];
 	        this.favoriteBenchmarks = source["favoriteBenchmarks"];

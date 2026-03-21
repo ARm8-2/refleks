@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"refleks/internal/constants"
 	"refleks/internal/models"
@@ -153,6 +154,22 @@ func (s *Store) LoadRecent(limit int) ([]RunRecord, error) {
 	}
 	all := make([]wrapped, 0, len(entries))
 
+	days := constants.DefaultRecentRunsDays
+	minCount := constants.DefaultRecentRunsMinCount
+	if s.settingsSvc != nil {
+		cfg := s.settingsSvc.Get()
+		if configured := cfg.RecentRunsDays; configured > 0 {
+			days = configured
+		}
+		if configured := cfg.RecentRunsMinCount; configured > 0 {
+			minCount = configured
+		}
+	}
+	var cutoff int64
+	if days > 0 {
+		cutoff = time.Now().AddDate(0, 0, -days).UnixMilli()
+	}
+
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
@@ -162,7 +179,8 @@ func (s *Store) LoadRecent(limit int) ([]RunRecord, error) {
 		}
 
 		path := filepath.Join(dir, e.Name())
-		all = append(all, wrapped{path: path, name: e.Name(), ts: scenarioTimestampFromFileName(e.Name(), path)})
+		ts := scenarioTimestampFromFileName(e.Name(), path)
+		all = append(all, wrapped{path: path, name: e.Name(), ts: ts})
 	}
 
 	sort.Slice(all, func(i, j int) bool {
@@ -172,12 +190,39 @@ func (s *Store) LoadRecent(limit int) ([]RunRecord, error) {
 		return all[i].ts < all[j].ts
 	})
 
-	if limit > 0 && len(all) > limit {
-		all = all[len(all)-limit:]
+	selectedStart := 0
+	if cutoff > 0 {
+		selectedStart = len(all)
+		for i := len(all) - 1; i >= 0; i-- {
+			if all[i].ts >= cutoff {
+				selectedStart = i
+			} else {
+				break
+			}
+		}
+
+		if minCount > 0 {
+			minStart := len(all) - minCount
+			if minStart < 0 {
+				minStart = 0
+			}
+			if minStart < selectedStart {
+				selectedStart = minStart
+			}
+		}
+
+		if selectedStart > len(all) {
+			selectedStart = len(all)
+		}
 	}
 
-	out := make([]RunRecord, 0, len(all))
-	for _, v := range all {
+	selected := all[selectedStart:]
+	if limit > 0 && len(selected) > limit {
+		selected = selected[len(selected)-limit:]
+	}
+
+	out := make([]RunRecord, 0, len(selected))
+	for _, v := range selected {
 		rec, err := readRecordFile(v.path)
 		if err != nil {
 			continue

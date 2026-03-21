@@ -7,7 +7,8 @@ type Settings struct {
 	PersonaNameOverride  string                  `json:"personaNameOverride,omitempty"`
 	StatsDir             string                  `json:"statsDir"`
 	SessionGapMinutes    int                     `json:"sessionGapMinutes"`
-	RecentRunsLimit      int                     `json:"recentRunsLimit"`
+	RecentRunsDays       int                     `json:"recentRunsDays"`
+	RecentRunsMinCount   int                     `json:"recentRunsMinCount"`
 	Theme                string                  `json:"theme"`
 	Font                 string                  `json:"font,omitempty"`
 	FavoriteBenchmarks   []string                `json:"favoriteBenchmarks,omitempty"`
