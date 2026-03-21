@@ -11,12 +11,14 @@ import (
 )
 
 // CollectRunEnvironment assembles machine and input metadata captured for a run window.
-func CollectRunEnvironment(mouse models.MouseTraceProvider, start, end time.Time, tracePoints int) models.RunEnvironment {
+func CollectRunEnvironment(mouse models.MouseTraceProvider, start, end time.Time, tracePoints int, steamID, personaName string) models.RunEnvironment {
 	env := models.RunEnvironment{
 		OS:          runtime.GOOS,
 		Arch:        runtime.GOARCH,
 		CPUCores:    int32(runtime.NumCPU()),
 		AppVersion:  constants.AppVersion,
+		SteamID:     strings.TrimSpace(steamID),
+		PersonaName: strings.TrimSpace(personaName),
 		TracePoints: int32(tracePoints),
 		SampleRate:  int32(constants.DefaultMouseSampleHz),
 	}

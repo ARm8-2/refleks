@@ -56,7 +56,7 @@ func (a *App) startup(ctx context.Context) {
 
 	// Initialize Core Services
 	a.cacheSvc = cache.NewService()
-	a.runStore = runs.NewStore()
+	a.runStore = runs.NewStore(a.settingsSvc)
 	a.updaterSvc = updater.NewService(constants.GitHubOwner, constants.GitHubRepo, constants.AppVersion)
 
 	// Initialize Domain Services

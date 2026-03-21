@@ -11,11 +11,13 @@ type ScenarioRecord struct {
 }
 
 type RunEnvironment struct {
-	AppVersion string `json:"appVersion"`
-	OS         string `json:"os"`
-	Arch       string `json:"arch"`
-	OSVersion  string `json:"osVersion"`
-	Hostname   string `json:"hostname"`
+	AppVersion  string `json:"appVersion"`
+	OS          string `json:"os"`
+	Arch        string `json:"arch"`
+	OSVersion   string `json:"osVersion"`
+	Hostname    string `json:"hostname"`
+	SteamID     string `json:"steamId"`
+	PersonaName string `json:"personaName"`
 
 	CPUName    string `json:"cpuName"`
 	CPUCores   int32  `json:"cpuCores"`

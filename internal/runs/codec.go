@@ -8,12 +8,20 @@ import (
 	"os"
 	"sort"
 
+	"github.com/klauspost/compress/zstd"
+	"github.com/zeebo/xxh3"
+
 	"refleks/internal/models"
 )
 
 const (
 	runMagic   = "RFLK"
 	runVersion = 1
+
+	runCompressionNone uint8 = 0
+	runCompressionZstd uint8 = 1
+	runHeaderSize            = int64(4 + 1 + 1 + 8)
+	runChecksumSize          = int64(8)
 
 	statTypeString = 1
 	statTypeInt    = 2
@@ -25,6 +33,7 @@ const (
 type RunRecord struct {
 	FilePath   string
 	FileName   string
+	EpochMilli int64
 	Stats      map[string]any
 	Events     [][]string
 	MouseTrace []models.MousePoint
@@ -39,19 +48,48 @@ func writeRecord(w io.Writer, rec RunRecord) error {
 		return err
 	}
 
-	if err := writeString(w, rec.FileName); err != nil {
+	compression := runCompressionZstd
+	if err := binary.Write(w, binary.LittleEndian, compression); err != nil {
 		return err
 	}
-	if err := writeStats(w, rec.Stats); err != nil {
+	if err := binary.Write(w, binary.LittleEndian, rec.EpochMilli); err != nil {
 		return err
 	}
-	if err := writeEvents(w, rec.Events); err != nil {
+
+	hasher := xxh3.New()
+	hashedWriter := io.MultiWriter(w, hasher)
+	payloadWriter, closePayload, err := newRunPayloadWriter(hashedWriter, compression)
+	if err != nil {
 		return err
 	}
-	if err := writeMouseTrace(w, rec.MouseTrace); err != nil {
+
+	if err := writeString(payloadWriter, rec.FileName); err != nil {
+		_ = closePayload()
 		return err
 	}
-	return writeRunEnvironment(w, rec.Env)
+	if err := writeStats(payloadWriter, rec.Stats); err != nil {
+		_ = closePayload()
+		return err
+	}
+	if err := writeEvents(payloadWriter, rec.Events); err != nil {
+		_ = closePayload()
+		return err
+	}
+	if err := writeMouseTrace(payloadWriter, rec.MouseTrace); err != nil {
+		_ = closePayload()
+		return err
+	}
+	if err := writeRunEnvironment(payloadWriter, rec.Env); err != nil {
+		_ = closePayload()
+		return err
+	}
+
+	if err := closePayload(); err != nil {
+		return err
+	}
+
+	checksum := hasher.Sum64()
+	return binary.Write(w, binary.LittleEndian, checksum)
 }
 
 func readRecordFile(path string) (RunRecord, error) {
@@ -60,6 +98,14 @@ func readRecordFile(path string) (RunRecord, error) {
 		return RunRecord{}, err
 	}
 	defer f.Close()
+
+	fi, err := f.Stat()
+	if err != nil {
+		return RunRecord{}, err
+	}
+	if fi.Size() < runHeaderSize+runChecksumSize {
+		return RunRecord{}, fmt.Errorf("invalid run file: too small")
+	}
 
 	var magic [4]byte
 	if _, err := io.ReadFull(f, magic[:]); err != nil {
@@ -77,38 +123,126 @@ func readRecordFile(path string) (RunRecord, error) {
 		return RunRecord{}, fmt.Errorf("unsupported run version: %d", version)
 	}
 
-	fileName, err := readString(f)
+	var compression uint8
+	if err := binary.Read(f, binary.LittleEndian, &compression); err != nil {
+		return RunRecord{}, err
+	}
+
+	var epochMilli int64
+	if err := binary.Read(f, binary.LittleEndian, &epochMilli); err != nil {
+		return RunRecord{}, err
+	}
+
+	encodedLen := fi.Size() - runHeaderSize - runChecksumSize
+	if encodedLen < 0 {
+		return RunRecord{}, fmt.Errorf("invalid run file: negative payload size")
+	}
+
+	hasher := xxh3.New()
+	encodedReader := io.LimitReader(f, encodedLen)
+	teedPayload := io.TeeReader(encodedReader, hasher)
+	payloadReader, closePayload, err := newRunPayloadReader(teedPayload, compression)
 	if err != nil {
 		return RunRecord{}, err
 	}
 
-	stats, err := readStats(f)
+	fileName, err := readString(payloadReader)
 	if err != nil {
+		_ = closePayload()
 		return RunRecord{}, err
 	}
 
-	events, err := readEvents(f)
+	stats, err := readStats(payloadReader)
 	if err != nil {
+		_ = closePayload()
 		return RunRecord{}, err
 	}
 
-	trace, err := readMouseTrace(f)
+	events, err := readEvents(payloadReader)
 	if err != nil {
+		_ = closePayload()
 		return RunRecord{}, err
 	}
 
-	env, err := readRunEnvironment(f)
+	trace, err := readMouseTrace(payloadReader)
 	if err != nil {
+		_ = closePayload()
 		return RunRecord{}, err
+	}
+
+	env, err := readRunEnvironment(payloadReader)
+	if err != nil {
+		_ = closePayload()
+		return RunRecord{}, err
+	}
+
+	var trailing [1]byte
+	if _, err := payloadReader.Read(trailing[:]); err != io.EOF {
+		_ = closePayload()
+		if err == nil {
+			return RunRecord{}, fmt.Errorf("invalid run file: trailing payload data")
+		}
+		return RunRecord{}, err
+	}
+	if err := closePayload(); err != nil {
+		return RunRecord{}, err
+	}
+
+	var wantChecksum uint64
+	if err := binary.Read(f, binary.LittleEndian, &wantChecksum); err != nil {
+		return RunRecord{}, err
+	}
+	if gotChecksum := hasher.Sum64(); gotChecksum != wantChecksum {
+		return RunRecord{}, fmt.Errorf("invalid run file: checksum mismatch")
+	}
+
+	if extra, err := io.ReadAll(f); err != nil {
+		return RunRecord{}, err
+	} else if len(extra) > 0 {
+		return RunRecord{}, fmt.Errorf("invalid run file: trailing bytes after checksum")
 	}
 
 	return RunRecord{
 		FileName:   fileName,
+		EpochMilli: epochMilli,
 		Stats:      stats,
 		Events:     events,
 		MouseTrace: trace,
 		Env:        env,
 	}, nil
+}
+
+func newRunPayloadWriter(w io.Writer, compression uint8) (io.Writer, func() error, error) {
+	switch compression {
+	case runCompressionNone:
+		return w, func() error { return nil }, nil
+	case runCompressionZstd:
+		enc, err := zstd.NewWriter(w)
+		if err != nil {
+			return nil, nil, err
+		}
+		return enc, enc.Close, nil
+	default:
+		return nil, nil, fmt.Errorf("unsupported run compression: %d", compression)
+	}
+}
+
+func newRunPayloadReader(r io.Reader, compression uint8) (io.Reader, func() error, error) {
+	switch compression {
+	case runCompressionNone:
+		return r, func() error { return nil }, nil
+	case runCompressionZstd:
+		dec, err := zstd.NewReader(r)
+		if err != nil {
+			return nil, nil, err
+		}
+		return dec, func() error {
+			dec.Close()
+			return nil
+		}, nil
+	default:
+		return nil, nil, fmt.Errorf("unsupported run compression: %d", compression)
+	}
 }
 
 func writeString(w io.Writer, s string) error {
@@ -385,6 +519,12 @@ func writeRunEnvironment(w io.Writer, env models.RunEnvironment) error {
 	if err := writeString(w, env.Hostname); err != nil {
 		return err
 	}
+	if err := writeString(w, env.SteamID); err != nil {
+		return err
+	}
+	if err := writeString(w, env.PersonaName); err != nil {
+		return err
+	}
 
 	if err := writeString(w, env.CPUName); err != nil {
 		return err
@@ -465,6 +605,14 @@ func readRunEnvironment(r io.Reader) (models.RunEnvironment, error) {
 	if err != nil {
 		return models.RunEnvironment{}, err
 	}
+	steamID, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
+	personaName, err := readString(r)
+	if err != nil {
+		return models.RunEnvironment{}, err
+	}
 
 	cpuName, err := readString(r)
 	if err != nil {
@@ -540,6 +688,8 @@ func readRunEnvironment(r io.Reader) (models.RunEnvironment, error) {
 		Arch:          arch,
 		OSVersion:     osVersion,
 		Hostname:      hostname,
+		SteamID:       steamID,
+		PersonaName:   personaName,
 		CPUName:       cpuName,
 		CPUCores:      cpuCores,
 		GPUName:       gpuName,

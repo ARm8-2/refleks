@@ -6,6 +6,7 @@ import (
 
 	"refleks/internal/models"
 	"refleks/internal/runs/environment"
+	"refleks/internal/steam"
 )
 
 // IngestScenario parses a KovaaK's stats CSV, enriches it, persists it, and returns the stored record.
@@ -73,6 +74,13 @@ func (s *Store) IngestScenario(fullPath string, mouse models.MouseTraceProvider)
 		Events:   events,
 	}
 
+	var steamID, personaName string
+	if s.settingsSvc != nil {
+		settings := s.settingsSvc.Get()
+		steamID = steam.GetSteamID(settings)
+		personaName = steam.GetPersonaName(settings)
+	}
+
 	var trace []models.MousePoint
 	if mouse != nil && mouse.Enabled() {
 		if !start.IsZero() && !end.IsZero() && start.Before(end) {
@@ -82,10 +90,11 @@ func (s *Store) IngestScenario(fullPath string, mouse models.MouseTraceProvider)
 
 	runPath, err := s.Save(RunRecord{
 		FileName:   rec.FileName,
+		EpochMilli: info.DatePlayed.UnixMilli(),
 		Stats:      rec.Stats,
 		Events:     rec.Events,
 		MouseTrace: trace,
-		Env:        environment.CollectRunEnvironment(mouse, start, end, len(trace)),
+		Env:        environment.CollectRunEnvironment(mouse, start, end, len(trace), steamID, personaName),
 	})
 	if err != nil {
 		return models.ScenarioRecord{}, err

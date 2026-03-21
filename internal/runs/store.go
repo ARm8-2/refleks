@@ -1,7 +1,9 @@
 package runs
 
 import (
+	"encoding/binary"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -13,11 +15,13 @@ import (
 )
 
 // Store manages the .refleks run directory.
-type Store struct{}
+type Store struct {
+	settingsSvc *appsettings.Service
+}
 
 // NewStore constructs a run store.
-func NewStore() *Store {
-	return &Store{}
+func NewStore(settingsSvc *appsettings.Service) *Store {
+	return &Store{settingsSvc: settingsSvc}
 }
 
 func (s *Store) runsDir() (string, error) {
@@ -185,6 +189,10 @@ func (s *Store) LoadRecent(limit int) ([]RunRecord, error) {
 }
 
 func scenarioTimestampFromFileName(fileName, path string) int64 {
+	if ts, ok := runEpochFromFile(path); ok {
+		return ts
+	}
+
 	base := strings.TrimSuffix(fileName, ".refleks") + ".csv"
 	if info, err := ParseFilename(base); err == nil {
 		return info.DatePlayed.UnixMilli()
@@ -193,4 +201,43 @@ func scenarioTimestampFromFileName(fileName, path string) int64 {
 		return fi.ModTime().UnixMilli()
 	}
 	return 0
+}
+
+func runEpochFromFile(path string) (int64, bool) {
+	f, err := os.Open(path)
+	if err != nil {
+		return 0, false
+	}
+	defer f.Close()
+
+	var magic [4]byte
+	if _, err := io.ReadFull(f, magic[:]); err != nil {
+		return 0, false
+	}
+	if string(magic[:]) != runMagic {
+		return 0, false
+	}
+
+	var version uint8
+	if err := binary.Read(f, binary.LittleEndian, &version); err != nil {
+		return 0, false
+	}
+	if version != runVersion {
+		return 0, false
+	}
+
+	var compression uint8
+	if err := binary.Read(f, binary.LittleEndian, &compression); err != nil {
+		return 0, false
+	}
+	_ = compression
+
+	var epochMilli int64
+	if err := binary.Read(f, binary.LittleEndian, &epochMilli); err != nil {
+		return 0, false
+	}
+	if epochMilli <= 0 {
+		return 0, false
+	}
+	return epochMilli, true
 }

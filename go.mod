@@ -5,8 +5,10 @@ go 1.24.0
 toolchain go1.24.5
 
 require (
+	github.com/klauspost/compress v1.18.5
 	github.com/wailsapp/wails/v2 v2.10.2
 	github.com/yusufpapurcu/wmi v1.2.4
+	github.com/zeebo/xxh3 v1.1.0
 	golang.org/x/sys v0.37.0
 	golang.org/x/text v0.30.0
 )
@@ -18,6 +20,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/jchv/go-winloader v0.0.0-20210711035445-715c2860da7e // indirect
+	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/labstack/echo/v4 v4.13.3 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/leaanthony/go-ansi-parser v1.6.1 // indirect
