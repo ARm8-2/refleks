@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/klauspost/compress/zstd"
 	"github.com/zeebo/xxh3"
