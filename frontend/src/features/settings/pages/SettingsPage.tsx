@@ -18,7 +18,7 @@ import {
 } from '@/shared/lib'
 import type { Settings, UpdateInfo } from '@/shared/types'
 import { ChevronDown, ChevronUp, Download, RefreshCw } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { ClearCacheModal } from '../components/ClearCacheModal'
 import { ResetSettingsModal } from '../components/ResetSettingsModal'
 import { SettingsField } from '../components/SettingsField'
@@ -39,6 +39,8 @@ export function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null)
   const [showAdvanced, setShowAdvanced] = usePersistedState(STORAGE_KEYS.settingsShowAdvanced, false)
   const saveQueueRef = useRef(Promise.resolve())
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   // Updates state
   const [currentVersion, setCurrentVersion] = useState<string>('')
@@ -56,15 +58,20 @@ export function SettingsPage() {
   }, [])
 
   const queueSettingsSave = (next: Settings) => {
+    setIsSaving(true)
     saveQueueRef.current = saveQueueRef.current
       .then(async () => {
         await updateSettings(next)
         setSessionGap(next.sessionGapMinutes)
         setSessionNotes(next.sessionNotes ?? {})
+        setHasUnsavedChanges(false)
       })
       .catch((error: unknown) => {
         console.error('Save error:', error)
         alert('Failed to save settings')
+      })
+      .finally(() => {
+        setIsSaving(false)
       })
   }
 
@@ -74,6 +81,8 @@ export function SettingsPage() {
       const next = { ...prev, [key]: value }
       if (persist) {
         queueSettingsSave(next)
+      } else {
+        setHasUnsavedChanges(true)
       }
       return next
     })
@@ -114,16 +123,24 @@ export function SettingsPage() {
     }
   }
 
-  const handleEnterCommit = () => {
+  const handleEnterCommit = (input?: HTMLInputElement) => {
     if (settings) {
       queueSettingsSave(settings)
+      input?.blur()
     }
+  }
+
+  const handleInputKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return
+    e.preventDefault()
+    handleEnterCommit(e.currentTarget)
   }
 
   const handleReset = async () => {
     try {
       const current = await getSettings()
       setSettings(current)
+      setHasUnsavedChanges(false)
       setTheme(current.theme)
       if (current.font) setFont(current.font)
       setSessionGap(current.sessionGapMinutes)
@@ -187,7 +204,7 @@ export function SettingsPage() {
               type="text"
               value={settings.statsDir}
               onChange={e => updateField('statsDir', e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
+              onKeyDown={handleInputKeyDown}
               className="w-full max-w-xl"
             />
           </SettingsField>
@@ -267,7 +284,7 @@ export function SettingsPage() {
                     type="text"
                     value={settings.steamInstallDir}
                     onChange={e => updateField('steamInstallDir', e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
+                    onKeyDown={handleInputKeyDown}
                     className="w-full max-w-xl"
                   />
                 </SettingsField>
@@ -277,7 +294,7 @@ export function SettingsPage() {
                     type="text"
                     value={settings.steamIdOverride || ''}
                     onChange={e => updateField('steamIdOverride', e.target.value || undefined)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
+                    onKeyDown={handleInputKeyDown}
                     placeholder="76561198000000000"
                     className="w-full max-w-xs font-mono"
                   />
@@ -288,7 +305,7 @@ export function SettingsPage() {
                     type="text"
                     value={settings.personaNameOverride || ''}
                     onChange={e => updateField('personaNameOverride', e.target.value || undefined)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
+                    onKeyDown={handleInputKeyDown}
                     placeholder="Display name"
                     className="w-full max-w-xs"
                   />
@@ -301,7 +318,7 @@ export function SettingsPage() {
                     type="number"
                     value={settings.mouseBufferMinutes}
                     onChange={e => updateField('mouseBufferMinutes', parseInt(e.target.value, 10) || 5)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
+                    onKeyDown={handleInputKeyDown}
                     min={1}
                     max={60}
                     className="w-20 text-center"
@@ -316,7 +333,7 @@ export function SettingsPage() {
                       const next = parseInt(e.target.value, 10)
                       updateField('recentRunsDays', Number.isFinite(next) && next > 0 ? next : settings.recentRunsDays)
                     }}
-                    onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
+                    onKeyDown={handleInputKeyDown}
                     min={1}
                     max={3650}
                     className="w-24 text-center"
@@ -331,7 +348,7 @@ export function SettingsPage() {
                       const next = parseInt(e.target.value, 10)
                       updateField('recentRunsMinCount', Number.isFinite(next) && next > 0 ? next : settings.recentRunsMinCount)
                     }}
-                    onKeyDown={e => { if (e.key === 'Enter') handleEnterCommit() }}
+                    onKeyDown={handleInputKeyDown}
                     min={1}
                     max={50000}
                     className="w-24 text-center"
@@ -350,7 +367,13 @@ export function SettingsPage() {
           <Button variant="ghost" size="sm" onClick={() => setIsClearCacheOpen(true)}>
             Clear Cache
           </Button>
+          <span className="text-xs text-muted-foreground">
+            {isSaving ? 'Saving settings...' : hasUnsavedChanges ? 'Unsaved changes' : 'All changes saved'}
+          </span>
           <div className="flex-1" />
+          <Button variant="default" size="sm" onClick={() => handleEnterCommit()} disabled={isSaving || !settings}>
+            {isSaving ? 'Saving...' : 'Save'}
+          </Button>
           <Button variant="destructive" size="sm" onClick={() => quitApp()}>
             Quit App
           </Button>
