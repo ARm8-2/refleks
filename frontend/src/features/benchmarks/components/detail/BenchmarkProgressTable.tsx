@@ -1,4 +1,5 @@
 
+import { REFLEKS_SYMBOL } from '@/assets'
 import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
 import { usePersistedState, useStore } from '@/shared/hooks'
 import {
@@ -28,6 +29,7 @@ type Props = {
   benchmark: Benchmark
   difficultyName: string
   progress: BenchmarkProgress
+  shareMode?: boolean
 }
 
 type NotesState = {
@@ -61,7 +63,7 @@ function ToggleChip({ label, enabled, onToggle }: { label: string; enabled: bool
   )
 }
 
-export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: Props) {
+export function BenchmarkProgressTable({ benchmark, difficultyName, progress, shareMode = false }: Props) {
   const sessions = useStore(state => state.sessions)
 
   const storageBase = benchmarkDetailProgressStorageBase(benchmark.benchmarkName)
@@ -77,8 +79,9 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
   const [historyState, setHistoryState] = useState<HistoryState>({ open: false, scenario: '', thresholds: [] })
 
   useEffect(() => {
+    if (shareMode) return
     getSettings().then(setSettings).catch(() => setSettings(null))
-  }, [])
+  }, [shareMode])
 
   const openNotes = (scenario: string) => {
     const note = settings?.scenarioNotes?.[scenario]
@@ -185,9 +188,14 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
     [recommendationScore, scenarioCategoryMap, categories.length],
   )
 
+  const effectiveShowNotesCol = !shareMode && showNotesCol
+  const effectiveShowRecCol = !shareMode && showRecCol
+  const effectiveShowPlayCol = !shareMode && showPlayCol
+  const effectiveShowHistoryCol = !shareMode && showHistoryCol
+
   const infoColumns = useMemo(
-    () => buildInfoColumns(showNotesCol, showRecCol, showPlayCol, showHistoryCol),
-    [showNotesCol, showRecCol, showPlayCol, showHistoryCol],
+    () => buildInfoColumns(effectiveShowNotesCol, effectiveShowRecCol, effectiveShowPlayCol, effectiveShowHistoryCol),
+    [effectiveShowNotesCol, effectiveShowRecCol, effectiveShowPlayCol, effectiveShowHistoryCol],
   )
 
   const infoGridTemplate = useMemo(
@@ -219,6 +227,16 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
 
   return (
     <section className="relative z-0 isolate space-y-3">
+      {shareMode && (
+        <div className="flex items-center gap-2 px-1">
+          <img src={REFLEKS_SYMBOL} alt="RefleK's" className="h-12 w-12" />
+          <div>
+            <p className="text-lg font-semibold text-foreground">RefleK's</p>
+            <p className="text-sm text-muted-foreground">Benchmark Progress Snapshot</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Progress Tracker</h3>
@@ -227,12 +245,14 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <ToggleChip label="Compact" enabled={compactMode} onToggle={() => setCompactMode(value => !value)} />
-          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} title="View tracker settings">
-            <Settings2 className="h-4 w-4" />
-          </Button>
-        </div>
+        {!shareMode && (
+          <div className="flex flex-wrap items-center gap-2">
+            <ToggleChip label="Compact" enabled={compactMode} onToggle={() => setCompactMode(value => !value)} />
+            <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} title="View tracker settings">
+              <Settings2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="relative z-0">
@@ -247,10 +267,10 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
                     Scenario
                   </div>
                   <div />
-                  {showNotesCol && <div />}
-                  {showRecCol && <div className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">Rec</div>}
-                  {showPlayCol && <div />}
-                  {showHistoryCol && <div />}
+                  {effectiveShowNotesCol && <div />}
+                  {effectiveShowRecCol && <div className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">Rec</div>}
+                  {effectiveShowPlayCol && <div />}
+                  {effectiveShowHistoryCol && <div />}
                   <div />
                   <div className="text-right text-[11px] uppercase tracking-wide text-muted-foreground">Score</div>
                 </div>
@@ -311,10 +331,10 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
                                 score={scenario.score || 0}
                                 gridTemplate={infoGridTemplate}
                                 cls={cls}
-                                showNotesCol={showNotesCol}
-                                showRecCol={showRecCol}
-                                showPlayCol={showPlayCol}
-                                showHistoryCol={showHistoryCol}
+                                showNotesCol={effectiveShowNotesCol}
+                                showRecCol={effectiveShowRecCol}
+                                showPlayCol={effectiveShowPlayCol}
+                                showHistoryCol={effectiveShowHistoryCol}
                                 hasSavedNote={hasSavedNote}
                                 recommendation={recommendation}
                                 isTopPick={isTopPick(scenario.name)}
@@ -395,98 +415,106 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress }: 
         </div>
       </div>
 
-      <Modal isOpen={showSettings} onClose={() => setShowSettings(false)} title="Tracker Settings" width={700} height="auto">
-        <div className="space-y-6 px-6 pb-6">
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground">Feature Columns</h4>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="inline-flex items-center gap-2 text-sm text-foreground">
-                <Checkbox checked={showNotesCol} onCheckedChange={value => setShowNotesCol(Boolean(value))} />
-                Notes
-              </label>
-              <label className="inline-flex items-center gap-2 text-sm text-foreground">
-                <Checkbox checked={showRecCol} onCheckedChange={value => setShowRecCol(Boolean(value))} />
-                Recommendations
-              </label>
-              <label className="inline-flex items-center gap-2 text-sm text-foreground">
-                <Checkbox checked={showPlayCol} onCheckedChange={value => setShowPlayCol(Boolean(value))} />
-                Play
-              </label>
-              <label className="inline-flex items-center gap-2 text-sm text-foreground">
-                <Checkbox checked={showHistoryCol} onCheckedChange={value => setShowHistoryCol(Boolean(value))} />
-                History
-              </label>
-            </div>
-          </div>
+      {shareMode && (
+        <div className="px-1 text-xs text-muted-foreground">refleks-app.com</div>
+      )}
 
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground">Rank Visibility</h4>
-            <div className="flex flex-wrap items-center gap-4">
-              <label className="inline-flex items-center gap-2 text-sm text-foreground">
-                <Checkbox checked={autoHideCleared} onCheckedChange={value => setAutoHideCleared(Boolean(value))} />
-                Auto-hide earlier cleared ranks
-              </label>
-
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Keep visible:</span>
-                <Select value={String(visibleRankCount)} onValueChange={value => setVisibleRankCount(Math.max(1, Number(value) || 1))}>
-                  <SelectTrigger className="h-8 w-[80px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {rankVisibilityOptions.map(count => (
-                      <SelectItem key={count} value={String(count)}>{count}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+      {!shareMode && (
+        <>
+          <Modal isOpen={showSettings} onClose={() => setShowSettings(false)} title="Tracker Settings" width={700} height="auto">
+            <div className="space-y-6 px-6 pb-6">
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-foreground">Feature Columns</h4>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                    <Checkbox checked={showNotesCol} onCheckedChange={value => setShowNotesCol(Boolean(value))} />
+                    Notes
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                    <Checkbox checked={showRecCol} onCheckedChange={value => setShowRecCol(Boolean(value))} />
+                    Recommendations
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                    <Checkbox checked={showPlayCol} onCheckedChange={value => setShowPlayCol(Boolean(value))} />
+                    Play
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                    <Checkbox checked={showHistoryCol} onCheckedChange={value => setShowHistoryCol(Boolean(value))} />
+                    History
+                  </label>
+                </div>
               </div>
 
-              <Button variant="outline" size="sm" onClick={resetManual}>Reset Manual</Button>
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-foreground">Rank Visibility</h4>
+                <div className="flex flex-wrap items-center gap-4">
+                  <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                    <Checkbox checked={autoHideCleared} onCheckedChange={value => setAutoHideCleared(Boolean(value))} />
+                    Auto-hide earlier cleared ranks
+                  </label>
+
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Keep visible:</span>
+                    <Select value={String(visibleRankCount)} onValueChange={value => setVisibleRankCount(Math.max(1, Number(value) || 1))}>
+                      <SelectTrigger className="h-8 w-[80px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {rankVisibilityOptions.map(count => (
+                          <SelectItem key={count} value={String(count)}>{count}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button variant="outline" size="sm" onClick={resetManual}>Reset Manual</Button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {rankDefs.map((rank, index) => {
+                    const hiddenManually = manuallyHidden.has(index)
+                    const hiddenAutomatically = autoHidden.has(index)
+                    const visible = !(hiddenManually || hiddenAutomatically)
+
+                    return (
+                      <button
+                        type="button"
+                        key={`${rank.name}-${index}`}
+                        disabled={hiddenAutomatically}
+                        onClick={() => toggleManualRank(index)}
+                        className={visible
+                          ? 'rounded-xl border border-primary-border bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-muted'
+                          : 'rounded-xl border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50'}
+                        style={rank.color && visible ? { color: rank.color, borderColor: rank.color } : undefined}
+                        title={hiddenAutomatically ? 'Hidden automatically because every scenario is already past this rank' : undefined}
+                      >
+                        {rank.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
+          </Modal>
 
-            <div className="flex flex-wrap gap-2">
-              {rankDefs.map((rank, index) => {
-                const hiddenManually = manuallyHidden.has(index)
-                const hiddenAutomatically = autoHidden.has(index)
-                const visible = !(hiddenManually || hiddenAutomatically)
+          <ScenarioNotesModal
+            isOpen={notesState.open}
+            onClose={() => setNotesState(previous => ({ ...previous, open: false }))}
+            scenarioName={notesState.scenario}
+            initialNotes={notesState.notes}
+            initialSensitivity={notesState.sensitivity}
+            onSave={saveNotes}
+          />
 
-                return (
-                  <button
-                    type="button"
-                    key={`${rank.name}-${index}`}
-                    disabled={hiddenAutomatically}
-                    onClick={() => toggleManualRank(index)}
-                    className={visible
-                      ? 'rounded-xl border border-primary-border bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-muted'
-                      : 'rounded-xl border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50'}
-                    style={rank.color && visible ? { color: rank.color, borderColor: rank.color } : undefined}
-                    title={hiddenAutomatically ? 'Hidden automatically because every scenario is already past this rank' : undefined}
-                  >
-                    {rank.name}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      <ScenarioNotesModal
-        isOpen={notesState.open}
-        onClose={() => setNotesState(previous => ({ ...previous, open: false }))}
-        scenarioName={notesState.scenario}
-        initialNotes={notesState.notes}
-        initialSensitivity={notesState.sensitivity}
-        onSave={saveNotes}
-      />
-
-      <ScenarioHistoryModal
-        isOpen={historyState.open}
-        onClose={() => setHistoryState(previous => ({ ...previous, open: false }))}
-        scenarioName={historyState.scenario}
-        thresholds={historyState.thresholds}
-        rankDefs={rankDefs}
-      />
+          <ScenarioHistoryModal
+            isOpen={historyState.open}
+            onClose={() => setHistoryState(previous => ({ ...previous, open: false }))}
+            scenarioName={historyState.scenario}
+            thresholds={historyState.thresholds}
+            rankDefs={rankDefs}
+          />
+        </>
+      )}
     </section>
   )
 }

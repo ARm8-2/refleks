@@ -9,8 +9,8 @@ import {
 } from '@/shared/components'
 import { useBenchmarks } from '@/shared/hooks'
 import { launchPlaylist } from '@/shared/lib'
-import { ArrowLeft, Play, Star } from 'lucide-react'
-import { useEffect } from 'react'
+import { ArrowLeft, Check, Play, Share2, Star } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { BenchmarkProgressTable } from '../components/detail/BenchmarkProgressTable'
 import { RankDistributionWidget } from '../components/detail/RankDistributionWidget'
@@ -21,6 +21,9 @@ export function BenchmarkDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const { getBenchmarkByName, selectBenchmark, loading, isFavorite, toggleFavorite } = useBenchmarks()
+  const shareCaptureRef = useRef<HTMLDivElement | null>(null)
+  const [isCopyingShare, setIsCopyingShare] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
 
   const name = id ? decodeURIComponent(id) : ''
 
@@ -40,6 +43,39 @@ export function BenchmarkDetailPage() {
 
   const difficulty = benchmark?.difficulties?.[difficultyIndex]
   const favorite = benchmark ? isFavorite(benchmark.benchmarkName) : false
+
+  const handleCopyShareImage = async () => {
+    if (!shareCaptureRef.current || isCopyingShare) return
+
+    try {
+      setIsCopyingShare(true)
+      setShareCopied(false)
+
+      if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') {
+        alert('Image clipboard is not supported in this environment.')
+        return
+      }
+
+      const { toBlob } = await import('html-to-image')
+      const blob = await toBlob(shareCaptureRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+      })
+
+      if (!blob) {
+        throw new Error('Failed to generate screenshot image')
+      }
+
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
+      setShareCopied(true)
+      window.setTimeout(() => setShareCopied(false), 1800)
+    } catch (error) {
+      console.error('Failed to copy benchmark screenshot:', error)
+      alert('Failed to copy screenshot.')
+    } finally {
+      setIsCopyingShare(false)
+    }
+  }
 
   return (
     <div className="flex-1 overflow-auto text-sm isolate">
@@ -85,6 +121,18 @@ export function BenchmarkDetailPage() {
             <Button
               variant="ghost"
               size="icon"
+              onClick={handleCopyShareImage}
+              disabled={isCopyingShare || !progress || !!error || progressLoading}
+              title={shareCopied ? 'Copied!' : 'Copy progress table screenshot'}
+            >
+              {shareCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+            </Button>
+          )}
+
+          {benchmark && (
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => toggleFavorite(benchmark.benchmarkName)}
               title={favorite ? 'Unfavorite benchmark' : 'Favorite benchmark'}
             >
@@ -116,6 +164,17 @@ export function BenchmarkDetailPage() {
               difficultyName={difficulty?.difficultyName || 'Unknown difficulty'}
               progress={progress}
             />
+
+            <div className="pointer-events-none fixed -left-[10000px] top-0 z-[-1]">
+              <div ref={shareCaptureRef} className="w-[1500px] bg-background p-6">
+                <BenchmarkProgressTable
+                  benchmark={benchmark}
+                  difficultyName={difficulty?.difficultyName || 'Unknown difficulty'}
+                  progress={progress}
+                  shareMode
+                />
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               <StrengthWidget progress={progress} />
