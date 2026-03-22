@@ -253,7 +253,7 @@ export function BenchmarkOverviewWidget() {
         <div className="flex flex-wrap items-center gap-2">
           {benchmark.difficulties?.length > 1 && (
             <Select value={String(difficultyIndex)} onValueChange={v => setDifficultyIndex(Number(v) || 0)}>
-              <SelectTrigger className="h-7 w-auto min-w-0 max-w-[200px] px-2 text-xs">
+              <SelectTrigger className="h-7 w-auto min-w-0 max-w-[200px] px-2 text-xs bg-secondary">
                 <SelectValue placeholder="Difficulty" />
               </SelectTrigger>
               <SelectContent>
