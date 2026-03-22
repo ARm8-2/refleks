@@ -304,7 +304,7 @@ func (w *Watcher) UpdateConfig(cfg models.WatcherConfig) error {
 // isKovaaksStatsFile reports whether a filename looks like a Kovaak's exported stats csv.
 func isKovaaksStatsFile(name string) bool {
 	lower := strings.ToLower(name)
-	return strings.HasSuffix(lower, " stats.csv")
+	return strings.HasSuffix(lower, " stats"+constants.StatsFileExt)
 }
 
 func existingStatsTimestamp(path string) int64 {
@@ -318,12 +318,14 @@ func existingStatsTimestamp(path string) int64 {
 	return 0
 }
 
-var statsFilenameRe = regexp.MustCompile(`^(?P<name>.+?)\s-\s.*?\s-\s(?P<dt>\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})\sStats\.csv$`)
+var statsFilenameRe = regexp.MustCompile(
+	`^(?P<name>.+?)\s-\s.*?\s-\s(?P<dt>\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})\sStats` + regexp.QuoteMeta(constants.StatsFileExt) + `$`,
+)
 
 func parseStatsFilenameTimestamp(filename string) (int64, bool) {
 	candidate := filename
-	if strings.HasSuffix(strings.ToLower(candidate), ".refleks") {
-		candidate = strings.TrimSuffix(candidate, ".refleks") + ".csv"
+	if strings.HasSuffix(strings.ToLower(candidate), constants.RunFileExt) {
+		candidate = strings.TrimSuffix(candidate, constants.RunFileExt) + constants.StatsFileExt
 	}
 	m := statsFilenameRe.FindStringSubmatch(candidate)
 	if m == nil {

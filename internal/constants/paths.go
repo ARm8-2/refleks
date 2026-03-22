@@ -5,6 +5,8 @@ const (
 	// Name of the app config folder in the user's home directory
 	ConfigDirName  = ".refleks"
 	RunsSubdirName = "runs"
+	RunFileExt     = ".refleks"
+	StatsFileExt   = ".csv"
 
 	// Default Kovaak's stats directory on Windows
 	DefaultWindowsKovaaksStatsDir = `C:\\Program Files (x86)\\Steam\\steamapps\\common\\FPSAimTrainer\\FPSAimTrainer\\stats`

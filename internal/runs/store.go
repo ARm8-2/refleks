@@ -40,14 +40,14 @@ func (s *Store) runsDir() (string, error) {
 
 func toRunFileName(statsFileName string) string {
 	name := filepath.Base(statsFileName)
-	if strings.HasSuffix(strings.ToLower(name), ".refleks") {
+	if strings.HasSuffix(strings.ToLower(name), constants.RunFileExt) {
 		return name
 	}
 	ext := filepath.Ext(name)
 	if ext != "" {
 		name = strings.TrimSuffix(name, ext)
 	}
-	return name + ".refleks"
+	return name + constants.RunFileExt
 }
 
 // Exists reports whether the given stats file already has a stored run record.
@@ -174,7 +174,7 @@ func (s *Store) LoadRecent(limit int) ([]RunRecord, error) {
 		if e.IsDir() {
 			continue
 		}
-		if !strings.HasSuffix(strings.ToLower(e.Name()), ".refleks") {
+		if !strings.HasSuffix(strings.ToLower(e.Name()), constants.RunFileExt) {
 			continue
 		}
 
@@ -238,7 +238,7 @@ func scenarioTimestampFromFileName(fileName, path string) int64 {
 		return ts
 	}
 
-	base := strings.TrimSuffix(fileName, ".refleks") + ".csv"
+	base := strings.TrimSuffix(fileName, constants.RunFileExt) + constants.StatsFileExt
 	if info, err := ParseFilename(base); err == nil {
 		return info.DatePlayed.UnixMilli()
 	}

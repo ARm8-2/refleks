@@ -13,13 +13,17 @@ import (
 	"strings"
 	"time"
 
+	"refleks/internal/constants"
+
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/transform"
 )
 
 var (
-	filenameRe = regexp.MustCompile(`^(?P<name>.+?)\s-\s.*?-\s(?P<dt>\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})\sStats\.csv$`)
-	dtLayout   = "2006.01.02-15.04.05"
+	filenameRe = regexp.MustCompile(
+		`^(?P<name>.+?)\s-\s.*?-\s(?P<dt>\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})\sStats` + regexp.QuoteMeta(constants.StatsFileExt) + `$`,
+	)
+	dtLayout = "2006.01.02-15.04.05"
 )
 
 // FilenameInfo represents parsed info from a stats filename.

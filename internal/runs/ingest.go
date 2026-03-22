@@ -2,6 +2,7 @@ package runs
 
 import (
 	"path/filepath"
+	"strings"
 	"time"
 
 	"refleks/internal/models"
@@ -67,9 +68,12 @@ func (s *Store) IngestScenario(fullPath string, mouse models.MouseTraceProvider)
 		stats["Duration"] = end.Sub(start).Seconds()
 	}
 
+	baseName := filepath.Base(fullPath)
+	fileName := strings.TrimSuffix(baseName, filepath.Ext(baseName))
+
 	rec := models.ScenarioRecord{
 		FilePath: fullPath,
-		FileName: filepath.Base(fullPath),
+		FileName: fileName,
 		Stats:    stats,
 		Events:   events,
 	}

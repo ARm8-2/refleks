@@ -6,7 +6,9 @@ import (
 	"io"
 	"math"
 	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/klauspost/compress/zstd"
 	"github.com/zeebo/xxh3"
@@ -63,7 +65,8 @@ func writeRecord(w io.Writer, rec RunRecord) error {
 		return err
 	}
 
-	if err := writeString(payloadWriter, rec.FileName); err != nil {
+	payloadFileName := strings.TrimSuffix(filepath.Base(rec.FileName), filepath.Ext(rec.FileName))
+	if err := writeString(payloadWriter, payloadFileName); err != nil {
 		_ = closePayload()
 		return err
 	}
