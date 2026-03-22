@@ -118,6 +118,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const collapsed = !open
+  const benchmarksTarget = selectedBenchmark ? benchmarkPath(selectedBenchmark) : '/benchmarks'
 
   const favBenchmarks = useMemo(() => {
     if (favorites.length === 0 || benchmarks.length === 0) return []
@@ -166,7 +167,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
               icon={<Activity />}
               label="Benchmarks"
               open={open}
-              to="/benchmarks"
+              to={benchmarksTarget}
             />
           </nav>
 
