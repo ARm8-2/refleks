@@ -15,7 +15,7 @@ const recentScoresConfig: ChartConfig = {
   score: { label: 'Score', color: 'var(--chart-2)' },
 }
 
-type RecentScorePoint = { index: number; score: number; inCurrentSession: boolean }
+type RecentScorePoint = { index: number; score: number; inCurrentSession: boolean; fill: string }
 
 function currentSessionStartRatio(points: RecentScorePoint[]): number | null {
   const firstCurrentIndex = points.findIndex(point => point.inCurrentSession)
@@ -41,12 +41,22 @@ export function RecentScoresWidget() {
     ? runCount
     : 10
 
-  const compactData = useMemo(() => recentScores.slice(-10), [recentScores])
+  const compactData = useMemo(
+    () => recentScores.slice(-10).map(point => ({
+      ...point,
+      fill: point.inCurrentSession ? 'var(--chart-1)' : 'var(--color-score)',
+    })),
+    [recentScores],
+  )
   const compactSessionSplitRatio = useMemo(() => currentSessionStartRatio(compactData), [compactData])
 
   const expandedData = useMemo(() => {
     const sliced = effectiveRunCount >= recentScores.length ? recentScores : recentScores.slice(-effectiveRunCount)
-    return sliced.map((s, i) => ({ ...s, index: i + 1 }))
+    return sliced.map((s, i) => ({
+      ...s,
+      index: i + 1,
+      fill: s.inCurrentSession ? 'var(--chart-1)' : 'var(--color-score)',
+    }))
   }, [recentScores, effectiveRunCount])
   const expandedSessionSplitRatio = useMemo(() => currentSessionStartRatio(expandedData), [expandedData])
 
@@ -78,10 +88,9 @@ export function RecentScoresWidget() {
     )
   }
 
-  const renderScoreDot = (props: { cx?: number; cy?: number; payload?: { inCurrentSession?: boolean } }): ReactElement => {
+  const renderScoreDot = (props: { cx?: number; cy?: number; payload?: { fill?: string; inCurrentSession?: boolean } }): ReactElement => {
     const hasPosition = typeof props.cx === 'number' && typeof props.cy === 'number'
-    const isCurrentSession = props.payload?.inCurrentSession === true
-    const fill = isCurrentSession ? 'var(--chart-1)' : 'var(--color-score)'
+    const fill = props.payload?.fill ?? (props.payload?.inCurrentSession ? 'var(--chart-1)' : 'var(--color-score)')
 
     return (
       <circle
@@ -94,10 +103,9 @@ export function RecentScoresWidget() {
     )
   }
 
-  const renderActiveScoreDot = (props: { cx?: number; cy?: number; payload?: { inCurrentSession?: boolean } }): ReactElement => {
+  const renderActiveScoreDot = (props: { cx?: number; cy?: number; payload?: { fill?: string; inCurrentSession?: boolean } }): ReactElement => {
     const hasPosition = typeof props.cx === 'number' && typeof props.cy === 'number'
-    const isCurrentSession = props.payload?.inCurrentSession === true
-    const fill = isCurrentSession ? 'var(--chart-1)' : 'var(--color-score)'
+    const fill = props.payload?.fill ?? (props.payload?.inCurrentSession ? 'var(--chart-1)' : 'var(--color-score)')
 
     return (
       <circle
@@ -105,8 +113,7 @@ export function RecentScoresWidget() {
         cy={hasPosition ? props.cy : 0}
         r={hasPosition ? 4 : 0}
         fill={fill}
-        stroke="var(--background)"
-        strokeWidth={1.5}
+        strokeWidth={0}
       />
     )
   }
@@ -173,7 +180,7 @@ export function RecentScoresWidget() {
           </defs>
           <XAxis dataKey="index" hide />
           <YAxis tickLine={false} axisLine={false} tickMargin={8} width={36} tickFormatter={v => formatScoreCompact(v)} domain={compactScoreDomain} />
-          <ChartTooltip content={<ChartTooltipContent color="var(--chart-2)" />} />
+          <ChartTooltip content={<ChartTooltipContent />} />
           {renderReferenceLines()}
           <Line isAnimationActive={false} type="monotone" dataKey="score" stroke={`url(#${compactGradientId})`} strokeWidth={2.5} dot={renderScoreDot} activeDot={renderActiveScoreDot} />
         </LineChart>
@@ -230,7 +237,7 @@ export function RecentScoresWidget() {
           <CartesianGrid vertical={false} strokeDasharray="3 3" />
           <XAxis dataKey="index" hide />
           <YAxis tickLine={false} axisLine={false} tickMargin={8} width={56} tickFormatter={v => formatScoreCompact(v)} domain={expandedScoreDomain} />
-          <ChartTooltip content={<ChartTooltipContent color="var(--chart-2)" />} />
+          <ChartTooltip content={<ChartTooltipContent />} />
           {showSessionBest && recentScoresSessionBest !== null && (
             <ReferenceLine y={recentScoresSessionBest} stroke="var(--chart-3)" strokeDasharray="6 3" strokeWidth={1.5} label={renderSessionBestLineLabel} />
           )}
