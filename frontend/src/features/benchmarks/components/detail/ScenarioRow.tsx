@@ -3,6 +3,64 @@ import { ChartLine, NotebookPen, Play } from 'lucide-react'
 import { cellFill, computeFillColor, formatNumber } from '../../lib/detailFormatting'
 import { RecommendationIndicator } from './RecommendationIndicator'
 
+type RGB = { r: number; g: number; b: number }
+
+function parseHexColor(color: string): RGB | null {
+  const hex = color.trim().replace(/^#/, '')
+  if (!/^[0-9a-fA-F]+$/.test(hex)) return null
+
+  if (hex.length === 3 || hex.length === 4) {
+    const r = parseInt(hex[0] + hex[0], 16)
+    const g = parseInt(hex[1] + hex[1], 16)
+    const b = parseInt(hex[2] + hex[2], 16)
+    return { r, g, b }
+  }
+
+  if (hex.length === 6 || hex.length === 8) {
+    const r = parseInt(hex.slice(0, 2), 16)
+    const g = parseInt(hex.slice(2, 4), 16)
+    const b = parseInt(hex.slice(4, 6), 16)
+    return { r, g, b }
+  }
+
+  return null
+}
+
+function parseRgbColor(color: string): RGB | null {
+  const m = color.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*[\d.]+)?\s*\)$/i)
+  if (!m) return null
+  const r = Math.max(0, Math.min(255, Number(m[1])))
+  const g = Math.max(0, Math.min(255, Number(m[2])))
+  const b = Math.max(0, Math.min(255, Number(m[3])))
+  if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b)) return null
+  return { r, g, b }
+}
+
+function parseColorToRGB(color: string): RGB | null {
+  return parseHexColor(color) ?? parseRgbColor(color)
+}
+
+function relativeLuminance({ r, g, b }: RGB): number {
+  const toLinear = (value: number) => {
+    const srgb = value / 255
+    if (srgb <= 0.04045) return srgb / 12.92
+    return ((srgb + 0.055) / 1.055) ** 2.4
+  }
+  const rr = toLinear(r)
+  const gg = toLinear(g)
+  const bb = toLinear(b)
+  return 0.2126 * rr + 0.7152 * gg + 0.0722 * bb
+}
+
+function thresholdTextOnFillColor(fillColor: string): string {
+  const rgb = parseColorToRGB(fillColor)
+  if (!rgb) {
+    // Unknown CSS formats (e.g. vars) fallback to a safe light text on the fill layer.
+    return '#f8fafc'
+  }
+  return relativeLuminance(rgb) >= 0.58 ? '#0b1220' : '#f8fafc'
+}
+
 // --- Column layout constants ---
 export const SCENARIO_COLUMN_WIDTH = 240
 export const GAP_COLUMN_WIDTH = 8
@@ -200,7 +258,10 @@ export function ScenarioRankCells({
       {hasVisibleRanks ? visibleRankIndices.map(rankIndex => {
         const rank = rankDefs[rankIndex]
         const fill = cellFill(rankIndex, score, thresholds)
+        const fillPercent = Math.round(fill * 100)
         const value = thresholds?.[rankIndex + 1]
+        const displayValue = value != null ? formatNumber(value, 0) : '-'
+        const fillTextColor = thresholdTextOnFillColor(fillColor)
         return (
           <div
             key={`${scenarioName}-${rank.name}-${rankIndex}`}
@@ -208,11 +269,22 @@ export function ScenarioRankCells({
           >
             <div
               className="absolute inset-y-0 left-0"
-              style={{ width: `${Math.round(fill * 100)}%`, background: fillColor }}
+              style={{ width: `${fillPercent}%`, background: fillColor }}
             />
             <span className="pointer-events-none relative z-10 flex w-full items-center justify-center font-medium text-foreground">
-              {value != null ? formatNumber(value, 0) : '-'}
+              {displayValue}
             </span>
+            {fillPercent > 0 && (
+              <span
+                className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-3 font-medium"
+                style={{
+                  color: fillTextColor,
+                  clipPath: `inset(0 ${100 - fillPercent}% 0 0)`,
+                }}
+              >
+                {displayValue}
+              </span>
+            )}
           </div>
         )
       }) : (
