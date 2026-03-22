@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"refleks/internal/constants"
 	"refleks/internal/models"
 	"refleks/internal/runs/environment"
 	"refleks/internal/steam"
@@ -68,8 +69,7 @@ func (s *Store) IngestScenario(fullPath string, mouse models.MouseTraceProvider)
 		stats["Duration"] = end.Sub(start).Seconds()
 	}
 
-	baseName := filepath.Base(fullPath)
-	fileName := strings.TrimSuffix(baseName, filepath.Ext(baseName))
+	fileName := strings.TrimSuffix(filepath.Base(fullPath), constants.StatsFileExt)
 
 	rec := models.ScenarioRecord{
 		FilePath: fullPath,

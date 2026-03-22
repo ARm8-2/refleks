@@ -65,7 +65,7 @@ func writeRecord(w io.Writer, rec RunRecord) error {
 		return err
 	}
 
-	payloadFileName := strings.TrimSuffix(filepath.Base(rec.FileName), filepath.Ext(rec.FileName))
+	payloadFileName := filepath.Base(rec.FileName)
 	if err := writeString(payloadWriter, payloadFileName); err != nil {
 		_ = closePayload()
 		return err

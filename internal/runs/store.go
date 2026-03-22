@@ -38,25 +38,15 @@ func (s *Store) runsDir() (string, error) {
 	return dir, nil
 }
 
-func toRunFileName(statsFileName string) string {
-	name := filepath.Base(statsFileName)
-	if strings.HasSuffix(strings.ToLower(name), constants.RunFileExt) {
-		return name
-	}
-	ext := filepath.Ext(name)
-	if ext != "" {
-		name = strings.TrimSuffix(name, ext)
-	}
-	return name + constants.RunFileExt
-}
-
 // Exists reports whether the given stats file already has a stored run record.
 func (s *Store) Exists(statsFileName string) bool {
 	dir, err := s.runsDir()
 	if err != nil {
 		return false
 	}
-	_, err = os.Stat(filepath.Join(dir, toRunFileName(statsFileName)))
+	statsName := filepath.Base(statsFileName)
+	runName := strings.TrimSuffix(statsName, constants.StatsFileExt) + constants.RunFileExt
+	_, err = os.Stat(filepath.Join(dir, runName))
 	return err == nil
 }
 
@@ -71,7 +61,7 @@ func (s *Store) Save(rec RunRecord) (string, error) {
 		return "", err
 	}
 
-	outPath := filepath.Join(dir, toRunFileName(rec.FileName))
+	outPath := filepath.Join(dir, filepath.Base(rec.FileName)+constants.RunFileExt)
 	tmpPath := outPath + ".tmp"
 
 	f, err := os.Create(tmpPath)
@@ -105,7 +95,7 @@ func (s *Store) LoadByFileName(statsFileName string) (RunRecord, error) {
 		return RunRecord{}, err
 	}
 
-	path := filepath.Join(dir, toRunFileName(statsFileName))
+	path := filepath.Join(dir, filepath.Base(statsFileName)+constants.RunFileExt)
 	rec, err := readRecordFile(path)
 	if err != nil {
 		return RunRecord{}, err
