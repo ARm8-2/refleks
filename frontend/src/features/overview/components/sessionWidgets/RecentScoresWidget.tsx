@@ -1,8 +1,9 @@
 import { Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
-import { cn } from '@/shared/lib'
-import { useMemo, useState, type ReactElement } from 'react'
+import { usePersistedState } from '@/shared/hooks'
+import { cn, STORAGE_KEYS } from '@/shared/lib'
+import { useId, useMemo, type ReactElement } from 'react'
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
 import { useRecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
 import { buildScoreDomain, formatScoreCompact } from './shared'
@@ -14,38 +15,40 @@ const recentScoresConfig: ChartConfig = {
   score: { label: 'Score', color: 'var(--chart-2)' },
 }
 
+type RecentScorePoint = { index: number; score: number; inCurrentSession: boolean }
+
+function currentSessionStartRatio(points: RecentScorePoint[]): number | null {
+  const firstCurrentIndex = points.findIndex(point => point.inCurrentSession)
+  if (firstCurrentIndex < 0) return null
+  if (points.length <= 1) return 0
+  return firstCurrentIndex / (points.length - 1)
+}
+
 export function RecentScoresWidget() {
+  const gradientBaseId = useId().replace(/:/g, '')
   const {
     currentSession,
     recentScores,
     recentScoresScenario,
     recentScoresSessionBest,
     recentScoresPb,
-    recentScoresSessionStartIndex,
   } = useRecentSessionSnapshot()
-  const [runCount, setRunCount] = useState(10)
-  const [showSessionBest, setShowSessionBest] = useState(true)
-  const [showPb, setShowPb] = useState(false)
+  const [runCount, setRunCount] = usePersistedState<number>(STORAGE_KEYS.overviewRecentScoresRunCount, 10)
+  const [showSessionBest, setShowSessionBest] = usePersistedState<boolean>(STORAGE_KEYS.overviewRecentScoresShowSessionBest, true)
+  const [showPb, setShowPb] = usePersistedState<boolean>(STORAGE_KEYS.overviewRecentScoresShowPb, false)
+
+  const effectiveRunCount = RECENT_SCORE_RUN_COUNT_OPTIONS.includes(runCount as (typeof RECENT_SCORE_RUN_COUNT_OPTIONS)[number])
+    ? runCount
+    : 10
 
   const compactData = useMemo(() => recentScores.slice(-10), [recentScores])
-  const compactSessionStartIndex = useMemo(() => {
-    if (recentScoresSessionStartIndex === null || compactData.length === 0) return null
-    const compactStartIndex = recentScores.length - compactData.length + 1
-    if (recentScoresSessionStartIndex < compactStartIndex) return null
-    return recentScoresSessionStartIndex
-  }, [compactData.length, recentScores.length, recentScoresSessionStartIndex])
+  const compactSessionSplitRatio = useMemo(() => currentSessionStartRatio(compactData), [compactData])
 
   const expandedData = useMemo(() => {
-    const sliced = runCount >= recentScores.length ? recentScores : recentScores.slice(-runCount)
+    const sliced = effectiveRunCount >= recentScores.length ? recentScores : recentScores.slice(-effectiveRunCount)
     return sliced.map((s, i) => ({ ...s, index: i + 1 }))
-  }, [recentScores, runCount])
-
-  const expandedSessionStartIndex = useMemo(() => {
-    if (recentScoresSessionStartIndex === null || expandedData.length === 0) return null
-    const expandedStartIndex = recentScores.length - expandedData.length + 1
-    if (recentScoresSessionStartIndex < expandedStartIndex) return null
-    return recentScoresSessionStartIndex - expandedStartIndex + 1
-  }, [expandedData.length, recentScores.length, recentScoresSessionStartIndex])
+  }, [recentScores, effectiveRunCount])
+  const expandedSessionSplitRatio = useMemo(() => currentSessionStartRatio(expandedData), [expandedData])
 
   const referenceScores = useMemo(
     () => [
@@ -91,6 +94,23 @@ export function RecentScoresWidget() {
     )
   }
 
+  const renderActiveScoreDot = (props: { cx?: number; cy?: number; payload?: { inCurrentSession?: boolean } }): ReactElement => {
+    const hasPosition = typeof props.cx === 'number' && typeof props.cy === 'number'
+    const isCurrentSession = props.payload?.inCurrentSession === true
+    const fill = isCurrentSession ? 'var(--chart-1)' : 'var(--color-score)'
+
+    return (
+      <circle
+        cx={hasPosition ? props.cx : 0}
+        cy={hasPosition ? props.cy : 0}
+        r={hasPosition ? 4 : 0}
+        fill={fill}
+        stroke="var(--background)"
+        strokeWidth={1.5}
+      />
+    )
+  }
+
   function renderReferenceLines() {
     return (
       <>
@@ -104,24 +124,65 @@ export function RecentScoresWidget() {
     )
   }
 
+  function renderSplitGradient(gradientId: string, ratio: number | null) {
+    if (ratio === null) {
+      return (
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="var(--color-score)" />
+          <stop offset="100%" stopColor="var(--color-score)" />
+        </linearGradient>
+      )
+    }
+
+    if (ratio <= 0) {
+      return (
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="var(--chart-1)" />
+          <stop offset="100%" stopColor="var(--chart-1)" />
+        </linearGradient>
+      )
+    }
+
+    if (ratio >= 1) {
+      return (
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="var(--color-score)" />
+          <stop offset="100%" stopColor="var(--color-score)" />
+        </linearGradient>
+      )
+    }
+
+    const splitOffset = `${(ratio * 100).toFixed(3)}%`
+    return (
+      <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stopColor="var(--color-score)" />
+        <stop offset={splitOffset} stopColor="var(--color-score)" />
+        <stop offset={splitOffset} stopColor="var(--chart-1)" />
+        <stop offset="100%" stopColor="var(--chart-1)" />
+      </linearGradient>
+    )
+  }
+
   function renderCompactChart() {
+    const compactGradientId = `recent-scores-compact-${gradientBaseId}`
     return (
       <ChartContainer config={recentScoresConfig} className="aspect-auto w-full h-full min-h-[140px]">
         <LineChart data={compactData} margin={{ top: 6, right: 6, left: 0, bottom: 0 }}>
+          <defs>
+            {renderSplitGradient(compactGradientId, compactSessionSplitRatio)}
+          </defs>
           <XAxis dataKey="index" hide />
           <YAxis tickLine={false} axisLine={false} tickMargin={8} width={36} tickFormatter={v => formatScoreCompact(v)} domain={compactScoreDomain} />
-          <ChartTooltip content={<ChartTooltipContent />} />
+          <ChartTooltip content={<ChartTooltipContent color="var(--chart-2)" />} />
           {renderReferenceLines()}
-          {compactSessionStartIndex !== null && (
-            <ReferenceLine x={compactSessionStartIndex} stroke="var(--chart-1)" strokeDasharray="3 3" strokeWidth={1} />
-          )}
-          <Line isAnimationActive={false} type="monotone" dataKey="score" stroke="var(--color-score)" strokeWidth={2} dot={renderScoreDot} activeDot={{ r: 4 }} />
+          <Line isAnimationActive={false} type="monotone" dataKey="score" stroke={`url(#${compactGradientId})`} strokeWidth={2.5} dot={renderScoreDot} activeDot={renderActiveScoreDot} />
         </LineChart>
       </ChartContainer>
     )
   }
 
   function renderExpandedChart() {
+    const expandedGradientId = `recent-scores-expanded-${gradientBaseId}`
     const sessionBestScore = recentScoresSessionBest ?? 0
     const personalBestScore = recentScoresPb ?? 0
     const domainSpan = Math.max(1, expandedScoreDomain[1] - expandedScoreDomain[0])
@@ -163,20 +224,20 @@ export function RecentScoresWidget() {
     return (
       <ChartContainer config={recentScoresConfig} className="aspect-auto w-full h-[360px]">
         <LineChart data={expandedData} margin={{ top: 12, right: 12, left: 6, bottom: 0 }}>
+          <defs>
+            {renderSplitGradient(expandedGradientId, expandedSessionSplitRatio)}
+          </defs>
           <CartesianGrid vertical={false} strokeDasharray="3 3" />
           <XAxis dataKey="index" hide />
           <YAxis tickLine={false} axisLine={false} tickMargin={8} width={56} tickFormatter={v => formatScoreCompact(v)} domain={expandedScoreDomain} />
-          <ChartTooltip content={<ChartTooltipContent />} />
+          <ChartTooltip content={<ChartTooltipContent color="var(--chart-2)" />} />
           {showSessionBest && recentScoresSessionBest !== null && (
             <ReferenceLine y={recentScoresSessionBest} stroke="var(--chart-3)" strokeDasharray="6 3" strokeWidth={1.5} label={renderSessionBestLineLabel} />
           )}
           {showPb && recentScoresPb !== null && (
             <ReferenceLine y={recentScoresPb} stroke="var(--chart-1)" strokeDasharray="6 3" strokeWidth={1.5} label={renderPersonalBestLineLabel} />
           )}
-          {expandedSessionStartIndex !== null && (
-            <ReferenceLine x={expandedSessionStartIndex} stroke="var(--chart-1)" strokeDasharray="3 3" strokeWidth={1} label={{ value: 'Session start', position: 'insideTopLeft', fill: 'var(--chart-1)', fontSize: 10 }} />
-          )}
-          <Line isAnimationActive={false} type="monotone" dataKey="score" stroke="var(--color-score)" strokeWidth={2} dot={renderScoreDot} activeDot={{ r: 4 }} />
+          <Line isAnimationActive={false} type="monotone" dataKey="score" stroke={`url(#${expandedGradientId})`} strokeWidth={2.5} dot={renderScoreDot} activeDot={renderActiveScoreDot} />
         </LineChart>
       </ChartContainer>
     )
@@ -192,7 +253,7 @@ export function RecentScoresWidget() {
             onClick={() => setRunCount(n)}
             className={cn(
               'rounded-xl px-3 py-1.5 text-sm font-medium transition-colors',
-              runCount === n
+              effectiveRunCount === n
                 ? 'bg-card text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
             )}

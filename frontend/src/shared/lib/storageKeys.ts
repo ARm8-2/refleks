@@ -42,6 +42,9 @@ export const STORAGE_KEYS = {
   traceSyncByTime: 'refleks.trace.syncByTime',
 
   overviewSessionProgressTargetRuns: 'refleks.overview.sessionProgress.targetRuns',
+  overviewRecentScoresRunCount: 'refleks.overview.recentScores.runCount',
+  overviewRecentScoresShowSessionBest: 'refleks.overview.recentScores.showSessionBest',
+  overviewRecentScoresShowPb: 'refleks.overview.recentScores.showPb',
 
   settingsShowAdvanced: 'refleks.settings.showAdvanced',
 } as const
