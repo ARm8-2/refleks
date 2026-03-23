@@ -3,7 +3,7 @@ import { usePersistedState } from '@/shared/hooks'
 import { STORAGE_KEYS } from '@/shared/lib'
 import type { BenchmarkProgress } from '@/shared/types'
 import { useEffect, useMemo } from 'react'
-import { formatNumber } from '../../lib/detailFormatting'
+import { adjustColorForTheme, formatNumber } from '../../lib/detailFormatting'
 
 type Props = {
   progress: BenchmarkProgress
@@ -17,6 +17,8 @@ type Segment = {
 }
 
 type ScopeLevel = 'all' | 'category' | 'subcategory'
+
+const CARD_BACKGROUND = 'var(--card)'
 
 function buildConicGradient(segments: Segment[]): string {
   if (!segments.length) return 'var(--muted)'
@@ -88,7 +90,7 @@ export function RankDistributionWidget({ progress }: Props) {
       counts.push({
         label: 'Below R1',
         count: belowR1,
-        color: 'var(--muted-foreground)',
+        color: adjustColorForTheme('var(--muted-foreground)', CARD_BACKGROUND, 0.9),
         percent: 0,
       })
     }
@@ -97,7 +99,7 @@ export function RankDistributionWidget({ progress }: Props) {
       counts.push({
         label: rank.name,
         count: rankCounts[index],
-        color: rank.color || 'var(--primary)',
+        color: adjustColorForTheme(rank.color || 'var(--primary)', CARD_BACKGROUND, 0.94),
         percent: 0,
       })
     })

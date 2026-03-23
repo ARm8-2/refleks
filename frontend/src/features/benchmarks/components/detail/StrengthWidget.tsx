@@ -3,7 +3,7 @@ import { usePersistedState } from '@/shared/hooks'
 import { STORAGE_KEYS } from '@/shared/lib'
 import type { BenchmarkProgress } from '@/shared/types'
 import { useMemo } from 'react'
-import { formatNumber, normalizedRankProgress } from '../../lib/detailFormatting'
+import { adjustColorForTheme, formatNumber, normalizedRankProgress } from '../../lib/detailFormatting'
 
 type Props = {
   progress: BenchmarkProgress
@@ -18,6 +18,8 @@ type StrengthRow = {
 }
 
 type StrengthLevel = 'category' | 'subcategory' | 'scenario'
+
+const CARD_BACKGROUND = 'var(--card)'
 
 export function StrengthWidget({ progress }: Props) {
   const [level, setLevel] = usePersistedState<StrengthLevel>(STORAGE_KEYS.benchmarksDetailStrengthLevel, 'category')
@@ -45,7 +47,7 @@ export function StrengthWidget({ progress }: Props) {
         label,
         percent,
         avgScore,
-        color: rankDefs[rankIndex]?.color || color || 'var(--primary)',
+        color: adjustColorForTheme(rankDefs[rankIndex]?.color || color || 'var(--primary)', CARD_BACKGROUND, 0.94),
         rankName: rankDefs[rankIndex]?.name || 'Unranked',
       }
     }
