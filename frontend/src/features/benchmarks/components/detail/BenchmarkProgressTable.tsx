@@ -49,6 +49,144 @@ const CATEGORY_COLUMN_WIDTH = 52
 const GROUP_COLUMN_WIDTH = 24
 const LEFT_PANEL_PADDING = 16
 
+type RGB = { r: number; g: number; b: number }
+
+function clamp(v: number, lo: number, hi: number) {
+  return v < lo ? lo : v > hi ? hi : v
+}
+
+function resolveCssColor(color: string): string {
+  const trimmed = color.trim()
+  if (typeof window === 'undefined') return trimmed
+
+  const varMatch = trimmed.match(/^var\((--[^)\s]+)\)$/)
+  if (!varMatch) return trimmed
+
+  const resolved = getComputedStyle(document.documentElement).getPropertyValue(varMatch[1]).trim()
+  return resolved || trimmed
+}
+
+function parseHexColor(color: string): RGB | null {
+  const hex = color.trim().replace(/^#/, '')
+  if (!/^[0-9a-fA-F]+$/.test(hex)) return null
+
+  if (hex.length === 3 || hex.length === 4) {
+    const r = parseInt(hex[0] + hex[0], 16)
+    const g = parseInt(hex[1] + hex[1], 16)
+    const b = parseInt(hex[2] + hex[2], 16)
+    return { r, g, b }
+  }
+
+  if (hex.length === 6 || hex.length === 8) {
+    const r = parseInt(hex.slice(0, 2), 16)
+    const g = parseInt(hex.slice(2, 4), 16)
+    const b = parseInt(hex.slice(4, 6), 16)
+    return { r, g, b }
+  }
+
+  return null
+}
+
+function parseRgbColor(color: string): RGB | null {
+  const match = color.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*[\d.]+)?\s*\)$/i)
+  if (!match) return null
+
+  const r = Math.max(0, Math.min(255, Number(match[1])))
+  const g = Math.max(0, Math.min(255, Number(match[2])))
+  const b = Math.max(0, Math.min(255, Number(match[3])))
+  if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b)) return null
+  return { r, g, b }
+}
+
+function parseColorToRGB(color: string): RGB | null {
+  return parseHexColor(color) ?? parseRgbColor(color)
+}
+
+function relativeLuminance({ r, g, b }: RGB): number {
+  const toLinear = (value: number) => {
+    const srgb = value / 255
+    if (srgb <= 0.04045) return srgb / 12.92
+    return ((srgb + 0.055) / 1.055) ** 2.4
+  }
+
+  const rr = toLinear(r)
+  const gg = toLinear(g)
+  const bb = toLinear(b)
+  return 0.2126 * rr + 0.7152 * gg + 0.0722 * bb
+}
+
+function rgbToHsl({ r, g, b }: RGB): { h: number; s: number; l: number } {
+  const rn = r / 255
+  const gn = g / 255
+  const bn = b / 255
+  const max = Math.max(rn, gn, bn)
+  const min = Math.min(rn, gn, bn)
+  const delta = max - min
+
+  let h = 0
+  const l = (max + min) / 2
+  const s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1))
+
+  if (delta !== 0) {
+    switch (max) {
+      case rn:
+        h = ((gn - bn) / delta) % 6
+        break
+      case gn:
+        h = (bn - rn) / delta + 2
+        break
+      default:
+        h = (rn - gn) / delta + 4
+        break
+    }
+    h *= 60
+    if (h < 0) h += 360
+  }
+
+  return { h, s, l }
+}
+
+function hslToRgb({ h, s, l }: { h: number; s: number; l: number }): RGB {
+  const c = (1 - Math.abs(2 * l - 1)) * s
+  const hh = h / 60
+  const x = c * (1 - Math.abs((hh % 2) - 1))
+  let rn = 0
+  let gn = 0
+  let bn = 0
+
+  if (hh >= 0 && hh < 1) [rn, gn, bn] = [c, x, 0]
+  else if (hh < 2) [rn, gn, bn] = [x, c, 0]
+  else if (hh < 3) [rn, gn, bn] = [0, c, x]
+  else if (hh < 4) [rn, gn, bn] = [0, x, c]
+  else if (hh < 5) [rn, gn, bn] = [x, 0, c]
+  else[rn, gn, bn] = [c, 0, x]
+
+  const m = l - c / 2
+  return {
+    r: Math.round((rn + m) * 255),
+    g: Math.round((gn + m) * 255),
+    b: Math.round((bn + m) * 255),
+  }
+}
+
+function rgbToCss({ r, g, b }: RGB): string {
+  return `rgb(${r}, ${g}, ${b})`
+}
+
+function adjustColorForTheme(color: string | undefined, backgroundColor: string): string {
+  const sourceColor = resolveCssColor(color?.trim() || 'var(--primary)')
+  const bgColor = resolveCssColor(backgroundColor)
+  const fgRgb = parseColorToRGB(sourceColor)
+  const bgRgb = parseColorToRGB(bgColor)
+  if (!fgRgb || !bgRgb) return color?.trim() || 'var(--primary)'
+
+  const fgHsl = rgbToHsl(fgRgb)
+  const bgLum = relativeLuminance(bgRgb)
+  const targetLightness = bgLum >= 0.5 ? 0.42 : 0.72
+  const adjustedLightness = clamp(fgHsl.l + (targetLightness - fgHsl.l) * 0.85, 0.18, 0.82)
+  return rgbToCss(hslToRgb({ ...fgHsl, l: adjustedLightness }))
+}
+
 function ToggleChip({ label, enabled, onToggle }: { label: string; enabled: boolean; onToggle: () => void }) {
   return (
     <button
@@ -221,6 +359,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
   const rowSpacingClass = compactMode ? 'space-y-0.5' : 'space-y-1'
   const labelTextClass = compactMode ? 'text-[10px]' : 'text-[11px]'
   const rankVisibilityOptions = Array.from({ length: Math.max(1, rankDefs.length) }, (_, index) => index + 1)
+  const labelBackgroundColor = resolveCssColor('var(--card)')
 
   const getRecommendation = (scenarioName: string) => recommendationScore.get(scenarioName) ?? 0
   const isTopPick = (scenarioName: string) => topPicks.has(scenarioName)
@@ -285,7 +424,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
                   <span
                     className={`font-semibold tracking-wide text-foreground ${labelTextClass}`}
                     style={{
-                      ...(category.color ? { color: category.color } : {}),
+                      color: adjustColorForTheme(category.color, labelBackgroundColor),
                       writingMode: 'vertical-rl',
                       transform: 'rotate(180deg)',
                     }}
@@ -302,7 +441,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
                           <span
                             className={`font-semibold tracking-wide text-foreground ${labelTextClass}`}
                             style={{
-                              ...(group.color ? { color: group.color } : {}),
+                              color: adjustColorForTheme(group.color || category.color, labelBackgroundColor),
                               writingMode: 'vertical-rl',
                               transform: 'rotate(180deg)',
                             }}
