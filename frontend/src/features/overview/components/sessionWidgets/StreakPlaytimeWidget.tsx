@@ -24,11 +24,11 @@ export function StreakPlaytimeWidget() {
       title={<span className="inline-flex items-center gap-1.5"><Flame className="h-3.5 w-3.5 text-[color:var(--streak)]" />Streak & Playtime</span>}
       className="px-4 py-3"
     >
-      <div className="mt-1 flex items-baseline gap-2">
+      <div className="flex items-baseline gap-2">
         <span className="text-lg font-semibold text-[color:var(--streak)]">{streakLabel}</span>
         <span className="text-xs text-muted-foreground">{streakDetail}</span>
       </div>
-      <ChartContainer config={playtimeConfig} className="mt-0.5 aspect-auto h-[28px] w-full">
+      <ChartContainer config={playtimeConfig} className="mt-1 aspect-auto h-[18px] w-full">
         <AreaChart data={chartData} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>
           <defs>
             <linearGradient id="streakPlaytimeFill" x1="0" y1="0" x2="0" y2="1">
