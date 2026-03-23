@@ -28,7 +28,7 @@ export function StreakPlaytimeWidget() {
         <span className="text-lg font-semibold text-[color:var(--streak)]">{streakLabel}</span>
         <span className="text-xs text-muted-foreground">{streakDetail}</span>
       </div>
-      <ChartContainer config={playtimeConfig} className="mt-1 aspect-auto h-[18px] w-full">
+      <ChartContainer config={playtimeConfig} className="mt-1 aspect-auto h-[20px] w-full">
         <AreaChart data={chartData} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>
           <defs>
             <linearGradient id="streakPlaytimeFill" x1="0" y1="0" x2="0" y2="1">
