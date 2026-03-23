@@ -1,15 +1,23 @@
-import { getScenarioName } from '@/features/benchmarks/lib/detailFormatting'
 import { Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
+import { useStore } from '@/shared/hooks'
+import { getScenarioName } from '@/shared/lib'
+import type { Session } from '@/shared/types'
 import { useMemo } from 'react'
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart } from 'recharts'
-import { useRecentSessionSnapshot } from '../hooks/useRecentSessionSnapshot'
 
 type ScenarioUsagePoint = {
   label: string
   scenario: string
   runs: number
+}
+
+type SessionScenarioRadarWidgetProps = {
+  session?: Session | null
+  title?: string
+  description?: string
+  className?: string
 }
 
 const scenarioUsageConfig: ChartConfig = {
@@ -19,8 +27,14 @@ const scenarioUsageConfig: ChartConfig = {
   },
 }
 
-export function SessionScenarioRadarWidget() {
-  const { currentSession } = useRecentSessionSnapshot()
+export function SessionScenarioRadarWidget({
+  session,
+  title = 'Session Scenario Mix',
+  description = 'Scenarios played this session and how much you played each one.',
+  className,
+}: SessionScenarioRadarWidgetProps) {
+  const storeSessions = useStore(state => state.sessions)
+  const currentSession = session ?? storeSessions[0] ?? null
 
   const scenarioUsage = useMemo(() => {
     if (!currentSession) return [] as ScenarioUsagePoint[]
@@ -50,14 +64,19 @@ export function SessionScenarioRadarWidget() {
 
   return (
     <Widget
-      title="Session Scenario Mix"
-      description="Scenarios played this session and how much you played each one."
+      title={title}
+      description={description}
+      modalTitle={title}
+      modalContent={renderBody(true)}
+      modalWidth={920}
+      modalHeight={760}
+      className={className}
     >
-      {renderBody()}
+      {renderBody(false)}
     </Widget>
   )
 
-  function renderBody() {
+  function renderBody(expanded: boolean) {
     if (!currentSession) {
       return <EmptyState message="No active session data yet. Play a scenario to populate this widget." />
     }
@@ -67,8 +86,8 @@ export function SessionScenarioRadarWidget() {
     }
 
     return (
-      <div className="h-[264px] sm:h-[280px]">
-        <SessionScenarioRadarChart points={scenarioUsage} maxRuns={maxRuns} />
+      <div className={expanded ? 'h-[420px]' : 'h-[264px] sm:h-[280px]'}>
+        <SessionScenarioRadarChart points={scenarioUsage} maxRuns={maxRuns} expanded={expanded} />
       </div>
     )
   }
@@ -77,12 +96,14 @@ export function SessionScenarioRadarWidget() {
 function SessionScenarioRadarChart({
   points,
   maxRuns,
+  expanded,
 }: {
   points: ScenarioUsagePoint[]
   maxRuns: number
+  expanded: boolean
 }) {
-  const angleTickSize = points.length >= 8 ? 9 : points.length >= 6 ? 10 : 11
-  const outerRadius = points.length >= 8 ? '58%' : points.length >= 6 ? '64%' : '72%'
+  const angleTickSize = expanded ? (points.length >= 8 ? 10 : points.length >= 6 ? 11 : 12) : (points.length >= 8 ? 9 : points.length >= 6 ? 10 : 11)
+  const outerRadius = expanded ? (points.length >= 8 ? '64%' : points.length >= 6 ? '70%' : '78%') : (points.length >= 8 ? '58%' : points.length >= 6 ? '64%' : '72%')
 
   return (
     <ChartContainer config={scenarioUsageConfig} className="aspect-auto h-full w-full">

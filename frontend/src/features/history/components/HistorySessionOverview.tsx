@@ -1,14 +1,11 @@
-import { Input, Widget } from '@/shared/components'
-import type { ChartConfig } from '@/shared/components/ui/chart'
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
+import { Input } from '@/shared/components'
 import { usePersistedState } from '@/shared/hooks'
-import { buildScoreDomain, cn, STORAGE_KEYS } from '@/shared/lib'
+import { cn, STORAGE_KEYS } from '@/shared/lib'
 import type { Session } from '@/shared/types'
 import { ChevronDown, ChevronUp, Clock3, Gamepad2, Layers3, Minus, Search, TrendingDown, TrendingUp, Trophy } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useId, useMemo } from 'react'
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import type { HistoryRun, ScenarioSummary, ScenarioTrendPoint } from '../lib/historyModels'
+import { useMemo } from 'react'
+import type { HistoryRun, ScenarioSummary } from '../lib/historyModels'
 import {
   buildSessionScenarioSummaries,
   buildSessionScenarioTrendPoints,
@@ -21,6 +18,9 @@ import {
   readSessionDurationMs,
   readUniqueScenarioCount
 } from '../lib/historyModels'
+import { ScenarioTrendChart } from './HistoryScenarioTrendChart'
+import { PerformanceVsSensWidget } from './PerformanceVsSensWidget'
+import { SessionScenarioRadarWidget } from './SessionScenarioRadarWidget'
 
 type Props = {
   session: Session | null
@@ -164,7 +164,22 @@ export function HistorySessionOverview({ session, sessions, sessionRuns, selecte
                 scenarioName={selectedScenario}
                 points={trendPoints}
                 onClickPoint={runId => onSelectRun(runId)}
+                className="bg-secondary hover:bg-muted"
               />
+
+              <div className="grid gap-3 lg:grid-cols-2">
+                <PerformanceVsSensWidget
+                  sessions={session ? [session] : []}
+                  scenarioName={selectedScenario}
+                  title="Performance vs Sensitivity"
+                  description={selectedScenario ? `${selectedScenario} in this session.` : undefined}
+                  className="bg-secondary hover:bg-muted"
+                />
+                <SessionScenarioRadarWidget
+                  session={session}
+                  className="bg-secondary hover:bg-muted"
+                />
+              </div>
             </div>
           )
         })()}
@@ -215,105 +230,5 @@ function ScenarioCard({ summary, selected, onSelect }: { summary: ScenarioSummar
       {summary.trend === 'down' && <TrendingDown className="h-4 w-4 shrink-0 text-red-500" />}
       {summary.trend === 'same' && <Minus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
     </button>
-  )
-}
-
-const dualChartConfig: ChartConfig = {
-  score: { label: 'Score', color: 'var(--chart-2)' },
-  accuracy: { label: 'Accuracy %', color: 'var(--chart-4)' },
-}
-
-function ScenarioTrendChart({
-  scenarioName,
-  points,
-  onClickPoint,
-}: {
-  scenarioName: string
-  points: ScenarioTrendPoint[]
-  onClickPoint: (runId: string) => void
-}) {
-  const chartId = useId().replace(/:/g, '')
-  const hasAccuracy = points.some(p => p.accuracy != null && p.accuracy > 0)
-  const scoreDomain = useMemo(() => buildScoreDomain(points.map(point => point.score)), [points])
-
-  const handleChartClick = (state: { activeTooltipIndex?: number } | null) => {
-    if (!state || state.activeTooltipIndex == null) return
-    const point = points[state.activeTooltipIndex]
-    if (point?.runId) onClickPoint(point.runId)
-  }
-
-  const chart = (expanded: boolean) => {
-    const chartHeight = expanded ? 'h-[320px]' : 'h-[200px]'
-
-    return (
-      <ChartContainer config={dualChartConfig} className={`aspect-auto w-full ${chartHeight}`}>
-        <LineChart data={points} margin={{ top: 8, right: 12, left: 6, bottom: 0 }} onClick={handleChartClick} style={{ cursor: 'pointer' }}>
-          <CartesianGrid vertical={false} />
-          <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={24} tickMargin={8} />
-          <YAxis
-            yAxisId="score"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            width={56}
-            tickFormatter={v => formatNumber(v, 0)}
-            domain={scoreDomain}
-          />
-          {hasAccuracy && (
-            <YAxis
-              yAxisId="accuracy"
-              orientation="right"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              width={44}
-              domain={[0, 100]}
-              tickFormatter={v => `${v}%`}
-            />
-          )}
-          <ChartTooltip
-            content={
-              <ChartTooltipContent
-                labelFormatter={(_, payload) => payload?.[0]?.payload?.fullLabel ?? null}
-              />
-            }
-          />
-          <Line
-            yAxisId="score"
-            isAnimationActive={false}
-            type="monotone"
-            dataKey="score"
-            stroke="var(--color-score)"
-            strokeWidth={2.25}
-            dot={{ r: expanded ? 2.75 : 2, fill: 'var(--color-score)', strokeWidth: 0 }}
-            activeDot={{ r: 5 }}
-          />
-          {hasAccuracy && (
-            <Line
-              yAxisId="accuracy"
-              isAnimationActive={false}
-              type="monotone"
-              dataKey="accuracy"
-              stroke="var(--color-accuracy)"
-              strokeWidth={1.75}
-              strokeDasharray="4 3"
-              dot={{ r: expanded ? 2 : 1.5, fill: 'var(--color-accuracy)', strokeWidth: 0 }}
-              activeDot={{ r: 4 }}
-            />
-          )}
-        </LineChart>
-      </ChartContainer>
-    )
-  }
-
-  return (
-    <Widget
-      title={scenarioName}
-      className="bg-secondary hover:bg-muted"
-      modalTitle={`${scenarioName} — Trend`}
-      modalContent={chart(true)}
-    >
-      {chart(false)}
-    </Widget>
   )
 }

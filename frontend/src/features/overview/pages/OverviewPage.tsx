@@ -1,9 +1,6 @@
+import { PerformanceVsSensWidget } from '@/features/history/components/PerformanceVsSensWidget'
+import { SessionScenarioRadarWidget } from '@/features/history/components/SessionScenarioRadarWidget'
 import { BenchmarkOverviewWidget } from '../components/BenchmarkOverviewWidget'
-import {
-  CurrentScenarioAttemptsWidget,
-  CurrentScenarioSessionAverageWidget,
-} from '../components/CurrentScenarioTrendWidgets'
-import { SessionScenarioRadarWidget } from '../components/SessionScenarioRadarWidget'
 import {
   LastRunWidget,
   RecentScoresWidget,
@@ -36,9 +33,8 @@ export function OverviewPage() {
 
         <BenchmarkOverviewWidget />
 
-        <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-3">
-          <CurrentScenarioSessionAverageWidget />
-          <CurrentScenarioAttemptsWidget />
+        <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
+          <PerformanceVsSensWidget />
           <SessionScenarioRadarWidget />
         </div>
       </div>
