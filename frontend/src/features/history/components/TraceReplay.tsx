@@ -16,7 +16,7 @@ import {
   SkipForward,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { ClickMode, TraceColors, TrailMode } from '../lib/traceRenderer'
+import type { ClickMode, TraceColors, TraceHighlight, TrailMode } from '../lib/traceRenderer'
 import {
   computeBounds,
   computeMergedBounds,
@@ -63,13 +63,16 @@ type TraceReplayProps = {
   comparePoints?: MousePoint[]
   compareResolution?: string
   layout?: 'overlay' | 'split'
+  highlight?: TraceHighlight
+  seekToMs?: number | null
+  onReset?: () => void
 }
 
 const SPEED_MIN = 0.1
 const SPEED_MAX = 4
 const SPEED_DEFAULT = 1
 
-export function TraceReplay({ points, resolution, comparePoints, compareResolution, layout = 'overlay' }: TraceReplayProps) {
+export function TraceReplay({ points, resolution, comparePoints, compareResolution, layout = 'overlay', highlight, seekToMs, onReset }: TraceReplayProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const [modalTraceSet, setModalTraceSet] = useState<'primary' | 'compare' | 'both'>('both')
   const openModal = useCallback((traceSet: 'primary' | 'compare' | 'both') => {
@@ -177,6 +180,16 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
     centerRef.current = { cx: bounds.cx, cy: bounds.cy }
   }, [points])
 
+  // External seek (e.g. from kill selection in analysis)
+  useEffect(() => {
+    if (seekToMs == null || !Number.isFinite(seekToMs) || points.length === 0) return
+    actions.seekTo(seekToMs - (points[0]?.ts ?? 0))
+    const i = findPointIndex(points, seekToMs)
+    const p = points[Math.max(0, Math.min(points.length - 1, i))]
+    if (p) centerRef.current = { cx: p.x, cy: p.y }
+    setTransformTick(t => t + 1)
+  }, [seekToMs])
+
   // ── Drawing ──
   const drawToCanvas = useCallback((
     canvas: HTMLCanvasElement | null,
@@ -213,7 +226,7 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
       const step = count > 10000 ? Math.ceil(count / 10000) : 1
       renderTrace(ctx, {
         width: cssW, height: cssH, points, startIdx, endIdx, step, bounds, zoom,
-        center, trailMode, clickMode, curT, colors,
+        center, trailMode, clickMode, curT, colors, highlight,
       })
     }
 
@@ -247,7 +260,7 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
         drawBox,
       })
     }
-  }, [points, comparePoints, playIndex, trailMode, clickMode, bounds, zoom, colors, compareColorSet, durationMs, progressMs, syncByTime])
+  }, [points, comparePoints, playIndex, trailMode, clickMode, bounds, zoom, colors, compareColorSet, durationMs, progressMs, syncByTime, highlight])
 
   useEffect(() => {
     if (modalOpen) {
@@ -389,7 +402,7 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
             active={isPlaying}
           />
           <ControlBtn icon={<SkipForward className="h-3.5 w-3.5" />} title="Forward 5s" onClick={() => actions.nudge(5000)} />
-          <ControlBtn icon={<RotateCcw className="h-3.5 w-3.5" />} title="Reset" onClick={actions.reset} />
+          <ControlBtn icon={<RotateCcw className="h-3.5 w-3.5" />} title="Reset" onClick={() => { actions.reset(); onReset?.() }} />
         </div>
 
         {/* Speed slider */}

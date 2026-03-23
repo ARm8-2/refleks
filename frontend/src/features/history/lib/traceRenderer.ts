@@ -14,6 +14,12 @@ export type TraceBounds = {
   cy: number
 }
 
+export type TraceHighlight = {
+  startTs: number
+  endTs: number
+  color: string
+}
+
 export type RenderOpts = {
   width: number
   height: number
@@ -29,6 +35,7 @@ export type RenderOpts = {
   curT: number
   colors: TraceColors
   drawBox?: boolean
+  highlight?: TraceHighlight
 }
 
 export type TraceColors = {
@@ -226,6 +233,45 @@ export function renderTrace(ctx: CanvasRenderingContext2D, opts: RenderOpts) {
     }
     ctx.fillStyle = colors.endPoint
     ctx.beginPath(); ctx.arc(toX(last.x), toY(last.y), 2, 0, Math.PI * 2); ctx.fill()
+  }
+
+  // ── Highlight overlay ──
+  if (opts.highlight && count >= 2) {
+    const hStart = findPointIndex(points, opts.highlight.startTs)
+    const hEnd = Math.min(findPointIndex(points, opts.highlight.endTs) + 1, endIdx)
+    if (hEnd > hStart) {
+      ctx.lineWidth = 3
+      ctx.strokeStyle = opts.highlight.color
+      ctx.globalAlpha = 0.85
+      let prev = points[hStart]
+      for (let i = hStart + 1; i < hEnd; i++) {
+        const p = points[i]
+        ctx.beginPath()
+        ctx.moveTo(toX(prev.x), toY(prev.y))
+        ctx.lineTo(toX(p.x), toY(p.y))
+        ctx.stroke()
+        prev = p
+      }
+      // Markers at start and end of highlight
+      ctx.globalAlpha = 1
+      ctx.fillStyle = opts.highlight.color
+      // Small dot at start
+      ctx.beginPath()
+      ctx.arc(toX(points[hStart].x), toY(points[hStart].y), 3, 0, Math.PI * 2)
+      ctx.fill()
+      // Larger kill marker at end (the kill point)
+      const killPt = points[Math.min(hEnd - 1, points.length - 1)]
+      ctx.beginPath()
+      ctx.arc(toX(killPt.x), toY(killPt.y), 5, 0, Math.PI * 2)
+      ctx.fill()
+      // White outline on kill marker for visibility
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)'
+      ctx.lineWidth = 1.5
+      ctx.beginPath()
+      ctx.arc(toX(killPt.x), toY(killPt.y), 5, 0, Math.PI * 2)
+      ctx.stroke()
+      ctx.lineWidth = 1
+    }
   }
 
   // ── Click markers ──
