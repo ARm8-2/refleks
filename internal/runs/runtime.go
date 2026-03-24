@@ -3,6 +3,7 @@ package runs
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -21,6 +22,7 @@ type RuntimeService struct {
 	ctx             context.Context
 	watcher         *watcher.Watcher
 	mouse           mouse.Provider
+	runSyncClient   *CloudSyncClient
 	settingsSvc     *appsettings.Service
 	benchmarkSvc    *benchmarks.Service
 	runStore        *Store
@@ -31,10 +33,11 @@ type RuntimeService struct {
 // NewRuntimeService constructs the runtime orchestration service for runs.
 func NewRuntimeService(ctx context.Context, settingsSvc *appsettings.Service, benchmarkSvc *benchmarks.Service, runStore *Store) *RuntimeService {
 	svc := &RuntimeService{
-		ctx:          ctx,
-		settingsSvc:  settingsSvc,
-		benchmarkSvc: benchmarkSvc,
-		runStore:     runStore,
+		ctx:           ctx,
+		settingsSvc:   settingsSvc,
+		benchmarkSvc:  benchmarkSvc,
+		runStore:      runStore,
+		runSyncClient: NewCloudSyncClient(),
 	}
 
 	settings := settingsSvc.Get()
@@ -56,7 +59,7 @@ func NewRuntimeService(ctx context.Context, settingsSvc *appsettings.Service, be
 	svc.watcher = watcher.New(ctx, defaultCfg, runStore)
 	svc.watcher.SetMouseProvider(svc.mouse)
 	svc.watcher.SetOnScenarioParsed(func(rec models.ScenarioRecord) {
-		benchmarkSvc.CheckAndRefreshIfNeeded(rec)
+		svc.handleScenarioParsed(rec)
 	})
 
 	benchmarkSvc.SetOnProgressUpdated(func(id int, p models.BenchmarkProgress) {
@@ -97,7 +100,7 @@ func (s *RuntimeService) StartWatcher(path string) error {
 		s.watcher = watcher.New(s.ctx, cfg, s.runStore)
 		s.watcher.SetMouseProvider(s.mouse)
 		s.watcher.SetOnScenarioParsed(func(rec models.ScenarioRecord) {
-			s.benchmarkSvc.CheckAndRefreshIfNeeded(rec)
+			s.handleScenarioParsed(rec)
 		})
 	} else {
 		if err := s.watcher.UpdateConfig(cfg); err != nil {
@@ -246,6 +249,20 @@ func (s *RuntimeService) SaveSessionNote(sessionID, name, notes string) error {
 		Notes: notes,
 	}
 	return s.settingsSvc.Update(current)
+}
+
+func (s *RuntimeService) handleScenarioParsed(rec models.ScenarioRecord) {
+	s.benchmarkSvc.CheckAndRefreshIfNeeded(rec)
+
+	if s.runSyncClient == nil || strings.TrimSpace(rec.FilePath) == "" {
+		return
+	}
+
+	go func(path string) {
+		if err := s.runSyncClient.SyncRunFile(s.ctx, path); err != nil {
+			runtime.LogWarningf(s.ctx, "run sync failed for %s: %v", path, err)
+		}
+	}(rec.FilePath)
 }
 
 func (s *RuntimeService) startMouseProcessWatcher() {

@@ -24,6 +24,8 @@ const (
 	UpdaterHTTPTimeoutSeconds = 10
 	// UpdaterDownloadTimeoutSeconds is used for downloading installer assets. Larger to accommodate slow links.
 	UpdaterDownloadTimeoutSeconds = 600
+	// RunsSyncHTTPTimeoutSeconds is used for uploading .refleks files to the cloud API.
+	RunsSyncHTTPTimeoutSeconds = 20
 
 	// --- Sensitivity conversion defaults ---
 	// Default yaw (deg/count) constants for supported game scales. These are used
