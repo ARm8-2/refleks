@@ -1,4 +1,4 @@
-import { Widget } from '@/shared/components'
+import { SegmentedControl, Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
 import { usePersistedState } from '@/shared/hooks'
@@ -252,23 +252,11 @@ export function RecentScoresWidget() {
 
   const modalControls = (
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1 rounded-xl bg-surface-subtle p-1">
-        {RECENT_SCORE_RUN_COUNT_OPTIONS.map(n => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => setRunCount(n)}
-            className={cn(
-              'rounded-xl px-3 py-1.5 text-sm font-medium transition-colors',
-              effectiveRunCount === n
-                ? 'bg-surface text-foreground shadow-sm'
-                : 'text-surface-muted-foreground hover:text-foreground',
-            )}
-          >
-            {`Last ${n}`}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        value={effectiveRunCount}
+        options={RECENT_SCORE_RUN_COUNT_OPTIONS.map(n => ({ value: n, label: `Last ${n}` }))}
+        onValueChange={setRunCount}
+      />
       <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
         <button
           type="button"

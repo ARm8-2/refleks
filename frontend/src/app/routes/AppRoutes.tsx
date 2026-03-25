@@ -1,15 +1,34 @@
 import { AppLayout } from '@/app/layout'
-import { Loading } from '@/shared/components'
+import { OverviewPage } from '@/features/overview'
 import { readLastRoute } from '@/shared/lib/navigation'
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
-// Lazy load feature pages for code splitting
-const OverviewPage = lazy(() => import('@/features/overview').then(m => ({ default: m.OverviewPage })))
-const HistoryPage = lazy(() => import('@/features/history').then(m => ({ default: m.HistoryPage })))
-const BenchmarksExplorePage = lazy(() => import('@/features/benchmarks').then(m => ({ default: m.BenchmarksExplorePage })))
-const BenchmarkDetailPage = lazy(() => import('@/features/benchmarks').then(m => ({ default: m.BenchmarkDetailPage })))
-const SettingsPage = lazy(() => import('@/features/settings').then(m => ({ default: m.SettingsPage })))
+const loadHistoryFeature = () => import('@/features/history')
+const loadBenchmarksFeature = () => import('@/features/benchmarks')
+const loadSettingsFeature = () => import('@/features/settings')
+
+const HistoryPage = lazy(() => loadHistoryFeature().then(m => ({ default: m.HistoryPage })))
+const BenchmarksExplorePage = lazy(() => loadBenchmarksFeature().then(m => ({ default: m.BenchmarksExplorePage })))
+const BenchmarkDetailPage = lazy(() => loadBenchmarksFeature().then(m => ({ default: m.BenchmarkDetailPage })))
+const SettingsPage = lazy(() => loadSettingsFeature().then(m => ({ default: m.SettingsPage })))
+
+function RouteLoading() {
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-3 p-6">
+      <div className="h-5 w-44 animate-pulse rounded-md bg-surface-muted" />
+      <div className="h-24 animate-pulse rounded-xl bg-surface-subtle" />
+      <div className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="animate-pulse rounded-xl bg-surface-subtle" />
+        <div className="animate-pulse rounded-xl bg-surface-subtle" />
+      </div>
+    </div>
+  )
+}
+
+function RouteSuspense({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<RouteLoading />}>{children}</Suspense>
+}
 
 function IndexRoute() {
   const lastRoute = readLastRoute()
@@ -21,17 +40,15 @@ function IndexRoute() {
 
 export function AppRoutes() {
   return (
-    <Suspense fallback={<Loading />}>
-      <Routes>
-        <Route path="/" element={<AppLayout />}>
-          <Route index element={<IndexRoute />} />
-          <Route path="overview" element={<OverviewPage />} />
-          <Route path="history" element={<HistoryPage />} />
-          <Route path="benchmarks" element={<BenchmarksExplorePage />} />
-          <Route path="benchmarks/:id" element={<BenchmarkDetailPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-        </Route>
-      </Routes>
-    </Suspense>
+    <Routes>
+      <Route path="/" element={<AppLayout />}>
+        <Route index element={<IndexRoute />} />
+        <Route path="overview" element={<OverviewPage />} />
+        <Route path="history" element={<RouteSuspense><HistoryPage /></RouteSuspense>} />
+        <Route path="benchmarks" element={<RouteSuspense><BenchmarksExplorePage /></RouteSuspense>} />
+        <Route path="benchmarks/:id" element={<RouteSuspense><BenchmarkDetailPage /></RouteSuspense>} />
+        <Route path="settings" element={<RouteSuspense><SettingsPage /></RouteSuspense>} />
+      </Route>
+    </Routes>
   )
 }

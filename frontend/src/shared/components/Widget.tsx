@@ -9,6 +9,8 @@ type WidgetProps = {
   children: ReactNode
   className?: string
   contentClassName?: string
+  hoverable?: boolean
+  hoverClassName?: string
   headerActions?: ReactNode
   modalHeaderActions?: ReactNode
   modalTitle?: ReactNode
@@ -25,6 +27,8 @@ export function Widget({
   children,
   className,
   contentClassName,
+  hoverable = true,
+  hoverClassName = 'hover:bg-surface-hover',
   headerActions,
   modalHeaderActions,
   modalTitle,
@@ -36,6 +40,7 @@ export function Widget({
 }: WidgetProps) {
   const [open, setOpen] = useState(false)
   const canExpand = Boolean(modalContent)
+  const shouldHover = hoverable
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (!canExpand) return
@@ -54,7 +59,9 @@ export function Widget({
       <section
         className={cn(
           'flex flex-col rounded-xl bg-surface p-5',
-          canExpand && 'cursor-pointer transition-colors hover:bg-surface-hover',
+          shouldHover && 'transition-colors',
+          shouldHover && hoverClassName,
+          canExpand && 'cursor-pointer',
           className,
         )}
         onClick={canExpand ? () => setOpen(true) : undefined}

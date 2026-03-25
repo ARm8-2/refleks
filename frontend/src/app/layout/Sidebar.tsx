@@ -17,25 +17,41 @@ type SidebarItemProps = {
   label: string
   onClick?: () => void
   open: boolean
+  showActiveBackground?: boolean
   to?: string
   trailing?: ReactNode
 }
 
-function SidebarItem({ active = false, icon, label, onClick, open, to, trailing }: SidebarItemProps) {
+function SidebarItem({ active = false, icon, label, onClick, open, showActiveBackground = true, to, trailing }: SidebarItemProps) {
   const collapsed = !open
   const className = cn(
-    'flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring',
-    active && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground',
-    collapsed && 'justify-center px-0',
+    'relative z-[1] flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+    active && (showActiveBackground ? 'bg-sidebar-accent' : null),
+    active && 'font-medium text-sidebar-accent-foreground',
   )
 
   const content = (
     <>
-      <span className="flex size-[18px] shrink-0 items-center justify-center [&_svg]:size-[18px] [&_svg]:shrink-0">
+      <span className={cn(
+        'flex size-[18px] shrink-0 items-center justify-center transition-transform duration-200 [&_svg]:size-[18px] [&_svg]:shrink-0',
+        active && 'scale-110',
+      )}>
         {icon}
       </span>
-      {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
-      {!collapsed && trailing}
+      <span className={cn(
+        'min-w-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 ease-out',
+        collapsed ? 'max-w-0 opacity-0' : 'max-w-[12rem] flex-1 opacity-100',
+      )}>
+        {label}
+      </span>
+      {trailing && (
+        <span className={cn(
+          'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 ease-out',
+          collapsed ? 'max-w-0 opacity-0' : 'max-w-[6rem] opacity-100',
+        )}>
+          {trailing}
+        </span>
+      )}
     </>
   )
 
@@ -49,16 +65,14 @@ function SidebarItem({ active = false, icon, label, onClick, open, to, trailing 
     </button>
   )
 
-  if (!collapsed) {
-    return item
-  }
-
   return (
     <Tooltip>
       <TooltipTrigger asChild>{item}</TooltipTrigger>
-      <TooltipContent side="right" align="center">
-        {label}
-      </TooltipContent>
+      {collapsed && (
+        <TooltipContent side="right" align="center">
+          {label}
+        </TooltipContent>
+      )}
     </Tooltip>
   )
 }
@@ -76,8 +90,8 @@ function SidebarFavoriteItem({ abbreviation, active, color, label, open, onClick
   const collapsed = !open
   const pill = (
     <span
-      className="w-[38px] rounded border border-sidebar-border py-0.5 text-center text-[10px] font-semibold text-surface-muted-foreground"
-      style={color ? { borderColor: color, color } : undefined}
+      className="w-[38px] shrink-0 rounded py-0.5 text-center text-[10px] font-semibold text-surface-muted-foreground"
+      style={color ? { color } : undefined}
     >
       {abbreviation}
     </span>
@@ -93,21 +107,25 @@ function SidebarFavoriteItem({ abbreviation, active, color, label, open, onClick
         collapsed && 'justify-center px-0',
       )}
     >
-      {pill}
-      {!collapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+      {collapsed ? (
+        pill
+      ) : (
+        <>
+          {pill}
+          <span className="min-w-0 flex-1 truncate">{label}</span>
+        </>
+      )}
     </button>
   )
-
-  if (!collapsed) {
-    return item
-  }
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>{item}</TooltipTrigger>
-      <TooltipContent side="right" align="center">
-        {label}
-      </TooltipContent>
+      {collapsed && (
+        <TooltipContent side="right" align="center">
+          {label}
+        </TooltipContent>
+      )}
     </Tooltip>
   )
 }
@@ -119,6 +137,11 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
   const navigate = useNavigate()
   const collapsed = !open
   const benchmarksTarget = selectedBenchmark ? benchmarkPath(selectedBenchmark) : '/benchmarks'
+  const primaryActiveIndex = useMemo(() => {
+    if (location.pathname.startsWith('/history')) return 1
+    if (location.pathname.startsWith('/benchmarks')) return 2
+    return 0
+  }, [location.pathname])
 
   const favBenchmarks = useMemo(() => {
     if (favorites.length === 0 || benchmarks.length === 0) return []
@@ -147,12 +170,18 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 pb-2">
-          <nav aria-label="Primary" className="flex flex-col gap-1">
+          <nav aria-label="Primary" className="relative flex flex-col gap-1">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-0 h-8 rounded-md bg-sidebar-accent transition-transform duration-220 ease-emphasized will-change-transform"
+              style={{ transform: `translateY(${primaryActiveIndex * 36}px)` }}
+            />
             <SidebarItem
               active={location.pathname === '/' || location.pathname.startsWith('/overview')}
               icon={<LayoutGrid />}
               label="Overview"
               open={open}
+              showActiveBackground={false}
               to="/overview"
             />
             <SidebarItem
@@ -160,6 +189,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
               icon={<TrendingUp />}
               label="History"
               open={open}
+              showActiveBackground={false}
               to="/history"
             />
             <SidebarItem
@@ -167,6 +197,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
               icon={<Activity />}
               label="Benchmarks"
               open={open}
+              showActiveBackground={false}
               to={benchmarksTarget}
             />
           </nav>

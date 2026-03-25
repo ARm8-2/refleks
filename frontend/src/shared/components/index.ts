@@ -13,11 +13,13 @@ export {
   SelectTrigger,
   SelectValue
 } from './ui/select'
+export { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 
 export { ErrorBoundary } from './ErrorBoundary'
 export { InfoTooltip } from './InfoTooltip'
 export { Loading } from './Loading'
 export { Modal } from './Modal'
 export { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
+export { SegmentedControl } from './ui/segmented-control'
 export { Slider } from './ui/slider'
 export { Widget } from './Widget'

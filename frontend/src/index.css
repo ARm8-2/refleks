@@ -91,13 +91,13 @@
     --canvas-foreground: #e6e6e6;
     --surface: #171717;
     --surface-foreground: #e6e6e6;
-    --surface-subtle: #1f1f1f;
+    --surface-subtle: #202020;
     --surface-subtle-foreground: #b8b8b8;
-    --surface-subtle-hover: #2d2d2d;
-    --surface-muted: #2b2b2b;
+    --surface-subtle-hover: #2a2a2a;
+    --surface-muted: #272727;
     --surface-muted-foreground: #a3a3a3;
-    --surface-muted-soft: #2b2b2b59;
-    --surface-muted-strong: #2b2b2b66;
+    --surface-muted-soft: #27272759;
+    --surface-muted-strong: #27272766;
     --surface-emphasis: #363636;
     --surface-emphasis-foreground: #e6e6e6;
     --surface-panel: #141414b3;
@@ -239,6 +239,10 @@
 
   .scrollbar-compact {
     scrollbar-width: thin;
+  }
+
+  .ease-emphasized {
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 }
 

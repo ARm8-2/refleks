@@ -1,4 +1,4 @@
-import { Button } from '@/shared/components'
+import { Button, SegmentedControl } from '@/shared/components'
 import { usePersistedState } from '@/shared/hooks'
 import { cn, STORAGE_KEYS } from '@/shared/lib'
 import { Columns2, Layers, PanelRightClose, Rows2, Trophy } from 'lucide-react'
@@ -39,23 +39,11 @@ export function HistoryRunDetailPane({
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-surface">
       <div className="flex items-center justify-between gap-2 px-4 py-3">
-        <div className="flex items-center gap-1 rounded-xl bg-surface-subtle p-1">
-          {INSPECTOR_TABS.map(tab => (
-            <button
-              key={tab.value}
-              type="button"
-              onClick={() => onTabChange(tab.value)}
-              className={cn(
-                'rounded-xl px-3 py-1.5 text-sm font-medium transition-colors',
-                activeTab === tab.value
-                  ? 'bg-surface text-foreground shadow-sm'
-                  : 'text-surface-muted-foreground hover:text-foreground',
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          value={activeTab}
+          options={INSPECTOR_TABS}
+          onValueChange={onTabChange}
+        />
         <div className="flex items-center gap-1">
           {primaryRun && !isPrimaryPb && (
             <Button
