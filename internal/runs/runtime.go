@@ -253,6 +253,9 @@ func (s *RuntimeService) SaveSessionNote(sessionID, name, notes string) error {
 
 func (s *RuntimeService) handleScenarioParsed(rec models.ScenarioRecord) {
 	s.benchmarkSvc.CheckAndRefreshIfNeeded(rec)
+	if !s.settingsSvc.Get().RunSyncEnabled {
+		return
+	}
 
 	if s.runSyncClient == nil || strings.TrimSpace(rec.FilePath) == "" {
 		return

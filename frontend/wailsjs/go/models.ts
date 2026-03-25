@@ -498,6 +498,8 @@ export namespace models {
 	    mouseTrackingEnabled: boolean;
 	    mouseBufferMinutes: number;
 	    autostartEnabled: boolean;
+	    anonymousEnabled: boolean;
+	    runSyncEnabled: boolean;
 	    scenarioNotes?: Record<string, ScenarioNote>;
 	    sessionNotes?: Record<string, SessionNote>;
 	
@@ -520,6 +522,8 @@ export namespace models {
 	        this.mouseTrackingEnabled = source["mouseTrackingEnabled"];
 	        this.mouseBufferMinutes = source["mouseBufferMinutes"];
 	        this.autostartEnabled = source["autostartEnabled"];
+	        this.anonymousEnabled = source["anonymousEnabled"];
+	        this.runSyncEnabled = source["runSyncEnabled"];
 	        this.scenarioNotes = this.convertValues(source["scenarioNotes"], ScenarioNote, true);
 	        this.sessionNotes = this.convertValues(source["sessionNotes"], SessionNote, true);
 	    }

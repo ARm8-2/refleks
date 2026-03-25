@@ -15,6 +15,8 @@ type Settings struct {
 	MouseTrackingEnabled bool                    `json:"mouseTrackingEnabled"`
 	MouseBufferMinutes   int                     `json:"mouseBufferMinutes"`
 	AutostartEnabled     bool                    `json:"autostartEnabled"`
+	AnonymousEnabled     bool                    `json:"anonymousEnabled"`
+	RunSyncEnabled       bool                    `json:"runSyncEnabled"`
 	ScenarioNotes        map[string]ScenarioNote `json:"scenarioNotes,omitempty"`
 	SessionNotes         map[string]SessionNote  `json:"sessionNotes,omitempty"`
 }

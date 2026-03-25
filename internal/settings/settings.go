@@ -36,6 +36,8 @@ func Default() models.Settings {
 		MouseTrackingEnabled: false,
 		MouseBufferMinutes:   constants.DefaultMouseBufferMinutes,
 		AutostartEnabled:     false,
+		AnonymousEnabled:     false,
+		RunSyncEnabled:       true,
 	}
 }
 

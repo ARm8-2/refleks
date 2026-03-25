@@ -197,6 +197,8 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		newSettings.MouseTrackingEnabled = defaults.MouseTrackingEnabled
 		newSettings.MouseBufferMinutes = defaults.MouseBufferMinutes
 		newSettings.AutostartEnabled = defaults.AutostartEnabled
+		newSettings.AnonymousEnabled = defaults.AnonymousEnabled
+		newSettings.RunSyncEnabled = defaults.RunSyncEnabled
 
 		// Sync autostart state
 		if newSettings.AutostartEnabled {

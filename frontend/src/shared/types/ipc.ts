@@ -191,6 +191,8 @@ export interface Settings {
   mouseTrackingEnabled?: boolean
   mouseBufferMinutes?: number
   autostartEnabled?: boolean
+  anonymousEnabled?: boolean
+  runSyncEnabled?: boolean
   scenarioNotes?: Record<string, ScenarioNote>
   sessionNotes?: Record<string, SessionNote>
 }
