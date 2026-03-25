@@ -27,7 +27,7 @@ export function Widget({
   children,
   className,
   contentClassName,
-  hoverable = true,
+  hoverable = false,
   hoverClassName = 'hover:bg-surface-hover',
   headerActions,
   modalHeaderActions,

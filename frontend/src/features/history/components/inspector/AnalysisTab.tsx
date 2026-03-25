@@ -92,7 +92,7 @@ export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: H
         <SummaryMetrics analysis={primaryAnalysis} />
         <Widget
           title="Kills over time"
-          className="bg-surface-subtle hover:bg-surface-muted"
+          className="bg-surface-subtle"
           modalTitle="Kills over time"
           modalContent={<EventsChart data={primary.events} height="h-[360px]" />}
         >
@@ -102,7 +102,7 @@ export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: H
           <Widget
             title="TTK trend"
             description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill · R² ${primaryAnalysis.movingAvg.r2.toFixed(3)}`}
-            className="bg-surface-subtle hover:bg-surface-muted"
+            className="bg-surface-subtle"
             modalTitle="TTK moving average"
             modalContent={<TTKChart data={primary.ttk} height="h-[360px]" />}
           >
@@ -111,7 +111,7 @@ export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: H
           <Widget
             title="Accuracy vs speed"
             description={`Pearson r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-            className="bg-surface-subtle hover:bg-surface-muted"
+            className="bg-surface-subtle"
             modalTitle="Accuracy vs speed"
             modalContent={<ScatterPlot data={primary.scatter} height="h-[360px]" />}
           >

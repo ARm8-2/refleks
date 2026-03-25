@@ -164,7 +164,7 @@ export function HistorySessionOverview({ session, sessions, sessionRuns, selecte
                 scenarioName={selectedScenario}
                 points={trendPoints}
                 onClickPoint={runId => onSelectRun(runId)}
-                className="bg-surface-subtle hover:bg-surface-muted"
+                className="bg-surface-subtle"
               />
 
               <div className="grid gap-3 lg:grid-cols-2">
@@ -173,11 +173,11 @@ export function HistorySessionOverview({ session, sessions, sessionRuns, selecte
                   scenarioName={selectedScenario}
                   title="Performance vs Sensitivity"
                   description={selectedScenario ? `${selectedScenario} in this session.` : undefined}
-                  className="bg-surface-subtle hover:bg-surface-muted"
+                  className="bg-surface-subtle"
                 />
                 <SessionScenarioRadarWidget
                   session={session}
-                  className="bg-surface-subtle hover:bg-surface-muted"
+                  className="bg-surface-subtle"
                 />
               </div>
             </div>
