@@ -1,4 +1,4 @@
-import { Input, Loading, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
+import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
 import { useBenchmarks, usePersistedState, useStore } from '@/shared/hooks'
 import { STORAGE_KEYS } from '@/shared/lib'
 import type { Benchmark } from '@/shared/types'
@@ -144,7 +144,7 @@ export function BenchmarksExplorePage() {
     navigate(`/benchmarks/${encodeURIComponent(name)}`)
   }
 
-  if (loading) return <Loading />
+  const showInitialSkeleton = loading && benchmarks.length === 0
 
   return (
     <div className="flex-1 overflow-auto text-sm">
@@ -231,83 +231,96 @@ export function BenchmarksExplorePage() {
 
       {/* Content */}
       <div className="p-4 space-y-4">
-        {/* Recommended benchmarks section */}
-        {showRecs && recommendedBenchmarks.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-primary mt-1 mb-2 select-none">
-              <Sparkles size={16} />
-              <span className="whitespace-nowrap">
-                Recommended{' '}
-                <span className="text-xs opacity-50">({recommendedBenchmarks.length})</span>
-              </span>
-              <div className="h-px bg-primary-muted flex-1" />
-            </div>
+        {showInitialSkeleton ? (
+          <div className="space-y-3">
+            <div className="h-8 w-56 animate-pulse rounded-xl bg-surface-subtle" />
             <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
-              {recommendedBenchmarks.map(b => (
-                <BenchmarkCard
-                  key={b.benchmarkName}
-                  benchmark={b}
-                  isFavorite={isFavorite(b.benchmarkName)}
-                  onToggleFavorite={() => toggleFavorite(b.benchmarkName)}
-                  onSelect={() => handleSelectBenchmark(b.benchmarkName)}
-                />
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="h-[68px] animate-pulse rounded-xl bg-surface-subtle" />
               ))}
             </div>
           </div>
-        )}
-
-        {filtered.length === 0 ? (
-          <div className="text-sm text-surface-muted-foreground py-8 text-center">
-            {benchmarks.length === 0
-              ? 'No benchmarks available.'
-              : showFavOnly
-                ? 'No favorite benchmarks yet. Star a benchmark to add it here.'
-                : query
-                  ? 'No benchmarks match your search.'
-                  : 'No benchmarks found.'}
-          </div>
         ) : (
-          groupKeys.map(group => {
-            const isCollapsed = collapsedGroups[group] || false
-            const items = groups[group]
-
-            return (
-              <div key={group} className="space-y-2">
-                {/* Group header (only when grouping is active) */}
-                {groupBy !== 'none' && (
-                  <button
-                    onClick={() => toggleGroup(group)}
-                    className="flex items-center gap-2 text-sm font-medium text-surface-muted-foreground mt-2 mb-2 w-full hover:text-foreground transition-colors text-left group/hdr select-none"
-                  >
-                    <ChevronDown
-                      size={16}
-                      className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+          <>
+            {/* Recommended benchmarks section */}
+            {showRecs && recommendedBenchmarks.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-primary mt-1 mb-2 select-none">
+                  <Sparkles size={16} />
+                  <span className="whitespace-nowrap">
+                    Recommended{' '}
+                    <span className="text-xs opacity-50">({recommendedBenchmarks.length})</span>
+                  </span>
+                  <div className="h-px bg-primary-muted flex-1" />
+                </div>
+                <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                  {recommendedBenchmarks.map(b => (
+                    <BenchmarkCard
+                      key={b.benchmarkName}
+                      benchmark={b}
+                      isFavorite={isFavorite(b.benchmarkName)}
+                      onToggleFavorite={() => toggleFavorite(b.benchmarkName)}
+                      onSelect={() => handleSelectBenchmark(b.benchmarkName)}
                     />
-                    <span className="whitespace-nowrap">
-                      {group}{' '}
-                      <span className="text-xs opacity-50">({items.length})</span>
-                    </span>
-                    <div className="h-px bg-primary-faint flex-1 group-hover/hdr:bg-primary-muted transition-colors" />
-                  </button>
-                )}
-
-                {/* Cards grid */}
-                {!isCollapsed && (
-                  <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
-                    {items.map(b => (
-                      <BenchmarkCard
-                        key={b.benchmarkName}
-                        benchmark={b}
-                        isFavorite={isFavorite(b.benchmarkName)}
-                        onToggleFavorite={() => toggleFavorite(b.benchmarkName)}
-                        onSelect={() => handleSelectBenchmark(b.benchmarkName)}
-                      />
-                    ))}
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
-            )
-          })
+            )}
+
+            {filtered.length === 0 ? (
+              <div className="text-sm text-surface-muted-foreground py-8 text-center">
+                {benchmarks.length === 0
+                  ? 'No benchmarks available.'
+                  : showFavOnly
+                    ? 'No favorite benchmarks yet. Star a benchmark to add it here.'
+                    : query
+                      ? 'No benchmarks match your search.'
+                      : 'No benchmarks found.'}
+              </div>
+            ) : (
+              groupKeys.map(group => {
+                const isCollapsed = collapsedGroups[group] || false
+                const items = groups[group]
+
+                return (
+                  <div key={group} className="space-y-2">
+                    {/* Group header (only when grouping is active) */}
+                    {groupBy !== 'none' && (
+                      <button
+                        onClick={() => toggleGroup(group)}
+                        className="flex items-center gap-2 text-sm font-medium text-surface-muted-foreground mt-2 mb-2 w-full hover:text-foreground transition-colors text-left group/hdr select-none"
+                      >
+                        <ChevronDown
+                          size={16}
+                          className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}
+                        />
+                        <span className="whitespace-nowrap">
+                          {group}{' '}
+                          <span className="text-xs opacity-50">({items.length})</span>
+                        </span>
+                        <div className="h-px bg-primary-faint flex-1 group-hover/hdr:bg-primary-muted transition-colors" />
+                      </button>
+                    )}
+
+                    {/* Cards grid */}
+                    {!isCollapsed && (
+                      <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                        {items.map(b => (
+                          <BenchmarkCard
+                            key={b.benchmarkName}
+                            benchmark={b}
+                            isFavorite={isFavorite(b.benchmarkName)}
+                            onToggleFavorite={() => toggleFavorite(b.benchmarkName)}
+                            onSelect={() => handleSelectBenchmark(b.benchmarkName)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </>
         )}
       </div>
     </div>

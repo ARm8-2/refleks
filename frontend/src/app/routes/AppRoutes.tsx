@@ -1,7 +1,7 @@
 import { AppLayout } from '@/app/layout'
 import { OverviewPage } from '@/features/overview'
 import { readLastRoute } from '@/shared/lib/navigation'
-import { lazy, Suspense, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
 const loadHistoryFeature = () => import('@/features/history')
@@ -26,8 +26,23 @@ function RouteLoading() {
   )
 }
 
+function DelayedRouteFallback() {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const timerId = window.setTimeout(() => setVisible(true), 120)
+    return () => window.clearTimeout(timerId)
+  }, [])
+
+  if (!visible) {
+    return <div className="h-full min-h-0" />
+  }
+
+  return <RouteLoading />
+}
+
 function RouteSuspense({ children }: { children: ReactNode }) {
-  return <Suspense fallback={<RouteLoading />}>{children}</Suspense>
+  return <Suspense fallback={<DelayedRouteFallback />}>{children}</Suspense>
 }
 
 function IndexRoute() {

@@ -36,7 +36,7 @@ export function BenchmarkDetailPage() {
     navigate('/benchmarks')
   }
 
-  if (loading) return <Loading />
+  const showInitialSkeleton = loading
 
   const benchmark = name ? getBenchmarkByName(name) : null
   const { progress, loading: progressLoading, error, difficultyIndex, setDifficultyIndex } = useBenchmarkDetailProgress(benchmark ?? undefined)
@@ -143,21 +143,28 @@ export function BenchmarkDetailPage() {
       </div>
 
       <div className="p-6 space-y-1">
-        {!benchmark && (
+        {showInitialSkeleton && (
+          <div className="space-y-3 rounded-xl bg-surface p-6 shadow-sm">
+            <div className="h-5 w-56 animate-pulse rounded-md bg-surface-subtle" />
+            <div className="h-[320px] animate-pulse rounded-xl bg-surface-subtle" />
+          </div>
+        )}
+
+        {!showInitialSkeleton && !benchmark && (
           <div className="rounded-xl bg-surface p-6 text-sm text-surface-muted-foreground shadow-sm">
             Benchmark not found.
           </div>
         )}
 
-        {benchmark && progressLoading && <Loading />}
+        {!showInitialSkeleton && benchmark && progressLoading && <Loading />}
 
-        {benchmark && !progressLoading && error && (
+        {!showInitialSkeleton && benchmark && !progressLoading && error && (
           <div className="rounded-xl border border-destructive-border bg-destructive-soft p-4 text-sm text-destructive">
             {error}
           </div>
         )}
 
-        {benchmark && !progressLoading && !error && progress && (
+        {!showInitialSkeleton && benchmark && !progressLoading && !error && progress && (
           <>
             <BenchmarkProgressTable
               benchmark={benchmark}
@@ -183,7 +190,7 @@ export function BenchmarkDetailPage() {
           </>
         )}
 
-        {benchmark && !progressLoading && !error && !progress && (
+        {!showInitialSkeleton && benchmark && !progressLoading && !error && !progress && (
           <div className="rounded-xl bg-surface p-6 text-sm text-surface-muted-foreground shadow-sm">
             No progress data available yet for this difficulty.
           </div>

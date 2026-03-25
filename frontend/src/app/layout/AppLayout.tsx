@@ -27,7 +27,9 @@ export function AppLayout() {
       </div>
 
       <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-canvas shadow">
-        <Outlet />
+        <div key={location.pathname} className="route-content-enter flex min-h-0 flex-1 flex-col">
+          <Outlet />
+        </div>
       </main>
     </div>
   )
