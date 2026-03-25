@@ -47,7 +47,7 @@ function ToggleChip({ label, enabled, onToggle }: { label: string; enabled: bool
       onClick={onToggle}
       className={enabled
         ? 'rounded-xl border border-primary-border-strong bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary transition-colors'
-        : 'rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
+        : 'rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-medium text-surface-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground'}
     >
       {label}
     </button>
@@ -214,10 +214,10 @@ export function BenchmarkOverviewWidget() {
 
   if (!benchmark) {
     return (
-      <div className="min-w-0 rounded-xl bg-card px-6 py-5 shadow-sm flex items-center justify-between gap-4">
+      <div className="min-w-0 rounded-xl bg-surface px-6 py-5 shadow-sm flex items-center justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold text-foreground mb-0.5">Benchmark Overview</h2>
-          <p className="text-xs text-muted-foreground">No benchmark selected yet. Pick one to track your progress here.</p>
+          <p className="text-xs text-surface-muted-foreground">No benchmark selected yet. Pick one to track your progress here.</p>
         </div>
         <Button variant="outline" size="sm" className="shrink-0" onClick={() => navigate('/benchmarks')}>
           Browse Benchmarks
@@ -228,24 +228,24 @@ export function BenchmarkOverviewWidget() {
 
   if (!progress) {
     return (
-      <div className="min-w-0 rounded-xl bg-card p-6 shadow-sm">
+      <div className="min-w-0 rounded-xl bg-surface p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-foreground mb-1">
           {benchmark.abbreviation} {benchmark.benchmarkName}
         </h2>
-        <p className="text-xs text-muted-foreground">Loading progress…</p>
+        <p className="text-xs text-surface-muted-foreground">Loading progress…</p>
       </div>
     )
   }
 
   return (
-    <div className="min-w-0 rounded-xl bg-card shadow-sm overflow-hidden">
+    <div className="min-w-0 rounded-xl bg-surface shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-3 pb-2.5">
         <div>
           <h2 className="text-sm font-semibold text-foreground">
             {benchmark.abbreviation} {benchmark.benchmarkName}
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-surface-muted-foreground">
             Overall {overallRankName} · {formatNumber(progress.benchmarkProgress || 0, 0)}%
           </p>
         </div>
@@ -253,7 +253,7 @@ export function BenchmarkOverviewWidget() {
         <div className="flex flex-wrap items-center gap-2">
           {benchmark.difficulties?.length > 1 && (
             <Select value={String(difficultyIndex)} onValueChange={v => setDifficultyIndex(Number(v) || 0)}>
-              <SelectTrigger className="h-7 w-auto min-w-0 max-w-[200px] px-2 text-xs bg-secondary">
+              <SelectTrigger className="h-7 w-auto min-w-0 max-w-[200px] px-2 text-xs bg-surface-subtle">
                 <SelectValue placeholder="Difficulty" />
               </SelectTrigger>
               <SelectContent>
@@ -279,16 +279,16 @@ export function BenchmarkOverviewWidget() {
           <div className="pr-2">
             {/* Column headers */}
             <div className="grid h-[28px] items-center mb-1.5" style={{ gridTemplateColumns: infoGridTemplate }}>
-              <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[11px] uppercase tracking-wide text-muted-foreground">
+              <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[11px] uppercase tracking-wide text-surface-muted-foreground">
                 Scenario
               </div>
               <div />
               {showNotesCol && <div />}
-              {showRecCol && <div className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">Rec</div>}
+              {showRecCol && <div className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground">Rec</div>}
               {showPlayCol && <div />}
               {showHistoryCol && <div />}
               <div />
-              <div className="text-right text-[11px] uppercase tracking-wide text-muted-foreground">Score</div>
+              <div className="text-right text-[11px] uppercase tracking-wide text-surface-muted-foreground">Score</div>
             </div>
 
             {/* Current scenario section */}
@@ -312,7 +312,7 @@ export function BenchmarkOverviewWidget() {
                   onPlay={() => launchScenario(currentScenario.name, 'challenge').catch(() => { })}
                 />
               ) : (
-                <div className="h-[32px] flex items-center text-[12px] text-muted-foreground">
+                <div className="h-[32px] flex items-center text-[12px] text-surface-muted-foreground">
                   No recent scenario for this benchmark
                 </div>
               )}
@@ -326,7 +326,7 @@ export function BenchmarkOverviewWidget() {
             {/* Recommended scenarios section */}
             <div className="space-y-0.5">
               {recommendedScenarios.length === 0 ? (
-                <div className="h-[32px] flex items-center text-[12px] text-muted-foreground">
+                <div className="h-[32px] flex items-center text-[12px] text-surface-muted-foreground">
                   No recommendations yet
                 </div>
               ) : (
@@ -368,14 +368,14 @@ export function BenchmarkOverviewWidget() {
                 return (
                   <div
                     key={`${rank.name}-${rankIndex}`}
-                    className="text-center text-[11px] uppercase tracking-wide text-muted-foreground"
+                    className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground"
                     style={rank.color ? { color: rank.color } : undefined}
                   >
                     {rank.name}
                   </div>
                 )
               }) : (
-                <div className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">Details</div>
+                <div className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground">Details</div>
               )}
             </div>
 
@@ -461,7 +461,7 @@ export function BenchmarkOverviewWidget() {
               </label>
 
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Keep visible:</span>
+                <span className="text-surface-muted-foreground">Keep visible:</span>
                 <Select value={String(visibleRankCount)} onValueChange={v => setVisibleRankCount(Math.max(1, Number(v) || 1))}>
                   <SelectTrigger className="h-8 w-[80px]">
                     <SelectValue />
@@ -489,8 +489,8 @@ export function BenchmarkOverviewWidget() {
                     disabled={hiddenAutomatically}
                     onClick={() => toggleManualRank(index)}
                     className={visible
-                      ? 'rounded-xl border border-primary-border bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-muted'
-                      : 'rounded-xl border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50'}
+                      ? 'rounded-xl border border-primary-border bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-surface-muted'
+                      : 'rounded-xl border border-border bg-surface px-2.5 py-1 text-xs font-medium text-surface-muted-foreground transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50'}
                     style={rank.color && visible ? { color: rank.color, borderColor: rank.color } : undefined}
                     title={hiddenAutomatically ? 'Hidden automatically because every scenario is already past this rank' : undefined}
                   >

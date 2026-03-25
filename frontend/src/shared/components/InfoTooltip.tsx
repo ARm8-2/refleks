@@ -18,7 +18,7 @@ export function InfoTooltip({ children, side = 'bottom', className, iconClassNam
           <button
             type="button"
             className={cn(
-              'inline-flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground',
+              'inline-flex h-5 w-5 items-center justify-center rounded-md text-surface-muted-foreground transition-colors hover:text-foreground',
               iconClassName,
             )}
           >
@@ -28,7 +28,7 @@ export function InfoTooltip({ children, side = 'bottom', className, iconClassNam
         <TooltipContent
           side={side}
           className={cn(
-            'rounded-lg bg-background px-2.5 py-1.5 text-xs shadow-xl',
+            'rounded-lg bg-canvas px-2.5 py-1.5 text-xs shadow-xl',
             className,
           )}
         >

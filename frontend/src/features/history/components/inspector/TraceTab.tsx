@@ -144,7 +144,7 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
   if (!primary.hasTrace) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted-foreground">No mouse trace data. Enable mouse tracking in settings to record traces.</p>
+        <p className="text-sm text-surface-muted-foreground">No mouse trace data. Enable mouse tracking in settings to record traces.</p>
       </div>
     )
   }
@@ -152,7 +152,7 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
   if (primary.loading || compare.loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading trace…</p>
+        <p className="text-sm text-surface-muted-foreground">Loading trace…</p>
       </div>
     )
   }
@@ -160,7 +160,7 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
   if (primary.error || !primary.points || primary.points.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-muted-foreground">{primary.error ?? 'No trace data available'}</p>
+        <p className="text-sm text-surface-muted-foreground">{primary.error ?? 'No trace data available'}</p>
       </div>
     )
   }
@@ -219,7 +219,7 @@ function AnalysisPanel({ analysis, suggestion, selectedKillIdx, onKillClick }: {
     <div className="shrink-0 space-y-1.5">
       {/* Summary row */}
       <div className="flex flex-wrap items-center gap-2 pl-2 pr-3.5">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-surface-muted-foreground">
           {counts.overshoot > 0 && (
             <span className="flex items-center gap-1">
               <span className={cn('inline-block h-1.5 w-1.5 rounded-full', CLASSIFICATION_STYLES.overshoot.dot)} />
@@ -297,7 +297,7 @@ function KillChip({ kill, selected, onClick }: { kill: KillAnalysis; selected: b
       title={`Kill #${kill.killIdx} — ${kill.classification}${px > 0 ? ` (${fmtNum(px, 0)}px)` : ''} — ${fmtPct(kill.efficiency)} eff`}
       className={cn(
         'flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] tabular-nums transition-colors',
-        selected ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+        selected ? 'bg-surface-muted text-foreground' : 'text-surface-muted-foreground hover:bg-surface-muted/50 hover:text-foreground',
       )}
     >
       <span className={cn('inline-block h-1.5 w-1.5 rounded-full shrink-0', style.dot)} />
@@ -318,21 +318,21 @@ function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
   }
 
   return (
-    <div className="rounded-xl bg-secondary px-3 py-2">
+    <div className="rounded-xl bg-surface-subtle px-3 py-2">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-xs text-muted-foreground">Suggested sens</span>
+          <span className="text-xs text-surface-muted-foreground">Suggested sens</span>
           <span className="font-medium text-foreground">
             {fmtNum(suggestion.recommended, 2)} cm/360
           </span>
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-[11px] text-surface-muted-foreground">
             ({suggestion.changePct >= 0 ? '+' : ''}{fmtNum(suggestion.changePct)}%)
           </span>
           <button
             type="button"
             onClick={handleCopy}
             title={`Copy ${suggestion.recommended.toFixed(2)}`}
-            className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+            className="inline-flex h-5 w-5 items-center justify-center rounded text-surface-muted-foreground hover:text-foreground"
           >
             <Copy className="h-3 w-3" />
           </button>

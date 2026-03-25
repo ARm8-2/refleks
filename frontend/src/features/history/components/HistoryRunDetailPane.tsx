@@ -37,9 +37,9 @@ export function HistoryRunDetailPane({
   const [overlay, setOverlay] = usePersistedState(STORAGE_KEYS.historyAnalysisOverlay, false)
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-card">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-surface">
       <div className="flex items-center justify-between gap-2 px-4 py-3">
-        <div className="flex items-center gap-1 rounded-xl bg-secondary p-1">
+        <div className="flex items-center gap-1 rounded-xl bg-surface-subtle p-1">
           {INSPECTOR_TABS.map(tab => (
             <button
               key={tab.value}
@@ -48,8 +48,8 @@ export function HistoryRunDetailPane({
               className={cn(
                 'rounded-xl px-3 py-1.5 text-sm font-medium transition-colors',
                 activeTab === tab.value
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
+                  ? 'bg-surface text-foreground shadow-sm'
+                  : 'text-surface-muted-foreground hover:text-foreground',
               )}
             >
               {tab.label}
@@ -95,7 +95,7 @@ export function HistoryRunDetailPane({
 
       {!primaryRun ? (
         <div className="flex flex-1 items-center justify-center p-6">
-          <p className="text-sm text-muted-foreground">Select a run to inspect</p>
+          <p className="text-sm text-surface-muted-foreground">Select a run to inspect</p>
         </div>
       ) : (
         <div className={cn(

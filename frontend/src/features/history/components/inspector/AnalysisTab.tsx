@@ -77,7 +77,7 @@ export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: H
 
   if (!primaryAnalysis) {
     return (
-      <div className="rounded-xl bg-secondary p-4 text-sm text-muted-foreground">
+      <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">
         Not enough event data to analyze. At least 2 kills are required.
       </div>
     )
@@ -91,7 +91,7 @@ export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: H
         <SummaryMetrics analysis={primaryAnalysis} />
         <Widget
           title="Kills over time"
-          className="bg-secondary hover:bg-muted"
+          className="bg-surface-subtle hover:bg-surface-muted"
           modalTitle="Kills over time"
           modalContent={<EventsChart data={primary.events} height="h-[360px]" />}
         >
@@ -101,7 +101,7 @@ export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: H
           <Widget
             title="TTK trend"
             description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill · R² ${primaryAnalysis.movingAvg.r2.toFixed(3)}`}
-            className="bg-secondary hover:bg-muted"
+            className="bg-surface-subtle hover:bg-surface-muted"
             modalTitle="TTK moving average"
             modalContent={<TTKChart data={primary.ttk} height="h-[360px]" />}
           >
@@ -110,7 +110,7 @@ export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: H
           <Widget
             title="Accuracy vs speed"
             description={`Pearson r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-            className="bg-secondary hover:bg-muted"
+            className="bg-surface-subtle hover:bg-surface-muted"
             modalTitle="Accuracy vs speed"
             modalContent={<ScatterPlot data={primary.scatter} height="h-[360px]" />}
           >
@@ -165,7 +165,7 @@ function SplitCharts({
       <div className="grid gap-3 md:grid-cols-2">
         <Widget
           title="Kills over time — Pinned"
-          className="bg-secondary hover:bg-muted"
+          className="bg-surface-subtle hover:bg-surface-muted"
           modalTitle="Kills over time — Pinned"
           modalContent={<EventsChart data={primary.events} height="h-[360px]" />}
         >
@@ -173,7 +173,7 @@ function SplitCharts({
         </Widget>
         <Widget
           title="Kills over time — Compare"
-          className="bg-secondary hover:bg-muted"
+          className="bg-surface-subtle hover:bg-surface-muted"
           modalTitle="Kills over time — Compare"
           modalContent={<EventsChart data={compare.events} height="h-[360px]" />}
         >
@@ -185,7 +185,7 @@ function SplitCharts({
         <Widget
           title="TTK trend — Pinned"
           description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill`}
-          className="bg-secondary hover:bg-muted"
+          className="bg-surface-subtle hover:bg-surface-muted"
           modalTitle="TTK trend — Pinned"
           modalContent={<TTKChart data={primary.ttk} height="h-[360px]" />}
         >
@@ -194,7 +194,7 @@ function SplitCharts({
         <Widget
           title="TTK trend — Compare"
           description={`Slope: ${compareAnalysis.movingAvg.slope >= 0 ? '+' : ''}${compareAnalysis.movingAvg.slope.toFixed(4)}s/kill`}
-          className="bg-secondary hover:bg-muted"
+          className="bg-surface-subtle hover:bg-surface-muted"
           modalTitle="TTK trend — Compare"
           modalContent={<TTKChart data={compare.ttk} height="h-[360px]" />}
         >
@@ -206,7 +206,7 @@ function SplitCharts({
         <Widget
           title="Acc vs speed — Pinned"
           description={`r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-          className="bg-secondary hover:bg-muted"
+          className="bg-surface-subtle hover:bg-surface-muted"
           modalTitle="Accuracy vs speed — Pinned"
           modalContent={<ScatterPlot data={primary.scatter} height="h-[360px]" />}
         >
@@ -215,7 +215,7 @@ function SplitCharts({
         <Widget
           title="Acc vs speed — Compare"
           description={`r: ${compareAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-          className="bg-secondary hover:bg-muted"
+          className="bg-surface-subtle hover:bg-surface-muted"
           modalTitle="Accuracy vs speed — Compare"
           modalContent={<ScatterPlot data={compare.scatter} height="h-[360px]" />}
         >
@@ -271,7 +271,7 @@ function OverlayCharts({
     <div className="space-y-3">
       <Widget
         title="Kills over time"
-        className="bg-secondary hover:bg-muted"
+        className="bg-surface-subtle hover:bg-surface-muted"
         modalTitle="Kills over time — Overlay"
         modalContent={<EventsChartOverlay data={eventsOverlay} height="h-[360px]" />}
       >
@@ -281,7 +281,7 @@ function OverlayCharts({
         <Widget
           title="TTK trend"
           description={`Pinned slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)} · Compare: ${compareAnalysis.movingAvg.slope >= 0 ? '+' : ''}${compareAnalysis.movingAvg.slope.toFixed(4)}`}
-          className="bg-secondary hover:bg-muted"
+          className="bg-surface-subtle hover:bg-surface-muted"
           modalTitle="TTK trend — Overlay"
           modalContent={<TTKChartOverlay data={ttkOverlay} height="h-[360px]" />}
         >
@@ -290,7 +290,7 @@ function OverlayCharts({
         <Widget
           title="Accuracy vs speed"
           description={`Pinned r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)} · Compare: ${compareAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-          className="bg-secondary hover:bg-muted"
+          className="bg-surface-subtle hover:bg-surface-muted"
           modalTitle="Accuracy vs speed — Overlay"
           modalContent={<ScatterPlotOverlay primary={primary.scatter} compare={compare.scatter} height="h-[360px]" />}
         >
@@ -308,7 +308,7 @@ function SummaryMetrics({ analysis, label }: { analysis: ScenarioAnalysis; label
 
   return (
     <div className="space-y-1.5">
-      {label && <div className="text-xs font-medium text-muted-foreground">{label}</div>}
+      {label && <div className="text-xs font-medium text-surface-muted-foreground">{label}</div>}
       <div className="grid grid-cols-3 gap-2">
         <MiniStat label="Kills" value={String(summary.kills)} />
         <MiniStat label="Accuracy" value={fmtPct(summary.finalAcc)} />
@@ -440,8 +440,8 @@ function ScatterPlotOverlay({ primary, compare, height }: { primary: Array<{ x: 
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-card px-2.5 py-2">
-      <div className="text-[10px] text-muted-foreground">{label}</div>
+    <div className="rounded-lg bg-surface px-2.5 py-2">
+      <div className="text-[10px] text-surface-muted-foreground">{label}</div>
       <div className="mt-0.5 text-sm font-semibold text-foreground tabular-nums">{value}</div>
     </div>
   )

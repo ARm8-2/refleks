@@ -117,7 +117,7 @@ export function EnvironmentTab({ primaryRun, compareRun, onClearPrimaryRun, onCl
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="font-medium text-foreground">{primaryRun.scenarioName}</div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
+          <div className="mt-0.5 text-xs text-surface-muted-foreground">
             {formatRunTimestamp(primaryRun.playedAt)} · {formatSessionTitle(primaryRun.session)}
           </div>
         </div>
@@ -157,21 +157,21 @@ function CompareEnvironmentView({ primaryRun, compareRun, onClearPrimaryRun, onC
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="flex items-start justify-between gap-2 rounded-xl bg-secondary px-3 py-2.5">
+        <div className="flex items-start justify-between gap-2 rounded-xl bg-surface-subtle px-3 py-2.5">
           <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Pinned</div>
+            <div className="text-xs text-surface-muted-foreground">Pinned</div>
             <div className="mt-0.5 font-medium text-foreground truncate">{primaryRun.scenarioName}</div>
-            <div className="text-[11px] text-muted-foreground">{formatRunTimestamp(primaryRun.playedAt)}</div>
+            <div className="text-[11px] text-surface-muted-foreground">{formatRunTimestamp(primaryRun.playedAt)}</div>
           </div>
           <Button variant="ghost" size="sm" className="shrink-0" onClick={onClearPrimaryRun}>
             <PinOff className="h-3.5 w-3.5" />
           </Button>
         </div>
-        <div className="flex items-start justify-between gap-2 rounded-xl bg-secondary px-3 py-2.5">
+        <div className="flex items-start justify-between gap-2 rounded-xl bg-surface-subtle px-3 py-2.5">
           <div className="min-w-0">
-            <div className="text-xs text-muted-foreground">Compare</div>
+            <div className="text-xs text-surface-muted-foreground">Compare</div>
             <div className="mt-0.5 font-medium text-foreground truncate">{compareRun.scenarioName}</div>
-            <div className="text-[11px] text-muted-foreground">{formatRunTimestamp(compareRun.playedAt)}</div>
+            <div className="text-[11px] text-surface-muted-foreground">{formatRunTimestamp(compareRun.playedAt)}</div>
           </div>
           <Button variant="ghost" size="sm" className="shrink-0" onClick={onClearComparison}>
             <ArrowRightLeft className="h-3.5 w-3.5" />

@@ -18,10 +18,10 @@ type Segment = {
 
 type ScopeLevel = 'all' | 'category' | 'subcategory'
 
-const CARD_BACKGROUND = 'var(--card)'
+const CARD_BACKGROUND = 'var(--surface)'
 
 function buildConicGradient(segments: Segment[]): string {
-  if (!segments.length) return 'var(--muted)'
+  if (!segments.length) return 'var(--surface-muted)'
 
   let cursor = 0
   const stops = segments
@@ -90,7 +90,7 @@ export function RankDistributionWidget({ progress }: Props) {
       counts.push({
         label: 'Below R1',
         count: belowR1,
-        color: adjustColorForTheme('var(--muted-foreground)', CARD_BACKGROUND, 0.9),
+        color: adjustColorForTheme('var(--surface-muted-foreground)', CARD_BACKGROUND, 0.9),
         percent: 0,
       })
     }
@@ -122,7 +122,7 @@ export function RankDistributionWidget({ progress }: Props) {
 
   const renderBody = (expanded: boolean) => {
     if (totalScenarios === 0) {
-      return <div className="rounded-xl bg-secondary p-4 text-sm text-muted-foreground">No data.</div>
+      return <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">No data.</div>
     }
 
     const donutSize = expanded ? 'h-[200px] w-[200px]' : 'h-[160px] w-[160px]'
@@ -135,21 +135,21 @@ export function RankDistributionWidget({ progress }: Props) {
             style={{ background: donutBackground }}
             aria-label="Rank distribution donut"
           />
-          <div className="absolute inset-[22%] flex flex-col items-center justify-center rounded-full bg-card">
-            <span className="text-[11px] text-muted-foreground">Scenarios</span>
+          <div className="absolute inset-[22%] flex flex-col items-center justify-center rounded-full bg-surface">
+            <span className="text-[11px] text-surface-muted-foreground">Scenarios</span>
             <span className="text-xl font-semibold text-foreground">{formatNumber(totalScenarios, 0)}</span>
           </div>
         </div>
 
         <div className="space-y-2 max-h-[320px] overflow-auto pr-1">
           {segments.map(segment => (
-            <div key={segment.label} className="rounded-xl bg-secondary px-3 py-2 text-sm">
+            <div key={segment.label} className="rounded-xl bg-surface-subtle px-3 py-2 text-sm">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: segment.color }} />
                   <span className="truncate text-foreground">{segment.label}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-surface-muted-foreground">
                   {formatNumber(segment.count, 0)} · {formatNumber(segment.percent, 1, false)}%
                 </span>
               </div>
@@ -167,7 +167,7 @@ export function RankDistributionWidget({ progress }: Props) {
       headerActions={(
         <div className="flex items-center gap-2">
           <Select value={scopeLevel} onValueChange={value => setScopeLevel(value as ScopeLevel)}>
-            <SelectTrigger className="h-8 min-w-[120px] w-auto px-2 text-xs bg-secondary">
+            <SelectTrigger className="h-8 min-w-[120px] w-auto px-2 text-xs bg-surface-subtle">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -179,7 +179,7 @@ export function RankDistributionWidget({ progress }: Props) {
 
           {scopeLevel !== 'all' && categories.length > 0 && (
             <Select value={String(safeCategoryIndex)} onValueChange={value => setCategoryIndex(Number(value) || 0)}>
-              <SelectTrigger className="h-8 min-w-[130px] w-auto max-w-[180px] px-2 text-xs bg-secondary">
+              <SelectTrigger className="h-8 min-w-[130px] w-auto max-w-[180px] px-2 text-xs bg-surface-subtle">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -192,7 +192,7 @@ export function RankDistributionWidget({ progress }: Props) {
 
           {scopeLevel === 'subcategory' && selectedGroups.length > 0 && (
             <Select value={String(safeSubcategoryIndex)} onValueChange={value => setSubcategoryIndex(Number(value) || 0)}>
-              <SelectTrigger className="h-8 min-w-[130px] w-auto max-w-[180px] px-2 text-xs bg-secondary">
+              <SelectTrigger className="h-8 min-w-[130px] w-auto max-w-[180px] px-2 text-xs bg-surface-subtle">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

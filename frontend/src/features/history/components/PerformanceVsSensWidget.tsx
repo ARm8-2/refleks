@@ -75,7 +75,7 @@ export function PerformanceVsSensWidget({
   const metricLabel = metricOptions.find(option => option.value === metric)?.label ?? 'Performance'
   const headerActions = (
     <Select value={metric} onValueChange={value => setMetric(value as MetricKey)}>
-      <SelectTrigger className="h-7 w-auto min-w-0 max-w-[180px] px-2 text-xs bg-secondary">
+      <SelectTrigger className="h-7 w-auto min-w-0 max-w-[180px] px-2 text-xs bg-surface-subtle">
         <SelectValue placeholder="Metric" />
       </SelectTrigger>
       <SelectContent>
@@ -151,7 +151,7 @@ function PerformanceVsSensChartContent({
     },
     count: {
       label: 'Run Count',
-      color: 'var(--muted-foreground)',
+      color: 'var(--surface-muted-foreground)',
     },
   }
 
@@ -248,9 +248,9 @@ function PerformanceVsSensTooltip({
   if (!point) return null
 
   return (
-    <div className="grid min-w-[14rem] gap-1.5 rounded-lg bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="grid min-w-[14rem] gap-1.5 rounded-lg bg-canvas px-2.5 py-1.5 text-xs shadow-xl">
       <div className="font-medium text-foreground">{point.fullLabel}</div>
-      <div className="grid gap-0.5 text-muted-foreground">
+      <div className="grid gap-0.5 text-surface-muted-foreground">
         <div>Sensitivity: {formatNumber(point.rawSensitivity, 2)} cm/360</div>
         <div>{metricLabel}: {formatMetricValue(point.performance, metric)}</div>
         <div>Bin: {formatNumber(point.binStart, 2)} - {formatNumber(point.binEnd, 2)} cm/360 · {formatNumber(point.binCount, 0)} runs</div>
@@ -448,5 +448,5 @@ function formatMetricValue(value: number, metric: MetricKey): string {
 }
 
 function EmptyState({ message }: { message: string }) {
-  return <div className="rounded-xl bg-muted-strong p-4 text-sm text-muted-foreground">{message}</div>
+  return <div className="rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">{message}</div>
 }

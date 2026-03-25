@@ -9,8 +9,8 @@ export function EmptyMetricWidget({ icon: Icon, label }: { icon: LucideIcon; lab
       title={<span className="inline-flex items-center gap-1.5"><Icon className="h-3.5 w-3.5" />{label}</span>}
       className="px-4 py-3"
     >
-      <div className="text-lg font-semibold text-muted-foreground">--</div>
-      <div className="mt-0.5 text-xs text-muted-foreground">No session loaded</div>
+      <div className="text-lg font-semibold text-surface-muted-foreground">--</div>
+      <div className="mt-0.5 text-xs text-surface-muted-foreground">No session loaded</div>
     </Widget>
   )
 }
@@ -47,7 +47,7 @@ export function getToneBadgeClasses(tone: SnapshotTone): string {
     case 'warning': return 'border-transparent bg-[rgb(245_159_10_/_0.16)] text-[rgb(180_110_0)] dark:text-[rgb(255_201_107)]'
     case 'neutral': return 'border-primary-border bg-primary-soft text-primary'
     case 'muted':
-    default: return 'border-border-soft bg-muted-soft text-muted-foreground'
+    default: return 'border-border-soft bg-surface-muted-soft text-surface-muted-foreground'
   }
 }
 
@@ -57,7 +57,7 @@ export function getPerformanceAccent(tone: SnapshotTone): string {
     case 'warning': return 'text-[color:var(--warning)]'
     case 'neutral': return 'text-primary'
     case 'muted':
-    default: return 'text-muted-foreground'
+    default: return 'text-surface-muted-foreground'
   }
 }
 

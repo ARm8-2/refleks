@@ -26,7 +26,7 @@ export function AppLayout() {
         <Sidebar open={desktopOpen} onToggle={() => setDesktopOpen(prev => !prev)} />
       </div>
 
-      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-background shadow">
+      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-canvas shadow">
         <Outlet />
       </main>
     </div>

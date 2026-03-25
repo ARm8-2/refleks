@@ -22,7 +22,7 @@ export function SessionPerformanceWidget() {
       }
     >
       <div className={cn('text-lg font-semibold', getPerformanceAccent(statusTone))}>{performanceValue}</div>
-      <div className="mt-0.5 text-xs text-muted-foreground">{performanceDetail}</div>
+      <div className="mt-0.5 text-xs text-surface-muted-foreground">{performanceDetail}</div>
     </Widget>
   )
 }

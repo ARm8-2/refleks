@@ -19,7 +19,7 @@ type StrengthRow = {
 
 type StrengthLevel = 'category' | 'subcategory' | 'scenario'
 
-const CARD_BACKGROUND = 'var(--card)'
+const CARD_BACKGROUND = 'var(--surface)'
 
 export function StrengthWidget({ progress }: Props) {
   const [level, setLevel] = usePersistedState<StrengthLevel>(STORAGE_KEYS.benchmarksDetailStrengthLevel, 'category')
@@ -102,26 +102,26 @@ export function StrengthWidget({ progress }: Props) {
 
   const renderBody = (expanded: boolean) => {
     if (rows.length === 0) {
-      return <div className="rounded-xl bg-secondary p-4 text-sm text-muted-foreground">No data.</div>
+      return <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">No data.</div>
     }
 
     return (
       <div className={expanded ? 'space-y-3 overflow-auto pr-1' : 'space-y-2.5 max-h-[320px] overflow-auto pr-1'}>
         {rows.map(row => (
-          <div key={row.label} className="rounded-xl bg-secondary p-3">
+          <div key={row.label} className="rounded-xl bg-surface-subtle p-3">
             <div className="flex items-center justify-between gap-3 text-sm">
               <div className={`font-medium text-foreground truncate ${expanded ? 'text-sm' : ''}`}>{row.label}</div>
-              <div className="text-xs text-muted-foreground">{row.rankName} · Avg {formatNumber(row.avgScore, 1)}</div>
+              <div className="text-xs text-surface-muted-foreground">{row.rankName} · Avg {formatNumber(row.avgScore, 1)}</div>
             </div>
 
-            <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-muted">
+            <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-surface-muted">
               <div
                 className="h-full rounded-full"
                 style={{ width: `${row.percent}%`, backgroundColor: row.color }}
               />
             </div>
 
-            <div className="mt-1 text-xs text-muted-foreground">{row.percent}%</div>
+            <div className="mt-1 text-xs text-surface-muted-foreground">{row.percent}%</div>
           </div>
         ))}
       </div>
@@ -134,7 +134,7 @@ export function StrengthWidget({ progress }: Props) {
       description={`${levelLabel}-level progress toward max rank.`}
       headerActions={(
         <Select value={level} onValueChange={value => setLevel(value as StrengthLevel)}>
-          <SelectTrigger className="h-8 min-w-[130px] w-auto px-2 text-xs bg-secondary">
+          <SelectTrigger className="h-8 min-w-[130px] w-auto px-2 text-xs bg-surface-subtle">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

@@ -53,8 +53,8 @@ export function Widget({
     <>
       <section
         className={cn(
-          'flex flex-col rounded-xl bg-card p-5',
-          canExpand && 'cursor-pointer transition-colors hover:bg-card-hover',
+          'flex flex-col rounded-xl bg-surface p-5',
+          canExpand && 'cursor-pointer transition-colors hover:bg-surface-hover',
           className,
         )}
         onClick={canExpand ? () => setOpen(true) : undefined}
@@ -65,7 +65,7 @@ export function Widget({
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-            {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+            {description && <p className="mt-0.5 text-xs text-surface-muted-foreground">{description}</p>}
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -82,7 +82,7 @@ export function Widget({
             {canExpand && (
               <button
                 type="button"
-                className="-my-0.5 inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="-my-0.5 inline-flex h-7 w-7 items-center justify-center rounded-lg text-surface-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
                 title="Open widget"
                 aria-label="Open widget"
                 onClick={handleExpandClick}
@@ -104,7 +104,7 @@ export function Widget({
           headerControls={modalHeaderActions ?? headerActions}
           width={modalWidth}
           height={modalHeight}
-          className={cn('rounded-xl bg-card shadow-xl', modalClassName)}
+          className={cn('rounded-xl bg-surface shadow-xl', modalClassName)}
         >
           <div className={cn('h-full min-h-0 overflow-auto px-6 pb-6', modalContentClassName)}>{modalContent}</div>
         </Modal>

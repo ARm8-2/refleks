@@ -76,7 +76,7 @@ function SidebarFavoriteItem({ abbreviation, active, color, label, open, onClick
   const collapsed = !open
   const pill = (
     <span
-      className="w-[38px] rounded border border-sidebar-border py-0.5 text-center text-[10px] font-semibold text-muted-foreground"
+      className="w-[38px] rounded border border-sidebar-border py-0.5 text-center text-[10px] font-semibold text-surface-muted-foreground"
       style={color ? { borderColor: color, color } : undefined}
     >
       {abbreviation}
@@ -142,7 +142,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
             label="RefleK's"
             onClick={onToggle}
             open={open}
-            trailing={version ? <span className="text-xs text-muted-foreground">v{version}</span> : null}
+            trailing={version ? <span className="text-xs text-surface-muted-foreground">v{version}</span> : null}
           />
         </div>
 

@@ -51,7 +51,7 @@ export function ResetSettingsModal({ isOpen, onClose, onReset }: ResetSettingsMo
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Reset Settings" width={420} height="auto">
       <div className="flex flex-col gap-4">
-        <p className="text-muted-foreground text-sm">
+        <p className="text-surface-muted-foreground text-sm">
           Select which data you want to reset to defaults:
         </p>
         <div className="flex flex-col gap-3">

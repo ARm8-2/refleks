@@ -81,7 +81,7 @@ export function RecentScoresWidget() {
   if (!currentSession || recentScores.length === 0) {
     return (
       <Widget title="Recent Scores" className="px-4 py-3">
-        <div className="flex h-full items-center justify-center rounded-xl bg-muted-strong p-4 text-sm text-muted-foreground">
+        <div className="flex h-full items-center justify-center rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
           Play a scenario to see recent scores here.
         </div>
       </Widget>
@@ -252,7 +252,7 @@ export function RecentScoresWidget() {
 
   const modalControls = (
     <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1 rounded-xl bg-secondary p-1">
+      <div className="flex items-center gap-1 rounded-xl bg-surface-subtle p-1">
         {RECENT_SCORE_RUN_COUNT_OPTIONS.map(n => (
           <button
             key={n}
@@ -261,21 +261,21 @@ export function RecentScoresWidget() {
             className={cn(
               'rounded-xl px-3 py-1.5 text-sm font-medium transition-colors',
               effectiveRunCount === n
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
+                ? 'bg-surface text-foreground shadow-sm'
+                : 'text-surface-muted-foreground hover:text-foreground',
             )}
           >
             {`Last ${n}`}
           </button>
         ))}
       </div>
-      <div className="flex items-center gap-0.5 rounded-xl bg-secondary p-1">
+      <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
         <button
           type="button"
           onClick={() => setShowSessionBest(v => !v)}
           className={cn(
             'flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors',
-            showSessionBest ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+            showSessionBest ? 'bg-surface-muted text-foreground' : 'text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground',
           )}
         >
           Session Best
@@ -285,7 +285,7 @@ export function RecentScoresWidget() {
           onClick={() => setShowPb(v => !v)}
           className={cn(
             'flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors',
-            showPb ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+            showPb ? 'bg-surface-muted text-foreground' : 'text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground',
           )}
         >
           Personal Best

@@ -26,7 +26,7 @@ export function StreakPlaytimeWidget() {
     >
       <div className="flex items-baseline gap-2">
         <span className="text-lg font-semibold text-[color:var(--streak)]">{streakLabel}</span>
-        <span className="text-xs text-muted-foreground">{streakDetail}</span>
+        <span className="text-xs text-surface-muted-foreground">{streakDetail}</span>
       </div>
       <ChartContainer config={playtimeConfig} className="mt-1 aspect-auto h-[20px] w-full">
         <AreaChart data={chartData} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>

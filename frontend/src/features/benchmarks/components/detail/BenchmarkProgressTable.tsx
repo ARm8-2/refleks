@@ -56,7 +56,7 @@ function ToggleChip({ label, enabled, onToggle }: { label: string; enabled: bool
       onClick={onToggle}
       className={enabled
         ? 'rounded-xl border border-primary-border-strong bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary transition-colors'
-        : 'rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
+        : 'rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-medium text-surface-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground'}
     >
       {label}
     </button>
@@ -221,7 +221,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
   const rowSpacingClass = compactMode ? 'space-y-0.5' : 'space-y-1'
   const labelTextClass = compactMode ? 'text-[10px]' : 'text-[11px]'
   const rankVisibilityOptions = Array.from({ length: Math.max(1, rankDefs.length) }, (_, index) => index + 1)
-  const labelBackgroundColor = 'var(--card)'
+  const labelBackgroundColor = 'var(--surface)'
 
   const getRecommendation = (scenarioName: string) => recommendationScore.get(scenarioName) ?? 0
   const isTopPick = (scenarioName: string) => topPicks.has(scenarioName)
@@ -233,7 +233,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
           <img src={REFLEKS_SYMBOL} alt="RefleK's" className="h-12 w-12" />
           <div>
             <p className="text-lg font-semibold text-foreground">RefleK's</p>
-            <p className="text-sm text-muted-foreground">Benchmark Progress Snapshot</p>
+            <p className="text-sm text-surface-muted-foreground">Benchmark Progress Snapshot</p>
           </div>
         </div>
       )}
@@ -241,7 +241,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Progress Tracker</h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-surface-muted-foreground">
             {benchmark.abbreviation} {benchmark.benchmarkName} · {difficultyName} · Overall {overallRankName} · {formatNumber(progress.benchmarkProgress || 0, 0)}%
           </p>
         </div>
@@ -258,29 +258,29 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
 
       <div className="relative z-0">
         <div className="relative z-0 w-full space-y-3 pb-4">
-          <div className="relative mb-3 w-full rounded-xl bg-card py-2 shadow-sm">
+          <div className="relative mb-3 w-full rounded-xl bg-surface py-2 shadow-sm">
             <div className="flex items-center">
               <div className="flex h-[28px] w-[52px] shrink-0 bg-transparent pl-5" />
               <div className="flex h-[28px] w-6 shrink-0 bg-transparent" />
               <div className="shrink-0 bg-transparent pl-2 pr-2">
                 <div className="grid h-[28px] items-center" style={{ gridTemplateColumns: infoGridTemplate }}>
-                  <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[11px] uppercase tracking-wide text-surface-muted-foreground">
                     Scenario
                   </div>
                   <div />
                   {effectiveShowNotesCol && <div />}
-                  {effectiveShowRecCol && <div className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">Rec</div>}
+                  {effectiveShowRecCol && <div className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground">Rec</div>}
                   {effectiveShowPlayCol && <div />}
                   {effectiveShowHistoryCol && <div />}
                   <div />
-                  <div className="text-right text-[11px] uppercase tracking-wide text-muted-foreground">Score</div>
+                  <div className="text-right text-[11px] uppercase tracking-wide text-surface-muted-foreground">Score</div>
                 </div>
               </div>
             </div>
           </div>
 
           {categories.map(category => (
-            <div key={category.name} className={`relative w-full overflow-hidden rounded-xl bg-card shadow-sm ${categoryPaddingClass}`}>
+            <div key={category.name} className={`relative w-full overflow-hidden rounded-xl bg-surface shadow-sm ${categoryPaddingClass}`}>
               <div className="flex">
                 <div className="flex w-[52px] shrink-0 items-center justify-center bg-transparent pl-5">
                   <span
@@ -311,7 +311,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
                             {group.name}
                           </span>
                         ) : (
-                          <span className="text-[10px] text-muted-foreground" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                          <span className="text-[10px] text-surface-muted-foreground" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                             -
                           </span>
                         )}
@@ -368,13 +368,13 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
                     {hasVisibleRanks ? visibleRanks.map((rank, index) => (
                       <div
                         key={`${rank.name}-${visibleRankIndices[index]}`}
-                        className="text-center text-[11px] uppercase tracking-wide text-muted-foreground"
+                        className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground"
                         style={rank.color ? { color: rank.color } : undefined}
                       >
                         {rank.name}
                       </div>
                     )) : (
-                      <div className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">Details</div>
+                      <div className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground">Details</div>
                     )}
                   </div>
                 </div>
@@ -417,7 +417,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
       </div>
 
       {shareMode && (
-        <div className="px-1 text-xs text-muted-foreground">refleks-app.com</div>
+        <div className="px-1 text-xs text-surface-muted-foreground">refleks-app.com</div>
       )}
 
       {!shareMode && (
@@ -455,7 +455,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
                   </label>
 
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">Keep visible:</span>
+                    <span className="text-surface-muted-foreground">Keep visible:</span>
                     <Select value={String(visibleRankCount)} onValueChange={value => setVisibleRankCount(Math.max(1, Number(value) || 1))}>
                       <SelectTrigger className="h-8 w-[80px]">
                         <SelectValue />
@@ -484,8 +484,8 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
                         disabled={hiddenAutomatically}
                         onClick={() => toggleManualRank(index)}
                         className={visible
-                          ? 'rounded-xl border border-primary-border bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-muted'
-                          : 'rounded-xl border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50'}
+                          ? 'rounded-xl border border-primary-border bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-surface-muted'
+                          : 'rounded-xl border border-border bg-surface px-2.5 py-1 text-xs font-medium text-surface-muted-foreground transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50'}
                         style={rank.color && visible ? { color: rank.color, borderColor: rank.color } : undefined}
                         title={hiddenAutomatically ? 'Hidden automatically because every scenario is already past this rank' : undefined}
                       >

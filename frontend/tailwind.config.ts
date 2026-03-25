@@ -1,5 +1,5 @@
-import tailwindcssAnimate from 'tailwindcss-animate'
 import { Config } from 'tailwindcss'
+import tailwindcssAnimate from 'tailwindcss-animate'
 
 export default {
   darkMode: ['class'],
@@ -20,11 +20,26 @@ export default {
         },
         input: 'var(--input)',
         ring: 'var(--ring)',
-        background: {
-          DEFAULT: 'var(--background)',
-          panel: 'var(--background-panel)',
+        canvas: {
+          DEFAULT: 'var(--canvas)',
+          foreground: 'var(--canvas-foreground)',
         },
-        foreground: 'var(--foreground)',
+        surface: {
+          DEFAULT: 'var(--surface)',
+          foreground: 'var(--surface-foreground)',
+          subtle: 'var(--surface-subtle)',
+          'subtle-foreground': 'var(--surface-subtle-foreground)',
+          'subtle-hover': 'var(--surface-subtle-hover)',
+          muted: 'var(--surface-muted)',
+          'muted-foreground': 'var(--surface-muted-foreground)',
+          soft: 'var(--surface-muted-soft)',
+          strong: 'var(--surface-muted-strong)',
+          emphasis: 'var(--surface-emphasis)',
+          'emphasis-foreground': 'var(--surface-emphasis-foreground)',
+          panel: 'var(--surface-panel)',
+          hover: 'var(--surface-hover)',
+        },
+        foreground: 'var(--canvas-foreground)',
         primary: {
           DEFAULT: 'var(--primary)',
           foreground: 'var(--primary-foreground)',
@@ -36,11 +51,6 @@ export default {
           'border-strong': 'var(--primary-border-strong)',
           hover: 'var(--primary-hover)',
         },
-        secondary: {
-          DEFAULT: 'var(--secondary)',
-          foreground: 'var(--secondary-foreground)',
-          hover: 'var(--secondary-hover)',
-        },
         destructive: {
           DEFAULT: 'var(--destructive)',
           foreground: 'var(--destructive-foreground)',
@@ -48,24 +58,9 @@ export default {
           border: 'var(--destructive-border)',
           hover: 'var(--destructive-hover)',
         },
-        muted: {
-          DEFAULT: 'var(--muted)',
-          foreground: 'var(--muted-foreground)',
-          soft: 'var(--muted-soft)',
-          strong: 'var(--muted-strong)',
-        },
-        accent: {
-          DEFAULT: 'var(--accent)',
-          foreground: 'var(--accent-foreground)',
-        },
         popover: {
           DEFAULT: 'var(--popover)',
           foreground: 'var(--popover-foreground)',
-        },
-        card: {
-          DEFAULT: 'var(--card)',
-          foreground: 'var(--card-foreground)',
-          hover: 'var(--card-hover)',
         },
         chart: {
           1: 'var(--chart-1)',

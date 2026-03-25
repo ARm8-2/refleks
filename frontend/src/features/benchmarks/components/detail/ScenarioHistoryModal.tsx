@@ -99,22 +99,22 @@ export function ScenarioHistoryModal({ isOpen, onClose, scenarioName, thresholds
         )}
 
         {!loading && !error && trendData.length === 0 && (
-          <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">No scores found.</div>
+          <div className="rounded-xl border border-border bg-surface p-4 text-sm text-surface-muted-foreground">No scores found.</div>
         )}
 
         {!loading && !error && trendData.length > 0 && (
           <>
             <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-secondary p-3">
-                <div className="text-xs text-muted-foreground">Latest</div>
+              <div className="rounded-xl bg-surface-subtle p-3">
+                <div className="text-xs text-surface-muted-foreground">Latest</div>
                 <div className="text-lg font-semibold text-foreground">{formatNumber(latest, 0)}</div>
               </div>
-              <div className="rounded-xl bg-secondary p-3">
-                <div className="text-xs text-muted-foreground">Highest</div>
+              <div className="rounded-xl bg-surface-subtle p-3">
+                <div className="text-xs text-surface-muted-foreground">Highest</div>
                 <div className="text-lg font-semibold text-success">{formatNumber(high, 0)}</div>
               </div>
-              <div className="rounded-xl bg-secondary p-3">
-                <div className="text-xs text-muted-foreground">Lowest</div>
+              <div className="rounded-xl bg-surface-subtle p-3">
+                <div className="text-xs text-surface-muted-foreground">Lowest</div>
                 <div className="text-lg font-semibold text-foreground">{formatNumber(low, 0)}</div>
               </div>
             </div>

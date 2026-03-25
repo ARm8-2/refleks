@@ -393,7 +393,7 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-1.5">
         {/* Transport */}
-        <div className="flex items-center gap-0.5 rounded-xl bg-secondary p-1">
+        <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
           <ControlBtn icon={<SkipBack className="h-3.5 w-3.5" />} title="Back 5s" onClick={() => actions.nudge(-5000)} />
           <ControlBtn
             icon={isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
@@ -406,8 +406,8 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
         </div>
 
         {/* Speed slider */}
-        <div className="flex items-center gap-1.5 rounded-xl bg-secondary p-1 pl-2.5">
-          <span className="text-[11px] font-medium text-muted-foreground">Speed</span>
+        <div className="flex items-center gap-1.5 rounded-xl bg-surface-subtle p-1 pl-2.5">
+          <span className="text-[11px] font-medium text-surface-muted-foreground">Speed</span>
           <Slider
             value={[speed]}
             min={SPEED_MIN}
@@ -416,7 +416,7 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
             onValueChange={([v]) => setSpeed(v)}
             className="w-24"
           />
-          <span className="min-w-[2.5rem] text-center text-[11px] font-medium tabular-nums text-muted-foreground">{speedLabel}</span>
+          <span className="min-w-[2.5rem] text-center text-[11px] font-medium tabular-nums text-surface-muted-foreground">{speedLabel}</span>
           <ControlBtn
             icon={<RotateCcw className="h-3 w-3" />}
             title="Reset speed to 1×"
@@ -426,7 +426,7 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
         </div>
 
         {/* Toggles */}
-        <div className="flex items-center gap-0.5 rounded-xl bg-secondary p-1">
+        <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
           <OptionToggle
             icon={<Crosshair className="h-3.5 w-3.5" />}
             label={trailMode === 'all' ? 'All' : '2s'}
@@ -450,7 +450,7 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
 
         {/* Sync toggle (compare mode only) */}
         {hasCompare && (
-          <div className="flex items-center gap-0.5 rounded-xl bg-secondary p-1">
+          <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
             <OptionToggle
               icon={<Link className="h-3.5 w-3.5" />}
               label={syncByTime ? 'Time' : 'Ratio'}
@@ -467,14 +467,14 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
 
   const renderCanvasOverlay = (traceSet: 'primary' | 'compare' | 'both') => (
     <>
-      <div className="absolute right-2 top-2 rounded-lg bg-card/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground backdrop-blur">
+      <div className="absolute right-2 top-2 rounded-lg bg-surface/80 px-2 py-0.5 text-[10px] font-medium text-surface-muted-foreground backdrop-blur">
         {Math.round(zoom * 100)}%
       </div>
       <button
         type="button"
         onClick={() => openModal(traceSet)}
         title="Expand"
-        className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-lg bg-card/80 text-muted-foreground backdrop-blur transition-colors hover:bg-card hover:text-foreground"
+        className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-lg bg-surface/80 text-surface-muted-foreground backdrop-blur transition-colors hover:bg-surface hover:text-foreground"
       >
         <Maximize2 className="h-3.5 w-3.5" />
       </button>
@@ -488,22 +488,22 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
         {isSplit ? (
           <div className="grid min-h-0 flex-1 grid-cols-2 gap-3">
             <div className="flex min-h-0 flex-col gap-1">
-              <div className="text-[11px] font-medium text-muted-foreground">Pinned</div>
-              <div ref={wrapRef} className="relative min-h-0 flex-1 rounded-xl bg-secondary">
+              <div className="text-[11px] font-medium text-surface-muted-foreground">Pinned</div>
+              <div ref={wrapRef} className="relative min-h-0 flex-1 rounded-xl bg-surface-subtle">
                 <canvas ref={canvasRef} className="block h-full w-full cursor-grab rounded-xl active:cursor-grabbing" />
                 {renderCanvasOverlay('primary')}
               </div>
             </div>
             <div className="flex min-h-0 flex-col gap-1">
-              <div className="text-[11px] font-medium text-muted-foreground">Compare</div>
-              <div ref={splitWrapRef} className="relative min-h-0 flex-1 rounded-xl bg-secondary">
+              <div className="text-[11px] font-medium text-surface-muted-foreground">Compare</div>
+              <div ref={splitWrapRef} className="relative min-h-0 flex-1 rounded-xl bg-surface-subtle">
                 <canvas ref={splitCanvasRef} className="block h-full w-full cursor-grab rounded-xl active:cursor-grabbing" />
                 {renderCanvasOverlay('compare')}
               </div>
             </div>
           </div>
         ) : (
-          <div ref={wrapRef} className="relative min-h-0 flex-1 rounded-xl bg-secondary">
+          <div ref={wrapRef} className="relative min-h-0 flex-1 rounded-xl bg-surface-subtle">
             <canvas ref={canvasRef} className="block h-full w-full cursor-grab rounded-xl active:cursor-grabbing" />
             {hasCompare && <TraceLegend />}
             {renderCanvasOverlay('both')}
@@ -520,10 +520,10 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
         className="flex flex-col overflow-hidden"
       >
         <div className="flex min-h-0 flex-1 flex-col gap-3">
-          <div ref={modalWrapRef} className="relative min-h-0 flex-1 rounded-xl bg-secondary">
+          <div ref={modalWrapRef} className="relative min-h-0 flex-1 rounded-xl bg-surface-subtle">
             <canvas ref={modalCanvasCallbackRef} className="block h-full w-full cursor-grab rounded-xl active:cursor-grabbing" />
             {modalTraceSet === 'both' && hasCompare && <TraceLegend />}
-            <div className="absolute right-2 top-2 rounded-lg bg-card/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground backdrop-blur">
+            <div className="absolute right-2 top-2 rounded-lg bg-surface/80 px-2 py-0.5 text-[10px] font-medium text-surface-muted-foreground backdrop-blur">
               {Math.round(zoom * 100)}%
             </div>
           </div>
@@ -577,10 +577,10 @@ function TimelineScrubber({ progressMs, durationMs, onSeek }: {
         }}
       >
         {/* Track bg */}
-        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-secondary" />
+        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-surface-subtle" />
         {/* Filled portion */}
         <div
-          className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-muted-foreground/50 transition-[width] duration-75"
+          className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-surface-muted-foreground/50 transition-[width] duration-75"
           style={{ left: 0, width: `${pct}%` }}
         />
         {/* Thumb */}
@@ -592,7 +592,7 @@ function TimelineScrubber({ progressMs, durationMs, onSeek }: {
           style={{ left: `${pct}%` }}
         />
       </div>
-      <span className="min-w-[6.5rem] text-right font-mono text-[11px] text-muted-foreground">
+      <span className="min-w-[6.5rem] text-right font-mono text-[11px] text-surface-muted-foreground">
         {formatTraceTime(progressMs)} / {formatTraceTime(durationMs)}
       </span>
     </div>
@@ -613,10 +613,10 @@ function ControlBtn({ icon, title, onClick, active, disabled }: {
       className={cn(
         'grid h-7 w-7 place-items-center rounded-lg transition-colors',
         disabled
-          ? 'text-muted-foreground/30 cursor-default'
+          ? 'text-surface-muted-foreground/30 cursor-default'
           : active
-            ? 'bg-muted text-foreground'
-            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+            ? 'bg-surface-muted text-foreground'
+            : 'text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground',
       )}
     >
       {icon}
@@ -634,7 +634,7 @@ function OptionToggle({ icon, label, title, active, onClick }: {
       title={title}
       className={cn(
         'flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors',
-        active ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+        active ? 'bg-surface-muted text-foreground' : 'text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground',
       )}
     >
       {icon}
@@ -646,13 +646,13 @@ function OptionToggle({ icon, label, title, active, onClick }: {
 function TraceLegend() {
   return (
     <div className="absolute left-2 top-2 flex flex-col gap-0.5">
-      <div className="flex items-center gap-1.5 rounded-md bg-card/80 px-2 py-0.5 text-[10px] font-medium backdrop-blur">
+      <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[10px] font-medium backdrop-blur">
         <span className="inline-block h-2 w-2 rounded-full bg-primary" />
-        <span className="text-muted-foreground">Pinned</span>
+        <span className="text-surface-muted-foreground">Pinned</span>
       </div>
-      <div className="flex items-center gap-1.5 rounded-md bg-card/80 px-2 py-0.5 text-[10px] font-medium backdrop-blur">
+      <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[10px] font-medium backdrop-blur">
         <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#14b8a6' }} />
-        <span className="text-muted-foreground">Compare</span>
+        <span className="text-surface-muted-foreground">Compare</span>
       </div>
     </div>
   )

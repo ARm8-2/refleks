@@ -119,7 +119,7 @@ function SessionScenarioRadarChart({
           dataKey="label"
           tickLine={false}
           axisLine={false}
-          tick={{ fill: 'var(--muted-foreground)', fontSize: angleTickSize }}
+          tick={{ fill: 'var(--surface-muted-foreground)', fontSize: angleTickSize }}
         />
         <PolarRadiusAxis
           domain={[0, Math.max(1, maxRuns)]}
@@ -127,7 +127,7 @@ function SessionScenarioRadarChart({
           allowDecimals={false}
           axisLine={false}
           tickLine={false}
-          tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
+          tick={{ fill: 'var(--surface-muted-foreground)', fontSize: 11 }}
         />
         <ChartTooltip
           content={(
@@ -155,5 +155,5 @@ function truncateScenarioLabel(label: string): string {
 }
 
 function EmptyState({ message }: { message: string }) {
-  return <div className="rounded-xl bg-muted-strong p-4 text-sm text-muted-foreground">{message}</div>
+  return <div className="rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">{message}</div>
 }

@@ -11,7 +11,7 @@ export function RecommendationIndicator({ score, isTopPick, isCompleted, compact
   const size = compact ? 12 : 14
   const stackClass = compact ? '-space-y-1' : '-space-y-1.5'
 
-  if (isCompleted) return <Check size={size} className="text-muted-foreground" />
+  if (isCompleted) return <Check size={size} className="text-surface-muted-foreground" />
 
   const upColor = isTopPick ? 'text-primary' : 'text-success'
 
@@ -57,5 +57,5 @@ export function RecommendationIndicator({ score, isTopPick, isCompleted, compact
     )
   }
 
-  return <Minus size={size} className="text-muted-foreground" />
+  return <Minus size={size} className="text-surface-muted-foreground" />
 }

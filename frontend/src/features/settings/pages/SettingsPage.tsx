@@ -153,7 +153,7 @@ export function SettingsPage() {
   if (!settings) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-muted-foreground">Loading settings...</div>
+        <div className="text-surface-muted-foreground">Loading settings...</div>
       </div>
     )
   }
@@ -161,7 +161,7 @@ export function SettingsPage() {
   return (
     <div className="flex-1 overflow-auto text-sm">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background px-6 py-4">
+      <div className="sticky top-0 z-10 bg-canvas px-6 py-4">
         <h1 className="text-lg font-semibold text-foreground">Settings</h1>
       </div>
 
@@ -170,22 +170,22 @@ export function SettingsPage() {
         {/* Updates */}
         <SettingsSection title="Updates">
           <div className="flex items-center gap-4">
-            <span className="text-muted-foreground text-sm">Current version: <span className="text-foreground font-mono">{currentVersion || MISSING_STR}</span></span>
+            <span className="text-surface-muted-foreground text-sm">Current version: <span className="text-foreground font-mono">{currentVersion || MISSING_STR}</span></span>
             <Button onClick={handleCheckUpdate} disabled={checking} variant="outline" size="sm">
               {checking ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Check for Updates'}
             </Button>
             {checkError && <span className="text-destructive text-sm">{checkError}</span>}
             {update && !update.hasUpdate && (
-              <span className="text-muted-foreground text-sm">You're on the latest version!</span>
+              <span className="text-surface-muted-foreground text-sm">You're on the latest version!</span>
             )}
           </div>
           {update?.hasUpdate && (
-            <div className="bg-card rounded-xl p-4 space-y-3 mt-2">
+            <div className="bg-surface rounded-xl p-4 space-y-3 mt-2">
               <div className="flex items-center gap-2">
                 <span className="text-foreground text-sm font-medium">Version {update.latestVersion} available</span>
               </div>
               {update.releaseNotes && (
-                <p className="text-muted-foreground text-xs whitespace-pre-wrap max-h-24 overflow-auto">
+                <p className="text-surface-muted-foreground text-xs whitespace-pre-wrap max-h-24 overflow-auto">
                   {update.releaseNotes}
                 </p>
               )}
@@ -270,7 +270,7 @@ export function SettingsPage() {
         <SettingsSection title="Advanced">
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm -mt-1"
+            className="flex items-center gap-1.5 text-surface-muted-foreground hover:text-foreground transition-colors text-sm -mt-1"
           >
             {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             {showAdvanced ? 'Hide advanced settings' : 'Show advanced settings'}
@@ -367,7 +367,7 @@ export function SettingsPage() {
           <Button variant="ghost" size="sm" onClick={() => setIsClearCacheOpen(true)}>
             Clear Cache
           </Button>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-surface-muted-foreground">
             {isSaving ? 'Saving settings...' : hasUnsavedChanges ? 'Unsaved changes' : 'All changes saved'}
           </span>
           <div className="flex-1" />

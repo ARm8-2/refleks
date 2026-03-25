@@ -34,7 +34,7 @@ export function Modal({
     <Dialog open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
       <DialogContent
         ref={contentRef}
-        className={cn('rounded-xl border-0 bg-card p-5 shadow-2xl sm:rounded-xl', className)}
+        className={cn('rounded-xl border-0 bg-surface p-5 shadow-2xl sm:rounded-xl', className)}
         onOpenAutoFocus={event => {
           event.preventDefault()
           requestAnimationFrame(() => {

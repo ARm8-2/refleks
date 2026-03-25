@@ -59,7 +59,7 @@ export function SessionProgressWidget() {
   if (!currentSession) {
     return (
       <Widget title="Session Progress" className="px-4 py-3">
-        <div className="flex h-full items-center justify-center rounded-xl bg-muted-strong p-4 text-sm text-muted-foreground">
+        <div className="flex h-full items-center justify-center rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
           Play or import a few runs to see session progress.
         </div>
       </Widget>
@@ -103,10 +103,10 @@ export function SessionProgressWidget() {
       headerActions={
         <div className="flex items-center gap-1.5">
           {editing ? (
-            <div className="flex items-center overflow-hidden rounded bg-secondary">
+            <div className="flex items-center overflow-hidden rounded bg-surface-subtle">
               <button
                 type="button"
-                className="flex h-5 w-5 items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="flex h-5 w-5 items-center justify-center text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground"
                 onMouseDown={(e) => {
                   e.preventDefault()
                   adjustPendingTarget(-1)
@@ -119,13 +119,13 @@ export function SessionProgressWidget() {
                 type="number"
                 min={1}
                 defaultValue={targetRuns}
-                className="w-8 border-x border-border bg-secondary py-0.5 text-center text-xs text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                className="w-8 border-x border-border bg-surface-subtle py-0.5 text-center text-xs text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 onKeyDown={handleEditKeyDown}
                 onBlur={(e) => commitTarget(e.currentTarget.value)}
               />
               <button
                 type="button"
-                className="flex h-5 w-5 items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="flex h-5 w-5 items-center justify-center text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground"
                 onMouseDown={(e) => {
                   e.preventDefault()
                   adjustPendingTarget(1)
@@ -136,12 +136,12 @@ export function SessionProgressWidget() {
             </div>
           ) : (
             <>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-surface-muted-foreground">
                 {targetRuns} target{isCustom ? '' : ' (auto)'}
               </span>
               <button
                 type="button"
-                className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                className="inline-flex h-5 w-5 items-center justify-center rounded text-surface-muted-foreground hover:text-foreground"
                 onClick={() => setEditing(true)}
                 title="Edit target"
               >
@@ -150,7 +150,7 @@ export function SessionProgressWidget() {
               {isCustom && (
                 <button
                   type="button"
-                  className="text-[11px] text-muted-foreground hover:text-foreground"
+                  className="text-[11px] text-surface-muted-foreground hover:text-foreground"
                   onClick={() => saveTarget(null)}
                   title="Reset to automatic"
                 >
@@ -165,7 +165,7 @@ export function SessionProgressWidget() {
       <div className="relative mx-auto flex flex-1 items-center justify-center">
         <div className="relative aspect-square w-full max-w-[160px] shrink-0">
           <svg viewBox="0 0 200 200" className="h-full w-full">
-            <circle cx={cx} cy={cy} r={(outerR + innerR) / 2} fill="none" stroke="var(--muted)" strokeWidth={outerR - innerR} />
+            <circle cx={cx} cy={cy} r={(outerR + innerR) / 2} fill="none" stroke="var(--surface-muted)" strokeWidth={outerR - innerR} />
 
             <path d={arcPath(0, warmupEnd)} fill="rgb(245 159 10 / 0.18)" />
             <path d={arcPath(peakStart - 1, peakEndClamped)} fill="rgb(16 183 127 / 0.18)" />
@@ -180,10 +180,10 @@ export function SessionProgressWidget() {
             <text x={cx} y={cy - 10} textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-2xl font-bold">
               {currentRuns}
             </text>
-            <text x={cx} y={cy + 8} textAnchor="middle" dominantBaseline="middle" className="fill-muted-foreground text-[11px]">
+            <text x={cx} y={cy + 8} textAnchor="middle" dominantBaseline="middle" className="fill-surface-muted-foreground text-[11px]">
               / {targetRuns} target
             </text>
-            <text x={cx} y={cy + 22} textAnchor="middle" dominantBaseline="middle" className="fill-muted-foreground text-[10px]">
+            <text x={cx} y={cy + 22} textAnchor="middle" dominantBaseline="middle" className="fill-surface-muted-foreground text-[10px]">
               {pct}%
             </text>
           </svg>

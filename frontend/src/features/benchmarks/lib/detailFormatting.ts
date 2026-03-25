@@ -125,7 +125,7 @@ function rgbToCss({ r, g, b }: RGB): string {
   return `rgb(${r}, ${g}, ${b})`
 }
 
-export function adjustColorForTheme(color: string | undefined, backgroundColor = 'var(--card)', strength = 0.92): string {
+export function adjustColorForTheme(color: string | undefined, backgroundColor = 'var(--surface)', strength = 0.92): string {
   const sourceColor = resolveCssColor(color?.trim() || 'var(--primary)')
   const bgColor = resolveCssColor(backgroundColor)
   const sourceRgb = parseColorToRGB(sourceColor)
@@ -154,7 +154,7 @@ export function formatNumber(value: unknown, decimals = 2, trimTrailingZeros = t
 export function computeFillColor(
   achievedRank: number | undefined | null,
   rankDefs: Array<{ color?: string }>,
-  fallback = 'var(--muted-foreground)',
+  fallback = 'var(--surface-muted-foreground)',
 ): string {
   const achieved = Number(achievedRank || 0)
   if (!achieved || achieved <= 0) return fallback

@@ -149,14 +149,14 @@ export function BenchmarksExplorePage() {
   return (
     <div className="flex-1 overflow-auto text-sm">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background px-6 py-4">
+      <div className="sticky top-0 z-10 bg-canvas px-6 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-lg font-semibold text-foreground">Benchmarks</h1>
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-muted-foreground" />
               <Input
                 type="text"
                 value={query}
@@ -193,7 +193,7 @@ export function BenchmarksExplorePage() {
             {/* Random */}
             <button
               onClick={handleRandom}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface text-sm text-surface-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors"
               title="Open a random benchmark"
             >
               <Dice5 className="w-4 h-4" />
@@ -205,7 +205,7 @@ export function BenchmarksExplorePage() {
               onClick={() => setShowFavOnly(v => !v)}
               className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl transition-colors ${showFavOnly
                 ? 'bg-primary-muted text-primary hover:bg-primary-emphasis'
-                : 'bg-card text-muted-foreground hover:text-foreground hover:bg-muted'
+                : 'bg-surface text-surface-muted-foreground hover:text-foreground hover:bg-surface-muted'
                 }`}
               title={showFavOnly ? 'Show all benchmarks' : 'Show favorites only'}
             >
@@ -218,7 +218,7 @@ export function BenchmarksExplorePage() {
               onClick={() => setShowRecs(v => !v)}
               className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl transition-colors ${showRecs
                 ? 'bg-primary-muted text-primary hover:bg-primary-emphasis'
-                : 'bg-card text-muted-foreground hover:text-foreground hover:bg-muted'
+                : 'bg-surface text-surface-muted-foreground hover:text-foreground hover:bg-surface-muted'
                 }`}
               title={showRecs ? 'Hide recommendations' : 'Show recommended benchmarks'}
             >
@@ -257,7 +257,7 @@ export function BenchmarksExplorePage() {
         )}
 
         {filtered.length === 0 ? (
-          <div className="text-sm text-muted-foreground py-8 text-center">
+          <div className="text-sm text-surface-muted-foreground py-8 text-center">
             {benchmarks.length === 0
               ? 'No benchmarks available.'
               : showFavOnly
@@ -277,7 +277,7 @@ export function BenchmarksExplorePage() {
                 {groupBy !== 'none' && (
                   <button
                     onClick={() => toggleGroup(group)}
-                    className="flex items-center gap-2 text-sm font-medium text-muted-foreground mt-2 mb-2 w-full hover:text-foreground transition-colors text-left group/hdr select-none"
+                    className="flex items-center gap-2 text-sm font-medium text-surface-muted-foreground mt-2 mb-2 w-full hover:text-foreground transition-colors text-left group/hdr select-none"
                   >
                     <ChevronDown
                       size={16}
