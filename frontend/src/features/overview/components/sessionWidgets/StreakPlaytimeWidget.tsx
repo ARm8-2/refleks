@@ -1,6 +1,7 @@
 import { Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer } from '@/shared/components/ui/chart'
+import { CHART_SERIES_COLORS, CHART_STYLE } from '@/shared/lib'
 import { Flame } from 'lucide-react'
 import { Area, AreaChart } from 'recharts'
 import { useDailyPlaytime } from '../../hooks/useDailyPlaytime'
@@ -8,7 +9,7 @@ import { useRecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
 import { EmptyMetricWidget } from './shared'
 
 const playtimeConfig: ChartConfig = {
-  minutes: { label: 'Playtime', color: 'var(--chart-3)' },
+  minutes: { label: 'Playtime', color: CHART_SERIES_COLORS.accuracy },
 }
 
 export function StreakPlaytimeWidget() {
@@ -42,7 +43,7 @@ export function StreakPlaytimeWidget() {
             dataKey="minutes"
             stroke="var(--color-minutes)"
             fill="url(#streakPlaytimeFill)"
-            strokeWidth={2}
+            strokeWidth={CHART_STYLE.linePrimaryWidth}
           />
         </AreaChart>
       </ChartContainer>

@@ -1,6 +1,7 @@
 import { Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
+import { CHART_SERIES_COLORS, CHART_STYLE, chartDot } from '@/shared/lib'
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, Scatter, ScatterChart, XAxis, YAxis } from 'recharts'
 import type { HistoryRun } from '../../lib/historyModels'
@@ -39,36 +40,36 @@ function buildChartData(analysis: ScenarioAnalysis): ChartData {
 }
 
 const eventsConfig: ChartConfig = {
-  accOverTime: { label: 'Accuracy', color: 'var(--chart-2)' },
-  realTTK: { label: 'TTK (s)', color: 'var(--chart-4)' },
+  accOverTime: { label: 'Accuracy', color: CHART_SERIES_COLORS.accuracy },
+  realTTK: { label: 'TTK (s)', color: CHART_SERIES_COLORS.ttk },
 }
 
 const ttkConfig: ChartConfig = {
-  realTTK: { label: 'TTK (s)', color: 'var(--chart-4)' },
-  ma5: { label: 'MA(5)', color: 'var(--chart-2)' },
+  realTTK: { label: 'TTK (s)', color: CHART_SERIES_COLORS.ttk },
+  ma5: { label: 'MA(5)', color: CHART_SERIES_COLORS.scoreHistory },
 }
 
 const scatterConfig: ChartConfig = {
-  scatter: { label: 'Kill', color: 'var(--chart-2)' },
+  scatter: { label: 'Kill', color: CHART_SERIES_COLORS.scoreHistory },
 }
 
 const eventsOverlayConfig: ChartConfig = {
-  accOverTime: { label: 'Pinned Acc', color: 'var(--chart-2)' },
-  realTTK: { label: 'Pinned TTK', color: 'var(--chart-4)' },
-  cmpAccOverTime: { label: 'Compare Acc', color: 'var(--chart-1)' },
-  cmpRealTTK: { label: 'Compare TTK', color: 'var(--chart-5)' },
+  accOverTime: { label: 'Pinned Acc', color: CHART_SERIES_COLORS.accuracy },
+  realTTK: { label: 'Pinned TTK', color: CHART_SERIES_COLORS.ttk },
+  cmpAccOverTime: { label: 'Compare Acc', color: CHART_SERIES_COLORS.compare },
+  cmpRealTTK: { label: 'Compare TTK', color: CHART_SERIES_COLORS.compare },
 }
 
 const ttkOverlayConfig: ChartConfig = {
-  realTTK: { label: 'Pinned TTK', color: 'var(--chart-4)' },
-  ma5: { label: 'Pinned MA(5)', color: 'var(--chart-2)' },
-  cmpRealTTK: { label: 'Compare TTK', color: 'var(--chart-1)' },
-  cmpMa5: { label: 'Compare MA(5)', color: 'var(--chart-5)' },
+  realTTK: { label: 'Pinned TTK', color: CHART_SERIES_COLORS.ttk },
+  ma5: { label: 'Pinned MA(5)', color: CHART_SERIES_COLORS.scoreHistory },
+  cmpRealTTK: { label: 'Compare TTK', color: CHART_SERIES_COLORS.compare },
+  cmpMa5: { label: 'Compare MA(5)', color: CHART_SERIES_COLORS.compare },
 }
 
 const scatterOverlayConfig: ChartConfig = {
-  pinned: { label: 'Pinned', color: 'var(--chart-2)' },
-  compare: { label: 'Compare', color: 'var(--chart-1)' },
+  pinned: { label: 'Pinned', color: CHART_SERIES_COLORS.scoreHistory },
+  compare: { label: 'Compare', color: CHART_SERIES_COLORS.compare },
 }
 
 export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: HistoryRun; compareRun: HistoryRun | null; overlay: boolean }) {
@@ -330,8 +331,8 @@ function EventsChart({ data, height }: { data: Array<Record<string, unknown>>; h
         <YAxis yAxisId="acc" tickLine={false} axisLine={false} tickMargin={8} width={44} domain={[0, 100]} tickFormatter={v => `${v}%`} />
         <YAxis yAxisId="ttk" orientation="right" tickLine={false} axisLine={false} tickMargin={8} width={40} tickFormatter={v => `${v}s`} />
         <ChartTooltip content={<ChartTooltipContent labelFormatter={(v) => fmtTimeTick(Number(v))} />} />
-        <Line yAxisId="acc" isAnimationActive={false} type="monotone" dataKey="accOverTime" stroke="var(--color-accOverTime)" strokeWidth={2} dot={false} />
-        <Line yAxisId="ttk" isAnimationActive={false} type="monotone" dataKey="realTTK" stroke="var(--color-realTTK)" strokeWidth={1.5} strokeDasharray="4 3" dot={false} />
+        <Line yAxisId="acc" isAnimationActive={false} type="monotone" dataKey="accOverTime" stroke="var(--color-accOverTime)" strokeWidth={CHART_STYLE.linePrimaryWidth} dot={false} />
+        <Line yAxisId="ttk" isAnimationActive={false} type="monotone" dataKey="realTTK" stroke="var(--color-realTTK)" strokeWidth={CHART_STYLE.lineSecondaryWidth} strokeDasharray={CHART_STYLE.lineDash} dot={false} />
       </LineChart>
     </ChartContainer>
   )
@@ -345,8 +346,8 @@ function TTKChart({ data, height }: { data: Array<Record<string, unknown>>; heig
         <XAxis type="number" dataKey="timeSec" tickLine={false} axisLine={false} minTickGap={24} tickMargin={8} tickFormatter={fmtTimeTick} />
         <YAxis tickLine={false} axisLine={false} tickMargin={8} width={44} tickFormatter={v => `${v}s`} />
         <ChartTooltip content={<ChartTooltipContent labelFormatter={(v) => fmtTimeTick(Number(v))} />} />
-        <Line isAnimationActive={false} type="monotone" dataKey="realTTK" stroke="var(--color-realTTK)" strokeWidth={1.5} dot={{ r: 1.5, fill: 'var(--color-realTTK)', strokeWidth: 0 }} />
-        <Line isAnimationActive={false} type="monotone" dataKey="ma5" stroke="var(--color-ma5)" strokeWidth={2.25} dot={false} />
+        <Line isAnimationActive={false} type="monotone" dataKey="realTTK" stroke="var(--color-realTTK)" strokeWidth={CHART_STYLE.lineSecondaryWidth} dot={chartDot('var(--color-realTTK)', CHART_STYLE.pointRadiusSmall)} />
+        <Line isAnimationActive={false} type="monotone" dataKey="ma5" stroke="var(--color-ma5)" strokeWidth={CHART_STYLE.linePrimaryWidth} dot={false} />
       </LineChart>
     </ChartContainer>
   )
@@ -371,7 +372,7 @@ function ScatterPlot({ data, height }: { data: Array<{ x: number; y: number }>; 
             />
           }
         />
-        <Scatter data={data} fill="var(--color-scatter)" r={3} isAnimationActive={false} />
+        <Scatter data={data} fill="var(--color-scatter)" r={CHART_STYLE.scatterPointRadius} isAnimationActive={false} />
       </ScatterChart>
     </ChartContainer>
   )
@@ -386,10 +387,10 @@ function EventsChartOverlay({ data, height }: { data: Array<Record<string, unkno
         <YAxis yAxisId="acc" tickLine={false} axisLine={false} tickMargin={8} width={44} domain={[0, 100]} tickFormatter={v => `${v}%`} />
         <YAxis yAxisId="ttk" orientation="right" tickLine={false} axisLine={false} tickMargin={8} width={40} tickFormatter={v => `${v}s`} />
         <ChartTooltip content={<ChartTooltipContent labelFormatter={(v) => fmtTimeTick(Number(v))} />} />
-        <Line yAxisId="acc" isAnimationActive={false} type="monotone" dataKey="accOverTime" stroke="var(--color-accOverTime)" strokeWidth={2} dot={false} connectNulls />
-        <Line yAxisId="ttk" isAnimationActive={false} type="monotone" dataKey="realTTK" stroke="var(--color-realTTK)" strokeWidth={1.5} strokeDasharray="4 3" dot={false} connectNulls />
-        <Line yAxisId="acc" isAnimationActive={false} type="monotone" dataKey="cmpAccOverTime" stroke="var(--color-cmpAccOverTime)" strokeWidth={2} dot={false} opacity={0.7} connectNulls />
-        <Line yAxisId="ttk" isAnimationActive={false} type="monotone" dataKey="cmpRealTTK" stroke="var(--color-cmpRealTTK)" strokeWidth={1.5} strokeDasharray="4 3" dot={false} opacity={0.7} connectNulls />
+        <Line yAxisId="acc" isAnimationActive={false} type="monotone" dataKey="accOverTime" stroke="var(--color-accOverTime)" strokeWidth={CHART_STYLE.linePrimaryWidth} dot={false} connectNulls />
+        <Line yAxisId="ttk" isAnimationActive={false} type="monotone" dataKey="realTTK" stroke="var(--color-realTTK)" strokeWidth={CHART_STYLE.lineSecondaryWidth} strokeDasharray={CHART_STYLE.lineDash} dot={false} connectNulls />
+        <Line yAxisId="acc" isAnimationActive={false} type="monotone" dataKey="cmpAccOverTime" stroke="var(--color-cmpAccOverTime)" strokeWidth={CHART_STYLE.linePrimaryWidth} dot={false} opacity={0.7} connectNulls />
+        <Line yAxisId="ttk" isAnimationActive={false} type="monotone" dataKey="cmpRealTTK" stroke="var(--color-cmpRealTTK)" strokeWidth={CHART_STYLE.lineSecondaryWidth} strokeDasharray={CHART_STYLE.lineDash} dot={false} opacity={0.7} connectNulls />
       </LineChart>
     </ChartContainer>
   )
@@ -403,10 +404,10 @@ function TTKChartOverlay({ data, height }: { data: Array<Record<string, unknown>
         <XAxis type="number" dataKey="timeSec" tickLine={false} axisLine={false} minTickGap={24} tickMargin={8} tickFormatter={fmtTimeTick} />
         <YAxis tickLine={false} axisLine={false} tickMargin={8} width={44} tickFormatter={v => `${v}s`} />
         <ChartTooltip content={<ChartTooltipContent labelFormatter={(v) => fmtTimeTick(Number(v))} />} />
-        <Line isAnimationActive={false} type="monotone" dataKey="realTTK" stroke="var(--color-realTTK)" strokeWidth={1.5} dot={{ r: 1.5, fill: 'var(--color-realTTK)', strokeWidth: 0 }} connectNulls />
-        <Line isAnimationActive={false} type="monotone" dataKey="ma5" stroke="var(--color-ma5)" strokeWidth={2.25} dot={false} connectNulls />
-        <Line isAnimationActive={false} type="monotone" dataKey="cmpRealTTK" stroke="var(--color-cmpRealTTK)" strokeWidth={1.5} dot={{ r: 1.5, fill: 'var(--color-cmpRealTTK)', strokeWidth: 0 }} opacity={0.7} connectNulls />
-        <Line isAnimationActive={false} type="monotone" dataKey="cmpMa5" stroke="var(--color-cmpMa5)" strokeWidth={2.25} dot={false} opacity={0.7} connectNulls />
+        <Line isAnimationActive={false} type="monotone" dataKey="realTTK" stroke="var(--color-realTTK)" strokeWidth={CHART_STYLE.lineSecondaryWidth} dot={chartDot('var(--color-realTTK)', CHART_STYLE.pointRadiusSmall)} connectNulls />
+        <Line isAnimationActive={false} type="monotone" dataKey="ma5" stroke="var(--color-ma5)" strokeWidth={CHART_STYLE.linePrimaryWidth} dot={false} connectNulls />
+        <Line isAnimationActive={false} type="monotone" dataKey="cmpRealTTK" stroke="var(--color-cmpRealTTK)" strokeWidth={CHART_STYLE.lineSecondaryWidth} dot={chartDot('var(--color-cmpRealTTK)', CHART_STYLE.pointRadiusSmall)} opacity={0.7} connectNulls />
+        <Line isAnimationActive={false} type="monotone" dataKey="cmpMa5" stroke="var(--color-cmpMa5)" strokeWidth={CHART_STYLE.linePrimaryWidth} dot={false} opacity={0.7} connectNulls />
       </LineChart>
     </ChartContainer>
   )
@@ -431,8 +432,8 @@ function ScatterPlotOverlay({ primary, compare, height }: { primary: Array<{ x: 
             />
           }
         />
-        <Scatter name="pinned" data={primary} fill="var(--color-pinned)" r={3} isAnimationActive={false} />
-        <Scatter name="compare" data={compare} fill="var(--color-compare)" r={3} isAnimationActive={false} opacity={0.7} />
+        <Scatter name="pinned" data={primary} fill="var(--color-pinned)" r={CHART_STYLE.scatterPointRadius} isAnimationActive={false} />
+        <Scatter name="compare" data={compare} fill="var(--color-compare)" r={CHART_STYLE.scatterPointRadius} isAnimationActive={false} opacity={0.7} />
       </ScatterChart>
     </ChartContainer>
   )

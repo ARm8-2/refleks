@@ -2,7 +2,7 @@ import { SegmentedControl, Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
 import { usePersistedState } from '@/shared/hooks'
-import { cn, STORAGE_KEYS } from '@/shared/lib'
+import { CHART_SERIES_COLORS, CHART_STYLE, cn, STORAGE_KEYS } from '@/shared/lib'
 import { useId, useMemo, type ReactElement } from 'react'
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
 import { useRecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
@@ -12,7 +12,7 @@ const RECENT_SCORE_RUN_COUNT_OPTIONS = [10, 20, 50] as const
 const REFERENCE_LABEL_OVERLAP_RATIO = 0.08
 
 const recentScoresConfig: ChartConfig = {
-  score: { label: 'Score', color: 'var(--chart-2)' },
+  score: { label: 'Score', color: CHART_SERIES_COLORS.scoreHistory },
 }
 
 type RecentScorePoint = { index: number; score: number; inCurrentSession: boolean; fill: string }
@@ -44,7 +44,7 @@ export function RecentScoresWidget() {
   const compactData = useMemo(
     () => recentScores.slice(-10).map(point => ({
       ...point,
-      fill: point.inCurrentSession ? 'var(--chart-1)' : 'var(--color-score)',
+      fill: point.inCurrentSession ? CHART_SERIES_COLORS.scoreCurrent : 'var(--color-score)',
     })),
     [recentScores],
   )
@@ -55,7 +55,7 @@ export function RecentScoresWidget() {
     return sliced.map((s, i) => ({
       ...s,
       index: i + 1,
-      fill: s.inCurrentSession ? 'var(--chart-1)' : 'var(--color-score)',
+      fill: s.inCurrentSession ? CHART_SERIES_COLORS.scoreCurrent : 'var(--color-score)',
     }))
   }, [recentScores, effectiveRunCount])
   const expandedSessionSplitRatio = useMemo(() => currentSessionStartRatio(expandedData), [expandedData])
@@ -90,13 +90,13 @@ export function RecentScoresWidget() {
 
   const renderScoreDot = (props: { cx?: number; cy?: number; payload?: { fill?: string; inCurrentSession?: boolean } }): ReactElement => {
     const hasPosition = typeof props.cx === 'number' && typeof props.cy === 'number'
-    const fill = props.payload?.fill ?? (props.payload?.inCurrentSession ? 'var(--chart-1)' : 'var(--color-score)')
+    const fill = props.payload?.fill ?? (props.payload?.inCurrentSession ? CHART_SERIES_COLORS.scoreCurrent : 'var(--color-score)')
 
     return (
       <circle
         cx={hasPosition ? props.cx : 0}
         cy={hasPosition ? props.cy : 0}
-        r={hasPosition ? 2.7 : 0}
+        r={hasPosition ? CHART_STYLE.pointRadius : 0}
         fill={fill}
         strokeWidth={0}
       />
@@ -105,13 +105,13 @@ export function RecentScoresWidget() {
 
   const renderActiveScoreDot = (props: { cx?: number; cy?: number; payload?: { fill?: string; inCurrentSession?: boolean } }): ReactElement => {
     const hasPosition = typeof props.cx === 'number' && typeof props.cy === 'number'
-    const fill = props.payload?.fill ?? (props.payload?.inCurrentSession ? 'var(--chart-1)' : 'var(--color-score)')
+    const fill = props.payload?.fill ?? (props.payload?.inCurrentSession ? CHART_SERIES_COLORS.scoreCurrent : 'var(--color-score)')
 
     return (
       <circle
         cx={hasPosition ? props.cx : 0}
         cy={hasPosition ? props.cy : 0}
-        r={hasPosition ? 4 : 0}
+        r={hasPosition ? CHART_STYLE.activePointRadius : 0}
         fill={fill}
         strokeWidth={0}
       />
@@ -122,10 +122,10 @@ export function RecentScoresWidget() {
     return (
       <>
         {showSessionBest && recentScoresSessionBest !== null && (
-          <ReferenceLine y={recentScoresSessionBest} stroke="var(--chart-3)" strokeDasharray="6 3" strokeWidth={1.5} />
+          <ReferenceLine y={recentScoresSessionBest} stroke={CHART_SERIES_COLORS.accuracy} strokeDasharray={CHART_STYLE.referenceDash} strokeWidth={CHART_STYLE.lineSecondaryWidth} />
         )}
         {showPb && recentScoresPb !== null && (
-          <ReferenceLine y={recentScoresPb} stroke="var(--chart-1)" strokeDasharray="6 3" strokeWidth={1.5} />
+          <ReferenceLine y={recentScoresPb} stroke={CHART_SERIES_COLORS.scoreCurrent} strokeDasharray={CHART_STYLE.referenceDash} strokeWidth={CHART_STYLE.lineSecondaryWidth} />
         )}
       </>
     )
@@ -144,8 +144,8 @@ export function RecentScoresWidget() {
     if (ratio <= 0) {
       return (
         <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="var(--chart-1)" />
-          <stop offset="100%" stopColor="var(--chart-1)" />
+          <stop offset="0%" stopColor={CHART_SERIES_COLORS.scoreCurrent} />
+          <stop offset="100%" stopColor={CHART_SERIES_COLORS.scoreCurrent} />
         </linearGradient>
       )
     }
@@ -164,8 +164,8 @@ export function RecentScoresWidget() {
       <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
         <stop offset="0%" stopColor="var(--color-score)" />
         <stop offset={splitOffset} stopColor="var(--color-score)" />
-        <stop offset={splitOffset} stopColor="var(--chart-1)" />
-        <stop offset="100%" stopColor="var(--chart-1)" />
+        <stop offset={splitOffset} stopColor={CHART_SERIES_COLORS.scoreCurrent} />
+        <stop offset="100%" stopColor={CHART_SERIES_COLORS.scoreCurrent} />
       </linearGradient>
     )
   }
@@ -182,7 +182,7 @@ export function RecentScoresWidget() {
           <YAxis tickLine={false} axisLine={false} tickMargin={8} width={36} tickFormatter={v => formatScoreCompact(v)} domain={compactScoreDomain} />
           <ChartTooltip content={<ChartTooltipContent />} />
           {renderReferenceLines()}
-          <Line isAnimationActive={false} type="monotone" dataKey="score" stroke={`url(#${compactGradientId})`} strokeWidth={2.5} dot={renderScoreDot} activeDot={renderActiveScoreDot} />
+          <Line isAnimationActive={false} type="monotone" dataKey="score" stroke={`url(#${compactGradientId})`} strokeWidth={CHART_STYLE.linePrimaryWidth} dot={renderScoreDot} activeDot={renderActiveScoreDot} />
         </LineChart>
       </ChartContainer>
     )
@@ -209,7 +209,7 @@ export function RecentScoresWidget() {
       const labelY = Math.max(14, y + offset)
 
       return (
-        <text x={x + 10} y={labelY} fill="var(--chart-3)" fontSize={11} fontWeight={500}>
+        <text x={x + 10} y={labelY} fill={CHART_SERIES_COLORS.accuracy} fontSize={11} fontWeight={500}>
           {`Session Best: ${formatScoreCompact(sessionBestScore)}`}
         </text>
       )
@@ -222,7 +222,7 @@ export function RecentScoresWidget() {
       const labelY = Math.max(14, y + offset)
 
       return (
-        <text x={x + 10} y={labelY} fill="var(--chart-1)" fontSize={11} fontWeight={500}>
+        <text x={x + 10} y={labelY} fill={CHART_SERIES_COLORS.scoreCurrent} fontSize={11} fontWeight={500}>
           {`Personal Best: ${formatScoreCompact(personalBestScore)}`}
         </text>
       )
@@ -239,12 +239,12 @@ export function RecentScoresWidget() {
           <YAxis tickLine={false} axisLine={false} tickMargin={8} width={56} tickFormatter={v => formatScoreCompact(v)} domain={expandedScoreDomain} />
           <ChartTooltip content={<ChartTooltipContent />} />
           {showSessionBest && recentScoresSessionBest !== null && (
-            <ReferenceLine y={recentScoresSessionBest} stroke="var(--chart-3)" strokeDasharray="6 3" strokeWidth={1.5} label={renderSessionBestLineLabel} />
+            <ReferenceLine y={recentScoresSessionBest} stroke={CHART_SERIES_COLORS.accuracy} strokeDasharray={CHART_STYLE.referenceDash} strokeWidth={CHART_STYLE.lineSecondaryWidth} label={renderSessionBestLineLabel} />
           )}
           {showPb && recentScoresPb !== null && (
-            <ReferenceLine y={recentScoresPb} stroke="var(--chart-1)" strokeDasharray="6 3" strokeWidth={1.5} label={renderPersonalBestLineLabel} />
+            <ReferenceLine y={recentScoresPb} stroke={CHART_SERIES_COLORS.scoreCurrent} strokeDasharray={CHART_STYLE.referenceDash} strokeWidth={CHART_STYLE.lineSecondaryWidth} label={renderPersonalBestLineLabel} />
           )}
-          <Line isAnimationActive={false} type="monotone" dataKey="score" stroke={`url(#${expandedGradientId})`} strokeWidth={2.5} dot={renderScoreDot} activeDot={renderActiveScoreDot} />
+          <Line isAnimationActive={false} type="monotone" dataKey="score" stroke={`url(#${expandedGradientId})`} strokeWidth={CHART_STYLE.linePrimaryWidth} dot={renderScoreDot} activeDot={renderActiveScoreDot} />
         </LineChart>
       </ChartContainer>
     )

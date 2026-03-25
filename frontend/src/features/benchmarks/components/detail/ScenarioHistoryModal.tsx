@@ -1,7 +1,7 @@
 import { Loading, Modal } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
-import { buildThresholdAnchoredScoreDomain, getLastScenarioScores } from '@/shared/lib'
+import { CHART_SERIES_COLORS, CHART_STYLE, buildThresholdAnchoredScoreDomain, getLastScenarioScores } from '@/shared/lib'
 import type { KovaaksLastScore, RankDef } from '@/shared/types'
 import { useEffect, useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, ReferenceArea, XAxis, YAxis } from 'recharts'
@@ -28,7 +28,7 @@ type RankBand = {
 }
 
 const chartConfig: ChartConfig = {
-  score: { label: 'Score', color: 'var(--chart-2)' },
+  score: { label: 'Score', color: CHART_SERIES_COLORS.scoreHistory },
 }
 
 export function ScenarioHistoryModal({ isOpen, onClose, scenarioName, thresholds, rankDefs }: Props) {
@@ -156,9 +156,9 @@ export function ScenarioHistoryModal({ isOpen, onClose, scenarioName, thresholds
                   type="monotone"
                   dataKey="score"
                   stroke="var(--color-score)"
-                  strokeWidth={2.5}
-                  dot={{ r: 2.5, fill: 'var(--color-score)', strokeWidth: 0 }}
-                  activeDot={{ r: 4.5 }}
+                  strokeWidth={CHART_STYLE.linePrimaryWidth}
+                  dot={{ r: CHART_STYLE.pointRadius, fill: 'var(--color-score)', strokeWidth: 0 }}
+                  activeDot={{ r: CHART_STYLE.activePointRadius }}
                 />
               </LineChart>
             </ChartContainer>
@@ -190,7 +190,7 @@ function buildRankBands(thresholds: number[], rankDefs: RankDef[], domain: [numb
     bands.push({
       y1,
       y2,
-      color: rankDefs[index]?.color || 'var(--chart-3)',
+      color: rankDefs[index]?.color || CHART_SERIES_COLORS.accuracy,
     })
   }
 

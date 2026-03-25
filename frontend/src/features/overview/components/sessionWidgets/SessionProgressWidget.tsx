@@ -1,9 +1,18 @@
 import { InfoTooltip, Widget } from '@/shared/components'
 import { usePersistedState } from '@/shared/hooks'
-import { STORAGE_KEYS } from '@/shared/lib'
+import { CHART_SERIES_COLORS, STORAGE_KEYS } from '@/shared/lib'
 import { Minus, Pencil, Plus } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { useRecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
+
+const PHASE_SWATCH = {
+  warmup: 'var(--phase-warmup)',
+  warmupFill: 'var(--phase-warmup-soft)',
+  peak: 'var(--phase-peak)',
+  peakFill: 'var(--phase-peak-soft)',
+  diminishing: 'var(--phase-diminishing)',
+  diminishingFill: 'var(--phase-diminishing-soft)',
+} as const
 
 export function SessionProgressWidget() {
   const {
@@ -167,14 +176,14 @@ export function SessionProgressWidget() {
           <svg viewBox="0 0 200 200" className="h-full w-full">
             <circle cx={cx} cy={cy} r={(outerR + innerR) / 2} fill="none" stroke="var(--surface-muted)" strokeWidth={outerR - innerR} />
 
-            <path d={arcPath(0, warmupEnd)} fill="rgb(245 159 10 / 0.18)" />
-            <path d={arcPath(peakStart - 1, peakEndClamped)} fill="rgb(16 183 127 / 0.18)" />
+            <path d={arcPath(0, warmupEnd)} fill={PHASE_SWATCH.warmupFill} />
+            <path d={arcPath(peakStart - 1, peakEndClamped)} fill={PHASE_SWATCH.peakFill} />
             {dimEnd < maxRun && (
-              <path d={arcPath(dimEnd, maxRun)} fill="rgb(239 68 68 / 0.12)" />
+              <path d={arcPath(dimEnd, maxRun)} fill={PHASE_SWATCH.diminishingFill} />
             )}
 
             {currentRuns > 0 && (
-              <path d={arcPath(0, currentRuns)} fill="var(--chart-2)" opacity={0.55} />
+              <path d={arcPath(0, currentRuns)} fill={CHART_SERIES_COLORS.scoreHistory} opacity={0.55} />
             )}
 
             <text x={cx} y={cy - 10} textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-2xl font-bold">
@@ -193,17 +202,17 @@ export function SessionProgressWidget() {
           <InfoTooltip side="left">
             <div className="space-y-1.5 text-[11px]">
               <div className="flex items-center gap-2">
-                <span className="inline-block h-2 w-2 rounded-full" style={{ background: 'rgb(245 159 10 / 0.6)' }} />
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: PHASE_SWATCH.warmup }} />
                 <span className="text-popover-foreground/70">Warm-up</span>
                 <span className="ml-auto font-medium text-popover-foreground">1–{warmupRuns}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-block h-2 w-2 rounded-full" style={{ background: 'rgb(16 183 127 / 0.6)' }} />
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: PHASE_SWATCH.peak }} />
                 <span className="text-popover-foreground/70">Peak</span>
                 <span className="ml-auto font-medium text-popover-foreground">{peakStart}–{peakEnd}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-block h-2 w-2 rounded-full" style={{ background: 'rgb(239 68 68 / 0.5)' }} />
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: PHASE_SWATCH.diminishing }} />
                 <span className="text-popover-foreground/70">Diminishing</span>
                 <span className="ml-auto font-medium text-popover-foreground">{diminishingReturnsAt}+</span>
               </div>

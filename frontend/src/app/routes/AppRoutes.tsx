@@ -15,10 +15,10 @@ const SettingsPage = lazy(() => loadSettingsFeature().then(m => ({ default: m.Se
 
 function RouteLoading() {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 p-6">
+    <div className="flex h-full min-h-0 flex-col gap-4 p-6">
       <div className="h-5 w-44 animate-pulse rounded-md bg-surface-muted" />
       <div className="h-24 animate-pulse rounded-xl bg-surface-subtle" />
-      <div className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2">
         <div className="animate-pulse rounded-xl bg-surface-subtle" />
         <div className="animate-pulse rounded-xl bg-surface-subtle" />
       </div>

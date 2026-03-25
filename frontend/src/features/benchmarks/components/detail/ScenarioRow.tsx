@@ -56,9 +56,9 @@ function thresholdTextOnFillColor(fillColor: string): string {
   const rgb = parseColorToRGB(fillColor)
   if (!rgb) {
     // Unknown CSS formats (e.g. vars) fallback to a safe light text on the fill layer.
-    return '#f8fafc'
+    return 'var(--ink-inverse)'
   }
-  return relativeLuminance(rgb) >= 0.58 ? '#0b1220' : '#f8fafc'
+  return relativeLuminance(rgb) >= 0.58 ? 'var(--ink-strong)' : 'var(--ink-inverse)'
 }
 
 // --- Column layout constants ---

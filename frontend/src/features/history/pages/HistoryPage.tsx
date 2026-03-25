@@ -49,7 +49,7 @@ export function HistoryPage() {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden text-sm">
-      <div className="flex min-h-0 flex-1 gap-3 overflow-hidden p-4 xl:p-5">
+      <div className="flex min-h-0 flex-1 gap-4 overflow-hidden p-4 xl:p-5">
         <HistorySessionSidebar
           sessions={filteredSessions}
           selectedSessionId={selectedSessionId}

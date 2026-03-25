@@ -3,7 +3,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Widget }
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip } from '@/shared/components/ui/chart'
 import { useStore } from '@/shared/hooks'
-import { getScenarioName, readScenarioAccuracy, readScenarioScore, readScenarioTimestamp } from '@/shared/lib'
+import {
+  CHART_SERIES_COLORS,
+  CHART_STYLE,
+  getScenarioName,
+  readScenarioAccuracy,
+  readScenarioScore,
+  readScenarioTimestamp,
+} from '@/shared/lib'
 import type { ScenarioRecord, Session } from '@/shared/types'
 import { useMemo, useState } from 'react'
 import { CartesianGrid, ComposedChart, ReferenceArea, Scatter, XAxis, YAxis } from 'recharts'
@@ -45,9 +52,9 @@ const metricOptions: Array<{ value: MetricKey; label: string }> = [
 ]
 
 const metricColors: Record<MetricKey, string> = {
-  score: 'var(--chart-2)',
-  accuracy: 'var(--chart-3)',
-  ttk: 'var(--chart-4)',
+  score: CHART_SERIES_COLORS.scoreHistory,
+  accuracy: CHART_SERIES_COLORS.accuracy,
+  ttk: CHART_SERIES_COLORS.ttk,
 }
 
 const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
@@ -151,7 +158,7 @@ function PerformanceVsSensChartContent({
     },
     count: {
       label: 'Run Count',
-      color: 'var(--surface-muted-foreground)',
+      color: CHART_SERIES_COLORS.neutral,
     },
   }
 
@@ -202,7 +209,7 @@ function PerformanceVsSensChartContent({
               y1={0}
               y2={bin.count}
               yAxisId="count"
-              fill="var(--chart-1)"
+              fill={CHART_SERIES_COLORS.scoreCurrent}
               fillOpacity={0.08}
               stroke="var(--border)"
               strokeOpacity={0.28}
@@ -220,7 +227,7 @@ function PerformanceVsSensChartContent({
             fill="var(--color-performance)"
             stroke="var(--color-performance)"
             isAnimationActive={false}
-            r={3.2}
+            r={CHART_STYLE.scatterPointRadius}
           />
         </ComposedChart>
       </ChartContainer>

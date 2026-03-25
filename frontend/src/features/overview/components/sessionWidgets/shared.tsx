@@ -43,8 +43,8 @@ export function getStatusIcon(tone: SnapshotTone): LucideIcon {
 
 export function getToneBadgeClasses(tone: SnapshotTone): string {
   switch (tone) {
-    case 'success': return 'border-transparent bg-[rgb(16_183_127_/_0.14)] text-[color:var(--success)]'
-    case 'warning': return 'border-transparent bg-[rgb(245_159_10_/_0.16)] text-[rgb(180_110_0)] dark:text-[rgb(255_201_107)]'
+    case 'success': return 'border-transparent bg-[color:var(--success-soft)] text-[color:var(--success)]'
+    case 'warning': return 'border-transparent bg-[color:var(--warning-soft)] text-[color:var(--warning-foreground)]'
     case 'neutral': return 'border-primary-border bg-primary-soft text-primary'
     case 'muted':
     default: return 'border-border-soft bg-surface-muted-soft text-surface-muted-foreground'

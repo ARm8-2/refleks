@@ -230,11 +230,11 @@ export function BenchmarksExplorePage() {
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-4">
+      <div className="p-6 space-y-4">
         {showInitialSkeleton ? (
           <div className="space-y-3">
             <div className="h-8 w-56 animate-pulse rounded-xl bg-surface-subtle" />
-            <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+            <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
               {Array.from({ length: 6 }).map((_, index) => (
                 <div key={index} className="h-[68px] animate-pulse rounded-xl bg-surface-subtle" />
               ))}
@@ -253,7 +253,7 @@ export function BenchmarksExplorePage() {
                   </span>
                   <div className="h-px bg-primary-muted flex-1" />
                 </div>
-                <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
                   {recommendedBenchmarks.map(b => (
                     <BenchmarkCard
                       key={b.benchmarkName}
@@ -304,7 +304,7 @@ export function BenchmarksExplorePage() {
 
                     {/* Cards grid */}
                     {!isCollapsed && (
-                      <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                      <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
                         {items.map(b => (
                           <BenchmarkCard
                             key={b.benchmarkName}

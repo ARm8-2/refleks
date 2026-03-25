@@ -35,7 +35,7 @@ function cssVarRGB(name: string, fallback: [number, number, number]): [number, n
   // handle hex (#rrggbb)
   const hex = raw.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i)
   if (hex) return [parseInt(hex[1], 16), parseInt(hex[2], 16), parseInt(hex[3], 16)]
-  // handle rgb(r,g,b)
+  // handle rgb values
   const rgb = raw.match(/(\d+)\s*,?\s*(\d+)\s*,?\s*(\d+)/)
   if (rgb) return [Number(rgb[1]), Number(rgb[2]), Number(rgb[3])]
   return fallback
@@ -48,6 +48,8 @@ function cssVarColor(name: string, fallback: string): string {
 function withAlpha(color: string, a: number): string {
   const rgb = color.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i)
   if (rgb) return `rgba(${parseInt(rgb[1], 16)},${parseInt(rgb[2], 16)},${parseInt(rgb[3], 16)},${a})`
+  const rgbFunc = color.match(/^rgb\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/i)
+  if (rgbFunc) return `rgba(${Number(rgbFunc[1])},${Number(rgbFunc[2])},${Number(rgbFunc[3])},${a})`
   return color
 }
 
@@ -145,32 +147,34 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
 
   // Theme colors (computed once, refreshed on theme change)
   const colors = useMemo((): TraceColors => {
-    const primary = cssVarColor('--primary', '#3c83f6')
-    const destructive = cssVarColor('--destructive', '#ef4343')
-    const fg = cssVarColor('--foreground', '#e6e6e6')
+    const primary = cssVarColor('--primary', 'var(--primary)')
+    const destructive = cssVarColor('--destructive', 'var(--destructive)')
+    const fg = cssVarColor('--trace-click', '#f8fafc')
     return {
       accentRGB: cssVarRGB('--primary', [60, 131, 246]),
       dangerRGB: cssVarRGB('--destructive', [239, 67, 67]),
       startPoint: withAlpha(primary, 0.9),
       endPoint: withAlpha(destructive, 0.9),
       marker: fg,
-      markerBorder: withAlpha(fg, 0.3),
-      boxFill: withAlpha(fg, 0.02),
-      boxStroke: withAlpha(fg, 0.12),
+      markerBorder: cssVarColor('--trace-click-ring', '#ffffffcc'),
+      boxFill: cssVarColor('--trace-box-fill', '#2a2a2a66'),
+      boxStroke: cssVarColor('--trace-box-stroke', '#5a5a5a88'),
     }
   }, [])
 
   const compareColorSet = useMemo((): TraceColors => {
-    const fg = cssVarColor('--foreground', '#e6e6e6')
+    const fg = cssVarColor('--trace-click', '#f8fafc')
+    const compareStart = cssVarColor('--trace-compare', 'var(--trace-compare)')
+    const compareEnd = cssVarColor('--trace-compare-end', 'var(--trace-compare-end)')
     return {
-      accentRGB: [20, 184, 166],
-      dangerRGB: [234, 179, 8],
-      startPoint: 'rgba(20,184,166,0.9)',
-      endPoint: 'rgba(234,179,8,0.9)',
+      accentRGB: cssVarRGB('--trace-compare', [20, 184, 166]),
+      dangerRGB: cssVarRGB('--trace-compare-end', [234, 179, 8]),
+      startPoint: withAlpha(compareStart, 0.9),
+      endPoint: withAlpha(compareEnd, 0.9),
       marker: fg,
-      markerBorder: withAlpha(fg, 0.3),
-      boxFill: 'transparent',
-      boxStroke: 'transparent',
+      markerBorder: cssVarColor('--trace-click-ring', '#ffffffcc'),
+      boxFill: cssVarColor('--trace-box-fill', '#2a2a2a66'),
+      boxStroke: cssVarColor('--trace-box-stroke', '#5a5a5a88'),
     }
   }, [])
 
@@ -651,7 +655,7 @@ function TraceLegend() {
         <span className="text-surface-muted-foreground">Pinned</span>
       </div>
       <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[10px] font-medium backdrop-blur">
-        <span className="inline-block h-2 w-2 rounded-full" style={{ background: '#14b8a6' }} />
+        <span className="inline-block h-2 w-2 rounded-full" style={{ background: 'var(--trace-compare)' }} />
         <span className="text-surface-muted-foreground">Compare</span>
       </div>
     </div>

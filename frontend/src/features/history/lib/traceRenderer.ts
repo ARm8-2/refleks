@@ -294,11 +294,16 @@ export function renderTrace(ctx: CanvasRenderingContext2D, opts: RenderOpts) {
 }
 
 function drawClick(ctx: CanvasRenderingContext2D, x: number, y: number, isDown: boolean, fill: string, stroke: string) {
-  const r = isDown ? 3 : 2
+  const r = 2.2
   ctx.fillStyle = fill
   ctx.strokeStyle = stroke
   ctx.beginPath()
   ctx.arc(x, y, r, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.stroke()
+  if (isDown) {
+    ctx.fill()
+  } else {
+    ctx.lineWidth = 1.3
+    ctx.stroke()
+    ctx.lineWidth = 1
+  }
 }

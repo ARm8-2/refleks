@@ -18,7 +18,7 @@ export function BenchmarkCard({ benchmark, isFavorite, onToggleFavorite, onSelec
   return (
     <div
       onClick={onSelect}
-      className="relative group cursor-pointer pl-2 pr-10 py-2 rounded-xl bg-surface hover:bg-surface-muted"
+      className="relative group cursor-pointer rounded-xl bg-surface pl-2 pr-10 py-2 transition-[transform,background-color] duration-220 ease-emphasized will-change-transform hover:bg-surface-muted motion-safe:hover:scale-[1.01]"
       onKeyDown={e => {
         if ((e.key === 'Enter' || e.key === ' ') && onSelect) {
           e.preventDefault()

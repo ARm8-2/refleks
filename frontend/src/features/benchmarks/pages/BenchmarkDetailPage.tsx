@@ -142,7 +142,7 @@ export function BenchmarkDetailPage() {
         </div>
       </div>
 
-      <div className="p-6 space-y-1">
+      <div className="p-6 space-y-4">
         {showInitialSkeleton && (
           <div className="space-y-3 rounded-xl bg-surface p-6 shadow-sm">
             <div className="h-5 w-56 animate-pulse rounded-md bg-surface-subtle" />

@@ -1,7 +1,7 @@
 import { Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
-import { buildScoreDomain } from '@/shared/lib'
+import { buildScoreDomain, CHART_SERIES_COLORS, CHART_STYLE, chartActiveDot, chartDot } from '@/shared/lib'
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import type { ScenarioTrendPoint } from '../lib/historyModels'
@@ -15,8 +15,8 @@ type Props = {
 }
 
 const dualChartConfig: ChartConfig = {
-  score: { label: 'Score', color: 'var(--chart-2)' },
-  accuracy: { label: 'Accuracy %', color: 'var(--chart-4)' },
+  score: { label: 'Score', color: CHART_SERIES_COLORS.scoreHistory },
+  accuracy: { label: 'Accuracy %', color: CHART_SERIES_COLORS.accuracy },
 }
 
 export function ScenarioTrendChart({ scenarioName, points, onClickPoint, className }: Props) {
@@ -71,9 +71,9 @@ export function ScenarioTrendChart({ scenarioName, points, onClickPoint, classNa
             type="monotone"
             dataKey="score"
             stroke="var(--color-score)"
-            strokeWidth={2.25}
-            dot={{ r: expanded ? 2.75 : 2, fill: 'var(--color-score)', strokeWidth: 0 }}
-            activeDot={{ r: 5 }}
+            strokeWidth={CHART_STYLE.linePrimaryWidth}
+            dot={chartDot('var(--color-score)', expanded ? CHART_STYLE.pointRadius : CHART_STYLE.pointRadiusCompact)}
+            activeDot={chartActiveDot(CHART_STYLE.activePointRadiusLarge)}
           />
           {hasAccuracy && (
             <Line
@@ -82,10 +82,10 @@ export function ScenarioTrendChart({ scenarioName, points, onClickPoint, classNa
               type="monotone"
               dataKey="accuracy"
               stroke="var(--color-accuracy)"
-              strokeWidth={1.75}
-              strokeDasharray="4 3"
-              dot={{ r: expanded ? 2 : 1.5, fill: 'var(--color-accuracy)', strokeWidth: 0 }}
-              activeDot={{ r: 4 }}
+              strokeWidth={CHART_STYLE.lineAccentWidth}
+              strokeDasharray={CHART_STYLE.lineDash}
+              dot={chartDot('var(--color-accuracy)', expanded ? CHART_STYLE.pointRadiusCompact : CHART_STYLE.pointRadiusSmall)}
+              activeDot={chartActiveDot()}
             />
           )}
         </LineChart>

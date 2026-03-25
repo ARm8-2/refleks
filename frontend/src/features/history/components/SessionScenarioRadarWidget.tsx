@@ -2,7 +2,7 @@ import { Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
 import { useStore } from '@/shared/hooks'
-import { getScenarioName } from '@/shared/lib'
+import { CHART_SERIES_COLORS, CHART_STYLE, getScenarioName } from '@/shared/lib'
 import type { Session } from '@/shared/types'
 import { useMemo } from 'react'
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart } from 'recharts'
@@ -23,7 +23,7 @@ type SessionScenarioRadarWidgetProps = {
 const scenarioUsageConfig: ChartConfig = {
   runs: {
     label: 'Runs',
-    color: 'var(--chart-1)',
+    color: CHART_SERIES_COLORS.scoreHistory,
   },
 }
 
@@ -142,7 +142,7 @@ function SessionScenarioRadarChart({
           stroke="var(--color-runs)"
           fill="var(--color-runs)"
           fillOpacity={0.25}
-          dot={{ r: 3, fill: 'var(--color-runs)', strokeWidth: 0 }}
+          dot={{ r: CHART_STYLE.scatterPointRadius, fill: 'var(--color-runs)', strokeWidth: 0 }}
         />
       </RadarChart>
     </ChartContainer>
