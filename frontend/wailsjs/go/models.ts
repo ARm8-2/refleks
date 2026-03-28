@@ -488,6 +488,7 @@ export namespace models {
 	    steamInstallDir: string;
 	    steamIdOverride?: string;
 	    personaNameOverride?: string;
+	    lastSeenVersion?: string;
 	    statsDir: string;
 	    sessionGapMinutes: number;
 	    recentRunsDays: number;
@@ -512,6 +513,7 @@ export namespace models {
 	        this.steamInstallDir = source["steamInstallDir"];
 	        this.steamIdOverride = source["steamIdOverride"];
 	        this.personaNameOverride = source["personaNameOverride"];
+	        this.lastSeenVersion = source["lastSeenVersion"];
 	        this.statsDir = source["statsDir"];
 	        this.sessionGapMinutes = source["sessionGapMinutes"];
 	        this.recentRunsDays = source["recentRunsDays"];

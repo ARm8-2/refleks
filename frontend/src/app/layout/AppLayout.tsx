@@ -1,3 +1,4 @@
+import { VersionWelcomeGate } from '@/features/welcome'
 import { useAppInitialization, usePersistedState } from '@/shared/hooks'
 import { cn, STORAGE_KEYS } from '@/shared/lib'
 import { writeLastRoute } from '@/shared/lib/navigation'
@@ -31,6 +32,8 @@ export function AppLayout() {
           <Outlet />
         </div>
       </main>
+
+      <VersionWelcomeGate />
     </div>
   )
 }

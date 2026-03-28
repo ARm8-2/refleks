@@ -181,6 +181,7 @@ export interface Settings {
   steamInstallDir?: string
   steamIdOverride?: string
   personaNameOverride?: string
+  lastSeenVersion?: string
   statsDir: string
   sessionGapMinutes: number
   recentRunsDays: number

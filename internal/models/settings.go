@@ -5,6 +5,7 @@ type Settings struct {
 	SteamInstallDir      string                  `json:"steamInstallDir"`
 	SteamIDOverride      string                  `json:"steamIdOverride,omitempty"`
 	PersonaNameOverride  string                  `json:"personaNameOverride,omitempty"`
+	LastSeenVersion      string                  `json:"lastSeenVersion,omitempty"`
 	StatsDir             string                  `json:"statsDir"`
 	SessionGapMinutes    int                     `json:"sessionGapMinutes"`
 	RecentRunsDays       int                     `json:"recentRunsDays"`
