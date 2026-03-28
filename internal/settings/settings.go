@@ -38,6 +38,7 @@ func Default() models.Settings {
 		AutostartEnabled:     false,
 		AnonymousEnabled:     false,
 		RunSyncEnabled:       true,
+		LastSeenVersion:      "",
 	}
 }
 

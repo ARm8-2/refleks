@@ -199,6 +199,7 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		newSettings.AutostartEnabled = defaults.AutostartEnabled
 		newSettings.AnonymousEnabled = defaults.AnonymousEnabled
 		newSettings.RunSyncEnabled = defaults.RunSyncEnabled
+		newSettings.LastSeenVersion = defaults.LastSeenVersion
 
 		// Sync autostart state
 		if newSettings.AutostartEnabled {

@@ -1,50 +1,70 @@
 export type WelcomeContent = {
   title: string
-  badge: string
   intro: string
+  details: string[]
+  highlightsTitle: string
   highlights: string[]
+  linksTitle: string
+  links: WelcomeLink[]
   ctaLabel: string
 }
 
+export type WelcomeLink = {
+  label: string
+  description: string
+  url: string
+  urlLabel: string
+}
+
 type ReleaseCopy = {
-  summary: string
+  details: string[]
   highlights: string[]
 }
 
-// Add per-version welcome copy here when shipping a new release.
-const RELEASE_COPY: Record<string, ReleaseCopy> = {
-  '0.7.0': {
-    summary: 'This release tightens privacy around synced uploads and adds a lightweight in-app welcome flow for new installs and updates.',
-    highlights: [
-      'Anonymous Mode now strips Steam ID, persona name, and hostname before synced uploads leave your machine.',
-      'The app can now show a short welcome or upgrade summary the first time a version is launched.',
-      'Settings still remain the place to review privacy controls and manually check for updates.',
-    ],
-  },
-}
-
-const DEFAULT_RELEASE_COPY: ReleaseCopy = {
-  summary: 'This build includes fixes and refinements across tracking, settings, and the desktop experience.',
+const APP_REFRESH_COPY: ReleaseCopy = {
+  details: [
+    'We\'re introducing an Overview page and a History page to make it easier to move between sessions and runs. The frontend has been rebuilt with a cleaner layout and more consistent components, and the desktop app underneath now runs faster and more reliably.',
+  ],
   highlights: [
-    'RefleK\'s will keep showing a short summary the first time you launch a new version.',
-    'Version-specific notes live in one place so future release messaging stays easy to maintain.',
-    'You can always review update status later from the Settings page.',
+    'A redesigned UI with reworked layouts, components, and theme treatment across the desktop app.',
+    'A new Overview page for quick progress checks and a richer History flow for sessions and runs.',
+    'Cleaner navigation between the main parts of the app.',
+    'Under-the-hood improvements that make the app faster, lighter, and smoother to use.',
   ],
 }
+
+const RESOURCE_LINKS: WelcomeLink[] = [
+  {
+    label: 'Browse the docs',
+    description: 'Setup guides, walkthroughs, and troubleshooting for the newer RefleK\'s experience.',
+    url: 'https://refleks-app.com/docs/',
+    urlLabel: 'refleks-app.com/docs/',
+  },
+  {
+    label: 'Read the changelog',
+    description: 'See the fuller release history and version-by-version notes in the browser.',
+    url: 'https://refleks-app.com/changelog/',
+    urlLabel: 'refleks-app.com/changelog/',
+  },
+]
 
 export function resolveWelcomeContent(currentVersion: string, previousVersion: string): WelcomeContent {
   const trimmedCurrent = currentVersion.trim()
   const trimmedPrevious = previousVersion.trim()
   const isFirstLaunch = trimmedPrevious === ''
-  const releaseCopy = RELEASE_COPY[trimmedCurrent] ?? DEFAULT_RELEASE_COPY
 
   return {
-    title: isFirstLaunch ? 'Welcome to RefleK\'s' : `What\'s New in ${trimmedCurrent}`,
-    badge: isFirstLaunch ? `Version ${trimmedCurrent}` : `${trimmedPrevious} -> ${trimmedCurrent}`,
+    title: isFirstLaunch
+      ? `Welcome to RefleK\'s v${trimmedCurrent}`
+      : `Welcome back to RefleK\'s v${trimmedCurrent}`,
     intro: isFirstLaunch
-      ? `Thanks for installing RefleK\'s. ${releaseCopy.summary}`
-      : `You\'ve updated to ${trimmedCurrent}. ${releaseCopy.summary}`,
-    highlights: releaseCopy.highlights,
-    ctaLabel: isFirstLaunch ? 'Start exploring' : 'Continue',
+      ? 'Thank you for installing RefleK\'s. This release is a major refresh for RefleK\'s, with much of the UI and supporting app code reworked, and it should feel more complete from the moment you open it.'
+      : 'Welcome back. This release is a major refresh for RefleK\'s, with much of the UI and supporting app code reworked, and it should feel more complete from the moment you open it.',
+    details: APP_REFRESH_COPY.details,
+    highlightsTitle: 'What\'s New',
+    highlights: APP_REFRESH_COPY.highlights,
+    linksTitle: 'Docs and Changelog',
+    links: RESOURCE_LINKS,
+    ctaLabel: isFirstLaunch ? 'Start exploring' : 'Jump back in',
   }
 }

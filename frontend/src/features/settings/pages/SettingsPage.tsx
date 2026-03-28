@@ -1,3 +1,10 @@
+import {
+  WelcomeModal,
+  buildManualWelcomePresentation,
+  buildWelcomeSeenSettingsUpdate,
+  buildWelcomeSettingsUpdate,
+  type WelcomePresentation,
+} from '@/features/welcome'
 import { Button, Checkbox, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
 import { usePersistedState, useStore } from '@/shared/hooks'
 import {
@@ -48,6 +55,7 @@ export function SettingsPage() {
   const [checkError, setCheckError] = useState<string>('')
   const [isResetOpen, setIsResetOpen] = useState(false)
   const [isClearCacheOpen, setIsClearCacheOpen] = useState(false)
+  const [welcomePresentation, setWelcomePresentation] = useState<WelcomePresentation | null>(null)
 
   useEffect(() => {
     getSettings().then(setSettings).catch(() => { })
@@ -58,20 +66,23 @@ export function SettingsPage() {
 
   const queueSettingsSave = (next: Settings) => {
     setIsSaving(true)
-    saveQueueRef.current = saveQueueRef.current
-      .then(async () => {
-        await updateSettings(next)
-        setSessionGap(next.sessionGapMinutes)
-        setSessionNotes(next.sessionNotes ?? {})
-        setHasUnsavedChanges(false)
-      })
+    const run = saveQueueRef.current.then(async () => {
+      await updateSettings(next)
+      setSessionGap(next.sessionGapMinutes)
+      setSessionNotes(next.sessionNotes ?? {})
+      setHasUnsavedChanges(false)
+    })
       .catch((error: unknown) => {
         console.error('Save error:', error)
         alert('Failed to save settings')
+        throw error
       })
       .finally(() => {
         setIsSaving(false)
       })
+
+    saveQueueRef.current = run.catch(() => { })
+    return run
   }
 
   const updateField = <K extends keyof Settings>(key: K, value: Settings[K], persist = false) => {
@@ -79,7 +90,7 @@ export function SettingsPage() {
       if (!prev) return null
       const next = { ...prev, [key]: value }
       if (persist) {
-        queueSettingsSave(next)
+        void queueSettingsSave(next)
       } else {
         setHasUnsavedChanges(true)
       }
@@ -122,9 +133,47 @@ export function SettingsPage() {
     }
   }
 
+  const handleOpenWelcome = () => {
+    if (!settings) return
+
+    const nextPresentation = buildManualWelcomePresentation(settings, currentVersion)
+    if (!nextPresentation) return
+
+    setWelcomePresentation(nextPresentation)
+  }
+
+  const handleWelcomeConfirm = async ({ anonymousEnabled, mouseTrackingEnabled }: { anonymousEnabled: boolean, mouseTrackingEnabled: boolean | null }) => {
+    if (!settings || !welcomePresentation) return
+
+    const next = buildWelcomeSeenSettingsUpdate(
+      buildWelcomeSettingsUpdate(settings, { anonymousEnabled, mouseTrackingEnabled }),
+      welcomePresentation.currentVersion,
+    )
+    setSettings(next)
+    try {
+      await queueSettingsSave(next)
+      setWelcomePresentation(null)
+    } catch {
+      // queueSettingsSave already surfaced the failure to the user.
+    }
+  }
+
+  const handleAnonymousChange = (enabled: boolean) => {
+    setSettings(prev => {
+      if (!prev) return null
+      const next = {
+        ...prev,
+        anonymousEnabled: enabled,
+      }
+      void queueSettingsSave(next)
+        .catch(() => { })
+      return next
+    })
+  }
+
   const handleEnterCommit = (input?: HTMLInputElement) => {
     if (settings) {
-      queueSettingsSave(settings)
+      void queueSettingsSave(settings)
       input?.blur()
     }
   }
@@ -168,13 +217,16 @@ export function SettingsPage() {
 
       <div className="min-h-0 flex-1 overflow-y-auto p-5">
         <div className="space-y-4">
-          <SettingsSection title="Updates" description="Check for the latest version and review the current release.">
+          <SettingsSection title="Updates" description="Check for the latest version, reopen the welcome screen, and review the current release.">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm text-surface-muted-foreground">
                 Current version: <span className="font-mono text-foreground">{currentVersion || MISSING_STR}</span>
               </span>
               <Button onClick={handleCheckUpdate} disabled={checking} variant="outline" size="sm">
                 {checking ? <RefreshCw className="h-4 w-4 animate-spin" /> : 'Check for Updates'}
+              </Button>
+              <Button onClick={handleOpenWelcome} disabled={!currentVersion.trim()} variant="outline" size="sm">
+                Read Welcome Again
               </Button>
               {checkError && <span className="text-sm text-destructive">{checkError}</span>}
               {update && !update.hasUpdate && (
@@ -251,7 +303,7 @@ export function SettingsPage() {
                 <SettingsField label="Anonymous Mode" description="Remove Steam ID, Steam persona name, and hostname from run environment data before sync uploads." checkbox>
                   <Checkbox
                     checked={settings.anonymousEnabled === true}
-                    onCheckedChange={v => updateField('anonymousEnabled', v === true, true)}
+                    onCheckedChange={v => handleAnonymousChange(v === true)}
                   />
                 </SettingsField>
               </SettingsSection>
@@ -409,6 +461,18 @@ export function SettingsPage() {
 
       <ResetSettingsModal isOpen={isResetOpen} onClose={() => setIsResetOpen(false)} onReset={handleReset} />
       <ClearCacheModal isOpen={isClearCacheOpen} onClose={() => setIsClearCacheOpen(false)} />
+      {welcomePresentation && (
+        <WelcomeModal
+          isOpen
+          content={welcomePresentation.content}
+          initialAnonymousEnabled={welcomePresentation.initialAnonymousEnabled}
+          initialMouseTrackingEnabled={welcomePresentation.initialMouseTrackingEnabled}
+          showMouseTraceChoice={welcomePresentation.showMouseTraceChoice}
+          runSyncEnabled={welcomePresentation.runSyncEnabled}
+          onConfirm={handleWelcomeConfirm}
+          onClose={() => setWelcomePresentation(null)}
+        />
+      )}
     </div>
   )
 }

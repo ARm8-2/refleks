@@ -16,6 +16,9 @@ type ModalProps = {
   width?: string | number
   height?: string | number
   className?: string
+  closeOnOutsideClick?: boolean
+  closeOnEscapeKey?: boolean
+  showCloseButton?: boolean
 }
 
 export function Modal({
@@ -27,19 +30,32 @@ export function Modal({
   width = '90%',
   height = '90%',
   className = '',
+  closeOnOutsideClick = true,
+  closeOnEscapeKey = true,
+  showCloseButton = true,
 }: ModalProps) {
-  const contentRef = useRef<HTMLDivElement>(null)
+  const focusRef = useRef<HTMLDivElement>(null)
 
   return (
     <Dialog open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
       <DialogContent
-        ref={contentRef}
         className={cn('rounded-xl border-0 bg-surface p-5 shadow-2xl sm:rounded-xl', className)}
+        showCloseButton={showCloseButton}
         onOpenAutoFocus={event => {
           event.preventDefault()
           requestAnimationFrame(() => {
-            contentRef.current?.focus()
+            focusRef.current?.focus({ preventScroll: true })
           })
+        }}
+        onInteractOutside={event => {
+          if (!closeOnOutsideClick) {
+            event.preventDefault()
+          }
+        }}
+        onEscapeKeyDown={event => {
+          if (!closeOnEscapeKey) {
+            event.preventDefault()
+          }
         }}
         style={{
           width: typeof width === 'number' ? `${width}px` : width,
@@ -48,6 +64,7 @@ export function Modal({
           maxHeight: '95vh',
         }}
       >
+        <div ref={focusRef} tabIndex={-1} aria-hidden="true" className="sr-only focus:outline-none" />
         {(title || headerControls) && (
           <DialogHeader>
             <div className="flex items-center justify-between gap-4 pr-7">
