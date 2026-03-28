@@ -69,7 +69,7 @@ function ChoiceCard({
       onClick={onSelect}
       className={cn(
         'flex h-full flex-col rounded-xl bg-surface px-4 py-4 text-left shadow-sm transition-colors hover:bg-surface-hover',
-        selected && 'bg-surface-emphasis ring-1 ring-primary/35',
+        selected && 'bg-surface-hover ring-1 ring-primary/35',
       )}
     >
       <div className="flex min-h-[1.75rem] items-center justify-between gap-3">
@@ -239,11 +239,10 @@ export function WelcomeModal({
                   eyebrowTone="primary"
                   label="Public Profile"
                   subtitle="Show my Steam name on the Index."
-                  description="Best if you want your runs to be discoverable and ready for rankings, comparisons, and public features."
+                  description="Best if you want your Steam name shown with the runs you upload."
                   bullets={[
-                    'Public runs are eligible for future Top 100 leaderboards.',
-                    'Public runs can qualify for verified status in the Lab.',
-                    'You can find your own runs on the Index by searching your name.',
+                    'Your Steam name appears on runs you upload to the Index.',
+                    'You can switch to Anonymous later in Privacy settings.',
                   ]}
                   selected={privacyMode === 'public'}
                   onSelect={() => setPrivacyMode('public')}
