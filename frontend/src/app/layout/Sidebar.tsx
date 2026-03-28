@@ -242,7 +242,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
             <SidebarItem
               icon={<HelpCircle />}
               label="Help"
-              onClick={() => openURL('https://refleks-app.com/home/#support')}
+              onClick={() => openURL('https://refleks-app.com/docs/')}
               open={open}
             />
             <SidebarItem
