@@ -253,7 +253,8 @@ func (s *RuntimeService) SaveSessionNote(sessionID, name, notes string) error {
 
 func (s *RuntimeService) handleScenarioParsed(rec models.ScenarioRecord) {
 	s.benchmarkSvc.CheckAndRefreshIfNeeded(rec)
-	if !s.settingsSvc.Get().RunSyncEnabled {
+	settings := s.settingsSvc.Get()
+	if !settings.RunSyncEnabled {
 		return
 	}
 
@@ -261,11 +262,11 @@ func (s *RuntimeService) handleScenarioParsed(rec models.ScenarioRecord) {
 		return
 	}
 
-	go func(path string) {
-		if err := s.runSyncClient.SyncRunFile(s.ctx, path); err != nil {
+	go func(path string, anonymous bool) {
+		if err := s.runSyncClient.SyncRunFile(s.ctx, path, anonymous); err != nil {
 			runtime.LogWarningf(s.ctx, "run sync failed for %s: %v", path, err)
 		}
-	}(rec.FilePath)
+	}(rec.FilePath, settings.AnonymousEnabled)
 }
 
 func (s *RuntimeService) startMouseProcessWatcher() {

@@ -1,6 +1,7 @@
 package runs
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"refleks/internal/constants"
+	"refleks/internal/models"
 	appsettings "refleks/internal/settings"
 )
 
@@ -37,8 +39,8 @@ func resolveRunsSyncEndpoint() string {
 	return constants.RefleksRunsSyncURL
 }
 
-// SyncRunFile posts the complete .refleks file bytes to the configured endpoint.
-func (c *CloudSyncClient) SyncRunFile(ctx context.Context, runPath string) error {
+// SyncRunFile posts the run file to the configured endpoint, optionally scrubbing identifying environment fields.
+func (c *CloudSyncClient) SyncRunFile(ctx context.Context, runPath string, anonymous bool) error {
 	if c == nil {
 		return fmt.Errorf("run sync client is nil")
 	}
@@ -50,18 +52,20 @@ func (c *CloudSyncClient) SyncRunFile(ctx context.Context, runPath string) error
 		return fmt.Errorf("missing run path")
 	}
 
-	f, err := os.Open(runPath)
+	body, closeBody, contentLength, err := buildSyncPayload(runPath, anonymous)
 	if err != nil {
-		return fmt.Errorf("open run file: %w", err)
+		return err
 	}
-	defer f.Close()
+	defer func() {
+		_ = closeBody()
+	}()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, f)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, body)
 	if err != nil {
 		return fmt.Errorf("build sync request: %w", err)
 	}
-	if info, statErr := f.Stat(); statErr == nil && info.Size() >= 0 {
-		req.ContentLength = info.Size()
+	if contentLength >= 0 {
+		req.ContentLength = contentLength
 	}
 
 	req.Header.Set("Content-Type", "application/octet-stream")
@@ -84,4 +88,39 @@ func (c *CloudSyncClient) SyncRunFile(ctx context.Context, runPath string) error
 	}
 
 	return nil
+}
+
+func buildSyncPayload(runPath string, anonymous bool) (io.Reader, func() error, int64, error) {
+	if !anonymous {
+		f, err := os.Open(runPath)
+		if err != nil {
+			return nil, nil, 0, fmt.Errorf("open run file: %w", err)
+		}
+
+		contentLength := int64(-1)
+		if info, statErr := f.Stat(); statErr == nil && info.Size() >= 0 {
+			contentLength = info.Size()
+		}
+		return f, f.Close, contentLength, nil
+	}
+
+	rec, err := readRecordFile(runPath)
+	if err != nil {
+		return nil, nil, 0, fmt.Errorf("read run file for anonymous sync: %w", err)
+	}
+	rec.Env = anonymizeRunEnvironment(rec.Env)
+
+	var payload bytes.Buffer
+	if err := writeRecord(&payload, rec); err != nil {
+		return nil, nil, 0, fmt.Errorf("encode anonymized run file: %w", err)
+	}
+
+	return bytes.NewReader(payload.Bytes()), func() error { return nil }, int64(payload.Len()), nil
+}
+
+func anonymizeRunEnvironment(env models.RunEnvironment) models.RunEnvironment {
+	env.Hostname = ""
+	env.SteamID = ""
+	env.PersonaName = ""
+	return env
 }

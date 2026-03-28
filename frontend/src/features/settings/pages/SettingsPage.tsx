@@ -240,15 +240,15 @@ export function SettingsPage() {
                 </SettingsField>
               </SettingsSection>
 
-              <SettingsSection title="Privacy" description="Control upload behavior and future anonymized sync options.">
-                <SettingsField label="Run Sync" description="Upload runs to the sync service." checkbox>
+              <SettingsSection title="Privacy" description="Control whether runs are uploaded and whether identifying environment data is scrubbed before sync.">
+                <SettingsField label="Run Sync" description="Upload completed runs to the RefleK's Index." checkbox>
                   <Checkbox
                     checked={settings.runSyncEnabled !== false}
                     onCheckedChange={v => updateField('runSyncEnabled', v === true, true)}
                   />
                 </SettingsField>
 
-                <SettingsField label="Anonymous Mode" description="Reserved for future anonymous sync behavior." checkbox>
+                <SettingsField label="Anonymous Mode" description="Remove Steam ID, Steam persona name, and hostname from run environment data before sync uploads." checkbox>
                   <Checkbox
                     checked={settings.anonymousEnabled === true}
                     onCheckedChange={v => updateField('anonymousEnabled', v === true, true)}
