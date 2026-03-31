@@ -45,6 +45,8 @@ export const STORAGE_KEYS = {
   overviewRecentScoresRunCount: 'refleks.overview.recentScores.runCount',
   overviewRecentScoresShowSessionBest: 'refleks.overview.recentScores.showSessionBest',
   overviewRecentScoresShowPb: 'refleks.overview.recentScores.showPb',
+  performanceVsSensMetric: 'refleks.widgets.performanceVsSens.metric',
+  performanceVsSensScope: 'refleks.widgets.performanceVsSens.scope',
 
   settingsShowAdvanced: 'refleks.settings.showAdvanced',
 } as const

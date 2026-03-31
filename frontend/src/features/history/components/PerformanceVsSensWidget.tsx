@@ -2,20 +2,22 @@ import { formatNumber } from '@/features/benchmarks/lib/detailFormatting'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip } from '@/shared/components/ui/chart'
-import { useStore } from '@/shared/hooks'
+import { usePersistedState, useStore } from '@/shared/hooks'
 import {
   CHART_SERIES_COLORS,
   CHART_STYLE,
+  STORAGE_KEYS,
   getScenarioName,
   readScenarioAccuracy,
   readScenarioScore,
   readScenarioTimestamp,
 } from '@/shared/lib'
 import type { ScenarioRecord, Session } from '@/shared/types'
-import { useMemo, useState } from 'react'
-import { CartesianGrid, ComposedChart, ReferenceArea, Scatter, XAxis, YAxis } from 'recharts'
+import { useMemo } from 'react'
+import { CartesianGrid, ReferenceArea, Scatter, ScatterChart, XAxis, YAxis } from 'recharts'
 
 type MetricKey = 'score' | 'accuracy' | 'ttk'
+type DataScopeKey = 'session' | 'all'
 
 type SensitivityBin = {
   start: number
@@ -43,6 +45,7 @@ type PerformanceVsSensWidgetProps = {
   title?: string
   description?: string
   className?: string
+  allowScopeSelection?: boolean
 }
 
 const metricOptions: Array<{ value: MetricKey; label: string }> = [
@@ -57,6 +60,14 @@ const metricColors: Record<MetricKey, string> = {
   ttk: CHART_SERIES_COLORS.ttk,
 }
 
+const scopeOptions: Array<{ value: DataScopeKey; label: string }> = [
+  { value: 'session', label: 'This Session' },
+  { value: 'all', label: 'All History' },
+]
+
+const DEFAULT_METRIC: MetricKey = 'score'
+const DEFAULT_SCOPE: DataScopeKey = 'all'
+
 const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   day: 'numeric',
@@ -70,29 +81,60 @@ export function PerformanceVsSensWidget({
   title = 'Performance vs Sensitivity',
   description,
   className,
+  allowScopeSelection = false,
 }: PerformanceVsSensWidgetProps) {
   const storeSessions = useStore(state => state.sessions)
-  const sourceSessions = sessions ?? storeSessions
-  const [metric, setMetric] = useState<MetricKey>('score')
+  const currentSession = storeSessions[0] ?? null
+  const [storedMetric, setStoredMetric] = usePersistedState<MetricKey>(STORAGE_KEYS.performanceVsSensMetric, DEFAULT_METRIC)
+  const [storedScope, setStoredScope] = usePersistedState<DataScopeKey>(STORAGE_KEYS.performanceVsSensScope, DEFAULT_SCOPE)
+
+  const metric = isMetricKey(storedMetric) ? storedMetric : DEFAULT_METRIC
+  const scope = isDataScopeKey(storedScope) ? storedScope : DEFAULT_SCOPE
+
+  const showScopeSelector = allowScopeSelection && sessions === undefined
+  const sourceSessions = sessions
+    ?? (showScopeSelector && scope === 'session'
+      ? (currentSession ? [currentSession] : [])
+      : storeSessions)
 
   const chartData = useMemo(
     () => buildChartData(sourceSessions, scenarioName ?? null, metric),
     [metric, scenarioName, sourceSessions],
   )
   const metricLabel = metricOptions.find(option => option.value === metric)?.label ?? 'Performance'
+  const scopeLabel = sessions
+    ? 'This Session'
+    : (showScopeSelector ? scopeOptions.find(option => option.value === scope)?.label : 'All History') ?? 'All History'
   const headerActions = (
-    <Select value={metric} onValueChange={value => setMetric(value as MetricKey)}>
-      <SelectTrigger className="h-7 w-auto min-w-0 max-w-[180px] px-2 text-xs bg-surface-subtle">
-        <SelectValue placeholder="Metric" />
-      </SelectTrigger>
-      <SelectContent>
-        {metricOptions.map(option => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex items-center gap-2">
+      {showScopeSelector && (
+        <Select value={scope} onValueChange={value => setStoredScope(isDataScopeKey(value) ? value : DEFAULT_SCOPE)}>
+          <SelectTrigger className="h-7 w-auto min-w-0 max-w-[180px] px-2 text-xs bg-surface-subtle">
+            <SelectValue placeholder="Scope" />
+          </SelectTrigger>
+          <SelectContent>
+            {scopeOptions.map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      <Select value={metric} onValueChange={value => setStoredMetric(isMetricKey(value) ? value : DEFAULT_METRIC)}>
+        <SelectTrigger className="h-7 w-auto min-w-0 max-w-[180px] px-2 text-xs bg-surface-subtle">
+          <SelectValue placeholder="Metric" />
+        </SelectTrigger>
+        <SelectContent>
+          {metricOptions.map(option => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   )
 
   if (!chartData.scenarioName) {
@@ -112,7 +154,7 @@ export function PerformanceVsSensWidget({
     return (
       <Widget
         title={title}
-        description={description ?? `${chartData.scenarioName} · ${metricLabel}`}
+        description={description ?? `${chartData.scenarioName} · ${metricLabel} · ${scopeLabel}`}
         headerActions={headerActions}
         className={className}
       >
@@ -126,7 +168,7 @@ export function PerformanceVsSensWidget({
   return (
     <Widget
       title={title}
-      description={description ?? `${chartData.scenarioName} · ${chartData.points.length} runs · ${metricLabel}`}
+      description={description ?? `${chartData.scenarioName} · ${chartData.points.length} runs · ${metricLabel} · ${scopeLabel}`}
       headerActions={headerActions}
       modalTitle={modalTitle}
       modalHeaderActions={headerActions}
@@ -169,7 +211,7 @@ function PerformanceVsSensChartContent({
   return (
     <div className={`w-full ${chartHeight}`}>
       <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
-        <ComposedChart data={data.points} margin={{ top: 12, right: 12, left: 6, bottom: 4 }}>
+        <ScatterChart margin={{ top: 12, right: 12, left: 6, bottom: 4 }}>
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="x"
@@ -217,7 +259,7 @@ function PerformanceVsSensChartContent({
             />
           ))}
 
-          <ChartTooltip content={<PerformanceVsSensTooltip metric={metric} metricLabel={metricLabel} />} />
+          <ChartTooltip shared={false} cursor={false} content={<PerformanceVsSensTooltip metric={metric} metricLabel={metricLabel} />} />
 
           <Scatter
             yAxisId="performance"
@@ -229,7 +271,7 @@ function PerformanceVsSensChartContent({
             isAnimationActive={false}
             r={CHART_STYLE.scatterPointRadius}
           />
-        </ComposedChart>
+        </ScatterChart>
       </ChartContainer>
     </div>
   )
@@ -359,7 +401,7 @@ function buildChartData(sessions: Session[], scenarioName: string | null, metric
     bins.push({ start, end, center: (start + end) / 2, count: 0 })
   }
 
-  const assignments = rawPoints.map(point => {
+  const assignments = sortedBySensitivity.map(point => {
     let binIndex = Math.floor((point.x - xMin) / binWidth)
     if (binIndex < 0) binIndex = 0
     if (binIndex >= bins.length) binIndex = bins.length - 1
@@ -369,7 +411,7 @@ function buildChartData(sessions: Session[], scenarioName: string | null, metric
   })
 
   const points: SensitivityPoint[] = assignments.map(({ point, binIndex }) => ({
-    x: bins[binIndex].center,
+    x: point.rawSensitivity,
     performance: point.performance,
     rawSensitivity: point.rawSensitivity,
     timestamp: point.timestamp,
@@ -407,6 +449,14 @@ function readMetricValue(item: ScenarioRecord, metric: MetricKey): number | null
 
 function readTimestamp(item: ScenarioRecord): number {
   return readScenarioTimestamp(item)
+}
+
+function isMetricKey(value: string): value is MetricKey {
+  return metricOptions.some(option => option.value === value)
+}
+
+function isDataScopeKey(value: string): value is DataScopeKey {
+  return scopeOptions.some(option => option.value === value)
 }
 
 function buildPerformanceDomain(values: number[]): [number, number] {

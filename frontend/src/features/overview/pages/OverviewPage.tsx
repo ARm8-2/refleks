@@ -34,7 +34,7 @@ export function OverviewPage() {
         <BenchmarkOverviewWidget />
 
         <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
-          <PerformanceVsSensWidget />
+          <PerformanceVsSensWidget allowScopeSelection />
           <SessionScenarioRadarWidget />
         </div>
       </div>
