@@ -1,7 +1,7 @@
 import { DISCORD_SYMBOL, KO_FI_SYMBOL } from '@/assets'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip'
 import { useAvailableUpdate, useBenchmarks } from '@/shared/hooks'
-import { benchmarkPath, cn, getVersion, openURL } from '@/shared/lib'
+import { benchmarkPath, cn, EXTERNAL_LINKS, getVersion, openURL } from '@/shared/lib'
 import { Activity, HelpCircle, LayoutGrid, PanelLeft, Settings, TrendingUp } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
@@ -244,19 +244,19 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
             <SidebarItem
               icon={<img src={DISCORD_SYMBOL} alt="" className="size-[18px] shrink-0" />}
               label="Discord"
-              onClick={() => openURL('https://discord.gg/SFsf4GQhJU')}
+              onClick={() => openURL(EXTERNAL_LINKS.discord)}
               open={open}
             />
             <SidebarItem
               icon={<HelpCircle />}
               label="Help"
-              onClick={() => openURL('https://refleks-app.com/docs/')}
+              onClick={() => openURL(EXTERNAL_LINKS.docs)}
               open={open}
             />
             <SidebarItem
               icon={<img src={KO_FI_SYMBOL} alt="" className="size-[18px] shrink-0" />}
               label="Support"
-              onClick={() => openURL('https://ko-fi.com/arm8_')}
+              onClick={() => openURL(EXTERNAL_LINKS.support)}
               open={open}
             />
             <SidebarItem

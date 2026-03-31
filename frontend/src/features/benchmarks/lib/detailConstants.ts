@@ -1,4 +1,6 @@
-export const MISSING_STR = 'N/A'
+import { MISSING_VALUE } from '@/shared/lib'
+
+export const MISSING_STR = MISSING_VALUE
 
 export const SCENARIO_DEFAULT_WIDTH = 260
 export const SCENARIO_MIN_WIDTH = 180

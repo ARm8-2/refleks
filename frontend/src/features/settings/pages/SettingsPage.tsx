@@ -8,7 +8,9 @@ import {
 import { Button, Checkbox, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
 import { setAvailableUpdate, useAvailableUpdate, usePersistedState, useStore } from '@/shared/hooks'
 import {
+  EXTERNAL_LINKS,
   FONTS,
+  MISSING_VALUE,
   STORAGE_KEYS,
   THEMES,
   checkForUpdates,
@@ -31,8 +33,6 @@ import { ResetSettingsModal } from '../components/ResetSettingsModal'
 import { SettingsField } from '../components/SettingsField'
 import { SettingsSection } from '../components/SettingsSection'
 
-const CHANGELOG_URL = 'https://refleks-app.com/changelog/'
-const MISSING_STR = 'N/A'
 const themeOptions = THEMES.map(t => ({ label: t, value: t }))
 const fontOptions = FONTS.map(f => ({ label: f.label, value: f.id }))
 const sessionGapOptions = [5, 10, 15, 20, 30, 45, 60, 90, 120].map(m => ({
@@ -228,7 +228,7 @@ export function SettingsPage() {
           <SettingsSection title="Updates" description="Check for the latest version, reopen the welcome screen, and review the current release.">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm text-surface-muted-foreground">
-                Current version: <span className="font-mono text-foreground">{currentVersion || MISSING_STR}</span>
+                Current version: <span className="font-mono text-foreground">{currentVersion || MISSING_VALUE}</span>
               </span>
               <Button onClick={handleCheckUpdate} disabled={checking} variant="outline" size="sm">
                 {checking ? <RefreshCw className="h-4 w-4 animate-spin" /> : 'Check for Updates'}
@@ -247,7 +247,7 @@ export function SettingsPage() {
                   <span className="text-sm font-medium text-foreground">Version {update.latestVersion} available</span>
                 </div>
                 <p className="text-xs text-surface-muted-foreground">
-                  You&apos;re on {update.currentVersion || currentVersion || MISSING_STR}. Download the latest release or review the changelog.
+                  You&apos;re on {update.currentVersion || currentVersion || MISSING_VALUE}. Download the latest release or review the changelog.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={() => update.downloadUrl && openURL(update.downloadUrl)} variant="default" size="sm">
@@ -255,7 +255,7 @@ export function SettingsPage() {
                     Download
                   </Button>
                   {update?.hasUpdate && (
-                    <Button onClick={() => openURL(CHANGELOG_URL)} variant="outline" size="sm">
+                    <Button onClick={() => openURL(EXTERNAL_LINKS.changelog)} variant="outline" size="sm">
                       View Changelog
                     </Button>
                   )}

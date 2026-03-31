@@ -1,3 +1,5 @@
+import { EXTERNAL_LINKS } from '@/shared/lib'
+
 export type WelcomeContent = {
   title: string
   intro: string
@@ -37,13 +39,13 @@ const RESOURCE_LINKS: WelcomeLink[] = [
   {
     label: 'Browse the docs',
     description: 'Setup guides, walkthroughs, and troubleshooting for the newer RefleK\'s experience.',
-    url: 'https://refleks-app.com/docs/',
+    url: EXTERNAL_LINKS.docs,
     urlLabel: 'refleks-app.com/docs/',
   },
   {
     label: 'Read the changelog',
     description: 'See the fuller release history and version-by-version notes in the browser.',
-    url: 'https://refleks-app.com/changelog/',
+    url: EXTERNAL_LINKS.changelog,
     urlLabel: 'refleks-app.com/changelog/',
   },
 ]
