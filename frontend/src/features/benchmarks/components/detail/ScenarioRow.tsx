@@ -115,11 +115,11 @@ export function getRowClasses(compact: boolean): RowClasses {
     nameTextClass: compact ? 'text-[12px]' : 'text-[13px]',
     scoreTextClass: compact ? 'text-[11px]' : 'text-[12px]',
     iconButtonClass: compact
-      ? 'rounded-lg border border-transparent p-1 text-surface-muted-foreground transition-colors hover:border-border hover:bg-surface-muted'
-      : 'rounded-lg border border-transparent p-1.5 text-surface-muted-foreground transition-colors hover:border-border hover:bg-surface-muted',
+      ? 'rounded-lg border border-transparent p-1 text-surface-muted-foreground transition-colors hover:bg-surface-muted'
+      : 'rounded-lg border border-transparent p-1.5 text-surface-muted-foreground transition-colors hover:bg-surface-muted',
     actionButtonClass: compact
-      ? 'rounded-lg border border-transparent p-1 text-foreground transition-colors hover:border-border hover:bg-surface-muted'
-      : 'rounded-lg border border-transparent p-1.5 text-foreground transition-colors hover:border-border hover:bg-surface-muted',
+      ? 'rounded-lg border border-transparent p-1 text-foreground transition-colors hover:bg-surface-muted'
+      : 'rounded-lg border border-transparent p-1.5 text-foreground transition-colors hover:bg-surface-muted',
     iconSize: compact ? 13 : 14,
   }
 }
