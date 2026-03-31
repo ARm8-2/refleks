@@ -104,7 +104,7 @@ export function SegmentedControl<T extends string | number>({
       <TabsList
         ref={containerRef}
         className={cn(
-          'relative inline-flex items-center rounded-xl bg-surface-subtle p-1',
+          'relative inline-flex h-auto items-center rounded-xl bg-surface-subtle p-1',
           className,
         )}
       >
