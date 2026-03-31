@@ -1,6 +1,6 @@
 import { DISCORD_SYMBOL, KO_FI_SYMBOL } from '@/assets'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip'
-import { useBenchmarks } from '@/shared/hooks'
+import { useAvailableUpdate, useBenchmarks } from '@/shared/hooks'
 import { benchmarkPath, cn, getVersion, openURL } from '@/shared/lib'
 import { Activity, HelpCircle, LayoutGrid, PanelLeft, Settings, TrendingUp } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
@@ -17,12 +17,13 @@ type SidebarItemProps = {
   label: string
   onClick?: () => void
   open: boolean
+  showNotificationDot?: boolean
   showActiveBackground?: boolean
   to?: string
   trailing?: ReactNode
 }
 
-function SidebarItem({ active = false, icon, label, onClick, open, showActiveBackground = true, to, trailing }: SidebarItemProps) {
+function SidebarItem({ active = false, icon, label, onClick, open, showNotificationDot = false, showActiveBackground = true, to, trailing }: SidebarItemProps) {
   const collapsed = !open
   const className = cn(
     'relative z-[1] flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring',
@@ -33,10 +34,16 @@ function SidebarItem({ active = false, icon, label, onClick, open, showActiveBac
   const content = (
     <>
       <span className={cn(
-        'flex size-[18px] shrink-0 items-center justify-center transition-transform duration-200 [&_svg]:size-[18px] [&_svg]:shrink-0',
+        'relative flex size-[18px] shrink-0 items-center justify-center transition-transform duration-200 [&_svg]:size-[18px] [&_svg]:shrink-0',
         active && 'scale-110',
       )}>
         {icon}
+        {showNotificationDot && (
+          <span
+            aria-hidden
+            className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-sidebar-primary ring-2 ring-sidebar"
+          />
+        )}
       </span>
       <span className={cn(
         'min-w-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 ease-out',
@@ -133,6 +140,7 @@ function SidebarFavoriteItem({ abbreviation, active, color, label, open, onClick
 export function Sidebar({ open, onToggle }: SidebarProps) {
   const [version, setVersion] = useState('')
   const { benchmarks, favorites, selectBenchmark, selectedBenchmark } = useBenchmarks()
+  const availableUpdate = useAvailableUpdate()
   const location = useLocation()
   const navigate = useNavigate()
   const collapsed = !open
@@ -256,6 +264,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
               icon={<Settings />}
               label="Settings"
               open={open}
+              showNotificationDot={availableUpdate?.hasUpdate === true}
               to="/settings"
             />
           </nav>

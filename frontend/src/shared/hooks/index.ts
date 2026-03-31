@@ -1,4 +1,5 @@
 export { useAppInitialization } from './useAppInitialization'
+export { setAvailableUpdate, useAvailableUpdate } from './useAvailableUpdate'
 export { BenchmarkProvider, useBenchmarks } from './useBenchmarks'
 export { usePersistedState } from './usePersistedState'
 export { StoreProvider, useStore } from './useStore'

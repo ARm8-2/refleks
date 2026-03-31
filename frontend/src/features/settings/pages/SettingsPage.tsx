@@ -6,7 +6,7 @@ import {
   type WelcomePresentation,
 } from '@/features/welcome'
 import { Button, Checkbox, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
-import { usePersistedState, useStore } from '@/shared/hooks'
+import { setAvailableUpdate, useAvailableUpdate, usePersistedState, useStore } from '@/shared/hooks'
 import {
   FONTS,
   STORAGE_KEYS,
@@ -31,6 +31,7 @@ import { ResetSettingsModal } from '../components/ResetSettingsModal'
 import { SettingsField } from '../components/SettingsField'
 import { SettingsSection } from '../components/SettingsSection'
 
+const CHANGELOG_URL = 'https://refleks-app.com/changelog/'
 const MISSING_STR = 'N/A'
 const themeOptions = THEMES.map(t => ({ label: t, value: t }))
 const fontOptions = FONTS.map(f => ({ label: f.label, value: f.id }))
@@ -42,6 +43,7 @@ const sessionGapOptions = [5, 10, 15, 20, 30, 45, 60, 90, 120].map(m => ({
 export function SettingsPage() {
   const setSessionGap = useStore(s => s.setSessionGap)
   const setSessionNotes = useStore(s => s.setSessionNotes)
+  const availableUpdate = useAvailableUpdate()
 
   const [settings, setSettings] = useState<Settings | null>(null)
   const [showAdvanced, setShowAdvanced] = usePersistedState(STORAGE_KEYS.settingsShowAdvanced, false)
@@ -63,6 +65,11 @@ export function SettingsPage() {
       .then(v => setCurrentVersion(v))
       .catch(() => setCurrentVersion(''))
   }, [])
+
+  useEffect(() => {
+    if (!availableUpdate) return
+    setUpdate(previous => previous ?? availableUpdate)
+  }, [availableUpdate])
 
   const queueSettingsSave = (next: Settings) => {
     setIsSaving(true)
@@ -126,6 +133,7 @@ export function SettingsPage() {
     try {
       const info = await checkForUpdates()
       setUpdate(info)
+      setAvailableUpdate(info)
     } catch (e) {
       setCheckError((e as Error)?.message || 'Failed to check for updates')
     } finally {
@@ -238,15 +246,20 @@ export function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-foreground">Version {update.latestVersion} available</span>
                 </div>
-                {update.releaseNotes && (
-                  <p className="max-h-24 overflow-auto whitespace-pre-wrap text-xs text-surface-muted-foreground">
-                    {update.releaseNotes}
-                  </p>
-                )}
-                <Button onClick={() => update.downloadUrl && openURL(update.downloadUrl)} variant="default" size="sm">
-                  <Download className="mr-1.5 h-4 w-4" />
-                  Download
-                </Button>
+                <p className="text-xs text-surface-muted-foreground">
+                  You&apos;re on {update.currentVersion || currentVersion || MISSING_STR}. Download the latest release or review the changelog.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => update.downloadUrl && openURL(update.downloadUrl)} variant="default" size="sm">
+                    <Download className="mr-1.5 h-4 w-4" />
+                    Download
+                  </Button>
+                  {update?.hasUpdate && (
+                    <Button onClick={() => openURL(CHANGELOG_URL)} variant="outline" size="sm">
+                      View Changelog
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </SettingsSection>
