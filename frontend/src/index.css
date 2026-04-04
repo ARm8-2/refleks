@@ -285,7 +285,7 @@
 @keyframes route-content-fade-in {
   from {
     opacity: 0;
-    transform: translateY(2px);
+    transform: translateY(8px);
   }
 
   to {
@@ -296,7 +296,7 @@
 
 @layer utilities {
   .route-content-enter {
-    animation: route-content-fade-in .16s ease-out both;
+    animation: route-content-fade-in .16s ease-out backwards;
   }
 }
 
