@@ -1,19 +1,6 @@
-import { Widget } from '@/shared/components';
 import { buildScoreDomain as buildSharedScoreDomain } from '@/shared/lib';
 import { Gauge, Minus, TrendingDown, TrendingUp, type LucideIcon } from 'lucide-react';
 import type { SnapshotTone } from '../../hooks/useRecentSessionSnapshot';
-
-export function EmptyMetricWidget({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
-  return (
-    <Widget
-      title={<span className="inline-flex items-center gap-1.5"><Icon className="h-3.5 w-3.5" />{label}</span>}
-      className="px-4 py-3"
-    >
-      <div className="text-lg font-semibold text-surface-muted-foreground">--</div>
-      <div className="mt-0.5 text-xs text-surface-muted-foreground">No session loaded</div>
-    </Widget>
-  )
-}
 
 export function TrendIndicator({ trend }: { trend: 'up' | 'down' | 'flat' | null }) {
   if (!trend || trend === 'flat') return null

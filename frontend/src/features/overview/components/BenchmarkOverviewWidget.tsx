@@ -11,7 +11,7 @@ import { useBenchmarkDetailProgress } from '@/features/benchmarks/hooks/useBench
 import { useBenchmarkVisibility } from '@/features/benchmarks/hooks/useBenchmarkVisibility'
 import { formatNumber, getScenarioName } from '@/features/benchmarks/lib/detailFormatting'
 import { computeRecommendationScores, selectTopPicks, type ScenarioBenchmarkData } from '@/features/benchmarks/lib/detailRecommendations'
-import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
+import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Widget } from '@/shared/components'
 import { useBenchmarks, usePersistedState, useStore } from '@/shared/hooks'
 import {
   benchmarkDetailProgressStorageBase,
@@ -214,64 +214,62 @@ export function BenchmarkOverviewWidget() {
 
   if (!benchmark) {
     return (
-      <div className="min-w-0 rounded-xl bg-surface px-6 py-5 shadow-sm flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground mb-0.5">Benchmark Overview</h2>
-          <p className="text-xs text-surface-muted-foreground">No benchmark selected yet. Pick one to track your progress here.</p>
-        </div>
-        <Button variant="outline" size="sm" className="shrink-0" onClick={() => navigate('/benchmarks')}>
-          Browse Benchmarks
-        </Button>
-      </div>
+      <Widget
+        title="Benchmark Overview"
+        description="No benchmark selected yet. Pick one to track your progress here."
+        headerAction={
+          <Button variant="outline" size="sm" className="shrink-0" onClick={() => navigate('/benchmarks')}>
+            Browse Benchmarks
+          </Button>
+        }
+      >
+        <div />
+      </Widget>
     )
   }
 
   if (!progress) {
     return (
-      <div className="min-w-0 rounded-xl bg-surface p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-foreground mb-1">
-          {benchmark.abbreviation} {benchmark.benchmarkName}
-        </h2>
-        <p className="text-xs text-surface-muted-foreground">Loading progress…</p>
-      </div>
+      <Widget
+        title={`${benchmark.abbreviation} ${benchmark.benchmarkName}`}
+        description="Loading progress…"
+      >
+        <div />
+      </Widget>
     )
   }
 
+  const headerControls = (
+    <div className="flex flex-wrap items-center gap-2">
+      {benchmark.difficulties?.length > 1 && (
+        <Select value={String(difficultyIndex)} onValueChange={v => setDifficultyIndex(Number(v) || 0)}>
+          <SelectTrigger className="h-7 w-auto min-w-0 max-w-[200px] px-2 text-xs bg-surface-subtle">
+            <SelectValue placeholder="Difficulty" />
+          </SelectTrigger>
+          <SelectContent>
+            {benchmark.difficulties.map((d, i) => (
+              <SelectItem key={`${d.kovaaksBenchmarkId}-${i}`} value={String(i)}>
+                {d.difficultyName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      <ToggleChip label="Compact" enabled={compactMode} onToggle={() => setCompactMode(v => !v)} />
+      <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} title="Widget settings">
+        <Settings2 className="h-4 w-4" />
+      </Button>
+    </div>
+  )
+
   return (
-    <div className="min-w-0 rounded-xl bg-surface shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-3 pb-2.5">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">
-            {benchmark.abbreviation} {benchmark.benchmarkName}
-          </h2>
-          <p className="text-xs text-surface-muted-foreground">
-            Overall {overallRankName} · {formatNumber(progress.benchmarkProgress || 0, 0)}%
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {benchmark.difficulties?.length > 1 && (
-            <Select value={String(difficultyIndex)} onValueChange={v => setDifficultyIndex(Number(v) || 0)}>
-              <SelectTrigger className="h-7 w-auto min-w-0 max-w-[200px] px-2 text-xs bg-surface-subtle">
-                <SelectValue placeholder="Difficulty" />
-              </SelectTrigger>
-              <SelectContent>
-                {benchmark.difficulties.map((d, i) => (
-                  <SelectItem key={`${d.kovaaksBenchmarkId}-${i}`} value={String(i)}>
-                    {d.difficultyName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <ToggleChip label="Compact" enabled={compactMode} onToggle={() => setCompactMode(v => !v)} />
-          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} title="Widget settings">
-            <Settings2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
+    <Widget
+      title={`${benchmark.abbreviation} ${benchmark.benchmarkName}`}
+      description={`Overall ${overallRankName} · ${formatNumber(progress.benchmarkProgress || 0, 0)}%`}
+      headerAction={headerControls}
+      className="overflow-hidden"
+      contentClassName="-mx-4 -mb-3"
+    >
       {/* Split-panel content */}
       <div className="relative z-0">
         {/* Left panel (fixed width) */}
@@ -519,6 +517,6 @@ export function BenchmarkOverviewWidget() {
         thresholds={historyState.thresholds}
         rankDefs={rankDefs}
       />
-    </div>
+    </Widget>
   )
 }

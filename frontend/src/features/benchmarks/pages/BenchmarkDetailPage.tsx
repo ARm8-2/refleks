@@ -78,7 +78,7 @@ export function BenchmarkDetailPage() {
   }
 
   return (
-    <div className="flex-1 overflow-auto text-sm isolate">
+    <div className="flex-1 overflow-auto text-sm">
       <div className="sticky top-0 z-20 bg-canvas px-6 py-4">
         <div className="flex flex-wrap items-center gap-2.5 min-w-0">
           <Button variant="ghost" size="sm" onClick={handleBack}>

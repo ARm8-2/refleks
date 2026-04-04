@@ -1,30 +1,30 @@
-import { Widget } from '@/shared/components'
+import { Widget, WidgetEmpty } from '@/shared/components'
 import { Activity, Crosshair } from 'lucide-react'
-import { useRecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
-import { EmptyMetricWidget, formatScore, TrendIndicator } from './shared'
+import type { RecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
+import { formatScore, TrendIndicator } from './shared'
 
-export function LastRunWidget() {
-  const { currentSession, lastRunScore, lastRunAccuracy, lastRunScoreTrend, lastRunAccTrend, lastRunScenario, recentScores } = useRecentSessionSnapshot()
-  if (!currentSession) return <EmptyMetricWidget icon={Activity} label="Last Run" />
+export function LastRunWidget({ snapshot }: { snapshot: RecentSessionSnapshot }) {
+  if (!snapshot.currentSession) return <WidgetEmpty icon={Activity} label="Last Run" />
+
+  const { lastRunScore, lastRunAccuracy, lastRunScoreTrend, lastRunAccTrend, lastRunScenario, recentScores } = snapshot
 
   if (lastRunScore === null && lastRunAccuracy === null) {
     return (
-      <Widget
-        title={<span className="inline-flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" />Last Run</span>}
-        className="px-4 py-3"
-      >
-        <div className="text-lg font-semibold text-surface-muted-foreground">--</div>
-        <div className="mt-0.5 text-xs text-surface-muted-foreground">No score data</div>
+      <Widget icon={Activity} title="Last Run">
+        <p className="text-lg font-semibold text-surface-muted-foreground">--</p>
+        <p className="mt-0.5 text-xs text-surface-muted-foreground">No score data</p>
       </Widget>
     )
   }
 
   return (
     <Widget
-      title={<span className="inline-flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" />Last Run</span>}
-      className="px-4 py-3"
-      headerActions={
-        lastRunScenario ? <span className="max-w-[120px] truncate text-[11px] text-surface-muted-foreground" title={lastRunScenario}>{lastRunScenario}</span> : null
+      icon={Activity}
+      title="Last Run"
+      headerAction={
+        lastRunScenario
+          ? <span className="max-w-[120px] truncate text-[11px] text-surface-muted-foreground" title={lastRunScenario}>{lastRunScenario}</span>
+          : null
       }
     >
       <div className="flex items-center gap-4">

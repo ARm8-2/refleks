@@ -1,30 +1,27 @@
-import { Widget } from '@/shared/components'
+import { Widget, WidgetEmpty } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer } from '@/shared/components/ui/chart'
 import { CHART_SERIES_COLORS, CHART_STYLE } from '@/shared/lib'
 import { Flame } from 'lucide-react'
 import { Area, AreaChart } from 'recharts'
 import { useDailyPlaytime } from '../../hooks/useDailyPlaytime'
-import { useRecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
-import { EmptyMetricWidget } from './shared'
+import type { RecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
 
 const playtimeConfig: ChartConfig = {
   minutes: { label: 'Playtime', color: CHART_SERIES_COLORS.accuracy },
 }
 
-export function StreakPlaytimeWidget() {
-  const { currentSession, streakLabel, streakDetail } = useRecentSessionSnapshot()
+export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnapshot }) {
   const points = useDailyPlaytime(7)
   const hasData = points.some(p => p.minutes > 0)
   const chartData = hasData ? points : points.map(p => ({ ...p, minutes: 0.5 }))
 
-  if (!currentSession) return <EmptyMetricWidget icon={Flame} label="Streak & Playtime" />
+  if (!snapshot.currentSession) return <WidgetEmpty icon={Flame} label="Streak & Playtime" />
+
+  const { streakLabel, streakDetail } = snapshot
 
   return (
-    <Widget
-      title={<span className="inline-flex items-center gap-1.5"><Flame className="h-3.5 w-3.5 text-[color:var(--streak)]" />Streak & Playtime</span>}
-      className="px-4 py-3"
-    >
+    <Widget icon={Flame} iconClassName="text-[color:var(--streak)]" title="Streak & Playtime">
       <div className="flex items-baseline gap-2">
         <span className="text-lg font-semibold text-[color:var(--streak)]">{streakLabel}</span>
         <span className="text-xs text-surface-muted-foreground">{streakDetail}</span>

@@ -1,9 +1,7 @@
 import { InfoTooltip, Widget } from '@/shared/components'
 import { usePersistedState } from '@/shared/hooks'
 import { CHART_SERIES_COLORS, STORAGE_KEYS } from '@/shared/lib'
-import { Minus, Pencil, Plus } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { useRecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
+import type { RecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
 
 const PHASE_SWATCH = {
   warmup: 'var(--phase-warmup)',
@@ -14,7 +12,7 @@ const PHASE_SWATCH = {
   diminishingFill: 'var(--phase-diminishing-soft)',
 } as const
 
-export function SessionProgressWidget() {
+export function SessionProgressWidget({ snapshot }: { snapshot: RecentSessionSnapshot }) {
   const {
     currentSession,
     currentRuns,
@@ -23,51 +21,18 @@ export function SessionProgressWidget() {
     peakStart,
     peakEnd,
     diminishingReturnsAt,
-  } = useRecentSessionSnapshot()
+  } = snapshot
 
-  const [customTarget, setCustomTarget] = usePersistedState<number | null>(
+  const [customTarget] = usePersistedState<number | null>(
     STORAGE_KEYS.overviewSessionProgressTargetRuns,
     null,
   )
-  const [editing, setEditing] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
 
   const targetRuns = customTarget ?? suggestedRuns
-  const isCustom = customTarget !== null
-
-  const saveTarget = useCallback((value: number | null) => {
-    setCustomTarget(value)
-    setEditing(false)
-  }, [setCustomTarget])
-
-  const commitTarget = useCallback((rawValue: string) => {
-    const parsed = parseInt(rawValue, 10)
-    saveTarget(Number.isFinite(parsed) && parsed > 0 ? parsed : null)
-  }, [saveTarget])
-
-  const adjustPendingTarget = useCallback((delta: number) => {
-    if (!inputRef.current) return
-
-    const parsed = parseInt(inputRef.current.value, 10)
-    const currentValue = Number.isFinite(parsed) ? parsed : targetRuns
-    inputRef.current.value = String(Math.max(1, currentValue + delta))
-  }, [targetRuns])
-
-  const handleEditKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      commitTarget(e.currentTarget.value)
-    } else if (e.key === 'Escape') {
-      setEditing(false)
-    }
-  }, [commitTarget])
-
-  useEffect(() => {
-    if (editing) inputRef.current?.focus()
-  }, [editing])
 
   if (!currentSession) {
     return (
-      <Widget title="Session Progress" className="px-4 py-3">
+      <Widget title="Session Progress">
         <div className="flex h-full items-center justify-center rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
           Play or import a few runs to see session progress.
         </div>
@@ -106,71 +71,7 @@ export function SessionProgressWidget() {
   }
 
   return (
-    <Widget
-      title="Session Progress"
-      className="px-4 py-3"
-      headerActions={
-        <div className="flex items-center gap-1.5">
-          {editing ? (
-            <div className="flex items-center overflow-hidden rounded bg-surface-subtle">
-              <button
-                type="button"
-                className="flex h-5 w-5 items-center justify-center text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground"
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  adjustPendingTarget(-1)
-                }}
-              >
-                <Minus className="h-2.5 w-2.5" />
-              </button>
-              <input
-                ref={inputRef}
-                type="number"
-                min={1}
-                defaultValue={targetRuns}
-                className="w-8 border-x border-border bg-surface-subtle py-0.5 text-center text-xs text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                onKeyDown={handleEditKeyDown}
-                onBlur={(e) => commitTarget(e.currentTarget.value)}
-              />
-              <button
-                type="button"
-                className="flex h-5 w-5 items-center justify-center text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground"
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  adjustPendingTarget(1)
-                }}
-              >
-                <Plus className="h-2.5 w-2.5" />
-              </button>
-            </div>
-          ) : (
-            <>
-              <span className="text-xs text-surface-muted-foreground">
-                {targetRuns} target{isCustom ? '' : ' (auto)'}
-              </span>
-              <button
-                type="button"
-                className="inline-flex h-5 w-5 items-center justify-center rounded text-surface-muted-foreground hover:text-foreground"
-                onClick={() => setEditing(true)}
-                title="Edit target"
-              >
-                <Pencil className="h-3 w-3" />
-              </button>
-              {isCustom && (
-                <button
-                  type="button"
-                  className="text-[11px] text-surface-muted-foreground hover:text-foreground"
-                  onClick={() => saveTarget(null)}
-                  title="Reset to automatic"
-                >
-                  reset
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      }
-    >
+    <Widget title="Session Progress">
       <div className="relative mx-auto flex flex-1 items-center justify-center">
         <div className="relative aspect-square w-full max-w-[160px] shrink-0">
           <svg viewBox="0 0 200 200" className="h-full w-full">

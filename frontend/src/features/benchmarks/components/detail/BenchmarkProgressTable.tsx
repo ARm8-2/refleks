@@ -227,7 +227,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
   const isTopPick = (scenarioName: string) => topPicks.has(scenarioName)
 
   return (
-    <section className="relative z-0 isolate space-y-3">
+    <section className="relative z-0 space-y-3">
       {shareMode && (
         <div className="flex items-center gap-2 px-1">
           <img src={REFLEKS_SYMBOL} alt="RefleK's" className="h-12 w-12" />

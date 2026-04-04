@@ -142,7 +142,7 @@ export function PerformanceVsSensWidget({
       <Widget
         title={title}
         description={description ?? 'Play a scenario to compare sensitivity against performance.'}
-        headerActions={headerActions}
+        headerAction={headerActions}
         className={className}
       >
         <EmptyState message="No recent scenario found yet. Play a run with cm/360 data to populate this widget." />
@@ -155,7 +155,7 @@ export function PerformanceVsSensWidget({
       <Widget
         title={title}
         description={description ?? `${chartData.scenarioName} · ${metricLabel} · ${scopeLabel}`}
-        headerActions={headerActions}
+        headerAction={headerActions}
         className={className}
       >
         <EmptyState message={`No usable sensitivity data found for ${chartData.scenarioName}.`} />
@@ -169,9 +169,9 @@ export function PerformanceVsSensWidget({
     <Widget
       title={title}
       description={description ?? `${chartData.scenarioName} · ${chartData.points.length} runs · ${metricLabel} · ${scopeLabel}`}
-      headerActions={headerActions}
+      headerAction={headerActions}
       modalTitle={modalTitle}
-      modalHeaderActions={headerActions}
+      modalControls={headerActions}
       modalContent={<PerformanceVsSensChartContent data={chartData} metric={metric} metricLabel={metricLabel} expanded />}
       modalWidth={980}
       modalHeight={760}

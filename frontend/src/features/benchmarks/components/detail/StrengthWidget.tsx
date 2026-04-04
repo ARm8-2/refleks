@@ -132,7 +132,7 @@ export function StrengthWidget({ progress }: Props) {
     <Widget
       title="Strength Breakdown"
       description={`${levelLabel}-level progress toward max rank.`}
-      headerActions={(
+      headerAction={(
         <Select value={level} onValueChange={value => setLevel(value as StrengthLevel)}>
           <SelectTrigger className="h-8 min-w-[130px] w-auto px-2 text-xs bg-surface-subtle">
             <SelectValue />

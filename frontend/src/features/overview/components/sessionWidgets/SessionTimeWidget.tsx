@@ -1,23 +1,20 @@
-import { Widget } from '@/shared/components'
+import { Widget, WidgetEmpty } from '@/shared/components'
 import { Clock3, Gamepad2 } from 'lucide-react'
-import { useRecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
-import { EmptyMetricWidget } from './shared'
+import type { RecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
 
-export function SessionTimeWidget() {
-  const { currentSession, sessionLengthLabel, sessionLengthDetail, activePlaytimeLabel, activePlaytimeDetail } = useRecentSessionSnapshot()
-  if (!currentSession) return <EmptyMetricWidget icon={Clock3} label="Session & Playtime" />
+export function SessionTimeWidget({ snapshot }: { snapshot: RecentSessionSnapshot }) {
+  if (!snapshot.currentSession) return <WidgetEmpty icon={Clock3} label="Session & Playtime" />
+
+  const { sessionLengthLabel, sessionLengthDetail, activePlaytimeLabel, activePlaytimeDetail } = snapshot
 
   return (
-    <Widget
-      title={<span className="inline-flex items-center gap-1.5"><Clock3 className="h-3.5 w-3.5" />Session & Playtime</span>}
-      className="px-4 py-3"
-    >
+    <Widget icon={Clock3} title="Session & Playtime">
       <div className="flex items-baseline gap-2">
         <span className="text-lg font-semibold text-foreground">{sessionLengthLabel}</span>
         <span className="text-xs text-surface-muted-foreground">{sessionLengthDetail}</span>
       </div>
-      <div className="mt-1 flex items-baseline gap-2">
-        <Gamepad2 className="h-3 w-3 text-surface-muted-foreground" />
+      <div className="mt-1 flex items-center gap-2">
+        <Gamepad2 className="h-4 w-4 text-surface-muted-foreground" />
         <span className="text-sm font-medium text-foreground">{activePlaytimeLabel}</span>
         <span className="text-xs text-surface-muted-foreground">{activePlaytimeDetail}</span>
       </div>

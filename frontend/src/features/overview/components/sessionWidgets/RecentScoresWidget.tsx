@@ -5,7 +5,7 @@ import { usePersistedState } from '@/shared/hooks'
 import { CHART_SERIES_COLORS, CHART_STYLE, cn, STORAGE_KEYS } from '@/shared/lib'
 import { useId, useMemo, type ReactElement } from 'react'
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
-import { useRecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
+import type { RecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
 import { buildScoreDomain, formatScoreCompact } from './shared'
 
 const RECENT_SCORE_RUN_COUNT_OPTIONS = [10, 20, 50] as const
@@ -24,7 +24,7 @@ function currentSessionStartRatio(points: RecentScorePoint[]): number | null {
   return firstCurrentIndex / (points.length - 1)
 }
 
-export function RecentScoresWidget() {
+export function RecentScoresWidget({ snapshot }: { snapshot: RecentSessionSnapshot }) {
   const gradientBaseId = useId().replace(/:/g, '')
   const {
     currentSession,
@@ -32,7 +32,7 @@ export function RecentScoresWidget() {
     recentScoresScenario,
     recentScoresSessionBest,
     recentScoresPb,
-  } = useRecentSessionSnapshot()
+  } = snapshot
   const [runCount, setRunCount] = usePersistedState<number>(STORAGE_KEYS.overviewRecentScoresRunCount, 10)
   const [showSessionBest, setShowSessionBest] = usePersistedState<boolean>(STORAGE_KEYS.overviewRecentScoresShowSessionBest, true)
   const [showPb, setShowPb] = usePersistedState<boolean>(STORAGE_KEYS.overviewRecentScoresShowPb, false)
@@ -80,7 +80,7 @@ export function RecentScoresWidget() {
 
   if (!currentSession || recentScores.length === 0) {
     return (
-      <Widget title="Recent Scores" className="px-4 py-3">
+      <Widget title="Recent Scores">
         <div className="flex h-full items-center justify-center rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
           Play a scenario to see recent scores here.
         </div>
@@ -285,9 +285,8 @@ export function RecentScoresWidget() {
   return (
     <Widget
       title="Recent Scores"
-      className="px-4 py-3"
       modalTitle={recentScoresScenario || 'Recent Scores'}
-      modalHeaderActions={modalControls}
+      modalControls={modalControls}
       modalContent={renderExpandedChart()}
       contentClassName="flex flex-col h-full"
     >

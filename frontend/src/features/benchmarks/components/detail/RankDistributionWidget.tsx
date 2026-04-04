@@ -164,7 +164,7 @@ export function RankDistributionWidget({ progress }: Props) {
     <Widget
       title="Rank Distribution"
       description={scopeDescription}
-      headerActions={(
+      headerAction={(
         <div className="flex items-center gap-2">
           <Select value={scopeLevel} onValueChange={value => setScopeLevel(value as ScopeLevel)}>
             <SelectTrigger className="h-8 min-w-[120px] w-auto px-2 text-xs bg-surface-subtle">
