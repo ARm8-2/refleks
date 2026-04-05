@@ -68,7 +68,7 @@ export const NOTES_COLUMN_WIDTH = 32
 export const RECOMMEND_COLUMN_WIDTH = 40
 export const ACTION_COLUMN_WIDTH = 32
 export const SCORE_COLUMN_WIDTH = 60
-export const RANK_MIN_COLUMN_WIDTH = 96
+export const RANK_MIN_COLUMN_WIDTH = 112
 
 export type InfoColumnKey = 'scenario' | 'leading-gap' | 'notes' | 'rec' | 'play' | 'history' | 'trailing-gap' | 'score'
 
