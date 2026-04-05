@@ -1,7 +1,7 @@
 import { Button, Input, Popover, PopoverContent, PopoverTrigger } from '@/shared/components'
 import { cn } from '@/shared/lib'
 import type { Session } from '@/shared/types'
-import { ArrowUpDown, CalendarRange, Check, ListFilter, PanelLeftClose, PanelLeftOpen, Search, Trophy } from 'lucide-react'
+import { ArrowUpDown, CalendarRange, Check, ListFilter, NotebookPen, PanelLeftClose, PanelLeftOpen, Search, Trophy } from 'lucide-react'
 import { useCallback } from 'react'
 import type { SessionSortKey } from '../hooks/useHistoryPageState'
 import {
@@ -96,6 +96,7 @@ export function HistorySessionSidebar({
           (session: Session) => {
             const selected = session.id === selectedSessionId
             const ts = readSessionEndTimestamp(session)
+            const hasNotes = !!session.notes?.trim()
 
             if (collapsed) {
               return (
@@ -125,7 +126,14 @@ export function HistorySessionSidebar({
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 truncate text-foreground">{formatSessionTitle(session)}</div>
-                  <span className="shrink-0 text-[11px] text-surface-muted-foreground">{formatRelativeTime(ts)}</span>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {hasNotes && (
+                      <span title="Has session notes">
+                        <NotebookPen className="h-3.5 w-3.5 text-primary" />
+                      </span>
+                    )}
+                    <span className="text-[11px] text-surface-muted-foreground">{formatRelativeTime(ts)}</span>
+                  </div>
                 </div>
                 <div className="mt-1 flex items-center gap-2 text-xs text-surface-muted-foreground">
                   <span>{session.items.length} {session.items.length === 1 ? 'run' : 'runs'}</span>

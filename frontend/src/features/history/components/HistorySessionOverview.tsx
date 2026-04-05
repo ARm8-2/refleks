@@ -1,10 +1,10 @@
-import { Input } from '@/shared/components'
-import { usePersistedState } from '@/shared/hooks'
+import { Button, Input } from '@/shared/components'
+import { usePersistedState, useStore } from '@/shared/hooks'
 import { cn, STORAGE_KEYS } from '@/shared/lib'
 import type { Session } from '@/shared/types'
-import { ChevronDown, ChevronUp, Clock3, Gamepad2, Layers3, Minus, Search, TrendingDown, TrendingUp, Trophy } from 'lucide-react'
+import { ChevronDown, ChevronUp, Clock3, Gamepad2, Layers3, Minus, NotebookPen, Search, SquarePen, TrendingDown, TrendingUp, Trophy } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { HistoryRun, ScenarioSummary } from '../lib/historyModels'
 import {
   buildSessionScenarioSummaries,
@@ -19,6 +19,7 @@ import {
   readUniqueScenarioCount
 } from '../lib/historyModels'
 import { ScenarioTrendChart } from './HistoryScenarioTrendChart'
+import { HistorySessionDetailsModal } from './HistorySessionDetailsModal'
 import { PerformanceVsSensWidget } from './PerformanceVsSensWidget'
 import { SessionScenarioRadarWidget } from './SessionScenarioRadarWidget'
 
@@ -35,6 +36,13 @@ type Props = {
 export function HistorySessionOverview({ session, sessions, sessionRuns, selectedScenario, onSelectScenario, onSelectRun, globalPbByScenario }: Props) {
   const [scenarioGridExpanded, setScenarioGridExpanded] = usePersistedState(STORAGE_KEYS.historyScenarioGridExpanded, false)
   const [scenarioQuery, setScenarioQuery] = usePersistedState(STORAGE_KEYS.historyScenarioQuery, '')
+  const saveSessionNote = useStore(state => state.saveSessionNote)
+  const [notesOpen, setNotesOpen] = useState(false)
+  const [nameEditing, setNameEditing] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
+  const [nameSaving, setNameSaving] = useState(false)
+  const [nameError, setNameError] = useState<string | null>(null)
+  const nameInputRef = useRef<HTMLInputElement>(null)
 
   const scenarioSummaries = useMemo(
     () => (session ? buildSessionScenarioSummaries(session, sessions) : []),
@@ -56,6 +64,55 @@ export function HistorySessionOverview({ session, sessions, sessionRuns, selecte
 
   const selectedSummary = selectedScenario ? scenarioSummaries.find(s => s.name === selectedScenario) : null
 
+  const notes = session?.notes?.trim() ?? ''
+  const hasNotes = !!notes
+  const initialNotes = session?.notes ?? ''
+  const initialName = session?.name ?? ''
+
+  useEffect(() => {
+    setNameDraft(initialName)
+    setNameEditing(false)
+    setNameSaving(false)
+    setNameError(null)
+  }, [initialName, session?.id])
+
+  useEffect(() => {
+    if (!nameEditing) return
+    requestAnimationFrame(() => {
+      nameInputRef.current?.focus()
+      nameInputRef.current?.select()
+    })
+  }, [nameEditing])
+
+  const saveName = async () => {
+    if (!session) return
+
+    const trimmedDraft = nameDraft.trim()
+    const trimmedInitial = initialName.trim()
+
+    if (trimmedDraft === trimmedInitial) {
+      setNameEditing(false)
+      return
+    }
+
+    setNameSaving(true)
+    setNameError(null)
+    try {
+      await saveSessionNote(session.id, trimmedDraft, initialNotes)
+      setNameEditing(false)
+    } catch {
+      setNameError('Failed to update session name. Please try again.')
+    } finally {
+      setNameSaving(false)
+    }
+  }
+
+  const cancelNameEdit = () => {
+    setNameDraft(initialName)
+    setNameEditing(false)
+    setNameError(null)
+  }
+
   if (!session) {
     return (
       <section className="flex h-full min-h-0 items-center justify-center rounded-xl bg-surface p-5">
@@ -64,13 +121,67 @@ export function HistorySessionOverview({ session, sessions, sessionRuns, selecte
     )
   }
 
-  const notes = session.notes?.trim()
-
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-surface">
       <div className="px-5 pt-5 pb-1">
-        <div className="font-medium text-foreground">{formatSessionTitle(session)}</div>
-        <div className="mt-0.5 text-xs text-surface-muted-foreground">{formatSessionDateRange(session)}</div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              {nameEditing ? (
+                <Input
+                  ref={nameInputRef}
+                  value={nameDraft}
+                  onChange={event => setNameDraft(event.target.value)}
+                  onBlur={() => {
+                    if (!nameSaving) {
+                      void saveName()
+                    }
+                  }}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      void saveName()
+                    }
+                    if (event.key === 'Escape') {
+                      event.preventDefault()
+                      cancelNameEdit()
+                    }
+                  }}
+                  placeholder="Session name"
+                  className="max-w-[340px] bg-transparent px-3 font-medium shadow-none focus-visible:bg-surface-subtle focus-visible:ring-0"
+                  disabled={nameSaving}
+                />
+              ) : (
+                <div className="flex h-9 max-w-[340px] items-center truncate font-medium text-foreground">{formatSessionTitle(session)}</div>
+              )}
+              {!nameEditing && (
+                <Button
+                  onClick={() => setNameEditing(true)}
+                  variant="ghost"
+                  size="icon"
+                  className="text-surface-muted-foreground"
+                  title="Rename session"
+                >
+                  <SquarePen />
+                </Button>
+              )}
+            </div>
+            <div className="mt-0.5 text-xs text-surface-muted-foreground">{formatSessionDateRange(session)}</div>
+            {nameError && <div className="mt-1 text-xs text-destructive">{nameError}</div>}
+          </div>
+          <Button
+            onClick={() => setNotesOpen(true)}
+            variant="ghost"
+            size="icon"
+            className={cn(
+              'shrink-0',
+              hasNotes ? 'text-primary' : 'text-surface-muted-foreground',
+            )}
+            title={hasNotes ? 'Edit session notes' : 'Add session notes'}
+          >
+            <NotebookPen />
+          </Button>
+        </div>
       </div>
 
       <div className="scrollbar-compact min-h-0 flex-1 overflow-y-auto p-5">
@@ -82,8 +193,18 @@ export function HistorySessionOverview({ session, sessions, sessionRuns, selecte
 
         {notes && (
           <div className="mt-4 rounded-xl bg-surface-subtle px-3 py-2.5">
-            <p className="text-xs text-surface-muted-foreground">Notes</p>
-            <p className="mt-1 text-sm text-foreground">{notes}</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-surface-muted-foreground">Notes</p>
+              <Button
+                onClick={() => setNotesOpen(true)}
+                variant="ghost"
+                size="sm"
+                title="Edit session notes"
+              >
+                Edit
+              </Button>
+            </div>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{notes}</p>
           </div>
         )}
 
@@ -184,6 +305,16 @@ export function HistorySessionOverview({ session, sessions, sessionRuns, selecte
           )
         })()}
       </div>
+
+      <HistorySessionDetailsModal
+        isOpen={notesOpen}
+        sessionLabel={formatSessionDateRange(session)}
+        initialNotes={initialNotes}
+        onClose={() => setNotesOpen(false)}
+        onSave={async (noteText) => {
+          await saveSessionNote(session.id, initialName.trim(), noteText)
+        }}
+      />
     </section>
   )
 }
