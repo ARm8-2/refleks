@@ -1,4 +1,4 @@
-import { Modal } from '@/shared/components'
+import { Modal, TogglePill } from '@/shared/components'
 import { Slider } from '@/shared/components/ui/slider'
 import { usePersistedState } from '@/shared/hooks'
 import { cn, STORAGE_KEYS } from '@/shared/lib'
@@ -632,18 +632,15 @@ function OptionToggle({ icon, label, title, active, onClick }: {
   icon: React.ReactNode; label: string; title: string; active?: boolean; onClick: () => void
 }) {
   return (
-    <button
-      type="button"
+    <TogglePill
       onClick={onClick}
       title={title}
-      className={cn(
-        'flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors',
-        active ? 'bg-surface-muted text-foreground' : 'text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground',
-      )}
+      active={active}
+      className="gap-1"
     >
       {icon}
       {label}
-    </button>
+    </TogglePill>
   )
 }
 

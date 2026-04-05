@@ -1,6 +1,6 @@
 
 import { REFLEKS_SYMBOL } from '@/assets'
-import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
+import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, TogglePill, TogglePillGroup } from '@/shared/components'
 import { usePersistedState, useStore } from '@/shared/hooks'
 import {
   benchmarkDetailProgressStorageBase,
@@ -48,20 +48,6 @@ type HistoryState = {
 const CATEGORY_COLUMN_WIDTH = 52
 const GROUP_COLUMN_WIDTH = 24
 const LEFT_PANEL_PADDING = 16
-
-function ToggleChip({ label, enabled, onToggle }: { label: string; enabled: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={enabled
-        ? 'rounded-xl border border-primary-border-strong bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary transition-colors'
-        : 'rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-medium text-surface-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground'}
-    >
-      {label}
-    </button>
-  )
-}
 
 export function BenchmarkProgressTable({ benchmark, difficultyName, progress, shareMode = false }: Props) {
   const sessions = useStore(state => state.sessions)
@@ -248,7 +234,11 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
 
         {!shareMode && (
           <div className="flex flex-wrap items-center gap-2">
-            <ToggleChip label="Compact" enabled={compactMode} onToggle={() => setCompactMode(value => !value)} />
+            <TogglePillGroup>
+              <TogglePill active={compactMode} size="md" className="px-3 text-xs" onClick={() => setCompactMode(value => !value)}>
+                Compact
+              </TogglePill>
+            </TogglePillGroup>
             <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} title="View tracker settings">
               <Settings2 className="h-4 w-4" />
             </Button>
@@ -478,19 +468,17 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
                     const visible = !(hiddenManually || hiddenAutomatically)
 
                     return (
-                      <button
-                        type="button"
+                      <TogglePill
                         key={`${rank.name}-${index}`}
                         disabled={hiddenAutomatically}
                         onClick={() => toggleManualRank(index)}
-                        className={visible
-                          ? 'rounded-xl border border-primary-border bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-surface-muted'
-                          : 'rounded-xl border border-border bg-surface px-2.5 py-1 text-xs font-medium text-surface-muted-foreground transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50'}
-                        style={rank.color && visible ? { color: rank.color, borderColor: rank.color } : undefined}
+                        active={visible}
+                        className="h-auto px-2.5 py-1 text-xs"
+                        style={rank.color && visible ? { color: rank.color } : undefined}
                         title={hiddenAutomatically ? 'Hidden automatically because every scenario is already past this rank' : undefined}
                       >
                         {rank.name}
-                      </button>
+                      </TogglePill>
                     )
                   })}
                 </div>

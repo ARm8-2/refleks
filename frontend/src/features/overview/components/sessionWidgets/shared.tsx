@@ -30,11 +30,11 @@ export function getStatusIcon(tone: SnapshotTone): LucideIcon {
 
 export function getToneBadgeClasses(tone: SnapshotTone): string {
   switch (tone) {
-    case 'success': return 'border-transparent bg-[color:var(--success-soft)] text-[color:var(--success)]'
-    case 'warning': return 'border-transparent bg-[color:var(--warning-soft)] text-[color:var(--warning-foreground)]'
-    case 'neutral': return 'border-primary-border bg-primary-soft text-primary'
+    case 'success': return 'bg-[color:var(--success-soft)] text-[color:var(--success)]'
+    case 'warning': return 'bg-[color:var(--warning-soft)] text-[color:var(--warning-foreground)]'
+    case 'neutral': return 'bg-primary-soft text-primary'
     case 'muted':
-    default: return 'border-border-soft bg-surface-muted-soft text-surface-muted-foreground'
+    default: return 'bg-surface-muted-soft text-surface-muted-foreground'
   }
 }
 

@@ -1,8 +1,8 @@
-import { SegmentedControl, Widget } from '@/shared/components'
+import { SegmentedControl, TogglePill, TogglePillGroup, Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
 import { usePersistedState } from '@/shared/hooks'
-import { CHART_SERIES_COLORS, CHART_STYLE, cn, STORAGE_KEYS } from '@/shared/lib'
+import { CHART_SERIES_COLORS, CHART_STYLE, STORAGE_KEYS } from '@/shared/lib'
 import { useId, useMemo, type ReactElement } from 'react'
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
 import type { RecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
@@ -256,29 +256,16 @@ export function RecentScoresWidget({ snapshot }: { snapshot: RecentSessionSnapsh
         value={effectiveRunCount}
         options={RECENT_SCORE_RUN_COUNT_OPTIONS.map(n => ({ value: n, label: `Last ${n}` }))}
         onValueChange={setRunCount}
+        size="sm"
       />
-      <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
-        <button
-          type="button"
-          onClick={() => setShowSessionBest(v => !v)}
-          className={cn(
-            'flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors',
-            showSessionBest ? 'bg-surface-muted text-foreground' : 'text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground',
-          )}
-        >
+      <TogglePillGroup>
+        <TogglePill active={showSessionBest} onClick={() => setShowSessionBest(v => !v)}>
           Session Best
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowPb(v => !v)}
-          className={cn(
-            'flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-medium transition-colors',
-            showPb ? 'bg-surface-muted text-foreground' : 'text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground',
-          )}
-        >
+        </TogglePill>
+        <TogglePill active={showPb} onClick={() => setShowPb(v => !v)}>
           Personal Best
-        </button>
-      </div>
+        </TogglePill>
+      </TogglePillGroup>
     </div>
   )
 

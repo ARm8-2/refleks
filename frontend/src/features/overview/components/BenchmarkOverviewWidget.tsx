@@ -11,7 +11,7 @@ import { useBenchmarkDetailProgress } from '@/features/benchmarks/hooks/useBench
 import { useBenchmarkVisibility } from '@/features/benchmarks/hooks/useBenchmarkVisibility'
 import { formatNumber, getScenarioName } from '@/features/benchmarks/lib/detailFormatting'
 import { computeRecommendationScores, selectTopPicks, type ScenarioBenchmarkData } from '@/features/benchmarks/lib/detailRecommendations'
-import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Widget } from '@/shared/components'
+import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, TogglePill, TogglePillGroup, Widget } from '@/shared/components'
 import { useBenchmarks, usePersistedState, useStore } from '@/shared/hooks'
 import {
   benchmarkDetailProgressStorageBase,
@@ -39,20 +39,6 @@ type HistoryState = {
   open: boolean
   scenario: string
   thresholds: number[]
-}
-
-function ToggleChip({ label, enabled, onToggle }: { label: string; enabled: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={enabled
-        ? 'rounded-xl border border-primary-border-strong bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary transition-colors'
-        : 'rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-medium text-surface-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground'}
-    >
-      {label}
-    </button>
-  )
 }
 
 export function BenchmarkOverviewWidget() {
@@ -272,7 +258,11 @@ export function BenchmarkOverviewWidget() {
 
   const headerControls = (
     <div className="flex flex-wrap items-center gap-2">
-      <ToggleChip label="Compact" enabled={compactMode} onToggle={() => setCompactMode(v => !v)} />
+      <TogglePillGroup>
+        <TogglePill active={compactMode} size="md" className="px-3 text-xs" onClick={() => setCompactMode(v => !v)}>
+          Compact
+        </TogglePill>
+      </TogglePillGroup>
       <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} title="Widget settings">
         <Settings2 className="h-4 w-4" />
       </Button>
@@ -499,19 +489,17 @@ export function BenchmarkOverviewWidget() {
                 const hiddenAutomatically = autoHidden.has(index)
                 const visible = !(hiddenManually || hiddenAutomatically)
                 return (
-                  <button
-                    type="button"
+                  <TogglePill
                     key={`${rank.name}-${index}`}
                     disabled={hiddenAutomatically}
                     onClick={() => toggleManualRank(index)}
-                    className={visible
-                      ? 'rounded-xl border border-primary-border bg-primary-soft px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-surface-muted'
-                      : 'rounded-xl border border-border bg-surface px-2.5 py-1 text-xs font-medium text-surface-muted-foreground transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50'}
-                    style={rank.color && visible ? { color: rank.color, borderColor: rank.color } : undefined}
+                    active={visible}
+                    className="h-auto px-2.5 py-1 text-xs"
+                    style={rank.color && visible ? { color: rank.color } : undefined}
                     title={hiddenAutomatically ? 'Hidden automatically because every scenario is already past this rank' : undefined}
                   >
                     {rank.name}
-                  </button>
+                  </TogglePill>
                 )
               })}
             </div>
