@@ -26,7 +26,7 @@ type SidebarItemProps = {
 function SidebarItem({ active = false, icon, label, onClick, open, showNotificationDot = false, showActiveBackground = true, to, trailing }: SidebarItemProps) {
   const collapsed = !open
   const className = cn(
-    'relative z-[1] flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+    'relative z-[1] flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
     active && (showActiveBackground ? 'bg-sidebar-accent' : null),
     active && 'font-medium text-sidebar-accent-foreground',
   )
@@ -109,7 +109,7 @@ function SidebarFavoriteItem({ abbreviation, active, color, label, open, onClick
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-6 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+        'flex h-6 w-full items-center gap-2 rounded-md px-2 text-left text-sm text-sidebar-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
         active && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground',
         collapsed && 'justify-center px-0',
       )}
