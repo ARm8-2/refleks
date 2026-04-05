@@ -54,7 +54,7 @@ export type RecentSessionSnapshot = {
   lastRunScoreTrend: 'up' | 'down' | 'flat' | null
   lastRunAccTrend: 'up' | 'down' | 'flat' | null
   // Recent scores for chart
-  recentScores: { index: number; score: number; inCurrentSession: boolean }[]
+  recentScores: { index: number; score: number; inCurrentSession: boolean; runId: string; sessionId: string }[]
   recentScoresScenario: string
   recentScoresSessionBest: number | null
   recentScoresPb: number | null
@@ -212,7 +212,7 @@ function computeLastRunStats(session: Session) {
 
 function computeRecentScores(session: Session, allSessions: Session[]) {
   const empty = {
-    scores: [] as { index: number; score: number; inCurrentSession: boolean }[],
+    scores: [] as { index: number; score: number; inCurrentSession: boolean; runId: string; sessionId: string }[],
     scenario: '',
     sessionBest: null as number | null,
     pb: null as number | null,
@@ -223,9 +223,10 @@ function computeRecentScores(session: Session, allSessions: Session[]) {
   const lastScenario = getScenarioName(session.items[0]).trim()
   if (!lastScenario) return empty
 
-  const allScenarioRuns: Array<{ ts: number; score: number; inCurrentSession: boolean }> = []
+  const allScenarioRuns: Array<{ ts: number; score: number; inCurrentSession: boolean; runId: string; sessionId: string }> = []
   for (const candidateSession of allSessions) {
-    for (const item of candidateSession.items) {
+    for (let index = 0; index < candidateSession.items.length; index++) {
+      const item = candidateSession.items[index]
       if (getScenarioName(item).trim() !== lastScenario) continue
       const score = readScenarioScore(item)
       if (score <= 0) continue
@@ -233,6 +234,8 @@ function computeRecentScores(session: Session, allSessions: Session[]) {
         ts: readScenarioTimestamp(item),
         score,
         inCurrentSession: candidateSession.id === session.id,
+        runId: item.filePath || `${candidateSession.id}:${index}`,
+        sessionId: candidateSession.id,
       })
     }
   }
@@ -250,6 +253,8 @@ function computeRecentScores(session: Session, allSessions: Session[]) {
     index: i + 1,
     score: run.score,
     inCurrentSession: run.inCurrentSession,
+    runId: run.runId,
+    sessionId: run.sessionId,
   }))
 
   const sessionScores = allScenarioRuns

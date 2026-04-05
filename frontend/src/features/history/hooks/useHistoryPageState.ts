@@ -70,7 +70,8 @@ export function useHistoryPageState() {
     }
   }, [compareRunId, primaryRunId, runsById, setCompareRunId])
 
-  const wasInspectorOpen = useRef(runInspectorOpen)
+  // Start from closed so persisted open state also runs the same collapse behavior on first mount.
+  const wasInspectorOpen = useRef(false)
   useEffect(() => {
     if (runInspectorOpen && !wasInspectorOpen.current) {
       setSessionListCollapsed(true)

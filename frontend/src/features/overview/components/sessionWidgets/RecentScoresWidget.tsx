@@ -2,8 +2,9 @@ import { SegmentedControl, TogglePill, TogglePillGroup, Widget } from '@/shared/
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
 import { usePersistedState } from '@/shared/hooks'
-import { CHART_SERIES_COLORS, CHART_STYLE, STORAGE_KEYS } from '@/shared/lib'
+import { CHART_SERIES_COLORS, CHART_STYLE, primeHistoryRunSelection, STORAGE_KEYS } from '@/shared/lib'
 import { useId, useMemo, type ReactElement } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CartesianGrid, Line, LineChart, ReferenceLine, XAxis, YAxis } from 'recharts'
 import type { RecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
 import { buildScoreDomain, formatScoreCompact } from './shared'
@@ -15,7 +16,14 @@ const recentScoresConfig: ChartConfig = {
   score: { label: 'Score', color: CHART_SERIES_COLORS.scoreHistory },
 }
 
-type RecentScorePoint = { index: number; score: number; inCurrentSession: boolean; fill: string }
+type RecentScorePoint = {
+  index: number
+  score: number
+  inCurrentSession: boolean
+  runId: string
+  sessionId: string
+  fill: string
+}
 
 function currentSessionStartRatio(points: RecentScorePoint[]): number | null {
   const firstCurrentIndex = points.findIndex(point => point.inCurrentSession)
@@ -25,6 +33,7 @@ function currentSessionStartRatio(points: RecentScorePoint[]): number | null {
 }
 
 export function RecentScoresWidget({ snapshot }: { snapshot: RecentSessionSnapshot }) {
+  const navigate = useNavigate()
   const gradientBaseId = useId().replace(/:/g, '')
   const {
     currentSession,
@@ -77,6 +86,15 @@ export function RecentScoresWidget({ snapshot }: { snapshot: RecentSessionSnapsh
     () => buildScoreDomain(expandedData.map(point => point.score), referenceScores),
     [expandedData, referenceScores],
   )
+
+  const handlePointClick = (state: { activeTooltipIndex?: number } | null, data: RecentScorePoint[]) => {
+    if (!state || state.activeTooltipIndex == null) return
+    const point = data[state.activeTooltipIndex]
+    if (!point?.runId || !point?.sessionId) return
+
+    primeHistoryRunSelection(point.runId, point.sessionId)
+    navigate('/history')
+  }
 
   if (!currentSession || recentScores.length === 0) {
     return (
@@ -174,7 +192,12 @@ export function RecentScoresWidget({ snapshot }: { snapshot: RecentSessionSnapsh
     const compactGradientId = `recent-scores-compact-${gradientBaseId}`
     return (
       <ChartContainer config={recentScoresConfig} className="aspect-auto w-full h-full min-h-[140px]">
-        <LineChart data={compactData} margin={{ top: 6, right: 6, left: 0, bottom: 0 }}>
+        <LineChart
+          data={compactData}
+          margin={{ top: 6, right: 6, left: 0, bottom: 0 }}
+          onClick={state => handlePointClick(state, compactData)}
+          style={{ cursor: 'pointer' }}
+        >
           <defs>
             {renderSplitGradient(compactGradientId, compactSessionSplitRatio)}
           </defs>
@@ -230,7 +253,12 @@ export function RecentScoresWidget({ snapshot }: { snapshot: RecentSessionSnapsh
 
     return (
       <ChartContainer config={recentScoresConfig} className="aspect-auto w-full h-[360px]">
-        <LineChart data={expandedData} margin={{ top: 12, right: 12, left: 6, bottom: 0 }}>
+        <LineChart
+          data={expandedData}
+          margin={{ top: 12, right: 12, left: 6, bottom: 0 }}
+          onClick={state => handlePointClick(state, expandedData)}
+          style={{ cursor: 'pointer' }}
+        >
           <defs>
             {renderSplitGradient(expandedGradientId, expandedSessionSplitRatio)}
           </defs>
