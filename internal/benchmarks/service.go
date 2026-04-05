@@ -411,9 +411,6 @@ func (s *Service) findDifficultyByBenchmarkID(benchmarkId int) (*models.Benchmar
 	return nil, nil
 }
 
-// ... (include helper functions: mergeRankDefs, groupScenariosByMeta, parseProgressTokens, etc.)
-// I will copy them from the original file.
-
 type rawRank struct {
 	Name  string `json:"name"`
 	Color string `json:"color"`
