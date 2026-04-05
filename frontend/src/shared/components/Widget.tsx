@@ -64,7 +64,7 @@ export function Widget({
         role={canExpand ? 'button' : undefined}
         tabIndex={canExpand ? 0 : undefined}
       >
-        <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
