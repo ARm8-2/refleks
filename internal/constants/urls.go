@@ -8,7 +8,7 @@ const (
 	KovaaksLastScoresURL = "https://kovaaks.com/webapp-backend/user/scenario/last-scores/by-name?username=%s&scenarioName=%s"
 
 	// RefleK's cloud endpoint for run file uploads.
-	RefleksRunsSyncURL = "https://api.refleks-app.com/v1/runs/sync"
+	RefleksRunsSyncURL = "https://api.refleksapp.com/v1/runs/sync"
 
 	// --- Updater/GitHub release info ---
 	// GitHub repository owner/name used for update checks and downloads
