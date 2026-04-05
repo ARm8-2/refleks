@@ -1,7 +1,8 @@
 import { Button, SegmentedControl } from '@/shared/components'
 import { usePersistedState } from '@/shared/hooks'
-import { cn, STORAGE_KEYS } from '@/shared/lib'
+import { cn, getSettings, STORAGE_KEYS } from '@/shared/lib'
 import { Columns2, Layers, PanelRightClose, Rows2, Trophy } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import type { HistoryRun } from '../lib/historyModels'
 import { INSPECTOR_TABS, type InspectorTab } from '../lib/inspectorTabs'
 import { AnalysisTab } from './inspector/AnalysisTab'
@@ -35,6 +36,25 @@ export function HistoryRunDetailPane({
   onComparePb,
 }: Props) {
   const [overlay, setOverlay] = usePersistedState(STORAGE_KEYS.historyAnalysisOverlay, false)
+  const [anonymousEnabled, setAnonymousEnabled] = useState(false)
+
+  useEffect(() => {
+    let active = true
+
+    getSettings()
+      .then(settings => {
+        if (!active) return
+        setAnonymousEnabled(settings.anonymousEnabled === true)
+      })
+      .catch(() => {
+        if (!active) return
+        setAnonymousEnabled(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-surface">
@@ -116,6 +136,7 @@ export function HistoryRunDetailPane({
             <EnvironmentTab
               primaryRun={primaryRun}
               compareRun={compareRun}
+              anonymousEnabled={anonymousEnabled}
               onClearPrimaryRun={onClearPrimaryRun}
               onClearComparison={onClearComparison}
             />

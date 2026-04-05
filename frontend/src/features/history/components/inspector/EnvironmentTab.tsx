@@ -92,9 +92,10 @@ function formatEnvValue(env: RunEnvironment, key: keyof RunEnvironment): string 
   return '—'
 }
 
-export function EnvironmentTab({ primaryRun, compareRun, onClearPrimaryRun, onClearComparison }: {
+export function EnvironmentTab({ primaryRun, compareRun, anonymousEnabled, onClearPrimaryRun, onClearComparison }: {
   primaryRun: HistoryRun
   compareRun: HistoryRun | null
+  anonymousEnabled: boolean
   onClearPrimaryRun: () => void
   onClearComparison: () => void
 }) {
@@ -102,11 +103,12 @@ export function EnvironmentTab({ primaryRun, compareRun, onClearPrimaryRun, onCl
     <CompareEnvironmentView
       primaryRun={primaryRun}
       compareRun={compareRun}
+      anonymousEnabled={anonymousEnabled}
       onClearPrimaryRun={onClearPrimaryRun}
       onClearComparison={onClearComparison}
     />
   ) : (
-    <SingleEnvironmentView primaryRun={primaryRun} onClearPrimaryRun={onClearPrimaryRun} />
+    <SingleEnvironmentView primaryRun={primaryRun} anonymousEnabled={anonymousEnabled} onClearPrimaryRun={onClearPrimaryRun} />
   )
 }
 
@@ -118,24 +120,46 @@ function PrivacyHint({ note }: { note: string }) {
   )
 }
 
-function EnvironmentStatRow({ label, value, privacyNote }: { label: string; value: string; privacyNote?: string }) {
+function EnvironmentStatRow({
+  label,
+  value,
+  privacyNote,
+  showPrivacyHint,
+}: {
+  label: string
+  value: string
+  privacyNote?: string
+  showPrivacyHint: boolean
+}) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <div className="flex min-w-0 items-center gap-1.5">
         <span className="text-xs text-surface-muted-foreground">{label}</span>
-        {privacyNote && <PrivacyHint note={privacyNote} />}
+        {showPrivacyHint && privacyNote && <PrivacyHint note={privacyNote} />}
       </div>
       <span className="text-sm font-medium text-foreground tabular-nums">{value}</span>
     </div>
   )
 }
 
-function EnvironmentCompareStatRow({ label, a, b, privacyNote }: { label: string; a: string; b: string; privacyNote?: string }) {
+function EnvironmentCompareStatRow({
+  label,
+  a,
+  b,
+  privacyNote,
+  showPrivacyHint,
+}: {
+  label: string
+  a: string
+  b: string
+  privacyNote?: string
+  showPrivacyHint: boolean
+}) {
   return (
     <div className="flex items-baseline justify-between gap-2">
       <div className="flex min-w-0 items-center gap-1.5">
         <span className="text-xs text-surface-muted-foreground flex-shrink-0">{label}</span>
-        {privacyNote && <PrivacyHint note={privacyNote} />}
+        {showPrivacyHint && privacyNote && <PrivacyHint note={privacyNote} />}
       </div>
       <div className="flex items-baseline gap-4 text-sm tabular-nums">
         <span className="font-medium text-foreground">{a}</span>
@@ -145,8 +169,9 @@ function EnvironmentCompareStatRow({ label, a, b, privacyNote }: { label: string
   )
 }
 
-function SingleEnvironmentView({ primaryRun, onClearPrimaryRun }: {
+function SingleEnvironmentView({ primaryRun, anonymousEnabled, onClearPrimaryRun }: {
   primaryRun: HistoryRun
+  anonymousEnabled: boolean
   onClearPrimaryRun: () => void
 }) {
   const env = primaryRun.item.env
@@ -181,6 +206,7 @@ function SingleEnvironmentView({ primaryRun, onClearPrimaryRun }: {
               label={field.label}
               value={formatEnvValue(env, field.key)}
               privacyNote={field.privacyNote}
+              showPrivacyHint={anonymousEnabled}
             />
           ))}
         </StatsGroup>
@@ -189,9 +215,10 @@ function SingleEnvironmentView({ primaryRun, onClearPrimaryRun }: {
   )
 }
 
-function CompareEnvironmentView({ primaryRun, compareRun, onClearPrimaryRun, onClearComparison }: {
+function CompareEnvironmentView({ primaryRun, compareRun, anonymousEnabled, onClearPrimaryRun, onClearComparison }: {
   primaryRun: HistoryRun
   compareRun: HistoryRun
+  anonymousEnabled: boolean
   onClearPrimaryRun: () => void
   onClearComparison: () => void
 }) {
@@ -232,6 +259,7 @@ function CompareEnvironmentView({ primaryRun, compareRun, onClearPrimaryRun, onC
               a={formatEnvValue(primaryEnv, field.key)}
               b={formatEnvValue(compareEnv, field.key)}
               privacyNote={field.privacyNote}
+              showPrivacyHint={anonymousEnabled}
             />
           ))}
         </StatsGroup>
