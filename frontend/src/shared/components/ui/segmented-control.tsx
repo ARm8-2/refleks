@@ -45,12 +45,21 @@ export function SegmentedControl<T extends string | number>({
     const item = itemRefs.current[String(value)]
     if (!container || !item) return
 
-    const containerRect = container.getBoundingClientRect()
-    const itemRect = item.getBoundingClientRect()
+    // Prefer layout metrics because they are not affected by CSS transforms
+    // (e.g. dialog open/close zoom animations).
+    let x = item.offsetLeft
+    let width = item.offsetWidth
+
+    if (item.offsetParent !== container) {
+      const containerRect = container.getBoundingClientRect()
+      const itemRect = item.getBoundingClientRect()
+      x = itemRect.left - containerRect.left
+      width = itemRect.width
+    }
 
     setIndicator({
-      x: itemRect.left - containerRect.left,
-      width: itemRect.width,
+      x,
+      width,
       ready: true,
     })
   }, [value])
