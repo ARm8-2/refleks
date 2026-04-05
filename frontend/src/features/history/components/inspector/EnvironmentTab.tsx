@@ -1,10 +1,10 @@
-import { Button } from '@/shared/components'
+import { Button, InfoTooltip } from '@/shared/components'
 import type { RunEnvironment } from '@/shared/types/ipc'
-import { ArrowRightLeft, PinOff } from 'lucide-react'
+import { ArrowRightLeft, EyeOff, PinOff } from 'lucide-react'
 import { formatNumber, formatRunTimestamp, formatSessionTitle, type HistoryRun } from '../../lib/historyModels'
-import { CompareStatRow, HeroStat, StatRow, StatsGroup } from './shared'
+import { HeroStat, StatsGroup } from './shared'
 
-type EnvField = { label: string; key: keyof RunEnvironment }
+type EnvField = { label: string; key: keyof RunEnvironment; privacyNote?: string }
 
 const ENV_GROUPS: Array<{ label: string; fields: EnvField[] }> = [
   {
@@ -14,8 +14,8 @@ const ENV_GROUPS: Array<{ label: string; fields: EnvField[] }> = [
       { label: 'OS', key: 'os' },
       { label: 'Architecture', key: 'arch' },
       { label: 'OS Version', key: 'osVersion' },
-      { label: 'Steam ID', key: 'steamId' },
-      { label: 'Persona Name', key: 'personaName' },
+      { label: 'Steam ID', key: 'steamId', privacyNote: 'Kept local only and scrubbed before upload.' },
+      { label: 'Persona Name', key: 'personaName', privacyNote: 'Kept local only and scrubbed before upload.' },
     ],
   },
   {
@@ -98,17 +98,57 @@ export function EnvironmentTab({ primaryRun, compareRun, onClearPrimaryRun, onCl
   onClearPrimaryRun: () => void
   onClearComparison: () => void
 }) {
-  if (compareRun) {
-    return (
-      <CompareEnvironmentView
-        primaryRun={primaryRun}
-        compareRun={compareRun}
-        onClearPrimaryRun={onClearPrimaryRun}
-        onClearComparison={onClearComparison}
-      />
-    )
-  }
+  return compareRun ? (
+    <CompareEnvironmentView
+      primaryRun={primaryRun}
+      compareRun={compareRun}
+      onClearPrimaryRun={onClearPrimaryRun}
+      onClearComparison={onClearComparison}
+    />
+  ) : (
+    <SingleEnvironmentView primaryRun={primaryRun} onClearPrimaryRun={onClearPrimaryRun} />
+  )
+}
 
+function PrivacyHint({ note }: { note: string }) {
+  return (
+    <InfoTooltip side="top" className="max-w-56 text-center" icon={<EyeOff className="h-3.5 w-3.5" />}>
+      {note}
+    </InfoTooltip>
+  )
+}
+
+function EnvironmentStatRow({ label, value, privacyNote }: { label: string; value: string; privacyNote?: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="text-xs text-surface-muted-foreground">{label}</span>
+        {privacyNote && <PrivacyHint note={privacyNote} />}
+      </div>
+      <span className="text-sm font-medium text-foreground tabular-nums">{value}</span>
+    </div>
+  )
+}
+
+function EnvironmentCompareStatRow({ label, a, b, privacyNote }: { label: string; a: string; b: string; privacyNote?: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="text-xs text-surface-muted-foreground flex-shrink-0">{label}</span>
+        {privacyNote && <PrivacyHint note={privacyNote} />}
+      </div>
+      <div className="flex items-baseline gap-4 text-sm tabular-nums">
+        <span className="font-medium text-foreground">{a}</span>
+        <span className="font-medium text-foreground">{b}</span>
+      </div>
+    </div>
+  )
+}
+
+function SingleEnvironmentView({ primaryRun, onClearPrimaryRun }: {
+  primaryRun: HistoryRun
+  onClearPrimaryRun: () => void
+}) {
   const env = primaryRun.item.env
 
   return (
@@ -136,7 +176,12 @@ export function EnvironmentTab({ primaryRun, compareRun, onClearPrimaryRun, onCl
       {ENV_GROUPS.map(group => (
         <StatsGroup key={group.label} label={group.label}>
           {group.fields.map(field => (
-            <StatRow key={field.key} label={field.label} value={formatEnvValue(env, field.key)} />
+            <EnvironmentStatRow
+              key={field.key}
+              label={field.label}
+              value={formatEnvValue(env, field.key)}
+              privacyNote={field.privacyNote}
+            />
           ))}
         </StatsGroup>
       ))}
@@ -181,11 +226,12 @@ function CompareEnvironmentView({ primaryRun, compareRun, onClearPrimaryRun, onC
       {ENV_GROUPS.map(group => (
         <StatsGroup key={group.label} label={group.label}>
           {group.fields.map(field => (
-            <CompareStatRow
+            <EnvironmentCompareStatRow
               key={field.key}
               label={field.label}
               a={formatEnvValue(primaryEnv, field.key)}
               b={formatEnvValue(compareEnv, field.key)}
+              privacyNote={field.privacyNote}
             />
           ))}
         </StatsGroup>

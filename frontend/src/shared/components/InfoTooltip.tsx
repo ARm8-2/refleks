@@ -8,9 +8,10 @@ type InfoTooltipProps = {
   side?: 'top' | 'bottom' | 'left' | 'right'
   className?: string
   iconClassName?: string
+  icon?: ReactNode
 }
 
-export function InfoTooltip({ children, side = 'bottom', className, iconClassName }: InfoTooltipProps) {
+export function InfoTooltip({ children, side = 'bottom', className, iconClassName, icon }: InfoTooltipProps) {
   return (
     <TooltipProvider delayDuration={150}>
       <Tooltip>
@@ -22,7 +23,7 @@ export function InfoTooltip({ children, side = 'bottom', className, iconClassNam
               iconClassName,
             )}
           >
-            <Info className="h-3.5 w-3.5" />
+            {icon ?? <Info className="h-3.5 w-3.5" />}
           </button>
         </TooltipTrigger>
         <TooltipContent
