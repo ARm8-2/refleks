@@ -14,29 +14,16 @@ import {
 } from '@/shared/lib'
 import type { ScenarioRecord, Session } from '@/shared/types'
 import { useMemo } from 'react'
-import { CartesianGrid, ReferenceArea, Scatter, ScatterChart, XAxis, YAxis } from 'recharts'
+import { CartesianGrid, Scatter, ScatterChart, XAxis, YAxis } from 'recharts'
 
 type MetricKey = 'score' | 'accuracy' | 'ttk'
 type DataScopeKey = 'session' | 'all'
-
-type SensitivityBin = {
-  start: number
-  end: number
-  center: number
-  count: number
-}
 
 type SensitivityPoint = {
   x: number
   performance: number
   rawSensitivity: number
-  timestamp: number
-  recency: number
-  binIndex: number
-  binStart: number
-  binEnd: number
-  binCount: number
-  fullLabel: string
+  runLabel: string
 }
 
 type PerformanceVsSensWidgetProps = {
@@ -198,15 +185,9 @@ function PerformanceVsSensChartContent({
       label: metricLabel,
       color: metricColors[metric],
     },
-    count: {
-      label: 'Run Count',
-      color: CHART_SERIES_COLORS.neutral,
-    },
   }
 
   const chartHeight = expanded ? 'h-[420px]' : 'h-[270px]'
-  const countMax = Math.max(1, Math.ceil(data.maxCount * 1.15))
-  const yDomain = buildPerformanceDomain(data.points.map(point => point.performance))
 
   return (
     <div className={`w-full ${chartHeight}`}>
@@ -219,50 +200,21 @@ function PerformanceVsSensChartContent({
             tickLine={false}
             axisLine={false}
             tickMargin={8}
-            domain={[data.xMin, data.xMax]}
+            domain={data.xDomain}
             tickFormatter={value => formatNumber(value, 1)}
           />
           <YAxis
-            yAxisId="performance"
             tickLine={false}
             axisLine={false}
             tickMargin={8}
             width={56}
-            domain={yDomain}
+            domain={data.yDomain}
             tickFormatter={value => formatMetricTick(value, metric)}
           />
-          <YAxis
-            yAxisId="count"
-            orientation="right"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            width={48}
-            allowDecimals={false}
-            domain={[0, countMax]}
-            tickFormatter={value => formatNumber(value, 0)}
-          />
-
-          {data.bins.map(bin => (
-            <ReferenceArea
-              key={`${bin.start}-${bin.end}`}
-              x1={bin.start}
-              x2={bin.end}
-              y1={0}
-              y2={bin.count}
-              yAxisId="count"
-              fill={CHART_SERIES_COLORS.scoreCurrent}
-              fillOpacity={0.08}
-              stroke="var(--border)"
-              strokeOpacity={0.28}
-              ifOverflow="extendDomain"
-            />
-          ))}
 
           <ChartTooltip shared={false} cursor={false} content={<PerformanceVsSensTooltip metric={metric} metricLabel={metricLabel} />} />
 
           <Scatter
-            yAxisId="performance"
             name="performance"
             data={data.points}
             dataKey="performance"
@@ -298,11 +250,10 @@ function PerformanceVsSensTooltip({
 
   return (
     <div className="grid min-w-[14rem] gap-1.5 rounded-lg bg-canvas px-2.5 py-1.5 text-xs shadow-xl">
-      <div className="font-medium text-foreground">{point.fullLabel}</div>
+      <div className="font-medium text-foreground">{point.runLabel}</div>
       <div className="grid gap-0.5 text-surface-muted-foreground">
         <div>Sensitivity: {formatNumber(point.rawSensitivity, 2)} cm/360</div>
         <div>{metricLabel}: {formatMetricValue(point.performance, metric)}</div>
-        <div>Bin: {formatNumber(point.binStart, 2)} - {formatNumber(point.binEnd, 2)} cm/360 · {formatNumber(point.binCount, 0)} runs</div>
       </div>
     </div>
   )
@@ -328,15 +279,13 @@ function buildChartData(sessions: Session[], scenarioName: string | null, metric
     return {
       scenarioName: null as string | null,
       points: [] as SensitivityPoint[],
-      bins: [] as SensitivityBin[],
-      xMin: 0,
-      xMax: 0,
-      maxCount: 0,
+      xDomain: [0, 1] as [number, number],
+      yDomain: [0, 1] as [number, number],
     }
   }
 
-  const rawPoints: Array<{ x: number; performance: number; rawSensitivity: number; timestamp: number; recency: number }> = []
-  let recency = 0
+  const points: SensitivityPoint[] = []
+  let runIndex = 0
 
   for (const session of sessions) {
     for (const item of session.items) {
@@ -348,88 +297,35 @@ function buildChartData(sessions: Session[], scenarioName: string | null, metric
       const performance = readMetricValue(item, metric)
       if (performance === null) continue
 
-      rawPoints.push({
+      const timestamp = readTimestamp(item)
+      runIndex += 1
+
+      points.push({
         x: rawSensitivity,
         performance,
         rawSensitivity,
-        timestamp: readTimestamp(item),
-        recency: recency++,
+        runLabel: formatRunLabel(timestamp, runIndex),
       })
     }
   }
 
-  if (rawPoints.length === 0) {
+  if (points.length === 0) {
     return {
       scenarioName: resolvedScenarioName,
       points: [] as SensitivityPoint[],
-      bins: [] as SensitivityBin[],
-      xMin: 0,
-      xMax: 0,
-      maxCount: 0,
+      xDomain: [0, 1] as [number, number],
+      yDomain: [0, 1] as [number, number],
     }
   }
 
-  const sortedBySensitivity = [...rawPoints].sort((left, right) => left.x - right.x || left.recency - right.recency)
-  const xs = sortedBySensitivity.map(point => point.x)
-  let xMin = Math.min(...xs)
-  let xMax = Math.max(...xs)
-
-  if (xMin === xMax) {
-    const pad = Math.max(0.5, Math.abs(xMin) * 0.05)
-    xMin -= pad
-    xMax += pad
-  }
-
-  const q1 = percentile(xs, 0.25)
-  const q3 = percentile(xs, 0.75)
-  const iqr = q3 - q1
-  const fdWidth = iqr > 0 ? (2 * iqr) / Math.cbrt(rawPoints.length) : 0
-  let binWidth = Number.isFinite(fdWidth) && fdWidth > 0 ? fdWidth : (xMax - xMin) / Math.max(3, Math.round(Math.sqrt(rawPoints.length)))
-
-  if (!Number.isFinite(binWidth) || binWidth <= 0) {
-    binWidth = (xMax - xMin) / Math.max(1, Math.round(Math.sqrt(rawPoints.length)))
-  }
-
-  let binCount = Math.max(1, Math.ceil((xMax - xMin) / binWidth))
-  binCount = Math.max(1, Math.min(50, binCount))
-  binWidth = (xMax - xMin) / binCount
-
-  const bins: SensitivityBin[] = []
-  for (let index = 0; index < binCount; index++) {
-    const start = xMin + index * binWidth
-    const end = start + binWidth
-    bins.push({ start, end, center: (start + end) / 2, count: 0 })
-  }
-
-  const assignments = sortedBySensitivity.map(point => {
-    let binIndex = Math.floor((point.x - xMin) / binWidth)
-    if (binIndex < 0) binIndex = 0
-    if (binIndex >= bins.length) binIndex = bins.length - 1
-
-    bins[binIndex].count += 1
-    return { point, binIndex }
-  })
-
-  const points: SensitivityPoint[] = assignments.map(({ point, binIndex }) => ({
-    x: point.rawSensitivity,
-    performance: point.performance,
-    rawSensitivity: point.rawSensitivity,
-    timestamp: point.timestamp,
-    recency: point.recency,
-    binIndex,
-    binStart: bins[binIndex].start,
-    binEnd: bins[binIndex].end,
-    binCount: bins[binIndex].count,
-    fullLabel: formatRunLabel(point.timestamp, point.recency + 1),
-  }))
+  const xDomain = buildNumericDomain(points.map(point => point.x), 0.08, 0.5)
+  const yDomain = buildNumericDomain(points.map(point => point.performance), 0.12, metric === 'ttk' ? 0.03 : 1)
 
   return {
     scenarioName: resolvedScenarioName,
     points,
-    bins,
-    xMin,
-    xMax,
-    maxCount: Math.max(...bins.map(bin => bin.count)),
+    xDomain,
+    yDomain,
   }
 }
 
@@ -459,34 +355,19 @@ function isDataScopeKey(value: string): value is DataScopeKey {
   return scopeOptions.some(option => option.value === value)
 }
 
-function buildPerformanceDomain(values: number[]): [number, number] {
+function buildNumericDomain(values: number[], padRatio: number, minPad: number): [number, number] {
   if (values.length === 0) return [0, 1]
 
   const min = Math.min(...values)
   const max = Math.max(...values)
   if (min === max) {
-    const pad = Math.max(1, Math.abs(min) * 0.05)
+    const pad = Math.max(minPad, Math.abs(min) * padRatio)
     return [min - pad, max + pad]
   }
 
   const span = max - min
-  const pad = Math.max(span * 0.12, 1)
+  const pad = Math.max(span * padRatio, minPad)
   return [min - pad, max + pad]
-}
-
-function percentile(values: number[], p: number): number {
-  if (values.length === 0) return 0
-
-  const sorted = [...values].sort((left, right) => left - right)
-  const position = (sorted.length - 1) * p
-  const base = Math.floor(position)
-  const rest = position - base
-
-  if (sorted[base + 1] !== undefined) {
-    return sorted[base] + rest * (sorted[base + 1] - sorted[base])
-  }
-
-  return sorted[base]
 }
 
 function formatRunLabel(timestamp: number, runIndex: number): string {
