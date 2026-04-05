@@ -14,7 +14,6 @@ const ENV_GROUPS: Array<{ label: string; fields: EnvField[] }> = [
       { label: 'OS', key: 'os' },
       { label: 'Architecture', key: 'arch' },
       { label: 'OS Version', key: 'osVersion' },
-      { label: 'Hostname', key: 'hostname' },
       { label: 'Steam ID', key: 'steamId' },
       { label: 'Persona Name', key: 'personaName' },
     ],

@@ -1,7 +1,6 @@
 package environment
 
 import (
-	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -24,10 +23,6 @@ func CollectRunEnvironment(mouse models.MouseTraceProvider, start, end time.Time
 	}
 	if !start.IsZero() && !end.IsZero() && start.Before(end) {
 		env.TraceDuration = end.Sub(start).Seconds()
-	}
-
-	if host, err := os.Hostname(); err == nil {
-		env.Hostname = strings.TrimSpace(host)
 	}
 
 	collectPlatformEnvironment(&env, start, end)

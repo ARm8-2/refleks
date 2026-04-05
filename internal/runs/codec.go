@@ -518,9 +518,6 @@ func writeRunEnvironment(w io.Writer, env models.RunEnvironment) error {
 	if err := writeString(w, env.OSVersion); err != nil {
 		return err
 	}
-	if err := writeString(w, env.Hostname); err != nil {
-		return err
-	}
 	if err := writeString(w, env.SteamID); err != nil {
 		return err
 	}
@@ -600,10 +597,6 @@ func readRunEnvironment(r io.Reader) (models.RunEnvironment, error) {
 		return models.RunEnvironment{}, err
 	}
 	osVersion, err := readString(r)
-	if err != nil {
-		return models.RunEnvironment{}, err
-	}
-	hostname, err := readString(r)
 	if err != nil {
 		return models.RunEnvironment{}, err
 	}
@@ -689,7 +682,6 @@ func readRunEnvironment(r io.Reader) (models.RunEnvironment, error) {
 		OS:            osName,
 		Arch:          arch,
 		OSVersion:     osVersion,
-		Hostname:      hostname,
 		SteamID:       steamID,
 		PersonaName:   personaName,
 		CPUName:       cpuName,

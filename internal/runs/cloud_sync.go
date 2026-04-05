@@ -119,7 +119,6 @@ func buildSyncPayload(runPath string, anonymous bool) (io.Reader, func() error, 
 }
 
 func anonymizeRunEnvironment(env models.RunEnvironment) models.RunEnvironment {
-	env.Hostname = ""
 	env.SteamID = ""
 	env.PersonaName = ""
 	return env

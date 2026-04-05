@@ -364,7 +364,6 @@ export namespace models {
 	    os: string;
 	    arch: string;
 	    osVersion: string;
-	    hostname: string;
 	    steamId: string;
 	    personaName: string;
 	    cpuName: string;
@@ -394,7 +393,6 @@ export namespace models {
 	        this.os = source["os"];
 	        this.arch = source["arch"];
 	        this.osVersion = source["osVersion"];
-	        this.hostname = source["hostname"];
 	        this.steamId = source["steamId"];
 	        this.personaName = source["personaName"];
 	        this.cpuName = source["cpuName"];

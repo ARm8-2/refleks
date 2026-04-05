@@ -15,7 +15,6 @@ type RunEnvironment struct {
 	OS          string `json:"os"`
 	Arch        string `json:"arch"`
 	OSVersion   string `json:"osVersion"`
-	Hostname    string `json:"hostname"`
 	SteamID     string `json:"steamId"`
 	PersonaName string `json:"personaName"`
 

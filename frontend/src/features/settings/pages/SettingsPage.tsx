@@ -313,7 +313,7 @@ export function SettingsPage() {
                   />
                 </SettingsField>
 
-                <SettingsField label="Anonymous Mode" description="Remove Steam ID, Steam persona name, and hostname from run environment data before sync uploads." checkbox>
+                <SettingsField label="Anonymous Mode" description="Remove Steam ID and Steam persona name from run environment data before sync uploads." checkbox>
                   <Checkbox
                     checked={settings.anonymousEnabled === true}
                     onCheckedChange={v => handleAnonymousChange(v === true)}

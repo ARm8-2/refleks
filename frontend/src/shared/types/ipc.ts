@@ -101,7 +101,6 @@ export interface RunEnvironment {
   os: string
   arch: string
   osVersion: string
-  hostname: string
   steamId: string
   personaName: string
 

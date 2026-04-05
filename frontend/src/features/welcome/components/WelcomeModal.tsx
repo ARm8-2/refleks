@@ -255,7 +255,7 @@ export function WelcomeModal({
                   subtitle="Private identity, shared contribution."
                   description="Best if you want to contribute data while keeping identifying information out of uploads."
                   bullets={[
-                    'Steam ID, persona name, and hostname are scrubbed before upload.',
+                    'Steam ID and persona name are scrubbed before upload.',
                     'Your runs still help the shared dataset, analysis, and research.',
                     'You can switch back to Public later in Privacy settings.',
                   ]}
