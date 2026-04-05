@@ -7,6 +7,7 @@ type WidgetProps = {
   icon?: LucideIcon
   iconClassName?: string
   title: string
+  titleControls?: ReactNode
   description?: string
   headerAction?: ReactNode
   children: ReactNode
@@ -23,6 +24,7 @@ export function Widget({
   icon: Icon,
   iconClassName,
   title,
+  titleControls,
   description,
   headerAction,
   children,
@@ -64,10 +66,22 @@ export function Widget({
       >
         <div className="mb-2 flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
-              {Icon && <Icon className={cn('h-3.5 w-3.5', iconClassName)} />}
-              {title}
-            </h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                {Icon && <Icon className={cn('h-3.5 w-3.5', iconClassName)} />}
+                {title}
+              </h3>
+
+              {titleControls && (
+                <div
+                  className="flex items-center gap-2"
+                  onClick={e => e.stopPropagation()}
+                  onKeyDown={e => e.stopPropagation()}
+                >
+                  {titleControls}
+                </div>
+              )}
+            </div>
             {description && <p className="mt-0.5 text-xs text-surface-muted-foreground">{description}</p>}
           </div>
 

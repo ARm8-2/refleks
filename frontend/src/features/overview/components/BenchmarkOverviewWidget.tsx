@@ -17,11 +17,12 @@ import {
   benchmarkDetailProgressStorageBase,
   benchmarkDetailProgressStorageKey,
   getSettings,
+  launchPlaylist,
   launchScenario,
   saveScenarioNote,
 } from '@/shared/lib'
 import type { ProgressScenario, Settings } from '@/shared/types'
-import { Settings2 } from 'lucide-react'
+import { Play, Settings2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -239,8 +240,10 @@ export function BenchmarkOverviewWidget() {
     )
   }
 
-  const headerControls = (
-    <div className="flex flex-wrap items-center gap-2">
+  const difficulty = benchmark.difficulties?.[difficultyIndex]
+
+  const titleControls = (
+    <>
       {benchmark.difficulties?.length > 1 && (
         <Select value={String(difficultyIndex)} onValueChange={v => setDifficultyIndex(Number(v) || 0)}>
           <SelectTrigger className="h-7 w-auto min-w-0 max-w-[200px] px-2 text-xs bg-surface-subtle">
@@ -255,6 +258,20 @@ export function BenchmarkOverviewWidget() {
           </SelectContent>
         </Select>
       )}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => difficulty?.sharecode && launchPlaylist(difficulty.sharecode)}
+        disabled={!difficulty?.sharecode}
+        title="Play benchmark playlist in Kovaak's"
+      >
+        <Play className="h-4 w-4" />
+      </Button>
+    </>
+  )
+
+  const headerControls = (
+    <div className="flex flex-wrap items-center gap-2">
       <ToggleChip label="Compact" enabled={compactMode} onToggle={() => setCompactMode(v => !v)} />
       <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} title="Widget settings">
         <Settings2 className="h-4 w-4" />
@@ -265,6 +282,7 @@ export function BenchmarkOverviewWidget() {
   return (
     <Widget
       title={`${benchmark.abbreviation} ${benchmark.benchmarkName}`}
+      titleControls={titleControls}
       description={`Overall ${overallRankName} · ${formatNumber(progress.benchmarkProgress || 0, 0)}%`}
       headerAction={headerControls}
       className="overflow-hidden"
