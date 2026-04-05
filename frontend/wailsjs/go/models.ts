@@ -50,11 +50,25 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class RankDef {
+	    name: string;
+	    color: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new RankDef(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.color = source["color"];
+	    }
+	}
 	export class BenchmarkDifficulty {
 	    difficultyName: string;
 	    kovaaksBenchmarkId: number;
 	    sharecode: string;
-	    rankColors: Record<string, string>;
+	    ranks: RankDef[];
 	    categories: BenchmarkCategory[];
 	
 	    static createFrom(source: any = {}) {
@@ -66,7 +80,7 @@ export namespace models {
 	        this.difficultyName = source["difficultyName"];
 	        this.kovaaksBenchmarkId = source["kovaaksBenchmarkId"];
 	        this.sharecode = source["sharecode"];
-	        this.rankColors = source["rankColors"];
+	        this.ranks = this.convertValues(source["ranks"], RankDef);
 	        this.categories = this.convertValues(source["categories"], BenchmarkCategory);
 	    }
 	
@@ -221,20 +235,6 @@ export namespace models {
 		    }
 		    return a;
 		}
-	}
-	export class RankDef {
-	    name: string;
-	    color: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new RankDef(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.color = source["color"];
-	    }
 	}
 	export class BenchmarkProgress {
 	    overallRank: number;

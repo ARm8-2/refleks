@@ -9,6 +9,8 @@ const (
 
 	// RefleK's cloud endpoint for run file uploads.
 	RefleksRunsSyncURL = "https://api.refleksapp.com/v1/runs/sync"
+	// RefleK's benchmark catalog endpoint used by the desktop app on startup.
+	RefleksBenchmarksURL = "https://api.refleksapp.com/v1/benchmarks?view=progress"
 
 	// --- Updater/GitHub release info ---
 	// GitHub repository owner/name used for update checks and downloads

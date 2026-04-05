@@ -79,9 +79,12 @@ func (a *App) startup(ctx context.Context) {
 		runtime.LogWarningf(a.ctx, "Auto-start watcher failed: %v", err)
 	}
 
-	// Fire-and-forget benchmark cache warmup/sync
+	// Fire-and-forget benchmark definitions + progress cache warmup/sync
 	go func() {
 		time.Sleep(1 * time.Second)
+		if err := a.benchmarkSvc.SyncBenchmarksCache(); err != nil {
+			runtime.LogErrorf(a.ctx, "benchmark definitions sync failed: %v", err)
+		}
 		_, err := a.benchmarkSvc.GetAllBenchmarkProgresses()
 		if err != nil {
 			runtime.LogErrorf(a.ctx, "benchmark cache sync failed: %v", err)
@@ -123,7 +126,7 @@ func (a *App) GetLastScenarioScores(scenarioName string) ([]models.KovaaksLastSc
 	return a.scenarioSvc.GetLastScores(scenarioName)
 }
 
-// GetBenchmarks returns the embedded benchmarks list for the Explore UI.
+// GetBenchmarks returns the cached benchmark list for the Explore UI.
 func (a *App) GetBenchmarks() ([]models.Benchmark, error) {
 	return a.benchmarkSvc.GetBenchmarks()
 }
