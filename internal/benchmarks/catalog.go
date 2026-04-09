@@ -1,6 +1,7 @@
 package benchmarks
 
 import (
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +14,9 @@ import (
 	"refleks/internal/models"
 	"refleks/internal/settings"
 )
+
+//go:embed benchmarks_fallback.json
+var benchmarksFallbackJSON []byte
 
 var errBenchmarksNotModified = errors.New("benchmarks not modified")
 
@@ -43,6 +47,17 @@ func (s *Service) SyncBenchmarksCache() error {
 				return errBenchmarksCacheMissing
 			}
 			s.applyBenchmarksCache(cached)
+			return nil
+		}
+		if len(cached.Benchmarks) == 0 {
+			fallback, fallbackErr := loadBundledBenchmarksFallback()
+			if fallbackErr != nil {
+				return fmt.Errorf("fetch benchmarks: %w; bundled fallback unavailable: %v", err, fallbackErr)
+			}
+			if saveErr := s.cacheSvc.Save(constants.BenchmarksDataCacheFileName, fallback); saveErr != nil {
+				return fmt.Errorf("save bundled benchmarks fallback: %w", saveErr)
+			}
+			s.applyBenchmarksCache(fallback)
 			return nil
 		}
 		return err
@@ -108,6 +123,23 @@ func (s *Service) loadBenchmarksCache() (benchmarksCachePayload, error) {
 	var payload benchmarksCachePayload
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		return benchmarksCachePayload{}, fmt.Errorf("decode benchmarks cache: %w", err)
+	}
+	normalizeBenchmarksShape(payload.Benchmarks)
+	if payload.Count <= 0 {
+		payload.Count = len(payload.Benchmarks)
+	}
+	return payload, nil
+}
+
+func loadBundledBenchmarksFallback() (benchmarksCachePayload, error) {
+	trimmed := strings.TrimSpace(string(benchmarksFallbackJSON))
+	if trimmed == "" {
+		return benchmarksCachePayload{}, errors.New("empty bundled benchmarks fallback")
+	}
+
+	var payload benchmarksCachePayload
+	if err := json.Unmarshal(benchmarksFallbackJSON, &payload); err != nil {
+		return benchmarksCachePayload{}, fmt.Errorf("decode bundled benchmarks fallback: %w", err)
 	}
 	normalizeBenchmarksShape(payload.Benchmarks)
 	if payload.Count <= 0 {
