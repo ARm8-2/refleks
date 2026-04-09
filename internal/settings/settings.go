@@ -33,7 +33,7 @@ func Default() models.Settings {
 		RecentRunsMinCount:   constants.DefaultRecentRunsMinCount,
 		Theme:                constants.DefaultTheme,
 		Font:                 constants.DefaultFont,
-		MouseTrackingEnabled: false,
+		MouseTrackingEnabled: true,
 		MouseBufferMinutes:   constants.DefaultMouseBufferMinutes,
 		AutostartEnabled:     false,
 		AnonymousEnabled:     false,
