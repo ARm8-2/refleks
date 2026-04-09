@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
 
 	"github.com/klauspost/compress/zstd"
 	"github.com/zeebo/xxh3"
@@ -39,6 +40,11 @@ type RunRecord struct {
 	Events     [][]string
 	MouseTrace []models.MousePoint
 	Env        models.RunEnvironment
+}
+
+type readRecordOptions struct {
+	skipEvents     bool
+	skipMouseTrace bool
 }
 
 func writeRecord(w io.Writer, rec RunRecord) error {
@@ -94,7 +100,7 @@ func writeRecord(w io.Writer, rec RunRecord) error {
 	return binary.Write(w, binary.LittleEndian, checksum)
 }
 
-func readRecordFile(path string) (RunRecord, error) {
+func readRecordFile(path string, options readRecordOptions) (RunRecord, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return RunRecord{}, err
@@ -160,16 +166,32 @@ func readRecordFile(path string) (RunRecord, error) {
 		return RunRecord{}, err
 	}
 
-	events, err := readEvents(payloadReader)
-	if err != nil {
-		_ = closePayload()
-		return RunRecord{}, err
+	var events [][]string
+	if options.skipEvents {
+		if err := skipEvents(payloadReader); err != nil {
+			_ = closePayload()
+			return RunRecord{}, err
+		}
+	} else {
+		events, err = readEvents(payloadReader)
+		if err != nil {
+			_ = closePayload()
+			return RunRecord{}, err
+		}
 	}
 
-	trace, err := readMouseTrace(payloadReader)
-	if err != nil {
-		_ = closePayload()
-		return RunRecord{}, err
+	trace := []models.MousePoint(nil)
+	if options.skipMouseTrace {
+		if err := skipMouseTrace(payloadReader); err != nil {
+			_ = closePayload()
+			return RunRecord{}, err
+		}
+	} else {
+		trace, err = readMouseTrace(payloadReader)
+		if err != nil {
+			_ = closePayload()
+			return RunRecord{}, err
+		}
 	}
 
 	env, err := readRunEnvironment(payloadReader)
@@ -214,16 +236,33 @@ func readRecordFile(path string) (RunRecord, error) {
 	}, nil
 }
 
+// Pooled zstd encoders/decoders to avoid per-file allocations.
+var (
+	zstdEncoderPool sync.Pool
+	zstdDecoderPool sync.Pool
+)
+
 func newRunPayloadWriter(w io.Writer, compression uint8) (io.Writer, func() error, error) {
 	switch compression {
 	case runCompressionNone:
 		return w, func() error { return nil }, nil
 	case runCompressionZstd:
-		enc, err := zstd.NewWriter(w)
-		if err != nil {
-			return nil, nil, err
+		var enc *zstd.Encoder
+		if v := zstdEncoderPool.Get(); v != nil {
+			enc = v.(*zstd.Encoder)
+			enc.Reset(w)
+		} else {
+			var err error
+			enc, err = zstd.NewWriter(w)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
-		return enc, enc.Close, nil
+		return enc, func() error {
+			err := enc.Close()
+			zstdEncoderPool.Put(enc)
+			return err
+		}, nil
 	default:
 		return nil, nil, fmt.Errorf("unsupported run compression: %d", compression)
 	}
@@ -234,12 +273,22 @@ func newRunPayloadReader(r io.Reader, compression uint8) (io.Reader, func() erro
 	case runCompressionNone:
 		return r, func() error { return nil }, nil
 	case runCompressionZstd:
-		dec, err := zstd.NewReader(r)
-		if err != nil {
-			return nil, nil, err
+		var dec *zstd.Decoder
+		if v := zstdDecoderPool.Get(); v != nil {
+			dec = v.(*zstd.Decoder)
+			if err := dec.Reset(r); err != nil {
+				dec.Close()
+				return nil, nil, err
+			}
+		} else {
+			var err error
+			dec, err = zstd.NewReader(r)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 		return dec, func() error {
-			dec.Close()
+			zstdDecoderPool.Put(dec)
 			return nil
 		}, nil
 	default:
@@ -701,4 +750,54 @@ func readRunEnvironment(r io.Reader) (models.RunEnvironment, error) {
 		TraceDuration: traceDuration,
 		SampleRate:    sampleRate,
 	}, nil
+}
+
+// ---- Skip helpers for selective reads ----
+
+const mousePointByteSize = 8 + 4 + 4 + 4 // TS(int64) + X(int32) + Y(int32) + Buttons(int32)
+
+func skipString(r io.Reader) error {
+	var n uint32
+	if err := binary.Read(r, binary.LittleEndian, &n); err != nil {
+		return err
+	}
+	if n > 0 {
+		if _, err := io.CopyN(io.Discard, r, int64(n)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func skipEvents(r io.Reader) error {
+	var rows uint32
+	if err := binary.Read(r, binary.LittleEndian, &rows); err != nil {
+		return err
+	}
+	for i := uint32(0); i < rows; i++ {
+		var cols uint32
+		if err := binary.Read(r, binary.LittleEndian, &cols); err != nil {
+			return err
+		}
+		for j := uint32(0); j < cols; j++ {
+			if err := skipString(r); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// skipMouseTrace skips the mouse trace section.
+func skipMouseTrace(r io.Reader) error {
+	var count uint32
+	if err := binary.Read(r, binary.LittleEndian, &count); err != nil {
+		return err
+	}
+	if count > 0 {
+		if _, err := io.CopyN(io.Discard, r, int64(count)*mousePointByteSize); err != nil {
+			return err
+		}
+	}
+	return nil
 }

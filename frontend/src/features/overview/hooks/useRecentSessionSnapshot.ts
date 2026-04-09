@@ -1,6 +1,6 @@
 import { getScenarioName } from '@/features/benchmarks/lib/detailFormatting'
 import { useStore } from '@/shared/hooks'
-import type { ScenarioRecord, Session } from '@/shared/types'
+import type { RunRecord, Session } from '@/shared/types'
 import { useMemo } from 'react'
 
 const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
@@ -167,7 +167,7 @@ function computeLastRunStats(session: Session) {
   // Last run is the most recently played (items are ordered newest-first typically)
   const lastItem = session.items[0]
   const scenario = getScenarioName(lastItem).trim()
-  const score = readScenarioScore(lastItem)
+  const score = readRunScore(lastItem)
   const accuracy = Number(lastItem.stats?.['Accuracy'] ?? 0)
 
   const result = {
@@ -189,8 +189,8 @@ function computeLastRunStats(session: Session) {
   const lateRuns = ordered.slice(splitAt)
   if (earlyRuns.length === 0 || lateRuns.length === 0) return result
 
-  const earlyScores = earlyRuns.map(readScenarioScore).filter(s => s > 0)
-  const lateScores = lateRuns.map(readScenarioScore).filter(s => s > 0)
+  const earlyScores = earlyRuns.map(readRunScore).filter(s => s > 0)
+  const lateScores = lateRuns.map(readRunScore).filter(s => s > 0)
   if (earlyScores.length > 0 && lateScores.length > 0) {
     const earlyAvg = earlyScores.reduce((a, b) => a + b, 0) / earlyScores.length
     const lateAvg = lateScores.reduce((a, b) => a + b, 0) / lateScores.length
@@ -228,10 +228,10 @@ function computeRecentScores(session: Session, allSessions: Session[]) {
     for (let index = 0; index < candidateSession.items.length; index++) {
       const item = candidateSession.items[index]
       if (getScenarioName(item).trim() !== lastScenario) continue
-      const score = readScenarioScore(item)
+      const score = readRunScore(item)
       if (score <= 0) continue
       allScenarioRuns.push({
-        ts: readScenarioTimestamp(item),
+        ts: readRunTimestamp(item),
         score,
         inCurrentSession: candidateSession.id === session.id,
         runId: item.filePath || `${candidateSession.id}:${index}`,
@@ -281,7 +281,7 @@ function calculateActivityStats(currentSession: Session, allSessions: Session[])
 
   for (const session of allSessions) {
     for (const item of session.items) {
-      const ts = readScenarioTimestamp(item)
+      const ts = readRunTimestamp(item)
       if (ts <= 0) continue
 
       const itemDate = new Date(ts)
@@ -289,7 +289,7 @@ function calculateActivityStats(currentSession: Session, allSessions: Session[])
       activityDays.add(itemKey)
 
       if (itemKey === toDayKey(targetDate)) {
-        playtimeMs += readScenarioDurationMs(item)
+        playtimeMs += readRunDurationMs(item)
       }
     }
   }
@@ -314,7 +314,7 @@ function readPerformance(currentSession: Session, previousSessions: Session[]): 
   for (const session of previousSessions) {
     for (const item of session.items) {
       const name = getScenarioName(item).trim()
-      const score = readScenarioScore(item)
+      const score = readRunScore(item)
 
       if (!name || score <= 0) continue
 
@@ -331,7 +331,7 @@ function readPerformance(currentSession: Session, previousSessions: Session[]): 
 
   for (const item of currentSession.items) {
     const name = getScenarioName(item).trim()
-    const score = readScenarioScore(item)
+    const score = readRunScore(item)
     const history = historyByScenario.get(name)
 
     if (!name || score <= 0 || !history || history.length < 3) continue
@@ -406,12 +406,12 @@ function recommendSessionLength(sessions: Session[]): SessionLengthRecommendatio
   for (const session of sessions) {
     if (session.items.length < minLengthThreshold) continue
 
-    const ordered = [...session.items].sort((left, right) => readScenarioTimestamp(left) - readScenarioTimestamp(right))
+    const ordered = [...session.items].sort((left, right) => readRunTimestamp(left) - readRunTimestamp(right))
     const percentiles: number[] = []
 
     for (const item of ordered) {
       const name = getScenarioName(item).trim()
-      const score = readScenarioScore(item)
+      const score = readRunScore(item)
       const profile = scenarioProfiles.get(name)
 
       if (!name || score <= 0 || !profile || profile.scores.length < 5) continue
@@ -545,7 +545,7 @@ function buildScenarioProfiles(sessions: Session[]): Map<string, ScenarioProfile
   for (const session of sessions) {
     for (const item of session.items) {
       const name = getScenarioName(item).trim()
-      const score = readScenarioScore(item)
+      const score = readRunScore(item)
 
       if (!name || score <= 0) continue
 
@@ -582,12 +582,12 @@ function scoreToPercentile(score: number, profile: ScenarioProfile): number {
   return ((below + equal / 2) / profile.scores.length) * 100
 }
 
-function readWithinSessionTrend(items: ScenarioRecord[]): number | null {
+function readWithinSessionTrend(items: RunRecord[]): number | null {
   const scenarioScores = new Map<string, number[]>()
 
   for (const item of [...items].reverse()) {
     const name = getScenarioName(item).trim()
-    const score = readScenarioScore(item)
+    const score = readRunScore(item)
 
     if (!name || score <= 0) continue
 
@@ -629,7 +629,7 @@ function readSessionLengthMs(session: Session): number {
     return end - start
   }
 
-  const timestamps = session.items.map(readScenarioTimestamp).filter(ts => ts > 0)
+  const timestamps = session.items.map(readRunTimestamp).filter(ts => ts > 0)
   if (timestamps.length === 0) return 0
   return Math.max(...timestamps) - Math.min(...timestamps)
 }
@@ -638,20 +638,20 @@ function readSessionEndTimestamp(session: Session): number {
   const end = Date.parse(session.end)
   if (Number.isFinite(end) && end > 0) return end
 
-  const timestamps = session.items.map(readScenarioTimestamp).filter(ts => ts > 0)
+  const timestamps = session.items.map(readRunTimestamp).filter(ts => ts > 0)
   return timestamps.length > 0 ? Math.max(...timestamps) : Date.now()
 }
 
 function sumSessionPlaytimeMs(session: Session): number {
-  return session.items.reduce((sum, item) => sum + readScenarioDurationMs(item), 0)
+  return session.items.reduce((sum, item) => sum + readRunDurationMs(item), 0)
 }
 
-function readScenarioScore(item: ScenarioRecord): number {
+function readRunScore(item: RunRecord): number {
   const score = Number(item.stats?.['Score'] ?? 0)
   return Number.isFinite(score) ? score : 0
 }
 
-function readScenarioTimestamp(item: ScenarioRecord): number {
+function readRunTimestamp(item: RunRecord): number {
   const raw = item.stats?.['Date Played']
   if (!raw) return 0
 
@@ -659,7 +659,7 @@ function readScenarioTimestamp(item: ScenarioRecord): number {
   return Number.isFinite(timestamp) ? timestamp : 0
 }
 
-function readScenarioDurationMs(item: ScenarioRecord): number {
+function readRunDurationMs(item: RunRecord): number {
   const seconds = Number(item.stats?.['Duration'] ?? 0)
   if (!Number.isFinite(seconds) || seconds <= 0) return 0
   return seconds * 1000

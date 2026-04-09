@@ -1,5 +1,7 @@
 import { PerformanceVsSensWidget } from '@/features/history/components/PerformanceVsSensWidget'
 import { SessionScenarioRadarWidget } from '@/features/history/components/SessionScenarioRadarWidget'
+import { Loading } from '@/shared/components'
+import { useStore } from '@/shared/hooks'
 import { BenchmarkOverviewWidget } from '../components/BenchmarkOverviewWidget'
 import {
   LastRunWidget,
@@ -13,6 +15,16 @@ import { useRecentSessionSnapshot } from '../hooks/useRecentSessionSnapshot'
 
 export function OverviewPage() {
   const snapshot = useRecentSessionSnapshot()
+  const sessions = useStore(s => s.sessions)
+  const runHydration = useStore(s => s.runHydration)
+
+  if (sessions.length === 0 && runHydration.loading) {
+    const label = runHydration.total > 0
+      ? `Loading run history ${Math.min(runHydration.loaded, runHydration.total)}/${runHydration.total}...`
+      : 'Loading run history...'
+
+    return <Loading label={label} />
+  }
 
   return (
     <div className="flex-1 overflow-auto text-sm">

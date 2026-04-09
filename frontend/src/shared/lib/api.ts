@@ -8,8 +8,9 @@ import {
   GetDefaultSettings as _GetDefaultSettings,
   GetFavoriteBenchmarks as _GetFavoriteBenchmarks,
   GetLastScenarioScores as _GetLastScenarioScores,
-  GetRecentScenarios as _GetRecentScenarios,
-  GetScenarioTrace as _GetScenarioTrace,
+  GetRecentRuns as _GetRecentRuns,
+  GetRunEvents as _GetRunEvents,
+  GetRunTrace as _GetRunTrace,
   GetSettings as _GetSettings,
   GetVersion as _GetVersion,
   LaunchKovaaksPlaylist as _LaunchKovaaksPlaylist,
@@ -25,7 +26,7 @@ import {
   StopWatcher as _StopWatcher,
   UpdateSettings as _UpdateSettings
 } from '@wails/go/main/App'
-import type { Benchmark, BenchmarkProgress, KovaaksLastScore, ScenarioRecord, Settings, UpdateInfo } from '../types/ipc'
+import type { Benchmark, BenchmarkProgress, KovaaksLastScore, RunRecord, Settings, UpdateInfo } from '../types/ipc'
 
 // Typed wrappers around Wails-generated bindings with normalized results
 
@@ -45,9 +46,19 @@ export async function stopWatcher(): Promise<void> {
   await _StopWatcher()
 }
 
-export async function getRecentScenarios(limit = 0): Promise<ScenarioRecord[]> {
-  const res = await _GetRecentScenarios(limit)
-  return (Array.isArray(res) ? res : []) as unknown as ScenarioRecord[]
+export async function getRecentRuns(limit = 0): Promise<RunRecord[]> {
+  const res = await _GetRecentRuns(limit)
+  return (Array.isArray(res) ? res : []) as unknown as RunRecord[]
+}
+
+export async function getRunEvents(filePath: string): Promise<string[][]> {
+  const res = await _GetRunEvents(filePath)
+  return Array.isArray(res) ? res : []
+}
+
+export async function getRunTrace(filePath: string): Promise<string> {
+  const res = await _GetRunTrace(filePath)
+  return res
 }
 
 export async function getLastScenarioScores(scenarioName: string): Promise<KovaaksLastScore[]> {
@@ -56,13 +67,13 @@ export async function getLastScenarioScores(scenarioName: string): Promise<Kovaa
 }
 
 export async function getSettings(): Promise<Settings> {
-  const s = await _GetSettings()
-  return s as unknown as Settings
+  const res = await _GetSettings()
+  return res as unknown as Settings
 }
 
 export async function getDefaultSettings(): Promise<Settings> {
-  const s = await _GetDefaultSettings()
-  return s as unknown as Settings
+  const res = await _GetDefaultSettings()
+  return res as unknown as Settings
 }
 
 export async function updateSettings(payload: Settings): Promise<void> {
@@ -82,13 +93,13 @@ export async function saveSessionNote(sessionID: string, name: string, notes: st
 }
 
 export async function getVersion(): Promise<string> {
-  const v = await _GetVersion()
-  return String(v || '')
+  const res = await _GetVersion()
+  return String(res || '')
 }
 
 export async function checkForUpdates(): Promise<UpdateInfo> {
-  const info = await _CheckForUpdates()
-  return info as unknown as UpdateInfo
+  const res = await _CheckForUpdates()
+  return res as unknown as UpdateInfo
 }
 
 export async function downloadAndInstallUpdate(version = ''): Promise<void> {
@@ -96,14 +107,14 @@ export async function downloadAndInstallUpdate(version = ''): Promise<void> {
 }
 
 export async function getBenchmarks(): Promise<Benchmark[]> {
-  const benchmarks = await _GetBenchmarks()
-  if (!Array.isArray(benchmarks)) throw new Error('GetBenchmarks failed')
-  return benchmarks as unknown as Benchmark[]
+  const res = await _GetBenchmarks()
+  if (!Array.isArray(res)) throw new Error('GetBenchmarks failed')
+  return res as unknown as Benchmark[]
 }
 
 export async function getFavoriteBenchmarks(): Promise<string[]> {
-  const ids = await _GetFavoriteBenchmarks()
-  return Array.isArray(ids) ? ids : []
+  const res = await _GetFavoriteBenchmarks()
+  return Array.isArray(res) ? res : []
 }
 
 export async function setFavoriteBenchmarks(ids: string[]): Promise<void> {
@@ -111,18 +122,18 @@ export async function setFavoriteBenchmarks(ids: string[]): Promise<void> {
 }
 
 export async function getBenchmarkProgress(benchmarkId: number): Promise<BenchmarkProgress> {
-  const data = await _GetBenchmarkProgress(benchmarkId)
-  return data as unknown as BenchmarkProgress
+  const res = await _GetBenchmarkProgress(benchmarkId)
+  return res as unknown as BenchmarkProgress
 }
 
 export async function getAllBenchmarkProgresses(): Promise<Record<number, BenchmarkProgress>> {
-  const data = await _GetAllBenchmarkProgresses()
-  return data as unknown as Record<number, BenchmarkProgress>
+  const res = await _GetAllBenchmarkProgresses()
+  return res as unknown as Record<number, BenchmarkProgress>
 }
 
 export async function refreshAllBenchmarkProgresses(): Promise<Record<number, BenchmarkProgress>> {
-  const data = await _RefreshAllBenchmarkProgresses()
-  return data as unknown as Record<number, BenchmarkProgress>
+  const res = await _RefreshAllBenchmarkProgresses()
+  return res as unknown as Record<number, BenchmarkProgress>
 }
 
 // Launch a Kovaak's scenario via Steam deeplink
@@ -141,7 +152,3 @@ export async function clearCache(): Promise<void> {
 
 // Runtime helpers
 export { BrowserOpenURL as openURL } from '@wails/runtime'
-
-export async function getScenarioTrace(fileName: string): Promise<string> {
-  return await _GetScenarioTrace(fileName)
-}

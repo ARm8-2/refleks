@@ -38,12 +38,16 @@ export function GetLastScenarioScores(arg1) {
   return window['go']['main']['App']['GetLastScenarioScores'](arg1);
 }
 
-export function GetRecentScenarios(arg1) {
-  return window['go']['main']['App']['GetRecentScenarios'](arg1);
+export function GetRecentRuns(arg1) {
+  return window['go']['main']['App']['GetRecentRuns'](arg1);
 }
 
-export function GetScenarioTrace(arg1) {
-  return window['go']['main']['App']['GetScenarioTrace'](arg1);
+export function GetRunEvents(arg1) {
+  return window['go']['main']['App']['GetRunEvents'](arg1);
+}
+
+export function GetRunTrace(arg1) {
+  return window['go']['main']['App']['GetRunTrace'](arg1);
 }
 
 export function GetSettings() {

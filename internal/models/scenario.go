@@ -1,13 +1,11 @@
 package models
 
-type ScenarioRecord struct {
+type RunRecord struct {
 	FilePath string         `json:"filePath"`
 	FileName string         `json:"fileName"`
 	Stats    map[string]any `json:"stats"`
 	Events   [][]string     `json:"events"`
 	Env      RunEnvironment `json:"env"`
-	// HasTrace indicates whether the run's .refleks payload contains mouse trace points.
-	HasTrace bool `json:"hasTrace"`
 }
 
 type RunEnvironment struct {

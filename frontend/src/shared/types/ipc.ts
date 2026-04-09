@@ -87,13 +87,12 @@ export type StatKey = keyof {
   [K in keyof ScenarioStats as string extends K ? never : K]: unknown
 }
 
-export interface ScenarioRecord {
+export interface RunRecord {
   filePath: string
   fileName: string
   stats: ScenarioStats
   events: string[][]
   env: RunEnvironment
-  hasTrace: boolean
 }
 
 export interface RunEnvironment {

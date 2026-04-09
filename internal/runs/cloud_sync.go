@@ -104,7 +104,7 @@ func buildSyncPayload(runPath string, anonymous bool) (io.Reader, func() error, 
 		return f, f.Close, contentLength, nil
 	}
 
-	rec, err := readRecordFile(runPath)
+	rec, err := readRecordFile(runPath, readRecordOptions{})
 	if err != nil {
 		return nil, nil, 0, fmt.Errorf("read run file for anonymous sync: %w", err)
 	}

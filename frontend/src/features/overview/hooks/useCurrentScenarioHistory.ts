@@ -63,9 +63,9 @@ export function useCurrentScenarioHistory(): CurrentScenarioHistory {
 
       if (matchingItems.length === 0) continue
 
-      const scores = matchingItems.map(readScenarioScore)
+      const scores = matchingItems.map(readRunScore)
       const averageScore = scores.reduce((sum, score) => sum + score, 0) / scores.length
-      const sessionTs = Math.max(...matchingItems.map(readScenarioTimestamp))
+      const sessionTs = Math.max(...matchingItems.map(readRunTimestamp))
       const shortLabel = formatShortDate(sessionTs, sessionAveragePoints.length + 1)
       const fullLabel = formatSessionLabel(session.start, session.end, scores.length)
 
@@ -76,8 +76,8 @@ export function useCurrentScenarioHistory(): CurrentScenarioHistory {
       })
 
       for (const item of matchingItems) {
-        const score = readScenarioScore(item)
-        const timestamp = readScenarioTimestamp(item)
+        const score = readRunScore(item)
+        const timestamp = readRunTimestamp(item)
         const nextIndex = attemptPoints.length + 1
 
         attemptPoints.push({
@@ -96,12 +96,12 @@ export function useCurrentScenarioHistory(): CurrentScenarioHistory {
   }, [sessions])
 }
 
-function readScenarioScore(item: { stats?: Record<string, unknown> }): number {
+function readRunScore(item: { stats?: Record<string, unknown> }): number {
   const score = Number(item.stats?.['Score'] ?? 0)
   return Number.isFinite(score) ? score : 0
 }
 
-function readScenarioTimestamp(item: { stats?: Record<string, unknown> }): number {
+function readRunTimestamp(item: { stats?: Record<string, unknown> }): number {
   const raw = item.stats?.['Date Played']
   if (!raw) return 0
 

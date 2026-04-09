@@ -20,9 +20,11 @@ export function GetFavoriteBenchmarks():Promise<Array<string>>;
 
 export function GetLastScenarioScores(arg1:string):Promise<Array<models.KovaaksLastScore>>;
 
-export function GetRecentScenarios(arg1:number):Promise<Array<models.ScenarioRecord>>;
+export function GetRecentRuns(arg1:number):Promise<Array<models.RunRecord>>;
 
-export function GetScenarioTrace(arg1:string):Promise<string>;
+export function GetRunEvents(arg1:string):Promise<Array<any>>;
+
+export function GetRunTrace(arg1:string):Promise<string>;
 
 export function GetSettings():Promise<models.Settings>;
 

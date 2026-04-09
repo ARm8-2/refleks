@@ -6,6 +6,7 @@ type Benchmark struct {
 	Abbreviation    string                `json:"abbreviation"`
 	Color           string                `json:"color"`
 	SpreadsheetURL  string                `json:"spreadsheetURL"`
+	DateAdded       string                `json:"dateAdded,omitempty"`
 	Difficulties    []BenchmarkDifficulty `json:"difficulties"`
 }
 

@@ -1,6 +1,6 @@
 import { EventsOn } from '@wails/runtime'
 import { startTransition, useCallback, useEffect, useRef } from 'react'
-import { getRecentScenarios, getSettings } from '../lib/api'
+import { getRecentRuns, getSettings } from '../lib/api'
 import { useStore } from './useStore'
 
 const DEFAULT_PROGRESSIVE_FETCH_LIMIT = 1000
@@ -9,9 +9,10 @@ const PROGRESSIVE_BATCH_LIMITS = [8, 16, 32, 64, 128, 256, 512]
 const PROGRESSIVE_BATCH_DELAYS_MS = [50, 70, 100, 140, 200, 280, 360]
 
 export function useAppInitialization() {
-  const setScenarios = useStore(s => s.setScenarios)
+  const setRuns = useStore(s => s.setRuns)
   const setSessionGap = useStore(s => s.setSessionGap)
   const setSessionNotes = useStore(s => s.setSessionNotes)
+  const updateRunHydration = useStore(s => s.updateRunHydration)
 
   const refreshSeq = useRef(0)
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -50,22 +51,23 @@ export function useAppInitialization() {
     return plan
   }, [])
 
-  const loadScenariosProgressively = useCallback(async () => {
+  const loadRunsProgressively = useCallback(async () => {
     const seq = ++refreshSeq.current
     const batchPlan = buildBatchPlan(loadedCount.current)
 
     for (let index = 0; index < batchPlan.length; index++) {
       const limit = batchPlan[index]
       try {
-        const arr = await getRecentScenarios(limit)
+        const arr = await getRecentRuns(limit)
         if (seq !== refreshSeq.current) return
 
         loadedCount.current = arr.length
+        updateRunHydration({ loaded: arr.length })
         if (limit === FETCH_ALL_LIMIT) {
           hasLoadedAll.current = true
         }
 
-        const apply = () => setScenarios(arr)
+        const apply = () => setRuns(arr)
         if (index === 0) {
           apply()
         } else {
@@ -73,11 +75,15 @@ export function useAppInitialization() {
         }
 
         if (limit > 0 && arr.length < limit) {
-          hasLoadedAll.current = true
+          if (arr.length > 0) {
+            hasLoadedAll.current = true
+          }
+          updateRunHydration({ loading: false, complete: true, total: arr.length, loaded: arr.length })
           break
         }
 
         if (limit === FETCH_ALL_LIMIT) {
+          updateRunHydration({ loading: false, complete: true, total: arr.length, loaded: arr.length })
           break
         }
 
@@ -86,11 +92,12 @@ export function useAppInitialization() {
           if (seq !== refreshSeq.current) return
         }
       } catch (err: unknown) {
-        console.warn('GetRecentScenarios failed:', err)
+        console.warn('GetRecentRuns failed:', err)
+        updateRunHydration({ loading: false, complete: true })
         break
       }
     }
-  }, [buildBatchPlan, setScenarios, sleep])
+  }, [buildBatchPlan, setRuns, sleep, updateRunHydration])
 
   const flushRefreshQueue = useCallback(async function flushRefreshQueue() {
     if (refreshRunning.current || !refreshDirty.current) return
@@ -98,7 +105,7 @@ export function useAppInitialization() {
     refreshRunning.current = true
     refreshDirty.current = false
     try {
-      await loadScenariosProgressively()
+      await loadRunsProgressively()
     } finally {
       refreshRunning.current = false
       if (refreshDirty.current && !refreshTimer.current) {
@@ -108,7 +115,7 @@ export function useAppInitialization() {
         }, 280)
       }
     }
-  }, [loadScenariosProgressively])
+  }, [loadRunsProgressively])
 
   const requestRefresh = useCallback((delayMs = 120) => {
     refreshDirty.current = true
@@ -122,6 +129,7 @@ export function useAppInitialization() {
 
   // Startup effect: run once to load initial data
   useEffect(() => {
+    updateRunHydration({ loading: true, complete: false, loaded: 0, total: 0 })
     requestRefresh(0)
 
     // Initialize session gap and notes
@@ -138,31 +146,27 @@ export function useAppInitialization() {
       refreshRunning.current = false
       hasLoadedAll.current = false
       loadedCount.current = 0
+      updateRunHydration({ loading: false, complete: false, loaded: 0, total: 0 })
       if (refreshTimer.current) {
         clearTimeout(refreshTimer.current)
         refreshTimer.current = null
       }
       refreshDirty.current = false
     }
-  }, [requestRefresh, setSessionGap, setSessionNotes])
+  }, [requestRefresh, setSessionGap, setSessionNotes, updateRunHydration])
 
   // Subscriptions effect: keep separate so it can cleanup/re-subscribe if handlers change
   useEffect(() => {
-    const off = EventsOn('scenario:added', () => {
+    const offRunsAdded = EventsOn('runs:added', () => {
       requestRefresh()
     })
 
-    const offUpd = EventsOn('scenario:updated', () => {
-      requestRefresh()
-    })
-
-    const offWatcher = EventsOn('watcher:started', () => {
+    const offWatcher = EventsOn('runs:watcher:started', () => {
       requestRefresh(180)
     })
 
     return () => {
-      try { off() } catch { /* ignore */ }
-      try { offUpd() } catch { /* ignore */ }
+      try { offRunsAdded() } catch { /* ignore */ }
       try { offWatcher() } catch { /* ignore */ }
     }
   }, [requestRefresh])

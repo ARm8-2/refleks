@@ -4,6 +4,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/comp
 import { CHART_SERIES_COLORS, CHART_STYLE, chartDot } from '@/shared/lib'
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, Scatter, ScatterChart, XAxis, YAxis } from 'recharts'
+import { useRunEvents } from '../../hooks/useRunEvents'
 import type { HistoryRun } from '../../lib/historyModels'
 import { computeScenarioAnalysis, type ScenarioAnalysis } from '../../lib/scenarioAnalysis'
 
@@ -73,8 +74,22 @@ const scatterOverlayConfig: ChartConfig = {
 }
 
 export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: HistoryRun; compareRun: HistoryRun | null; overlay: boolean }) {
-  const primaryAnalysis = useMemo(() => computeScenarioAnalysis(primaryRun.item), [primaryRun])
-  const compareAnalysis = useMemo(() => (compareRun ? computeScenarioAnalysis(compareRun.item) : null), [compareRun])
+  const primaryEvents = useRunEvents(primaryRun)
+  const compareEvents = useRunEvents(compareRun)
+
+  const primaryItem = useMemo(() => primaryEvents ? { ...primaryRun.item, events: primaryEvents } : null, [primaryRun.item, primaryEvents])
+  const compareItem = useMemo(() => compareRun && compareEvents ? { ...compareRun.item, events: compareEvents } : null, [compareRun?.item, compareEvents])
+
+  const primaryAnalysis = useMemo(() => primaryItem ? computeScenarioAnalysis(primaryItem) : null, [primaryItem])
+  const compareAnalysis = useMemo(() => compareItem ? computeScenarioAnalysis(compareItem) : null, [compareItem])
+
+  if (primaryEvents === null || (compareRun && compareEvents === null)) {
+    return (
+      <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">
+        Loading event data...
+      </div>
+    )
+  }
 
   if (!primaryAnalysis) {
     return (

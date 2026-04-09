@@ -1,5 +1,5 @@
-import { getScenarioName, readScenarioAccuracy, readScenarioDurationMs, readScenarioScore, readScenarioTimestamp } from '@/shared/lib'
-import type { ScenarioRecord, Session, StatKey } from '@/shared/types'
+import { getScenarioName, readRunAccuracy, readRunDurationMs, readRunScore, readRunTimestamp } from '@/shared/lib'
+import type { RunRecord, Session, StatKey } from '@/shared/types'
 
 const sessionFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
@@ -30,7 +30,7 @@ export type HistoryRun = {
   id: string
   sessionId: string
   session: Session
-  item: ScenarioRecord
+  item: RunRecord
   scenarioName: string
   playedAt: number
   score: number
@@ -46,10 +46,10 @@ export function buildHistoryRuns(sessions: Session[]): HistoryRun[] {
     session,
     item,
     scenarioName: getScenarioName(item).trim() || 'Unknown scenario',
-    playedAt: readScenarioTimestamp(item),
-    score: readScenarioScore(item),
-    accuracy: readScenarioAccuracy(item),
-    durationMs: readScenarioDurationMs(item),
+    playedAt: readRunTimestamp(item),
+    score: readRunScore(item),
+    accuracy: readRunAccuracy(item),
+    durationMs: readRunDurationMs(item),
     orderInSession: index,
   })))
 }
@@ -58,7 +58,7 @@ export function readSessionStartTimestamp(session: Session): number {
   const start = Date.parse(session.start)
   if (Number.isFinite(start) && start > 0) return start
 
-  const timestamps = session.items.map(readScenarioTimestamp).filter(timestamp => timestamp > 0)
+  const timestamps = session.items.map(readRunTimestamp).filter(timestamp => timestamp > 0)
   return timestamps.length > 0 ? Math.min(...timestamps) : 0
 }
 
@@ -66,7 +66,7 @@ export function readSessionEndTimestamp(session: Session): number {
   const end = Date.parse(session.end)
   if (Number.isFinite(end) && end > 0) return end
 
-  const timestamps = session.items.map(readScenarioTimestamp).filter(timestamp => timestamp > 0)
+  const timestamps = session.items.map(readRunTimestamp).filter(timestamp => timestamp > 0)
   return timestamps.length > 0 ? Math.max(...timestamps) : 0
 }
 
@@ -82,11 +82,11 @@ export function readUniqueScenarioCount(session: Session): number {
 }
 
 export function readSessionActivePlaytimeMs(session: Session): number {
-  return session.items.reduce((sum, item) => sum + readScenarioDurationMs(item), 0)
+  return session.items.reduce((sum, item) => sum + readRunDurationMs(item), 0)
 }
 
 export function readSessionAverageScore(session: Session): number {
-  const scores = session.items.map(readScenarioScore).filter(score => score > 0)
+  const scores = session.items.map(readRunScore).filter(score => score > 0)
   if (scores.length === 0) return 0
   return scores.reduce((sum, score) => sum + score, 0) / scores.length
 }
@@ -118,7 +118,7 @@ export type ScenarioSummary = {
 }
 
 export function buildSessionScenarioSummaries(session: Session, sessions: Session[]): ScenarioSummary[] {
-  const grouped = new Map<string, ScenarioRecord[]>()
+  const grouped = new Map<string, RunRecord[]>()
   for (const item of session.items) {
     const name = getScenarioName(item).trim()
     if (!name) continue
@@ -135,7 +135,7 @@ export function buildSessionScenarioSummaries(session: Session, sessions: Sessio
     for (const item of prevSession.items) {
       const name = getScenarioName(item).trim()
       if (!name) continue
-      const score = readScenarioScore(item)
+      const score = readRunScore(item)
       const current = prevBestMap.get(name) ?? 0
       if (score > current) prevBestMap.set(name, score)
     }
@@ -143,7 +143,7 @@ export function buildSessionScenarioSummaries(session: Session, sessions: Sessio
 
   const summaries: ScenarioSummary[] = []
   for (const [name, items] of grouped) {
-    const bestScore = Math.max(...items.map(readScenarioScore))
+    const bestScore = Math.max(...items.map(readRunScore))
     const prevBest = prevBestMap.get(name)
     let trend: 'up' | 'down' | 'same' | null = null
     if (prevBest != null && bestScore > 0) {
@@ -298,7 +298,7 @@ export function matchRunSearch(run: HistoryRun, query: string): boolean {
     || formatRunTimestamp(run.playedAt).toLowerCase().includes(normalized)
 }
 
-export function buildRunStats(item: ScenarioRecord): Array<{ label: string; value: string }> {
+export function buildRunStats(item: RunRecord): Array<{ label: string; value: string }> {
   const stats = item.stats ?? {}
   const entries: Array<{ label: string; value: string }> = []
   const seen = new Set<string>()
@@ -319,9 +319,9 @@ export function buildRunStats(item: ScenarioRecord): Array<{ label: string; valu
     let value = '--'
 
     if (key === 'Accuracy') {
-      value = formatPercent(readScenarioAccuracy(item))
+      value = formatPercent(readRunAccuracy(item))
     } else if (key === 'Duration') {
-      value = formatDurationLabel(readScenarioDurationMs(item))
+      value = formatDurationLabel(readRunDurationMs(item))
     } else if (typeof raw === 'number') {
       value = formatNumber(raw, Number.isInteger(raw) ? 0 : 2)
     } else if (typeof raw === 'string') {

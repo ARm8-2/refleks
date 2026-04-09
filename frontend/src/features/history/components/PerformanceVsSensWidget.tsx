@@ -8,11 +8,11 @@ import {
   CHART_STYLE,
   STORAGE_KEYS,
   getScenarioName,
-  readScenarioAccuracy,
-  readScenarioScore,
-  readScenarioTimestamp,
+  readRunAccuracy,
+  readRunScore,
+  readRunTimestamp,
 } from '@/shared/lib'
-import type { ScenarioRecord, Session } from '@/shared/types'
+import type { RunRecord, Session } from '@/shared/types'
 import { useMemo } from 'react'
 import { CartesianGrid, Scatter, ScatterChart, XAxis, YAxis } from 'recharts'
 
@@ -329,13 +329,13 @@ function buildChartData(sessions: Session[], scenarioName: string | null, metric
   }
 }
 
-function readMetricValue(item: ScenarioRecord, metric: MetricKey): number | null {
+function readMetricValue(item: RunRecord, metric: MetricKey): number | null {
   if (metric === 'score') {
-    return readScenarioScore(item)
+    return readRunScore(item)
   }
 
   if (metric === 'accuracy') {
-    const accuracy = readScenarioAccuracy(item)
+    const accuracy = readRunAccuracy(item)
     return accuracy !== null && Number.isFinite(accuracy) ? accuracy : null
   }
 
@@ -343,8 +343,8 @@ function readMetricValue(item: ScenarioRecord, metric: MetricKey): number | null
   return Number.isFinite(ttk) ? ttk : null
 }
 
-function readTimestamp(item: ScenarioRecord): number {
-  return readScenarioTimestamp(item)
+function readTimestamp(item: RunRecord): number {
+  return readRunTimestamp(item)
 }
 
 function isMetricKey(value: string): value is MetricKey {

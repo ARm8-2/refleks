@@ -11,15 +11,15 @@ import (
 	"refleks/internal/steam"
 )
 
-// IngestScenario parses a KovaaK's stats CSV, enriches it, persists it, and returns the stored record.
-func (s *Store) IngestScenario(fullPath string, mouse models.MouseTraceProvider) (models.ScenarioRecord, error) {
+// IngestRun parses a KovaaK's stats CSV, enriches it, persists it, and returns the stored record.
+func (s *Store) IngestRun(fullPath string, mouse models.MouseTraceProvider) (models.RunRecord, error) {
 	info, err := ParseFilename(filepath.Base(fullPath))
 	if err != nil {
-		return models.ScenarioRecord{}, err
+		return models.RunRecord{}, err
 	}
 	events, stats, err := ParseStatsFile(fullPath)
 	if err != nil {
-		return models.ScenarioRecord{}, err
+		return models.RunRecord{}, err
 	}
 
 	stats["Date Played"] = info.DatePlayed.Format(time.RFC3339)
@@ -71,7 +71,7 @@ func (s *Store) IngestScenario(fullPath string, mouse models.MouseTraceProvider)
 
 	fileName := strings.TrimSuffix(filepath.Base(fullPath), constants.StatsFileExt)
 
-	rec := models.ScenarioRecord{
+	rec := models.RunRecord{
 		FilePath: fullPath,
 		FileName: fileName,
 		Stats:    stats,
@@ -101,11 +101,10 @@ func (s *Store) IngestScenario(fullPath string, mouse models.MouseTraceProvider)
 		Env:        environment.CollectRunEnvironment(mouse, start, end, len(trace), steamID, personaName),
 	})
 	if err != nil {
-		return models.ScenarioRecord{}, err
+		return models.RunRecord{}, err
 	}
 
 	rec.FilePath = runPath
-	rec.HasTrace = len(trace) > 0
 	return rec, nil
 }
 

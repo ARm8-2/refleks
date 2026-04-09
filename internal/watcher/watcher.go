@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	goruntime "runtime"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"sync"
@@ -29,14 +31,19 @@ type Watcher struct {
 	mouse   models.MouseTraceProvider
 	runSvc  RunStore
 
-	OnScenarioParsed func(models.ScenarioRecord)
+	OnRunParsed func(models.RunRecord)
 }
 
-// RunStore persists and loads scenario runs from the source-of-truth storage.
+type ingestOptions struct {
+	ignoreSeen   bool
+	notifyParsed bool
+	emitEvent    bool
+}
+
+// RunStore persists and loads runs from the source-of-truth storage.
 type RunStore interface {
 	Exists(statsFileName string) bool
-	IngestScenario(fullPath string, mouse models.MouseTraceProvider) (models.ScenarioRecord, error)
-	LoadRecentScenarios(limit int) ([]models.ScenarioRecord, error)
+	IngestRun(fullPath string, mouse models.MouseTraceProvider) (models.RunRecord, error)
 }
 
 // New returns a new Watcher with the given config.
@@ -50,7 +57,7 @@ func New(ctx context.Context, cfg models.WatcherConfig, runSvc RunStore) *Watche
 	}
 }
 
-// SetMouseProvider injects a mouse provider to enrich scenario records.
+// SetMouseProvider injects a mouse provider to enrich run records.
 func (w *Watcher) SetMouseProvider(p models.MouseTraceProvider) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -78,13 +85,18 @@ func (w *Watcher) Start() error {
 		}
 	}
 
-	existing := w.snapshotExistingStats()
-	existing = w.filterStatsWithinDays(existing)
-	w.markExistingStatsSeen(existing)
-	runtime.EventsEmit(w.ctx, constants.EventWatcherStarted, map[string]string{"path": w.cfg.Path})
+	allExisting := w.snapshotExistingStats()
+	catchUpFiles := w.filterStatsWithinDays(allExisting)
 
-	if len(existing) > 0 {
-		go w.catchUpExisting(existing, currentGen)
+	// Everything already present when the watcher starts is treated as existing.
+	// Only the filtered catch-up subset is converted on startup; the live polling
+	// path is reserved for files that appear after startup.
+	w.markExistingStatsSeen(allExisting)
+	payload := map[string]string{"path": w.cfg.Path}
+	runtime.EventsEmit(w.ctx, constants.EventRunsWatcherStarted, payload)
+
+	if len(catchUpFiles) > 0 {
+		go w.catchUpExisting(catchUpFiles, currentGen)
 	}
 
 	go w.loop()
@@ -105,11 +117,11 @@ func (w *Watcher) Stop() error {
 	return nil
 }
 
-// SetOnScenarioParsed sets the callback for when a scenario is parsed.
-func (w *Watcher) SetOnScenarioParsed(fn func(models.ScenarioRecord)) {
+// SetOnRunParsed sets the callback for when a run is ingested.
+func (w *Watcher) SetOnRunParsed(fn func(models.RunRecord)) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	w.OnScenarioParsed = fn
+	w.OnRunParsed = fn
 }
 
 func (w *Watcher) Clear() {
@@ -158,7 +170,7 @@ func (w *Watcher) scanOnce() error {
 			continue
 		}
 
-		w.ingestStatsFile(full, name, false)
+		w.ingestStatsFile(full, name, ingestOptions{notifyParsed: true, emitEvent: true})
 	}
 	return nil
 }
@@ -235,46 +247,63 @@ func (w *Watcher) catchUpExisting(files []string, gen uint64) {
 	if len(files) == 0 {
 		return
 	}
+	ingested := false
 	for _, full := range files {
 		if !w.isGenerationCurrent(gen) {
 			return
 		}
-		w.ingestStatsFile(full, filepath.Base(full), true)
+		if w.ingestStatsFile(full, filepath.Base(full), ingestOptions{ignoreSeen: true}) {
+			ingested = true
+		}
+	}
+
+	// Release memory accumulated during bulk conversion.
+	goruntime.GC()
+	debug.FreeOSMemory()
+
+	if ingested && w.isGenerationCurrent(gen) {
+		runtime.EventsEmit(w.ctx, constants.EventRunsAdded, nil)
 	}
 }
 
-func (w *Watcher) ingestStatsFile(fullPath, name string, force bool) {
+// ingestStatsFile ingests a stats file with behavior controlled by options.
+// Catch-up uses ignoreSeen without callbacks/events; live ingestion enables both.
+func (w *Watcher) ingestStatsFile(fullPath, name string, options ingestOptions) bool {
 	w.mu.RLock()
 	_, known := w.seen[fullPath]
 	mouse := w.mouse
-	onParsed := w.OnScenarioParsed
+	onParsed := w.OnRunParsed
 	w.mu.RUnlock()
-	if known && !force {
-		return
+	if known && !options.ignoreSeen {
+		return false
 	}
 
 	if w.runSvc.Exists(name) {
 		w.mu.Lock()
 		w.seen[fullPath] = struct{}{}
 		w.mu.Unlock()
-		return
+		return false
 	}
 
-	rec, err := w.runSvc.IngestScenario(fullPath, mouse)
+	rec, err := w.runSvc.IngestRun(fullPath, mouse)
 	if err != nil {
 		runtime.LogErrorf(w.ctx, "parse error for %s: %v", fullPath, err)
-		return
+		return false
 	}
 
 	w.mu.Lock()
 	w.seen[fullPath] = struct{}{}
 	w.mu.Unlock()
 
-	if onParsed != nil {
+	if options.notifyParsed && onParsed != nil {
 		onParsed(rec)
 	}
 
-	runtime.EventsEmit(w.ctx, constants.EventScenarioAdded, rec)
+	if options.emitEvent {
+		runtime.EventsEmit(w.ctx, constants.EventRunsAdded, nil)
+	}
+
+	return true
 }
 
 func (w *Watcher) isGenerationCurrent(gen uint64) bool {

@@ -1,4 +1,4 @@
-import type { ScenarioRecord, ScenarioStats } from '../types'
+import type { RunRecord, ScenarioStats } from '../types'
 
 function readString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
@@ -40,7 +40,7 @@ function parseDurationMs(value: unknown): number {
   return seconds > 0 ? seconds * 1000 : 0
 }
 
-export function getScenarioName(input: ScenarioRecord | { fileName?: string; stats?: ScenarioStats }): string {
+export function getScenarioName(input: RunRecord | { fileName?: string; stats?: ScenarioStats }): string {
   const stats = input.stats
   const direct = readString(stats?.['Scenario'])
   if (direct) return direct
@@ -53,7 +53,7 @@ export function getScenarioName(input: ScenarioRecord | { fileName?: string; sta
   return fileName
 }
 
-export function readScenarioTimestamp(item: ScenarioRecord): number {
+export function readRunTimestamp(item: RunRecord): number {
   const raw = item.stats?.['Date Played']
   if (!raw) return 0
 
@@ -61,18 +61,18 @@ export function readScenarioTimestamp(item: ScenarioRecord): number {
   return Number.isFinite(timestamp) ? timestamp : 0
 }
 
-export function readScenarioScore(item: ScenarioRecord): number {
+export function readRunScore(item: RunRecord): number {
   return parseNumber(item.stats?.['Score']) ?? 0
 }
 
-export function readScenarioAccuracy(item: ScenarioRecord): number | null {
+export function readRunAccuracy(item: RunRecord): number | null {
   const raw = parseNumber(item.stats?.['Accuracy'])
   if (raw === null) return null
   // Values in 0–1 range are ratios (0.85 = 85%); normalize to percentage
   return raw > 0 && raw <= 1 ? raw * 100 : raw
 }
 
-export function readScenarioDurationMs(item: ScenarioRecord): number {
+export function readRunDurationMs(item: RunRecord): number {
   return parseDurationMs(
     item.stats?.['Duration']
     ?? item.stats?.['Scenario Time']

@@ -62,6 +62,9 @@ func (a *App) startup(ctx context.Context) {
 	// Initialize Domain Services
 	a.benchmarkSvc = benchmarks.NewService(a.settingsSvc, a.cacheSvc)
 	a.scenarioSvc = scenarios.NewService(a.settingsSvc)
+	a.benchmarkSvc.SetOnBenchmarksUpdated(func(items []models.Benchmark) {
+		runtime.EventsEmit(a.ctx, constants.EventBenchmarkCatalogUpdated, map[string]any{"count": len(items)})
+	})
 
 	// Initialize runs runtime service (coordinates Watcher + Mouse)
 	a.runsRuntimeSvc = runs.NewRuntimeService(a.ctx, a.settingsSvc, a.benchmarkSvc, a.runStore)
@@ -81,7 +84,6 @@ func (a *App) startup(ctx context.Context) {
 
 	// Fire-and-forget benchmark definitions + progress cache warmup/sync
 	go func() {
-		time.Sleep(1 * time.Second)
 		if err := a.benchmarkSvc.SyncBenchmarksCache(); err != nil {
 			runtime.LogErrorf(a.ctx, "benchmark definitions sync failed: %v", err)
 		}
@@ -116,9 +118,21 @@ func (a *App) StopWatcher() error {
 	return a.runsRuntimeSvc.StopWatcher()
 }
 
-// GetRecentScenarios returns most recent parsed scenarios, up to optional limit.
-func (a *App) GetRecentScenarios(limit int) []models.ScenarioRecord {
+// GetRecentRuns returns most recent parsed runs, up to optional limit.
+func (a *App) GetRecentRuns(limit int) []models.RunRecord {
 	return a.runsRuntimeSvc.GetRecent(limit)
+}
+
+// GetRunEvents returns the kill event rows for a single run file.
+// Events are loaded on demand (not stored in the index) to keep memory usage low.
+func (a *App) GetRunEvents(filePath string) ([][]string, error) {
+	return a.runStore.LoadRunEvents(filePath)
+}
+
+// GetRunTrace retrieves the binary trace data for a run, encoded as Base64.
+// This is called lazily by the frontend when the user views the trace tab.
+func (a *App) GetRunTrace(filePath string) (string, error) {
+	return a.runStore.LoadRunTrace(filePath)
 }
 
 // GetLastScenarioScores fetches the last 10 scores for a given scenario from KovaaK's API.
@@ -304,19 +318,6 @@ func (a *App) ClearCache() error {
 		return err
 	}
 	return nil
-}
-
-// GetScenarioTrace retrieves the binary trace data for a scenario, encoded as Base64.
-// This is called lazily by the frontend when the user views the trace tab.
-func (a *App) GetScenarioTrace(fileName string) (string, error) {
-	data, err := a.runStore.LoadByFileName(fileName)
-	if err != nil {
-		return "", err
-	}
-	if len(data.MouseTrace) == 0 {
-		return "", fmt.Errorf("trace not found")
-	}
-	return runs.EncodeTraceBase64(data.MouseTrace)
 }
 
 // --- Autostart & Monitoring ---

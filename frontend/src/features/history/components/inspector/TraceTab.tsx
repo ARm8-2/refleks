@@ -1,10 +1,10 @@
 import { InfoTooltip } from '@/shared/components'
-import { getScenarioTrace } from '@/shared/lib'
 import { cn } from '@/shared/lib/utils'
 import type { MousePoint } from '@/shared/types/ipc'
 import { Copy } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { decodeTrace } from '../../lib/decodeTrace'
+import { useRunEvents } from '../../hooks/useRunEvents'
+import { useRunTrace } from '../../hooks/useRunTrace'
 import type { HistoryRun } from '../../lib/historyModels'
 import {
   computeMouseTraceAnalysis,
@@ -15,39 +15,6 @@ import {
 } from '../../lib/mouseAnalysis'
 import type { TraceHighlight } from '../../lib/traceRenderer'
 import { TraceReplay } from '../TraceReplay'
-
-/* ─── Trace data hook ─── */
-
-function useTraceData(run: HistoryRun | null) {
-  const [points, setPoints] = useState<MousePoint[] | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const hasTrace = !!run && !!run.item.hasTrace
-  const fileName = run?.item.fileName ?? null
-  const flagHasTrace = run?.item.hasTrace ?? false
-
-  useEffect(() => {
-    setPoints(null)
-    setError(null)
-    if (!flagHasTrace || !fileName) return
-
-    let cancelled = false
-    setLoading(true)
-    getScenarioTrace(fileName)
-      .then(b64 => {
-        if (cancelled) return
-        const decoded = decodeTrace(b64)
-        setPoints(decoded.length > 0 ? decoded : null)
-        if (decoded.length === 0) setError('Trace file was empty')
-      })
-      .catch(() => { if (!cancelled) setError('Failed to load trace data') })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [fileName, flagHasTrace])
-
-  return { points, loading, error, hasTrace, resolution: String(run?.item.stats?.Resolution ?? '') }
-}
 
 /* ─── Kill classification ─── */
 
@@ -104,8 +71,11 @@ function fmtPct(n: number): string {
 /* ─── Component ─── */
 
 export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: HistoryRun; compareRun: HistoryRun | null; overlay: boolean }) {
-  const primary = useTraceData(primaryRun)
-  const compare = useTraceData(compareRun)
+  const primaryPoints = useRunTrace(primaryRun)
+  const comparePoints = useRunTrace(compareRun)
+  const primaryEvents = useRunEvents(primaryRun)
+  const primaryResolution = String(primaryRun.item.stats?.Resolution ?? '')
+  const compareResolution = String(compareRun?.item.stats?.Resolution ?? '')
 
   const [selectedKill, setSelectedKill] = useState<KillAnalysis | null>(null)
 
@@ -114,9 +84,9 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
 
   // Compute analysis
   const analysis: MouseTraceAnalysis | null = useMemo(() => {
-    if (!primary.points || primary.points.length === 0) return null
-    return computeMouseTraceAnalysis(primaryRun.item.stats, primaryRun.item.events, primary.points)
-  }, [primaryRun.item.stats, primaryRun.item.events, primary.points])
+    if (!primaryPoints || primaryPoints.length === 0 || !primaryEvents) return null
+    return computeMouseTraceAnalysis(primaryRun.item.stats, primaryEvents, primaryPoints)
+  }, [primaryRun.item.stats, primaryEvents, primaryPoints])
 
   const suggestion: SensSuggestion | null = useMemo(() => {
     if (!analysis) return null
@@ -125,13 +95,13 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
 
   // Highlight: show the last flick from the prior click to the current kill click
   const highlight: TraceHighlight | undefined = useMemo(() => {
-    if (!selectedKill || !primary.points) return undefined
+    if (!selectedKill || !primaryPoints) return undefined
     return {
-      startTs: getFlickStartTs(primary.points, selectedKill),
+      startTs: getFlickStartTs(primaryPoints, selectedKill),
       endTs: selectedKill.endMs,
       color: CLASSIFICATION_STYLES[selectedKill.classification].highlight,
     }
-  }, [selectedKill, primary.points])
+  }, [selectedKill, primaryPoints])
 
   const seekToMs = selectedKill?.endMs ?? null
 
@@ -141,15 +111,7 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
 
   const clearSelection = useCallback(() => setSelectedKill(null), [])
 
-  if (!primary.hasTrace) {
-    return (
-      <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-surface-muted-foreground">No mouse trace data. Enable mouse tracking in settings to record traces.</p>
-      </div>
-    )
-  }
-
-  if (primary.loading || compare.loading) {
+  if (primaryPoints === null || (compareRun && comparePoints === null) || primaryEvents === null) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p className="text-sm text-surface-muted-foreground">Loading trace…</p>
@@ -157,15 +119,15 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
     )
   }
 
-  if (primary.error || !primary.points || primary.points.length === 0) {
+  if (!primaryPoints || primaryPoints.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-surface-muted-foreground">{primary.error ?? 'No trace data available'}</p>
+        <p className="text-sm text-surface-muted-foreground">No mouse trace data. Enable mouse tracking in settings to record traces.</p>
       </div>
     )
   }
 
-  const hasCompare = compare.points != null && compare.points.length > 0
+  const hasCompare = comparePoints != null && comparePoints.length > 0
   const hasAnalysis = analysis != null && analysis.kills.length > 0
 
   return (
@@ -173,10 +135,10 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
       {/* Trace viewer — takes up remaining space, never shrinks */}
       <div className="min-h-0 flex-1">
         <TraceReplay
-          points={primary.points}
-          resolution={primary.resolution || undefined}
-          comparePoints={hasCompare ? compare.points! : undefined}
-          compareResolution={hasCompare ? (compare.resolution || undefined) : undefined}
+          points={primaryPoints}
+          resolution={primaryResolution || undefined}
+          comparePoints={hasCompare ? comparePoints! : undefined}
+          compareResolution={hasCompare ? (compareResolution || undefined) : undefined}
           layout={hasCompare && !overlay ? 'split' : 'overlay'}
           highlight={highlight}
           seekToMs={seekToMs}

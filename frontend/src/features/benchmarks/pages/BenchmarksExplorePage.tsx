@@ -145,6 +145,7 @@ export function BenchmarksExplorePage() {
   }
 
   const showInitialSkeleton = loading && benchmarks.length === 0
+  const showRecommendationWarmup = showRecs && Object.keys(progressMap).length === 0
 
   return (
     <div className="flex-1 overflow-auto text-sm">
@@ -243,6 +244,12 @@ export function BenchmarksExplorePage() {
         ) : (
           <>
             {/* Recommended benchmarks section */}
+            {showRecs && showRecommendationWarmup && (
+              <div className="rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-surface-muted-foreground">
+                Loading benchmark progress for recommendations...
+              </div>
+            )}
+
             {showRecs && recommendedBenchmarks.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium text-primary mt-1 mb-2 select-none">
@@ -270,7 +277,7 @@ export function BenchmarksExplorePage() {
             {filtered.length === 0 ? (
               <div className="text-sm text-surface-muted-foreground py-8 text-center">
                 {benchmarks.length === 0
-                  ? 'No benchmarks available.'
+                  ? 'Waiting for the benchmark catalog to finish syncing...'
                   : showFavOnly
                     ? 'No favorite benchmarks yet. Star a benchmark to add it here.'
                     : query

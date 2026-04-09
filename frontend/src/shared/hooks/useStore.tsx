@@ -2,39 +2,58 @@ import type { ReactNode } from 'react'
 import { createContext, useCallback, useContext, useMemo, useReducer } from 'react'
 import { saveSessionNote } from '../lib/api'
 import type { Session } from '../types/domain'
-import type { ScenarioRecord } from '../types/ipc'
+import type { RunRecord } from '../types/ipc'
 
 type State = {
   sessions: Session[]
   sessionGapMinutes: number
   sessionNotes: Record<string, { name: string; notes: string }>
+  runHydration: {
+    loading: boolean
+    loaded: number
+    total: number
+    complete: boolean
+  }
 }
 
 type Action =
-  | { type: 'set'; items: ScenarioRecord[] }
+  | { type: 'set'; items: RunRecord[] }
   | { type: 'setGap'; minutes: number }
   | { type: 'setSessionNotes'; notes: Record<string, { name: string; notes: string }> }
+  | { type: 'updateRunHydration'; hydration: Partial<State['runHydration']> }
   | { type: 'updateSessionNote'; id: string; name: string; notes: string }
 
-const initial: State = { sessions: [], sessionGapMinutes: 30, sessionNotes: {} }
+const initial: State = {
+  sessions: [],
+  sessionGapMinutes: 30,
+  sessionNotes: {},
+  runHydration: {
+    loading: false,
+    loaded: 0,
+    total: 0,
+    complete: false,
+  },
+}
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'set':
       return { ...state, sessions: groupSessions(action.items ?? [], state.sessionGapMinutes, state.sessionNotes) }
     case 'setGap': {
-      const currentScenarios = state.sessions.flatMap(s => s.items)
+      const currentRuns = state.sessions.flatMap(s => s.items)
       const gap = Math.max(1, Math.floor(action.minutes))
-      return { ...state, sessionGapMinutes: gap, sessions: groupSessions(currentScenarios, gap, state.sessionNotes) }
+      return { ...state, sessionGapMinutes: gap, sessions: groupSessions(currentRuns, gap, state.sessionNotes) }
     }
     case 'setSessionNotes': {
-      const currentScenarios = state.sessions.flatMap(s => s.items)
-      return { ...state, sessionNotes: action.notes, sessions: groupSessions(currentScenarios, state.sessionGapMinutes, action.notes) }
+      const currentRuns = state.sessions.flatMap(s => s.items)
+      return { ...state, sessionNotes: action.notes, sessions: groupSessions(currentRuns, state.sessionGapMinutes, action.notes) }
     }
+    case 'updateRunHydration':
+      return { ...state, runHydration: { ...state.runHydration, ...action.hydration } }
     case 'updateSessionNote': {
       const nextNotes = { ...state.sessionNotes, [action.id]: { name: action.name, notes: action.notes } }
-      const currentScenarios = state.sessions.flatMap(s => s.items)
-      return { ...state, sessionNotes: nextNotes, sessions: groupSessions(currentScenarios, state.sessionGapMinutes, nextNotes) }
+      const currentRuns = state.sessions.flatMap(s => s.items)
+      return { ...state, sessionNotes: nextNotes, sessions: groupSessions(currentRuns, state.sessionGapMinutes, nextNotes) }
     }
     default:
       return state
@@ -42,9 +61,10 @@ function reducer(state: State, action: Action): State {
 }
 
 type Ctx = State & {
-  setScenarios: (items: ScenarioRecord[]) => void
+  setRuns: (items: RunRecord[]) => void
   setSessionGap: (minutes: number) => void
   setSessionNotes: (notes: Record<string, { name: string; notes: string }>) => void
+  updateRunHydration: (hydration: Partial<State['runHydration']>) => void
   saveSessionNote: (id: string, name: string, notes: string) => Promise<void>
   isInSession: boolean
 }
@@ -55,9 +75,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initial)
 
   // Stable callbacks so consumers can safely depend on their identity
-  const setScenarios = useCallback((items: ScenarioRecord[]) => dispatch({ type: 'set', items }), [dispatch])
+  const setRuns = useCallback((items: RunRecord[]) => dispatch({ type: 'set', items }), [dispatch])
   const setSessionGap = useCallback((minutes: number) => dispatch({ type: 'setGap', minutes }), [dispatch])
   const setSessionNotes = useCallback((notes: Record<string, { name: string; notes: string }>) => dispatch({ type: 'setSessionNotes', notes }), [dispatch])
+  const updateRunHydration = useCallback((hydration: Partial<State['runHydration']>) => dispatch({ type: 'updateRunHydration', hydration }), [dispatch])
 
   const saveSessionNoteAction = useCallback(async (id: string, name: string, notes: string) => {
     await saveSessionNote(id, name, notes)
@@ -75,12 +96,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => ({
     ...state,
-    setScenarios,
+    setRuns,
     setSessionGap,
     setSessionNotes,
+    updateRunHydration,
     saveSessionNote: saveSessionNoteAction,
     isInSession,
-  }), [state, setScenarios, setSessionGap, setSessionNotes, saveSessionNoteAction, isInSession])
+  }), [state, setRuns, setSessionGap, setSessionNotes, updateRunHydration, saveSessionNoteAction, isInSession])
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>
 }
 
@@ -91,7 +113,7 @@ export function useStore<T>(selector: (s: Ctx) => T): T {
 }
 
 // --- Helpers ---
-function groupSessions(items: ScenarioRecord[], gapMinutes = 30, notes: Record<string, { name: string; notes: string }> = {}): Session[] {
+function groupSessions(items: RunRecord[], gapMinutes = 30, notes: Record<string, { name: string; notes: string }> = {}): Session[] {
   if (!Array.isArray(items) || items.length === 0) return []
 
   const sorted = [...items].sort((a, b) => {
@@ -100,8 +122,8 @@ function groupSessions(items: ScenarioRecord[], gapMinutes = 30, notes: Record<s
     return a.filePath.localeCompare(b.filePath)
   })
 
-  const groups: ScenarioRecord[][] = []
-  let currentGroup: ScenarioRecord[] = []
+  const groups: RunRecord[][] = []
+  let currentGroup: RunRecord[] = []
   let lastTs = 0
 
   for (const it of sorted) {
@@ -155,7 +177,7 @@ function groupSessions(items: ScenarioRecord[], gapMinutes = 30, notes: Record<s
   return sessions.map(({ sortTs: _sortTs, ...session }) => session)
 }
 
-function endTs(it: ScenarioRecord): number {
+function endTs(it: RunRecord): number {
   const raw = it.stats?.['Date Played']
   if (!raw) return 0
   return Date.parse(String(raw)) || 0

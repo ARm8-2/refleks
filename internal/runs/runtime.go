@@ -58,8 +58,8 @@ func NewRuntimeService(ctx context.Context, settingsSvc *appsettings.Service, be
 
 	svc.watcher = watcher.New(ctx, defaultCfg, runStore)
 	svc.watcher.SetMouseProvider(svc.mouse)
-	svc.watcher.SetOnScenarioParsed(func(rec models.ScenarioRecord) {
-		svc.handleScenarioParsed(rec)
+	svc.watcher.SetOnRunParsed(func(rec models.RunRecord) {
+		svc.handleRunParsed(rec)
 	})
 
 	benchmarkSvc.SetOnProgressUpdated(func(id int, p models.BenchmarkProgress) {
@@ -99,8 +99,8 @@ func (s *RuntimeService) StartWatcher(path string) error {
 	if s.watcher == nil {
 		s.watcher = watcher.New(s.ctx, cfg, s.runStore)
 		s.watcher.SetMouseProvider(s.mouse)
-		s.watcher.SetOnScenarioParsed(func(rec models.ScenarioRecord) {
-			s.handleScenarioParsed(rec)
+		s.watcher.SetOnRunParsed(func(rec models.RunRecord) {
+			s.handleRunParsed(rec)
 		})
 	} else {
 		if err := s.watcher.UpdateConfig(cfg); err != nil {
@@ -123,14 +123,14 @@ func (s *RuntimeService) StopWatcher() error {
 	return s.watcher.Stop()
 }
 
-func (s *RuntimeService) GetRecent(limit int) []models.ScenarioRecord {
+func (s *RuntimeService) GetRecent(limit int) []models.RunRecord {
 	if s.runStore == nil {
 		return nil
 	}
 	if limit < 0 {
 		limit = 0
 	}
-	records, err := s.runStore.LoadRecentScenarios(limit)
+	records, err := s.runStore.LoadRecentRuns(limit)
 	if err != nil {
 		runtime.LogWarningf(s.ctx, "failed to load recent runs: %v", err)
 		return nil
@@ -251,7 +251,7 @@ func (s *RuntimeService) SaveSessionNote(sessionID, name, notes string) error {
 	return s.settingsSvc.Update(current)
 }
 
-func (s *RuntimeService) handleScenarioParsed(rec models.ScenarioRecord) {
+func (s *RuntimeService) handleRunParsed(rec models.RunRecord) {
 	s.benchmarkSvc.CheckAndRefreshIfNeeded(rec)
 	settings := s.settingsSvc.Get()
 	if !settings.RunSyncEnabled {

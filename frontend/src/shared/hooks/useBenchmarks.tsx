@@ -64,6 +64,16 @@ export function BenchmarkProvider({ children }: { children: ReactNode }) {
 
   const favoriteSet = useMemo(() => new Set(favorites), [favorites])
 
+  const reloadBenchmarks = useCallback(async () => {
+    try {
+      const list = await getBenchmarks()
+      setBenchmarks(list)
+      setLoading(false)
+    } catch {
+      setLoading(false)
+    }
+  }, [])
+
   // ---- Initial load ----
   useEffect(() => {
     let cancelled = false
@@ -78,6 +88,13 @@ export function BenchmarkProvider({ children }: { children: ReactNode }) {
     })
     return () => { cancelled = true }
   }, [])
+
+  useEffect(() => {
+    const off = EventsOn('benchmark:catalog:updated', () => {
+      void reloadBenchmarks()
+    })
+    return () => { try { off() } catch { /* ignore */ } }
+  }, [reloadBenchmarks])
 
   // ---- Real-time progress updates from Go backend ----
   useEffect(() => {

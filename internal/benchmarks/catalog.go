@@ -14,6 +14,14 @@ import (
 	"refleks/internal/settings"
 )
 
+var errBenchmarksNotModified = errors.New("benchmarks not modified")
+
+type benchmarksCachePayload struct {
+	Benchmarks []models.Benchmark `json:"benchmarks"`
+	Count      int                `json:"count"`
+	ETag       string             `json:"etag,omitempty"`
+}
+
 func resolveBenchmarksEndpoint() string {
 	if env := strings.TrimSpace(settings.GetEnv(constants.EnvBenchmarksURLVar)); env != "" {
 		return env
@@ -23,18 +31,27 @@ func resolveBenchmarksEndpoint() string {
 
 // SyncBenchmarksCache fetches benchmark definitions from API and persists them to cache.
 func (s *Service) SyncBenchmarksCache() error {
-	benchmarks, err := s.fetchBenchmarksFromAPI()
-	if err != nil {
-		return err
-	}
-	if err := s.cacheSvc.Save(constants.BenchmarksDataCacheFileName, benchmarks); err != nil {
-		return fmt.Errorf("save benchmarks cache: %w", err)
+	cached, cacheErr := s.loadBenchmarksCache()
+	if cacheErr != nil {
+		cached = benchmarksCachePayload{}
 	}
 
-	s.mu.Lock()
-	s.benchmarksList = benchmarks
-	s.loadErr = nil
-	s.mu.Unlock()
+	payload, err := s.fetchBenchmarksFromAPI(cached.ETag)
+	if err != nil {
+		if errors.Is(err, errBenchmarksNotModified) {
+			if len(cached.Benchmarks) == 0 {
+				return errBenchmarksCacheMissing
+			}
+			s.applyBenchmarksCache(cached)
+			return nil
+		}
+		return err
+	}
+
+	if err := s.cacheSvc.Save(constants.BenchmarksDataCacheFileName, payload); err != nil {
+		return fmt.Errorf("save benchmarks cache: %w", err)
+	}
+	s.applyBenchmarksCache(payload)
 
 	return nil
 }
@@ -49,21 +66,19 @@ func (s *Service) GetBenchmarks() ([]models.Benchmark, error) {
 	}
 	s.mu.Unlock()
 
-	loaded, err := s.loadBenchmarksFromCache()
+	loaded, err := s.loadBenchmarksCache()
 	if err == nil {
-		s.mu.Lock()
-		s.benchmarksList = loaded
-		s.loadErr = nil
-		s.mu.Unlock()
-		return loaded, nil
+		s.applyBenchmarksCache(loaded)
+		return loaded.Benchmarks, nil
 	}
 
-	// First-run fallback: attempt direct API fetch when benchmark cache is missing.
 	if syncErr := s.SyncBenchmarksCache(); syncErr == nil {
 		s.mu.Lock()
 		out := s.benchmarksList
 		s.mu.Unlock()
 		return out, nil
+	} else {
+		err = syncErr
 	}
 
 	s.mu.Lock()
@@ -73,47 +88,85 @@ func (s *Service) GetBenchmarks() ([]models.Benchmark, error) {
 	return nil, err
 }
 
-func (s *Service) loadBenchmarksFromCache() ([]models.Benchmark, error) {
+var errBenchmarksCacheMissing = errors.New("benchmarks cache missing")
+
+func (s *Service) loadBenchmarksCache() (benchmarksCachePayload, error) {
 	if !s.cacheSvc.Exists(constants.BenchmarksDataCacheFileName) {
-		return nil, errors.New("benchmarks cache missing")
+		return benchmarksCachePayload{}, errBenchmarksCacheMissing
 	}
-	var data []models.Benchmark
-	if err := s.cacheSvc.Load(constants.BenchmarksDataCacheFileName, &data); err != nil {
-		return nil, fmt.Errorf("load benchmarks cache: %w", err)
+
+	var raw json.RawMessage
+	if err := s.cacheSvc.Load(constants.BenchmarksDataCacheFileName, &raw); err != nil {
+		return benchmarksCachePayload{}, fmt.Errorf("load benchmarks cache: %w", err)
 	}
-	normalizeBenchmarksShape(data)
-	return data, nil
+
+	trimmed := strings.TrimSpace(string(raw))
+	if trimmed == "" {
+		return benchmarksCachePayload{}, errBenchmarksCacheMissing
+	}
+
+	var payload benchmarksCachePayload
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return benchmarksCachePayload{}, fmt.Errorf("decode benchmarks cache: %w", err)
+	}
+	normalizeBenchmarksShape(payload.Benchmarks)
+	if payload.Count <= 0 {
+		payload.Count = len(payload.Benchmarks)
+	}
+	return payload, nil
 }
 
-func (s *Service) fetchBenchmarksFromAPI() ([]models.Benchmark, error) {
+func (s *Service) applyBenchmarksCache(payload benchmarksCachePayload) {
+	normalizeBenchmarksShape(payload.Benchmarks)
+
+	s.mu.Lock()
+	s.benchmarksList = payload.Benchmarks
+	s.loadErr = nil
+	cb := s.onBenchmarksUpdated
+	items := append([]models.Benchmark(nil), payload.Benchmarks...)
+	s.mu.Unlock()
+
+	if cb != nil {
+		cb(items)
+	}
+}
+
+func (s *Service) fetchBenchmarksFromAPI(ifNoneMatch string) (benchmarksCachePayload, error) {
 	endpoint := strings.TrimSpace(s.benchmarksURL)
 	if endpoint == "" {
-		return nil, errors.New("missing benchmarks endpoint")
+		return benchmarksCachePayload{}, errors.New("missing benchmarks endpoint")
 	}
 
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("build benchmarks request: %w", err)
+		return benchmarksCachePayload{}, fmt.Errorf("build benchmarks request: %w", err)
+	}
+	if tag := strings.TrimSpace(ifNoneMatch); tag != "" {
+		req.Header.Set("If-None-Match", tag)
 	}
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("fetch benchmarks: %w", err)
+		return benchmarksCachePayload{}, fmt.Errorf("fetch benchmarks: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotModified {
+		return benchmarksCachePayload{}, errBenchmarksNotModified
+	}
 
 	if resp.StatusCode != http.StatusOK {
 		msg, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 		trimmed := strings.TrimSpace(string(msg))
 		if trimmed == "" {
-			return nil, fmt.Errorf("benchmarks endpoint returned status %d", resp.StatusCode)
+			return benchmarksCachePayload{}, fmt.Errorf("benchmarks endpoint returned status %d", resp.StatusCode)
 		}
-		return nil, fmt.Errorf("benchmarks endpoint returned status %d: %s", resp.StatusCode, trimmed)
+		return benchmarksCachePayload{}, fmt.Errorf("benchmarks endpoint returned status %d: %s", resp.StatusCode, trimmed)
 	}
 
 	var payload apiBenchmarksResponse
 	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-		return nil, fmt.Errorf("decode benchmarks response: %w", err)
+		return benchmarksCachePayload{}, fmt.Errorf("decode benchmarks response: %w", err)
 	}
 
 	out := make([]models.Benchmark, 0, len(payload.Benchmarks))
@@ -124,6 +177,7 @@ func (s *Service) fetchBenchmarksFromAPI() ([]models.Benchmark, error) {
 			Abbreviation:    bench.Abbreviation,
 			Color:           bench.Color,
 			SpreadsheetURL:  bench.SpreadsheetURL,
+			DateAdded:       strings.TrimSpace(bench.DateAdded),
 			Difficulties:    make([]models.BenchmarkDifficulty, 0, len(bench.Difficulties)),
 		}
 
@@ -161,7 +215,7 @@ func (s *Service) fetchBenchmarksFromAPI() ([]models.Benchmark, error) {
 
 			id, err := parseBenchmarkID(diff.KovaaksBenchmarkID)
 			if err != nil {
-				return nil, fmt.Errorf("invalid kovaaksBenchmarkId %q for %s/%s: %w", diff.KovaaksBenchmarkID, bench.BenchmarkName, diff.DifficultyName, err)
+				return benchmarksCachePayload{}, fmt.Errorf("invalid kovaaksBenchmarkId %q for %s/%s: %w", diff.KovaaksBenchmarkID, bench.BenchmarkName, diff.DifficultyName, err)
 			}
 
 			m.Difficulties = append(m.Difficulties, models.BenchmarkDifficulty{
@@ -177,7 +231,15 @@ func (s *Service) fetchBenchmarksFromAPI() ([]models.Benchmark, error) {
 	}
 
 	normalizeBenchmarksShape(out)
-	return out, nil
+	count := payload.Count
+	if count <= 0 {
+		count = len(out)
+	}
+	return benchmarksCachePayload{
+		Benchmarks: out,
+		Count:      count,
+		ETag:       strings.TrimSpace(resp.Header.Get("ETag")),
+	}, nil
 }
 
 func normalizeBenchmarksShape(items []models.Benchmark) {
@@ -226,6 +288,7 @@ func parseBenchmarkID(raw json.RawMessage) (int, error) {
 
 type apiBenchmarksResponse struct {
 	Benchmarks []apiBenchmark `json:"benchmarks"`
+	Count      int            `json:"count"`
 }
 
 type apiBenchmark struct {
@@ -234,6 +297,7 @@ type apiBenchmark struct {
 	Abbreviation    string          `json:"abbreviation"`
 	Color           string          `json:"color"`
 	SpreadsheetURL  string          `json:"spreadsheetURL"`
+	DateAdded       string          `json:"dateAdded"`
 	Difficulties    []apiDifficulty `json:"difficulties"`
 }
 

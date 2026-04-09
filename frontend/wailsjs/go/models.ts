@@ -108,6 +108,7 @@ export namespace models {
 	    abbreviation: string;
 	    color: string;
 	    spreadsheetURL: string;
+	    dateAdded?: string;
 	    difficulties: BenchmarkDifficulty[];
 	
 	    static createFrom(source: any = {}) {
@@ -121,6 +122,7 @@ export namespace models {
 	        this.abbreviation = source["abbreviation"];
 	        this.color = source["color"];
 	        this.spreadsheetURL = source["spreadsheetURL"];
+	        this.dateAdded = source["dateAdded"];
 	        this.difficulties = this.convertValues(source["difficulties"], BenchmarkDifficulty);
 	    }
 	
@@ -413,31 +415,15 @@ export namespace models {
 	        this.sampleRate = source["sampleRate"];
 	    }
 	}
-	export class ScenarioNote {
-	    notes: string;
-	    sens: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ScenarioNote(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.notes = source["notes"];
-	        this.sens = source["sens"];
-	    }
-	}
-	
-	export class ScenarioRecord {
+	export class RunRecord {
 	    filePath: string;
 	    fileName: string;
 	    stats: Record<string, any>;
 	    events: string[][];
 	    env: RunEnvironment;
-	    hasTrace: boolean;
 	
 	    static createFrom(source: any = {}) {
-	        return new ScenarioRecord(source);
+	        return new RunRecord(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -447,7 +433,6 @@ export namespace models {
 	        this.stats = source["stats"];
 	        this.events = source["events"];
 	        this.env = this.convertValues(source["env"], RunEnvironment);
-	        this.hasTrace = source["hasTrace"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -468,6 +453,21 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class ScenarioNote {
+	    notes: string;
+	    sens: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ScenarioNote(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.notes = source["notes"];
+	        this.sens = source["sens"];
+	    }
+	}
+	
 	export class SessionNote {
 	    name: string;
 	    notes: string;

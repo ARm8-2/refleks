@@ -1,4 +1,6 @@
 
+import { Loading } from '@/shared/components'
+import { useStore } from '@/shared/hooks'
 import { HistoryRunDetailPane } from '../components/HistoryRunDetailPane'
 import { HistoryRunList } from '../components/HistoryRunList'
 import { HistorySessionOverview } from '../components/HistorySessionOverview'
@@ -6,6 +8,8 @@ import { HistorySessionSidebar } from '../components/HistorySessionSidebar'
 import { useHistoryPageState } from '../hooks/useHistoryPageState'
 
 export function HistoryPage() {
+  const allSessions = useStore(s => s.sessions)
+  const runHydration = useStore(s => s.runHydration)
   const {
     sessions,
     filteredSessions,
@@ -46,6 +50,14 @@ export function HistoryPage() {
     clearPrimaryRun,
     clearComparison,
   } = useHistoryPageState()
+
+  if (allSessions.length === 0 && runHydration.loading) {
+    const label = runHydration.total > 0
+      ? `Loading run history ${Math.min(runHydration.loaded, runHydration.total)}/${runHydration.total}...`
+      : 'Loading run history...'
+
+    return <Loading label={label} />
+  }
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden text-sm">

@@ -1,4 +1,4 @@
-import type { ScenarioRecord } from '@/shared/types'
+import type { RunRecord } from '@/shared/types'
 
 /* ─── Types ─── */
 
@@ -148,7 +148,7 @@ function fmtRel(sec: number): string {
 
 /* ─── Main analysis ─── */
 
-export function computeScenarioAnalysis(item: ScenarioRecord): ScenarioAnalysis | null {
+export function computeScenarioAnalysis(item: RunRecord): ScenarioAnalysis | null {
   const kills = Array.isArray(item.events) ? item.events : []
   if (kills.length < 2) return null
 

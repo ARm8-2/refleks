@@ -8,9 +8,9 @@ const (
 	// Benchmark events
 	EventBenchmarkProgressUpdated = "benchmark:progress:updated"
 	EventBenchmarkProgressPrefix  = "benchmark:progress:" // + benchmarkId
+	EventBenchmarkCatalogUpdated  = "benchmark:catalog:updated"
 
-	// Watcher/Scenario events
-	EventWatcherStarted  = "watcher:started"
-	EventScenarioAdded   = "scenario:added"
-	EventScenarioUpdated = "scenario:updated"
+	// Runs events
+	EventRunsWatcherStarted = "runs:watcher:started"
+	EventRunsAdded          = "runs:added"
 )

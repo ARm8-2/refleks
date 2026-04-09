@@ -92,16 +92,14 @@ export function useBenchmarkDetailProgress(benchmark: Benchmark | undefined): St
       }, REFRESH_DEBOUNCE_MS)
     }
 
-    const offScenarioAdded = EventsOn('scenario:added', () => triggerRefresh())
-    const offScenarioUpdated = EventsOn('scenario:updated', () => triggerRefresh())
+    const offRunsAdded = EventsOn('runs:added', () => triggerRefresh())
 
     return () => {
       cancelled = true
       if (timeout) clearTimeout(timeout)
 
       try { offRealtime() } catch { }
-      try { offScenarioAdded() } catch { }
-      try { offScenarioUpdated() } catch { }
+      try { offRunsAdded() } catch { }
     }
   }, [benchmarkId])
 

@@ -88,45 +88,68 @@ func (s *Store) Save(rec RunRecord) (string, error) {
 	return outPath, nil
 }
 
-// LoadByFileName loads a stored run record for the provided stats file name.
-func (s *Store) LoadByFileName(statsFileName string) (RunRecord, error) {
-	dir, err := s.runsDir()
+// LoadRunEvents reads a single .refleks file by full path and returns its kill events.
+func (s *Store) LoadRunEvents(filePath string) ([][]string, error) {
+	rec, err := readRecordFile(filePath, readRecordOptions{})
 	if err != nil {
-		return RunRecord{}, err
+		return nil, err
 	}
-
-	path := filepath.Join(dir, filepath.Base(statsFileName)+constants.RunFileExt)
-	rec, err := readRecordFile(path)
-	if err != nil {
-		return RunRecord{}, err
+	if rec.Events == nil {
+		return [][]string{}, nil
 	}
-	rec.FilePath = path
-	return rec, nil
+	return rec.Events, nil
 }
 
-// LoadRecentScenarios returns recent scenarios in oldest-to-newest order.
-func (s *Store) LoadRecentScenarios(limit int) ([]models.ScenarioRecord, error) {
-	records, err := s.LoadRecent(limit)
+// LoadRunTrace reads a single .refleks file by full path and returns its mouse
+// trace encoded in the frontend wire format.
+func (s *Store) LoadRunTrace(filePath string) (string, error) {
+	rec, err := readRecordFile(filePath, readRecordOptions{})
+	if err != nil {
+		return "", err
+	}
+	if rec.MouseTrace == nil {
+		return "", nil
+	}
+	if len(rec.MouseTrace) == 0 {
+		return "", nil
+	}
+
+	return EncodeTraceBase64(rec.MouseTrace)
+}
+
+// LoadRecentRuns returns recent runs in oldest-to-newest order.
+// Events are omitted to save memory; use LoadRunEvents for on-demand event access.
+func (s *Store) LoadRecentRuns(limit int) ([]models.RunRecord, error) {
+	selected, err := s.selectRecentFiles(limit)
 	if err != nil {
 		return nil, err
 	}
 
-	out := make([]models.ScenarioRecord, 0, len(records))
-	for _, r := range records {
-		out = append(out, models.ScenarioRecord{
-			FilePath: r.FilePath,
-			FileName: r.FileName,
-			Stats:    r.Stats,
-			Events:   r.Events,
-			Env:      r.Env,
-			HasTrace: len(r.MouseTrace) > 0,
+	out := make([]models.RunRecord, 0, len(selected))
+	for _, v := range selected {
+		rec, err := readRecordFile(v.path, readRecordOptions{skipEvents: true, skipMouseTrace: true})
+		if err != nil {
+			continue
+		}
+		out = append(out, models.RunRecord{
+			FilePath: v.path,
+			FileName: rec.FileName,
+			Stats:    rec.Stats,
+			Events:   nil,
+			Env:      rec.Env,
 		})
 	}
 	return out, nil
 }
 
-// LoadRecent returns up to limit records sorted oldest-to-newest.
-func (s *Store) LoadRecent(limit int) ([]RunRecord, error) {
+type recentFile struct {
+	path string
+	name string
+	ts   int64
+}
+
+// selectRecentFiles returns the file paths to load, sorted oldest-to-newest.
+func (s *Store) selectRecentFiles(limit int) ([]recentFile, error) {
 	dir, err := s.runsDir()
 	if err != nil {
 		return nil, err
@@ -137,12 +160,7 @@ func (s *Store) LoadRecent(limit int) ([]RunRecord, error) {
 		return nil, err
 	}
 
-	type wrapped struct {
-		path string
-		name string
-		ts   int64
-	}
-	all := make([]wrapped, 0, len(entries))
+	all := make([]recentFile, 0, len(entries))
 
 	days := constants.DefaultRecentRunsDays
 	minCount := constants.DefaultRecentRunsMinCount
@@ -169,8 +187,8 @@ func (s *Store) LoadRecent(limit int) ([]RunRecord, error) {
 		}
 
 		path := filepath.Join(dir, e.Name())
-		ts := scenarioTimestampFromFileName(e.Name(), path)
-		all = append(all, wrapped{path: path, name: e.Name(), ts: ts})
+		ts := runTimestampFromFileName(e.Name(), path)
+		all = append(all, recentFile{path: path, name: e.Name(), ts: ts})
 	}
 
 	sort.Slice(all, func(i, j int) bool {
@@ -211,19 +229,10 @@ func (s *Store) LoadRecent(limit int) ([]RunRecord, error) {
 		selected = selected[len(selected)-limit:]
 	}
 
-	out := make([]RunRecord, 0, len(selected))
-	for _, v := range selected {
-		rec, err := readRecordFile(v.path)
-		if err != nil {
-			continue
-		}
-		rec.FilePath = v.path
-		out = append(out, rec)
-	}
-	return out, nil
+	return selected, nil
 }
 
-func scenarioTimestampFromFileName(fileName, path string) int64 {
+func runTimestampFromFileName(fileName, path string) int64 {
 	if ts, ok := runEpochFromFile(path); ok {
 		return ts
 	}
