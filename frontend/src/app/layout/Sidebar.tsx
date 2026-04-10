@@ -146,6 +146,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
   const collapsed = !open
   const benchmarksTarget = selectedBenchmark ? benchmarkPath(selectedBenchmark) : '/benchmarks'
   const primaryActiveIndex = useMemo(() => {
+    if (location.pathname.startsWith('/settings')) return null
     if (location.pathname.startsWith('/history')) return 1
     if (location.pathname.startsWith('/benchmarks')) return 2
     return 0
@@ -179,11 +180,13 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
 
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 pb-2">
           <nav aria-label="Primary" className="relative flex flex-col gap-1">
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 h-8 rounded-md bg-sidebar-accent transition-transform duration-220 ease-emphasized will-change-transform"
-              style={{ transform: `translateY(${primaryActiveIndex * 36}px)` }}
-            />
+            {primaryActiveIndex !== null && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 top-0 h-8 rounded-md bg-sidebar-accent transition-transform duration-220 ease-emphasized will-change-transform"
+                style={{ transform: `translateY(${primaryActiveIndex * 36}px)` }}
+              />
+            )}
             <SidebarItem
               active={location.pathname === '/' || location.pathname.startsWith('/overview')}
               icon={<LayoutGrid />}
