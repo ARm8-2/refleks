@@ -23,7 +23,7 @@ type SessionScenarioRadarWidgetProps = {
 const scenarioUsageConfig: ChartConfig = {
   runs: {
     label: 'Runs',
-    color: CHART_SERIES_COLORS.scoreHistory,
+    color: CHART_SERIES_COLORS.scoreCurrent,
   },
 }
 
@@ -114,7 +114,7 @@ function SessionScenarioRadarChart({
         outerRadius={outerRadius}
         margin={{ top: 20, right: 28, left: 28, bottom: 12 }}
       >
-        <PolarGrid />
+        <PolarGrid gridType="circle" radialLines={false} stroke="var(--border-strong)" fill="none" />
         <PolarAngleAxis
           dataKey="label"
           tickLine={false}
