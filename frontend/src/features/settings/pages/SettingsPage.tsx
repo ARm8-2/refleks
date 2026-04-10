@@ -276,7 +276,7 @@ export function SettingsPage() {
                   />
                 </SettingsField>
 
-                <SettingsField label="Start with Windows" description="Launch RefleK's when you log in" checkbox>
+                <SettingsField label="Start with KovaaK's" description="Automatically launch RefleK's when you start KovaaK's, RefleK's will also start with Windows" checkbox>
                   <Checkbox
                     checked={!!settings.autostartEnabled}
                     onCheckedChange={v => handleAutostartChange(v === true)}
