@@ -68,8 +68,6 @@ export function SessionScenarioRadarWidget({
       description={description}
       modalTitle={title}
       modalContent={renderBody(true)}
-      modalWidth={920}
-      modalHeight={760}
       className={className}
     >
       {renderBody(false)}
@@ -86,9 +84,7 @@ export function SessionScenarioRadarWidget({
     }
 
     return (
-      <div className={expanded ? 'h-[420px]' : 'h-[264px] sm:h-[280px]'}>
-        <SessionScenarioRadarChart points={scenarioUsage} maxRuns={maxRuns} expanded={expanded} />
-      </div>
+      <SessionScenarioRadarChart points={scenarioUsage} maxRuns={maxRuns} expanded={expanded} />
     )
   }
 }

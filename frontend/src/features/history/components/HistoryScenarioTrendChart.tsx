@@ -33,7 +33,7 @@ export function ScenarioTrendChart({ scenarioName, points, onClickPoint, classNa
     const chartHeight = expanded ? 'h-[320px]' : 'h-[200px]'
 
     return (
-      <ChartContainer config={dualChartConfig} className={`aspect-auto w-full ${chartHeight}`}>
+      <ChartContainer config={dualChartConfig} className={`aspect-auto w-full h-full`}>
         <LineChart data={points} margin={{ top: 8, right: 12, left: 6, bottom: 0 }} onClick={handleChartClick} style={{ cursor: 'pointer' }}>
           <CartesianGrid vertical={false} />
           <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={24} tickMargin={8} />

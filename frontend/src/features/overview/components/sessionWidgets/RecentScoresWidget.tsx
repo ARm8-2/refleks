@@ -252,7 +252,7 @@ export function RecentScoresWidget({ snapshot }: { snapshot: RecentSessionSnapsh
     }
 
     return (
-      <ChartContainer config={recentScoresConfig} className="aspect-auto w-full h-[360px]">
+      <ChartContainer config={recentScoresConfig} className="aspect-auto w-full h-full">
         <LineChart
           data={expandedData}
           margin={{ top: 12, right: 12, left: 6, bottom: 0 }}

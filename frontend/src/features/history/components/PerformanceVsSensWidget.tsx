@@ -160,8 +160,6 @@ export function PerformanceVsSensWidget({
       modalTitle={modalTitle}
       modalControls={headerActions}
       modalContent={<PerformanceVsSensChartContent data={chartData} metric={metric} metricLabel={metricLabel} expanded />}
-      modalWidth={980}
-      modalHeight={760}
       className={className}
     >
       <PerformanceVsSensChartContent data={chartData} metric={metric} metricLabel={metricLabel} />
@@ -187,10 +185,8 @@ function PerformanceVsSensChartContent({
     },
   }
 
-  const chartHeight = expanded ? 'h-[420px]' : 'h-[270px]'
-
   return (
-    <div className={`w-full ${chartHeight}`}>
+    <div className={`w-full h-full`}>
       <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
         <ScatterChart margin={{ top: 12, right: 12, left: 6, bottom: 4 }}>
           <CartesianGrid vertical={false} />
