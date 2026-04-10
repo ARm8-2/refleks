@@ -1,10 +1,8 @@
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
+import { THEME_SELECTORS, type Theme } from "@/shared/lib/theme"
 import { cn } from "@/shared/lib/utils"
-
-// Format: { THEME_NAME: CSS_SELECTOR }
-const THEMES = { light: "", dark: ".dark" } as const
 
 export type ChartConfig = {
   [k in string]: {
@@ -12,7 +10,7 @@ export type ChartConfig = {
     icon?: React.ComponentType
   } & (
     | { color?: string; theme?: never }
-    | { color?: never; theme: Record<keyof typeof THEMES, string> }
+    | { color?: never; theme: Record<Theme, string> }
   )
 }
 
@@ -77,7 +75,7 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   return (
     <style
       dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
+        __html: Object.entries(THEME_SELECTORS)
           .map(
             ([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {

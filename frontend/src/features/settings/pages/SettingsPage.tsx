@@ -33,7 +33,13 @@ import { ResetSettingsModal } from '../components/ResetSettingsModal'
 import { SettingsField } from '../components/SettingsField'
 import { SettingsSection } from '../components/SettingsSection'
 
-const themeOptions = THEMES.map(t => ({ label: t, value: t }))
+const themeOptions = THEMES.map(t => ({
+  label: t
+    .split('-')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' '),
+  value: t,
+}))
 const fontOptions = FONTS.map(f => ({ label: f.label, value: f.id }))
 const sessionGapOptions = [5, 10, 15, 20, 30, 45, 60, 90, 120].map(m => ({
   label: `${m} minutes`,

@@ -2,7 +2,8 @@ import { STORAGE_KEYS } from './storageKeys'
 
 export const THEMES = [
   'dark',
-  'light'
+  'darker',
+  'light',
 ] as const
 export type Theme = typeof THEMES[number]
 
@@ -21,7 +22,14 @@ const FONT_STORAGE_KEY = STORAGE_KEYS.font
 
 const THEME_CLASSES: Record<Theme, string | null> = {
   dark: 'dark',
+  darker: 'darker',
   light: null,
+}
+
+export const THEME_SELECTORS: Record<Theme, string> = {
+  light: '',
+  dark: '.dark',
+  darker: '.darker',
 }
 
 export const DEFAULT_THEME: Theme = 'dark'
