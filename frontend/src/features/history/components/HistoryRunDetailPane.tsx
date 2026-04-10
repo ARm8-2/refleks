@@ -21,6 +21,7 @@ type Props = {
   onClearPrimaryRun: () => void
   onClearComparison: () => void
   isPrimaryPb: boolean
+  isComparePb: boolean
   onComparePb: () => void
 }
 
@@ -33,6 +34,7 @@ export function HistoryRunDetailPane({
   onClearPrimaryRun,
   onClearComparison,
   isPrimaryPb,
+  isComparePb,
   onComparePb,
 }: Props) {
   const [overlay, setOverlay] = usePersistedState(STORAGE_KEYS.historyAnalysisOverlay, false)
@@ -65,7 +67,7 @@ export function HistoryRunDetailPane({
           onValueChange={onTabChange}
         />
         <div className="flex items-center gap-1">
-          {primaryRun && !isPrimaryPb && (
+          {primaryRun && !isPrimaryPb && !isComparePb && (
             <Button
               variant="ghost"
               size="sm"

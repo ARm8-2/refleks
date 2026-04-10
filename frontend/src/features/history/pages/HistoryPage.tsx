@@ -88,6 +88,7 @@ export function HistoryPage() {
               onClearPrimaryRun={clearPrimaryRun}
               onClearComparison={clearComparison}
               isPrimaryPb={!!primaryRun && !!pbRunForPrimary && primaryRun.id === pbRunForPrimary.id}
+              isComparePb={!!compareRun && !!pbRunForPrimary && compareRun.id === pbRunForPrimary.id}
               onComparePb={comparePb}
             />
           ) : (
