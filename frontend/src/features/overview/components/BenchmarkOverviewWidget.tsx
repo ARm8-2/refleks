@@ -273,7 +273,7 @@ export function BenchmarkOverviewWidget() {
     <Widget
       title={`${benchmark.abbreviation} ${benchmark.benchmarkName}`}
       titleControls={titleControls}
-      description={`Overall ${overallRankName} · ${formatNumber(progress.benchmarkProgress || 0, 0)}%`}
+      // description={`${overallRankName}`}
       headerAction={headerControls}
       className="overflow-hidden"
       contentClassName="-mx-4 -mb-3"

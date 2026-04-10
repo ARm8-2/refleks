@@ -13,7 +13,7 @@ import type { Benchmark, BenchmarkProgress, Settings } from '@/shared/types'
 import { Settings2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useBenchmarkVisibility } from '../../hooks/useBenchmarkVisibility'
-import { adjustColorForTheme, formatNumber, getScenarioName } from '../../lib/detailFormatting'
+import { adjustColorForTheme, getScenarioName } from '../../lib/detailFormatting'
 import { computeRecommendationScores, selectTopPicks, type ScenarioBenchmarkData } from '../../lib/detailRecommendations'
 import { ScenarioHistoryModal } from './ScenarioHistoryModal'
 import { ScenarioNotesModal } from './ScenarioNotesModal'
@@ -201,6 +201,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
     : `minmax(${RANK_MIN_COLUMN_WIDTH}px, 1fr)`
   const rightGridMinWidth = Math.max(1, visibleRankIndices.length) * RANK_MIN_COLUMN_WIDTH
   const overallRankName = rankDefs[(progress.overallRank ?? 0) - 1]?.name || '-'
+  const overallRankColor = rankDefs[(progress.overallRank ?? 0) - 1]?.color ?? null
   const cls = getRowClasses(compactMode)
   const categoryPaddingClass = compactMode ? 'py-3' : 'py-4'
   const categorySpacingClass = compactMode ? 'space-y-1.5' : 'space-y-2'
@@ -228,7 +229,8 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
         <div>
           <h3 className="text-sm font-semibold text-foreground">Progress Tracker</h3>
           <p className="text-xs text-surface-muted-foreground">
-            {benchmark.abbreviation} {benchmark.benchmarkName} · {difficultyName} · Overall {overallRankName} · {formatNumber(progress.benchmarkProgress || 0, 0)}%
+            {benchmark.benchmarkName} · {difficultyName} ·{' '}
+            <span style={overallRankColor ? { color: overallRankColor } : undefined}>{overallRankName}</span>
           </p>
         </div>
 
