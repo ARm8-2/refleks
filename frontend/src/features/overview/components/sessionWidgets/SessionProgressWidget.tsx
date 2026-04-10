@@ -1,6 +1,8 @@
-import { InfoTooltip, Widget } from '@/shared/components'
+import { Button, InfoTooltip, Input, Popover, PopoverContent, PopoverTrigger, Widget } from '@/shared/components'
 import { usePersistedState } from '@/shared/hooks'
 import { CHART_SERIES_COLORS, STORAGE_KEYS } from '@/shared/lib'
+import { Pencil, Plus, RotateCcw } from 'lucide-react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import type { RecentSessionSnapshot } from '../../hooks/useRecentSessionSnapshot'
 
 const PHASE_SWATCH = {
@@ -11,6 +13,157 @@ const PHASE_SWATCH = {
   diminishing: 'var(--phase-diminishing)',
   diminishingFill: 'var(--phase-diminishing-soft)',
 } as const
+
+type SessionProgressTargetEditorProps = {
+  targetRuns: number
+  isCustom: boolean
+  onChange: (nextTarget: number | null) => void
+}
+
+function SessionProgressTargetEditor({ targetRuns, isCustom, onChange }: SessionProgressTargetEditorProps) {
+  const [open, setOpen] = useState(false)
+  const [draftTarget, setDraftTarget] = useState(targetRuns)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const saveOnCloseRef = useRef(true)
+
+  useEffect(() => {
+    if (open) {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+      return
+    }
+
+    setDraftTarget(targetRuns)
+  }, [open, targetRuns])
+
+  function adjustDraftTarget(delta: number) {
+    setDraftTarget(current => Math.max(1, current + delta))
+  }
+
+  function commitTarget(rawValue: string) {
+    const parsed = Number(rawValue)
+    if (!Number.isFinite(parsed)) {
+      setDraftTarget(targetRuns)
+      return
+    }
+
+    onChange(Math.max(1, Math.round(parsed)))
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      if (saveOnCloseRef.current) {
+        commitTarget(String(draftTarget))
+      } else {
+        saveOnCloseRef.current = true
+        setDraftTarget(targetRuns)
+      }
+    }
+
+    setOpen(nextOpen)
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      commitTarget(String(draftTarget))
+      setOpen(false)
+      return
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      saveOnCloseRef.current = false
+      setOpen(false)
+      setDraftTarget(targetRuns)
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant={isCustom ? 'secondary' : 'ghost'}
+          size="sm"
+          className="h-7 gap-1.5 px-2 text-xs"
+          title="Edit session target"
+        >
+          <span className="tabular-nums">{targetRuns}</span>
+          <span className="text-surface-muted-foreground">target{isCustom ? '' : ' auto'}</span>
+          <Pencil className="h-3 w-3" />
+        </Button>
+      </PopoverTrigger>
+
+      <PopoverContent align="end" className="w-56 p-2">
+        <div className="space-y-2">
+          <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-surface-muted-foreground">
+            Session target runs
+          </div>
+
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0 text-surface-muted-foreground"
+              onMouseDown={(event) => {
+                event.preventDefault()
+                adjustDraftTarget(-1)
+              }}
+            >
+              <span className="text-base leading-none">−</span>
+            </Button>
+            <Input
+              ref={inputRef}
+              type="number"
+              min={1}
+              value={draftTarget}
+              onChange={event => setDraftTarget(Math.max(1, Number(event.currentTarget.value) || 1))}
+              onKeyDown={handleKeyDown}
+              onBlur={event => commitTarget(event.currentTarget.value)}
+              className="h-8 w-full rounded-xl px-2 text-center text-sm font-medium tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 shrink-0 text-surface-muted-foreground"
+              onMouseDown={(event) => {
+                event.preventDefault()
+                adjustDraftTarget(1)
+              }}
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 px-1 pt-1">
+            <span className="text-xs text-surface-muted-foreground">{isCustom ? 'Custom target' : 'Automatic target'}</span>
+            <div className="flex items-center gap-1">
+              {isCustom && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => {
+                    saveOnCloseRef.current = false
+                    onChange(null)
+                    setOpen(false)
+                  }}
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Reset
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 export function SessionProgressWidget({ snapshot }: { snapshot: RecentSessionSnapshot }) {
   const {
@@ -23,12 +176,12 @@ export function SessionProgressWidget({ snapshot }: { snapshot: RecentSessionSna
     diminishingReturnsAt,
   } = snapshot
 
-  const [customTarget] = usePersistedState<number | null>(
+  const [customTarget, setCustomTarget] = usePersistedState<number | null>(
     STORAGE_KEYS.overviewSessionProgressTargetRuns,
     null,
   )
-
   const targetRuns = customTarget ?? suggestedRuns
+  const isCustom = customTarget !== null
 
   if (!currentSession) {
     return (
@@ -71,7 +224,10 @@ export function SessionProgressWidget({ snapshot }: { snapshot: RecentSessionSna
   }
 
   return (
-    <Widget title="Session Progress">
+    <Widget
+      title="Session Progress"
+      headerAction={<SessionProgressTargetEditor targetRuns={targetRuns} isCustom={isCustom} onChange={setCustomTarget} />}
+    >
       <div className="relative mx-auto flex flex-1 items-center justify-center">
         <div className="relative aspect-square w-full max-w-[160px] shrink-0">
           <svg viewBox="0 0 200 200" className="h-full w-full">
