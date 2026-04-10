@@ -68,8 +68,8 @@ function ChoiceCard({
       type="button"
       onClick={onSelect}
       className={cn(
-        'flex h-full flex-col rounded-xl bg-surface px-4 py-4 text-left shadow-sm transition-[transform,background-color,box-shadow,ring-color] duration-220 ease-emphasized will-change-transform hover:z-10 hover:-translate-y-1 hover:scale-[1.02] hover:bg-surface-hover hover:shadow-md active:translate-y-0 active:scale-[0.99]',
-        selected && '-translate-y-px scale-[1.015] bg-surface-hover ring-1 ring-primary/35 shadow-md',
+        'flex h-full flex-col rounded-xl bg-surface px-4 py-4 text-left shadow-sm transition-[transform,background-color,box-shadow,ring-color] duration-200 ease-emphasized will-change-transform hover:-translate-y-px hover:scale-[1.01] hover:bg-surface-hover hover:shadow-sm active:scale-[0.995]',
+        selected && '-translate-y-px scale-[1.005] bg-surface-hover ring-1 ring-primary/35 shadow-sm',
       )}
     >
       <div className="flex min-h-[1.75rem] items-center justify-between gap-3">
@@ -136,7 +136,7 @@ function ResourceCard({ label, description, url, urlLabel }: { label: string, de
     <button
       type="button"
       onClick={() => openURL(url)}
-      className="w-full rounded-xl bg-surface-subtle p-4 text-left transition-[transform,background-color,box-shadow] duration-220 ease-emphasized will-change-transform hover:z-10 hover:-translate-y-1 hover:scale-[1.02] hover:bg-surface-hover hover:shadow-sm active:translate-y-0 active:scale-[0.99]"
+      className="w-full rounded-xl bg-surface-subtle p-4 text-left transition-[transform,background-color,box-shadow] duration-200 ease-emphasized will-change-transform hover:-translate-y-px hover:scale-[1.01] hover:bg-surface-hover hover:shadow-sm active:scale-[0.995]"
     >
       <div className="text-sm font-medium text-foreground">{label}</div>
       <p className="mt-1 text-xs leading-5 text-surface-muted-foreground">{description}</p>
