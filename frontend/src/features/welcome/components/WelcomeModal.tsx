@@ -68,8 +68,8 @@ function ChoiceCard({
       type="button"
       onClick={onSelect}
       className={cn(
-        'flex h-full flex-col rounded-xl bg-surface px-4 py-4 text-left shadow-sm transition-colors hover:bg-surface-hover',
-        selected && 'bg-surface-hover ring-1 ring-primary/35',
+        'flex h-full flex-col rounded-xl bg-surface px-4 py-4 text-left shadow-sm transition-[transform,background-color,box-shadow,ring-color] duration-220 ease-emphasized will-change-transform hover:z-10 hover:-translate-y-1 hover:scale-[1.02] hover:bg-surface-hover hover:shadow-md active:translate-y-0 active:scale-[0.99]',
+        selected && '-translate-y-px scale-[1.015] bg-surface-hover ring-1 ring-primary/35 shadow-md',
       )}
     >
       <div className="flex min-h-[1.75rem] items-center justify-between gap-3">
@@ -83,7 +83,7 @@ function ChoiceCard({
         >
           {eyebrow}
         </span>
-        <span className={cn('h-4 w-4 rounded-full border', selected ? 'border-primary bg-primary' : 'border-border bg-transparent')} />
+        <span className={cn('h-4 w-4 rounded-full border transition-[transform,background-color,border-color] duration-200 ease-emphasized', selected ? 'scale-100 border-primary bg-primary' : 'scale-90 border-border bg-transparent')} />
       </div>
 
       <div className="mt-3 flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -136,7 +136,7 @@ function ResourceCard({ label, description, url, urlLabel }: { label: string, de
     <button
       type="button"
       onClick={() => openURL(url)}
-      className="w-full rounded-xl bg-surface-subtle p-4 text-left transition-colors hover:bg-surface-hover"
+      className="w-full rounded-xl bg-surface-subtle p-4 text-left transition-[transform,background-color,box-shadow] duration-220 ease-emphasized will-change-transform hover:z-10 hover:-translate-y-1 hover:scale-[1.02] hover:bg-surface-hover hover:shadow-sm active:translate-y-0 active:scale-[0.99]"
     >
       <div className="text-sm font-medium text-foreground">{label}</div>
       <p className="mt-1 text-xs leading-5 text-surface-muted-foreground">{description}</p>

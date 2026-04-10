@@ -123,14 +123,25 @@ export function HistoryRunList({
                   type="button"
                   onClick={() => onSelectRun(run.id)}
                   className={cn(
-                    'flex w-full flex-col items-center rounded-xl px-1 py-2 text-center transition-colors',
-                    isPrimary ? 'bg-surface-muted font-medium' : isCompared ? 'bg-surface-muted/60' : 'hover:bg-surface-muted',
+                    'group relative flex w-full flex-col items-center overflow-hidden rounded-xl px-1 py-2 text-center transition-[transform,color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.985]',
+                    isCompared && 'shadow-sm',
                     isDimmed && 'opacity-40',
                   )}
                   title={`${run.scenarioName} — ${formatScore(run.score)}`}
                 >
-                  <span className="text-xs font-semibold text-foreground">{formatScore(run.score)}</span>
-                  <span className="mt-0.5 text-[10px] leading-tight text-surface-muted-foreground">{formatPercent(run.accuracy)}</span>
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'absolute inset-0 rounded-xl shadow-sm transition-[opacity,transform] duration-220 ease-emphasized',
+                      isPrimary
+                        ? 'scale-100 bg-surface-muted opacity-100 shadow-md'
+                        : isCompared
+                          ? 'scale-100 bg-surface-muted/70 opacity-100 shadow-md'
+                          : 'scale-[0.96] bg-surface-muted opacity-0 group-hover:scale-100 group-hover:opacity-100',
+                    )}
+                  />
+                  <span className="relative z-10 text-xs font-semibold text-foreground">{formatScore(run.score)}</span>
+                  <span className={cn('relative z-10 mt-0.5 text-[10px] leading-tight text-surface-muted-foreground transition-colors duration-200', (isPrimary || isCompared) && 'text-foreground/70')}>{formatPercent(run.accuracy)}</span>
                 </button>
               )
             }
@@ -138,21 +149,32 @@ export function HistoryRunList({
             return (
               <div
                 className={cn(
-                  'group flex items-center gap-1 rounded-xl pr-1 transition-colors',
-                  isPrimary ? 'bg-surface-muted' : isCompared ? 'bg-surface-muted/60' : 'hover:bg-surface-muted',
+                  'group relative flex items-center gap-1 overflow-hidden rounded-xl pr-1 transition-[transform,color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.985]',
+                  isCompared && 'shadow-sm',
                   isDimmed && 'opacity-40',
                 )}
               >
+                <span
+                  aria-hidden
+                  className={cn(
+                    'absolute inset-0 rounded-xl shadow-sm transition-[opacity,transform] duration-220 ease-emphasized',
+                    isPrimary
+                      ? 'scale-100 bg-surface-muted opacity-100 shadow-md'
+                      : isCompared
+                        ? 'scale-100 bg-surface-muted/70 opacity-100 shadow-md'
+                        : 'scale-[0.985] bg-surface-muted opacity-0 group-hover:scale-100 group-hover:opacity-100',
+                  )}
+                />
                 <button
                   type="button"
                   onClick={() => onSelectRun(run.id)}
-                  className="min-w-0 flex-1 px-3 py-2 text-left"
+                  className="relative z-10 min-w-0 flex-1 px-3 py-2 text-left"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 truncate font-medium text-foreground">{run.scenarioName}</div>
                     <span className="shrink-0 font-semibold text-foreground">{formatScore(run.score)}</span>
                   </div>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-surface-muted-foreground">
+                  <div className={cn('mt-1 flex items-center gap-2 text-xs text-surface-muted-foreground transition-colors duration-200', (isPrimary || isCompared) && 'text-foreground/70')}>
                     <span>{formatDurationLabel(run.durationMs)}</span>
                     {run.accuracy !== null && (
                       <>
@@ -167,7 +189,7 @@ export function HistoryRunList({
                   variant={isCompared ? 'secondary' : 'ghost'}
                   size="icon"
                   className={cn(
-                    'h-7 w-7 shrink-0 transition-opacity',
+                    'relative z-10 h-7 w-7 shrink-0 transition-opacity',
                     isCompared ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
                   )}
                   onClick={e => {

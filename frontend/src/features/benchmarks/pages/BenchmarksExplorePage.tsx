@@ -1,4 +1,4 @@
-import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
+import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components'
 import { useBenchmarks, usePersistedState, useStore } from '@/shared/hooks'
 import { STORAGE_KEYS } from '@/shared/lib'
 import type { Benchmark } from '@/shared/types'
@@ -192,40 +192,38 @@ export function BenchmarksExplorePage() {
             </Select>
 
             {/* Random */}
-            <button
+            <Button
+              variant="outline"
+              size="default"
+              className="px-3"
               onClick={handleRandom}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface text-sm text-surface-muted-foreground hover:text-foreground hover:bg-surface-muted transition-colors"
               title="Open a random benchmark"
             >
               <Dice5 className="w-4 h-4" />
               Random
-            </button>
+            </Button>
 
-            {/* Favorites filter */}
-            <button
+            <Button
+              variant={showFavOnly ? 'secondary' : 'outline'}
+              size="default"
+              className="px-3"
               onClick={() => setShowFavOnly(v => !v)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl transition-colors ${showFavOnly
-                ? 'bg-primary-muted text-primary hover:bg-primary-emphasis'
-                : 'bg-surface text-surface-muted-foreground hover:text-foreground hover:bg-surface-muted'
-                }`}
               title={showFavOnly ? 'Show all benchmarks' : 'Show favorites only'}
             >
-              <Star className="w-4 h-4" fill={showFavOnly ? 'currentColor' : 'none'} />
+              <Star className="h-4 w-4" fill={showFavOnly ? 'currentColor' : 'none'} />
               {showFavOnly ? 'Favorites' : 'All'}
-            </button>
+            </Button>
 
-            {/* Recommendations toggle */}
-            <button
+            <Button
+              variant={showRecs ? 'secondary' : 'outline'}
+              size="default"
+              className="px-3"
               onClick={() => setShowRecs(v => !v)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm rounded-xl transition-colors ${showRecs
-                ? 'bg-primary-muted text-primary hover:bg-primary-emphasis'
-                : 'bg-surface text-surface-muted-foreground hover:text-foreground hover:bg-surface-muted'
-                }`}
               title={showRecs ? 'Hide recommendations' : 'Show recommended benchmarks'}
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="h-4 w-4" />
               Recommended
-            </button>
+            </Button>
           </div>
         </div>
       </div>

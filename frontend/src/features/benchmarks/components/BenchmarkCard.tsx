@@ -18,7 +18,7 @@ export function BenchmarkCard({ benchmark, isFavorite, onToggleFavorite, onSelec
   return (
     <div
       onClick={onSelect}
-      className="relative group cursor-pointer rounded-xl bg-surface pl-2 pr-10 py-2 transition-[transform,background-color] duration-220 ease-emphasized will-change-transform hover:bg-surface-muted motion-safe:hover:scale-[1.01]"
+      className="relative group cursor-pointer rounded-xl bg-surface pl-2 pr-10 py-2 transition-[transform,background-color,box-shadow] duration-200 ease-emphasized origin-center will-change-transform hover:z-10 hover:scale-[1.02] hover:bg-surface-muted hover:shadow-sm active:scale-[0.995]"
       onKeyDown={e => {
         if ((e.key === 'Enter' || e.key === ' ') && onSelect) {
           e.preventDefault()
@@ -35,7 +35,7 @@ export function BenchmarkCard({ benchmark, isFavorite, onToggleFavorite, onSelec
           aria-label={isFavorite ? 'Unfavorite' : 'Favorite'}
           title={isFavorite ? 'Unfavorite' : 'Favorite'}
           onClick={handleToggle}
-          className={`inline-flex items-center justify-center rounded w-8 h-8 focus:outline-none transition-colors hover:bg-surface-emphasis ${isFavorite ? 'text-primary' : 'text-foreground hover:text-primary'
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-xl focus:outline-none transition-[transform,background-color,color] duration-200 ease-emphasized hover:bg-surface-emphasis hover:scale-[1.05] active:scale-[0.96] ${isFavorite ? 'text-primary' : 'text-foreground hover:text-primary'
             }`}
         >
           <Star size={20} strokeWidth={1.5} fill={isFavorite ? 'currentColor' : 'none'} />

@@ -104,13 +104,19 @@ export function HistorySessionSidebar({
                   type="button"
                   onClick={() => onSelectSession(session.id)}
                   className={cn(
-                    'flex w-full flex-col items-center rounded-xl px-1 py-2 text-center transition-colors',
-                    selected ? 'bg-surface-muted font-medium' : 'hover:bg-surface-muted',
+                    'group relative flex w-full flex-col items-center overflow-hidden rounded-xl px-1 py-2 text-center transition-[transform,color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.985]',
                   )}
                   title={formatSessionTitle(session)}
                 >
-                  <CalendarRange className="h-4 w-4 text-surface-muted-foreground" />
-                  <span className="mt-1 text-[10px] leading-tight text-surface-muted-foreground">{formatCompactDate(ts)}</span>
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'absolute inset-0 rounded-xl bg-surface-muted shadow-sm transition-[opacity,transform] duration-220 ease-emphasized',
+                      selected ? 'scale-100 opacity-100' : 'scale-[0.96] opacity-0 group-hover:scale-100 group-hover:opacity-100',
+                    )}
+                  />
+                  <CalendarRange className={cn('relative z-10 h-4 w-4 text-surface-muted-foreground transition-colors duration-200', selected && 'text-foreground')} />
+                  <span className={cn('relative z-10 mt-1 text-[10px] leading-tight text-surface-muted-foreground transition-colors duration-200', selected && 'font-medium text-foreground')}>{formatCompactDate(ts)}</span>
                 </button>
               )
             }
@@ -120,11 +126,17 @@ export function HistorySessionSidebar({
                 type="button"
                 onClick={() => onSelectSession(session.id)}
                 className={cn(
-                  'w-full rounded-xl px-3 py-2 text-left transition-colors',
-                  selected ? 'bg-surface-muted font-medium' : 'hover:bg-surface-muted',
+                  'group relative w-full overflow-hidden rounded-xl px-3 py-2 text-left transition-[transform,color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.985]',
                 )}
               >
-                <div className="flex items-start justify-between gap-2">
+                <span
+                  aria-hidden
+                  className={cn(
+                    'absolute inset-0 rounded-xl bg-surface-muted shadow-sm transition-[opacity,transform] duration-220 ease-emphasized',
+                    selected ? 'scale-100 opacity-100' : 'scale-[0.985] opacity-0 group-hover:scale-100 group-hover:opacity-100',
+                  )}
+                />
+                <div className="relative z-10 flex items-start justify-between gap-2">
                   <div className="min-w-0 truncate text-foreground">{formatSessionTitle(session)}</div>
                   <div className="flex shrink-0 items-center gap-1.5">
                     {hasNotes && (
@@ -135,7 +147,7 @@ export function HistorySessionSidebar({
                     <span className="text-[11px] text-surface-muted-foreground">{formatRelativeTime(ts)}</span>
                   </div>
                 </div>
-                <div className="mt-1 flex items-center gap-2 text-xs text-surface-muted-foreground">
+                <div className={cn('relative z-10 mt-1 flex items-center gap-2 text-xs text-surface-muted-foreground transition-colors duration-200', selected && 'text-foreground/70')}>
                   <span>{session.items.length} {session.items.length === 1 ? 'run' : 'runs'}</span>
                   <span>·</span>
                   <span>{formatDurationLabel(readSessionDurationMs(session))}</span>

@@ -1,5 +1,5 @@
 import {
-  WelcomeModal,
+  WelcomeModalSession,
   buildManualWelcomePresentation,
   buildWelcomeSeenSettingsUpdate,
   buildWelcomeSettingsUpdate,
@@ -160,7 +160,6 @@ export function SettingsPage() {
     setSettings(next)
     try {
       await queueSettingsSave(next)
-      setWelcomePresentation(null)
     } catch {
       // queueSettingsSave already surfaced the failure to the user.
     }
@@ -475,15 +474,10 @@ export function SettingsPage() {
       <ResetSettingsModal isOpen={isResetOpen} onClose={() => setIsResetOpen(false)} onReset={handleReset} />
       <ClearCacheModal isOpen={isClearCacheOpen} onClose={() => setIsClearCacheOpen(false)} />
       {welcomePresentation && (
-        <WelcomeModal
-          isOpen
-          content={welcomePresentation.content}
-          initialAnonymousEnabled={welcomePresentation.initialAnonymousEnabled}
-          initialMouseTrackingEnabled={welcomePresentation.initialMouseTrackingEnabled}
-          showMouseTraceChoice={welcomePresentation.showMouseTraceChoice}
-          runSyncEnabled={welcomePresentation.runSyncEnabled}
+        <WelcomeModalSession
+          presentation={welcomePresentation}
           onConfirm={handleWelcomeConfirm}
-          onClose={() => setWelcomePresentation(null)}
+          onDismissed={() => setWelcomePresentation(null)}
         />
       )}
     </div>

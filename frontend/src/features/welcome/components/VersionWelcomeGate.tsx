@@ -1,7 +1,7 @@
 import { getSettings, getVersion, updateSettings } from '@/shared/lib'
 import { useEffect, useState } from 'react'
 import { buildVersionWelcomePresentation, buildWelcomeSeenSettingsUpdate, buildWelcomeSettingsUpdate, type WelcomePresentation } from '../lib/presentation'
-import { WelcomeModal } from './WelcomeModal'
+import { WelcomeModalSession } from './WelcomeModalSession'
 
 export function VersionWelcomeGate() {
   const [presentation, setPresentation] = useState<WelcomePresentation | null>(null)
@@ -27,20 +27,6 @@ export function VersionWelcomeGate() {
     }
   }, [])
 
-  const handleClose = () => {
-    if (!presentation) {
-      return
-    }
-
-    setPresentation(null)
-
-    void getSettings()
-      .then(settings => updateSettings(buildWelcomeSeenSettingsUpdate(settings, presentation.currentVersion)))
-      .catch(error => {
-        console.warn('Failed to persist welcome dismissal:', error)
-      })
-  }
-
   const handleConfirm = async ({ anonymousEnabled, mouseTrackingEnabled }: { anonymousEnabled: boolean, mouseTrackingEnabled: boolean | null }) => {
     if (!presentation) {
       return
@@ -53,7 +39,6 @@ export function VersionWelcomeGate() {
         presentation.currentVersion,
       )
       await updateSettings(nextSettings)
-      setPresentation(null)
     } catch (error) {
       console.warn('Failed to save welcome choice:', error)
     }
@@ -64,15 +49,20 @@ export function VersionWelcomeGate() {
   }
 
   return (
-    <WelcomeModal
-      isOpen
-      content={presentation.content}
-      initialAnonymousEnabled={presentation.initialAnonymousEnabled}
-      initialMouseTrackingEnabled={presentation.initialMouseTrackingEnabled}
-      showMouseTraceChoice={presentation.showMouseTraceChoice}
-      runSyncEnabled={presentation.runSyncEnabled}
+    <WelcomeModalSession
+      presentation={presentation}
       onConfirm={handleConfirm}
-      onClose={handleClose}
+      onDismissed={reason => {
+        setPresentation(null)
+
+        if (reason === 'dismiss') {
+          void getSettings()
+            .then(settings => updateSettings(buildWelcomeSeenSettingsUpdate(settings, presentation.currentVersion)))
+            .catch(error => {
+              console.warn('Failed to persist welcome dismissal:', error)
+            })
+        }
+      }}
     />
   )
 }
