@@ -207,7 +207,7 @@ function SessionSortFilter({
             type="button"
             onClick={() => onSortChange(opt.value)}
             className={cn(
-              'flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-xs transition-colors',
+              'flex w-full cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 text-xs transition-[transform,background-color,color] duration-200 ease-emphasized will-change-transform active:scale-[0.985]',
               sort === opt.value ? 'bg-surface-muted text-foreground' : 'text-surface-muted-foreground hover:bg-surface-emphasis hover:text-foreground',
             )}
           >
@@ -227,7 +227,7 @@ function SessionSortFilter({
           type="button"
           onClick={() => onFilterPbChange(v => !v)}
           className={cn(
-            'flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-xs transition-colors',
+            'flex w-full cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 text-xs transition-[transform,background-color,color] duration-200 ease-emphasized will-change-transform active:scale-[0.985]',
             filterPb ? 'bg-surface-muted text-foreground' : 'text-surface-muted-foreground hover:bg-surface-emphasis hover:text-foreground',
           )}
         >

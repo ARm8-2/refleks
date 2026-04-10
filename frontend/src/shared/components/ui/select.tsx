@@ -19,7 +19,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-xl bg-surface-subtle px-3 py-2 text-sm transition-[background-color,color,box-shadow] duration-200 ease-emphasized data-[placeholder]:text-surface-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      "flex h-9 w-full cursor-pointer items-center justify-between whitespace-nowrap rounded-xl bg-surface-subtle px-3 py-2 text-sm transition-[background-color,color,box-shadow] duration-200 ease-emphasized data-[placeholder]:text-surface-muted-foreground focus:outline-none data-[state=open]:bg-surface-hover data-[state=open]:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
       className
     )}
     {...props}
@@ -118,7 +118,7 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-xl py-1.5 pl-2 pr-8 text-sm outline-none transition-[background-color,color] duration-150 ease-emphasized focus:bg-surface-emphasis focus:text-surface-emphasis-foreground data-[highlighted]:bg-surface-emphasis data-[highlighted]:text-surface-emphasis-foreground data-[state=checked]:bg-surface-muted data-[state=checked]:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex w-full cursor-pointer select-none items-center rounded-xl py-1.5 pl-2 pr-8 text-sm outline-none transition-[transform,background-color,color] duration-150 ease-emphasized focus:bg-surface-emphasis focus:text-surface-emphasis-foreground data-[highlighted]:bg-surface-emphasis data-[highlighted]:text-surface-emphasis-foreground data-[state=checked]:bg-surface-muted data-[state=checked]:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 active:scale-[0.985]",
       className
     )}
     {...props}
