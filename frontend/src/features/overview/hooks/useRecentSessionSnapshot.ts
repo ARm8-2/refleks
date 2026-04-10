@@ -1,4 +1,5 @@
 import { getScenarioName } from '@/features/benchmarks/lib/detailFormatting'
+import { buildStreakActivity } from '@/features/overview/lib/streakActivity'
 import { useStore } from '@/shared/hooks'
 import type { RunRecord, Session } from '@/shared/types'
 import { useMemo } from 'react'
@@ -38,6 +39,7 @@ export type RecentSessionSnapshot = {
   activePlaytimeDetail: string
   streakLabel: string
   streakDetail: string
+  topStreak: number
   performanceValue: string
   performanceDetail: string
   currentRuns: number
@@ -88,6 +90,7 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
         activePlaytimeDetail: 'No run duration data',
         streakLabel: '--',
         streakDetail: 'No recent activity',
+        topStreak: 0,
         performanceValue: '--',
         performanceDetail: 'Need more history',
         currentRuns: 0,
@@ -116,7 +119,7 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
     const focusRatio = activePlaytimeMs > 0
       ? activePlaytimeMs / Math.max(activePlaytimeMs, sessionLengthMs)
       : 0
-    const activityStats = calculateActivityStats(currentSession, sessions)
+    const streakActivity = buildStreakActivity(sessions)
     const performance = readPerformance(currentSession, sessions.slice(1))
     const recommendation = recommendSessionLength(sessions)
     const currentRuns = currentSession.items.length
@@ -135,8 +138,13 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
       activePlaytimeDetail: focusRatio > 0
         ? `${Math.round(focusRatio * 100)}% active`
         : 'No run duration data',
-      streakLabel: `${activityStats.streak} ${pluralize('day', activityStats.streak)}`,
-      streakDetail: `${formatDuration(activityStats.playtimeMs)} today`,
+      streakLabel: `${streakActivity.currentStreak} ${pluralize('day', streakActivity.currentStreak)}`,
+      streakDetail: streakActivity.currentStreak > 0
+        ? `${formatDuration(streakActivity.todayPlaytimeMs)} today`
+        : streakActivity.lastActiveDayTs !== null
+          ? `Last active ${formatRelativeDay(streakActivity.lastActiveDayTs)}`
+          : 'No recent activity',
+      topStreak: streakActivity.topStreak,
       performanceValue: performance.value,
       performanceDetail: performance.tone === 'muted' ? 'Need more history' : performance.label,
       currentRuns,
@@ -271,40 +279,6 @@ function computeRecentScores(session: Session, allSessions: Session[]) {
     sessionBest,
     pb,
     sessionStartIndex: sessionStart?.index ?? null,
-  }
-}
-
-function calculateActivityStats(currentSession: Session, allSessions: Session[]) {
-  const targetDate = new Date(readSessionEndTimestamp(currentSession))
-  const activityDays = new Set<string>()
-  let playtimeMs = 0
-
-  for (const session of allSessions) {
-    for (const item of session.items) {
-      const ts = readRunTimestamp(item)
-      if (ts <= 0) continue
-
-      const itemDate = new Date(ts)
-      const itemKey = toDayKey(itemDate)
-      activityDays.add(itemKey)
-
-      if (itemKey === toDayKey(targetDate)) {
-        playtimeMs += readRunDurationMs(item)
-      }
-    }
-  }
-
-  let streak = 0
-  const cursor = startOfDay(targetDate)
-
-  while (activityDays.has(toDayKey(cursor))) {
-    streak += 1
-    cursor.setDate(cursor.getDate() - 1)
-  }
-
-  return {
-    playtimeMs,
-    streak,
   }
 }
 
@@ -734,12 +708,18 @@ function pluralize(word: string, count: number): string {
   return count === 1 ? word : `${word}s`
 }
 
-function startOfDay(date: Date): Date {
-  const next = new Date(date)
-  next.setHours(0, 0, 0, 0)
-  return next
-}
+function formatRelativeDay(timestamp: number): string {
+  const target = new Date(timestamp)
+  target.setHours(0, 0, 0, 0)
 
-function toDayKey(date: Date): string {
-  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  if (target.getTime() === today.getTime()) return 'today'
+  if (target.getTime() === yesterday.getTime()) return 'yesterday'
+
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(target)
 }

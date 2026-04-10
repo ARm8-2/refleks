@@ -267,7 +267,7 @@ export function HistorySessionOverview({ session, sessions, sessionRuns, selecte
                   <button
                     type="button"
                     onClick={() => onSelectRun(pb.id)}
-                    className="rounded-xl bg-surface-subtle px-3 py-2.5 text-left transition-colors hover:bg-surface-emphasis"
+                    className="rounded-xl bg-surface-subtle px-3 py-2.5 text-left transition-[transform,color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.985] hover:bg-surface-emphasis"
                     title="Inspect personal best"
                   >
                     <div className="flex items-center gap-1 text-xs text-surface-muted-foreground">
