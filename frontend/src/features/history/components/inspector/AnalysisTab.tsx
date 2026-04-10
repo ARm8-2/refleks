@@ -107,30 +107,30 @@ export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: H
         <SummaryMetrics analysis={primaryAnalysis} />
         <Widget
           title="Kills over time"
-          className="bg-surface-subtle"
+          className="bg-surface-subtle h-[360px]"
           modalTitle="Kills over time"
-          modalContent={<EventsChart data={primary.events} height="h-[360px]" />}
+          modalContent={<EventsChart data={primary.events} />}
         >
-          <EventsChart data={primary.events} height="h-[160px]" />
+          <EventsChart data={primary.events} />
         </Widget>
         <div className="grid gap-3 lg:grid-cols-2">
           <Widget
             title="TTK trend"
             description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill · R² ${primaryAnalysis.movingAvg.r2.toFixed(3)}`}
-            className="bg-surface-subtle"
+            className="bg-surface-subtle h-[360px]"
             modalTitle="TTK moving average"
-            modalContent={<TTKChart data={primary.ttk} height="h-[360px]" />}
+            modalContent={<TTKChart data={primary.ttk} />}
           >
-            <TTKChart data={primary.ttk} height="h-[160px]" />
+            <TTKChart data={primary.ttk} />
           </Widget>
           <Widget
             title="Accuracy vs speed"
             description={`Pearson r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-            className="bg-surface-subtle"
+            className="bg-surface-subtle h-[360px]"
             modalTitle="Accuracy vs speed"
-            modalContent={<ScatterPlot data={primary.scatter} height="h-[360px]" />}
+            modalContent={<ScatterPlot data={primary.scatter} />}
           >
-            <ScatterPlot data={primary.scatter} height="h-[160px]" />
+            <ScatterPlot data={primary.scatter} />
           </Widget>
         </div>
       </div>
@@ -181,19 +181,19 @@ function SplitCharts({
       <div className="grid gap-3 md:grid-cols-2">
         <Widget
           title="Kills over time — Pinned"
-          className="bg-surface-subtle hover:bg-surface-muted"
+          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
           modalTitle="Kills over time — Pinned"
-          modalContent={<EventsChart data={primary.events} height="h-[360px]" />}
+          modalContent={<EventsChart data={primary.events} />}
         >
-          <EventsChart data={primary.events} height="h-[140px]" />
+          <EventsChart data={primary.events} />
         </Widget>
         <Widget
           title="Kills over time — Compare"
-          className="bg-surface-subtle hover:bg-surface-muted"
+          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
           modalTitle="Kills over time — Compare"
-          modalContent={<EventsChart data={compare.events} height="h-[360px]" />}
+          modalContent={<EventsChart data={compare.events} />}
         >
-          <EventsChart data={compare.events} height="h-[140px]" />
+          <EventsChart data={compare.events} />
         </Widget>
       </div>
 
@@ -201,20 +201,20 @@ function SplitCharts({
         <Widget
           title="TTK trend — Pinned"
           description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill`}
-          className="bg-surface-subtle hover:bg-surface-muted"
+          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
           modalTitle="TTK trend — Pinned"
-          modalContent={<TTKChart data={primary.ttk} height="h-[360px]" />}
+          modalContent={<TTKChart data={primary.ttk} />}
         >
-          <TTKChart data={primary.ttk} height="h-[140px]" />
+          <TTKChart data={primary.ttk} />
         </Widget>
         <Widget
           title="TTK trend — Compare"
           description={`Slope: ${compareAnalysis.movingAvg.slope >= 0 ? '+' : ''}${compareAnalysis.movingAvg.slope.toFixed(4)}s/kill`}
-          className="bg-surface-subtle hover:bg-surface-muted"
+          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
           modalTitle="TTK trend — Compare"
-          modalContent={<TTKChart data={compare.ttk} height="h-[360px]" />}
+          modalContent={<TTKChart data={compare.ttk} />}
         >
-          <TTKChart data={compare.ttk} height="h-[140px]" />
+          <TTKChart data={compare.ttk} />
         </Widget>
       </div>
 
@@ -222,20 +222,20 @@ function SplitCharts({
         <Widget
           title="Acc vs speed — Pinned"
           description={`r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-          className="bg-surface-subtle hover:bg-surface-muted"
+          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
           modalTitle="Accuracy vs speed — Pinned"
-          modalContent={<ScatterPlot data={primary.scatter} height="h-[360px]" />}
+          modalContent={<ScatterPlot data={primary.scatter} />}
         >
-          <ScatterPlot data={primary.scatter} height="h-[140px]" />
+          <ScatterPlot data={primary.scatter} />
         </Widget>
         <Widget
           title="Acc vs speed — Compare"
           description={`r: ${compareAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-          className="bg-surface-subtle hover:bg-surface-muted"
+          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
           modalTitle="Accuracy vs speed — Compare"
-          modalContent={<ScatterPlot data={compare.scatter} height="h-[360px]" />}
+          modalContent={<ScatterPlot data={compare.scatter} />}
         >
-          <ScatterPlot data={compare.scatter} height="h-[140px]" />
+          <ScatterPlot data={compare.scatter} />
         </Widget>
       </div>
     </div>
@@ -287,30 +287,30 @@ function OverlayCharts({
     <div className="space-y-3">
       <Widget
         title="Kills over time"
-        className="bg-surface-subtle hover:bg-surface-muted"
+        className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
         modalTitle="Kills over time — Overlay"
-        modalContent={<EventsChartOverlay data={eventsOverlay} height="h-[360px]" />}
+        modalContent={<EventsChartOverlay data={eventsOverlay} />}
       >
-        <EventsChartOverlay data={eventsOverlay} height="h-[160px]" />
+        <EventsChartOverlay data={eventsOverlay} />
       </Widget>
       <div className="grid gap-3 lg:grid-cols-2">
         <Widget
           title="TTK trend"
           description={`Pinned slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)} · Compare: ${compareAnalysis.movingAvg.slope >= 0 ? '+' : ''}${compareAnalysis.movingAvg.slope.toFixed(4)}`}
-          className="bg-surface-subtle hover:bg-surface-muted"
+          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
           modalTitle="TTK trend — Overlay"
-          modalContent={<TTKChartOverlay data={ttkOverlay} height="h-[360px]" />}
+          modalContent={<TTKChartOverlay data={ttkOverlay} />}
         >
-          <TTKChartOverlay data={ttkOverlay} height="h-[160px]" />
+          <TTKChartOverlay data={ttkOverlay} />
         </Widget>
         <Widget
           title="Accuracy vs speed"
           description={`Pinned r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)} · Compare: ${compareAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-          className="bg-surface-subtle hover:bg-surface-muted"
+          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
           modalTitle="Accuracy vs speed — Overlay"
-          modalContent={<ScatterPlotOverlay primary={primary.scatter} compare={compare.scatter} height="h-[360px]" />}
+          modalContent={<ScatterPlotOverlay primary={primary.scatter} compare={compare.scatter} />}
         >
-          <ScatterPlotOverlay primary={primary.scatter} compare={compare.scatter} height="h-[160px]" />
+          <ScatterPlotOverlay primary={primary.scatter} compare={compare.scatter} />
         </Widget>
       </div>
     </div>
@@ -337,9 +337,9 @@ function SummaryMetrics({ analysis, label }: { analysis: ScenarioAnalysis; label
   )
 }
 
-function EventsChart({ data, height }: { data: Array<Record<string, unknown>>; height: string }) {
+function EventsChart({ data }: { data: Array<Record<string, unknown>> }) {
   return (
-    <ChartContainer config={eventsConfig} className={`aspect-auto w-full ${height}`}>
+    <ChartContainer config={eventsConfig} className={`aspect-auto w-full h-full`}>
       <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis type="number" dataKey="timeSec" tickLine={false} axisLine={false} minTickGap={24} tickMargin={8} tickFormatter={fmtTimeTick} />
@@ -353,9 +353,9 @@ function EventsChart({ data, height }: { data: Array<Record<string, unknown>>; h
   )
 }
 
-function TTKChart({ data, height }: { data: Array<Record<string, unknown>>; height: string }) {
+function TTKChart({ data }: { data: Array<Record<string, unknown>> }) {
   return (
-    <ChartContainer config={ttkConfig} className={`aspect-auto w-full ${height}`}>
+    <ChartContainer config={ttkConfig} className={`aspect-auto w-full h-full`}>
       <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis type="number" dataKey="timeSec" tickLine={false} axisLine={false} minTickGap={24} tickMargin={8} tickFormatter={fmtTimeTick} />
@@ -368,9 +368,9 @@ function TTKChart({ data, height }: { data: Array<Record<string, unknown>>; heig
   )
 }
 
-function ScatterPlot({ data, height }: { data: Array<{ x: number; y: number }>; height: string }) {
+function ScatterPlot({ data }: { data: Array<{ x: number; y: number }> }) {
   return (
-    <ChartContainer config={scatterConfig} className={`aspect-auto w-full ${height}`}>
+    <ChartContainer config={scatterConfig} className={`aspect-auto w-full h-full`}>
       <ScatterChart margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
         <CartesianGrid />
         <XAxis type="number" dataKey="x" name="KPM" tickLine={false} axisLine={false} tickMargin={8} />
@@ -393,9 +393,9 @@ function ScatterPlot({ data, height }: { data: Array<{ x: number; y: number }>; 
   )
 }
 
-function EventsChartOverlay({ data, height }: { data: Array<Record<string, unknown>>; height: string }) {
+function EventsChartOverlay({ data }: { data: Array<Record<string, unknown>> }) {
   return (
-    <ChartContainer config={eventsOverlayConfig} className={`aspect-auto w-full ${height}`}>
+    <ChartContainer config={eventsOverlayConfig} className={`aspect-auto w-full h-full`}>
       <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis type="number" dataKey="timeSec" tickLine={false} axisLine={false} minTickGap={24} tickMargin={8} tickFormatter={fmtTimeTick} />
@@ -411,9 +411,9 @@ function EventsChartOverlay({ data, height }: { data: Array<Record<string, unkno
   )
 }
 
-function TTKChartOverlay({ data, height }: { data: Array<Record<string, unknown>>; height: string }) {
+function TTKChartOverlay({ data }: { data: Array<Record<string, unknown>> }) {
   return (
-    <ChartContainer config={ttkOverlayConfig} className={`aspect-auto w-full ${height}`}>
+    <ChartContainer config={ttkOverlayConfig} className={`aspect-auto w-full h-full`}>
       <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
         <CartesianGrid vertical={false} />
         <XAxis type="number" dataKey="timeSec" tickLine={false} axisLine={false} minTickGap={24} tickMargin={8} tickFormatter={fmtTimeTick} />
@@ -428,9 +428,9 @@ function TTKChartOverlay({ data, height }: { data: Array<Record<string, unknown>
   )
 }
 
-function ScatterPlotOverlay({ primary, compare, height }: { primary: Array<{ x: number; y: number }>; compare: Array<{ x: number; y: number }>; height: string }) {
+function ScatterPlotOverlay({ primary, compare }: { primary: Array<{ x: number; y: number }>; compare: Array<{ x: number; y: number }> }) {
   return (
-    <ChartContainer config={scatterOverlayConfig} className={`aspect-auto w-full ${height}`}>
+    <ChartContainer config={scatterOverlayConfig} className={`aspect-auto w-full h-full`}>
       <ScatterChart margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
         <CartesianGrid />
         <XAxis type="number" dataKey="x" name="KPM" tickLine={false} axisLine={false} tickMargin={8} />
