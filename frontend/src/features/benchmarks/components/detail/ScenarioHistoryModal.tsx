@@ -74,10 +74,6 @@ export function ScenarioHistoryModal({ isOpen, onClose, scenarioName, thresholds
     [trendData],
   )
 
-  const high = numericScores.length ? Math.max(...numericScores) : 0
-  const low = numericScores.length ? Math.min(...numericScores) : 0
-  const latest = numericScores.length ? numericScores[numericScores.length - 1] : 0
-
   const scoreDomain = useMemo(
     () => buildThresholdAnchoredScoreDomain(numericScores, thresholds),
     [numericScores, thresholds],
@@ -88,7 +84,7 @@ export function ScenarioHistoryModal({ isOpen, onClose, scenarioName, thresholds
   }, [rankDefs, scoreDomain, thresholds])
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Scenario History · ${scenarioName}`} width={980} height="auto">
+    <Modal isOpen={isOpen} onClose={onClose} title={`Scenario History · ${scenarioName}`}>
       <div className="space-y-3 px-4 pb-4">
         {loading && <Loading />}
 
@@ -104,22 +100,7 @@ export function ScenarioHistoryModal({ isOpen, onClose, scenarioName, thresholds
 
         {!loading && !error && trendData.length > 0 && (
           <>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-surface-subtle p-3">
-                <div className="text-xs text-surface-muted-foreground">Latest</div>
-                <div className="text-lg font-semibold text-foreground">{formatNumber(latest, 0)}</div>
-              </div>
-              <div className="rounded-xl bg-surface-subtle p-3">
-                <div className="text-xs text-surface-muted-foreground">Highest</div>
-                <div className="text-lg font-semibold text-success">{formatNumber(high, 0)}</div>
-              </div>
-              <div className="rounded-xl bg-surface-subtle p-3">
-                <div className="text-xs text-surface-muted-foreground">Lowest</div>
-                <div className="text-lg font-semibold text-foreground">{formatNumber(low, 0)}</div>
-              </div>
-            </div>
-
-            <ChartContainer config={chartConfig} className="aspect-auto h-[360px] w-full">
+            <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
               <LineChart data={trendData} margin={{ top: 2, right: 6, left: 0, bottom: 0 }}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis dataKey="run" hide />
