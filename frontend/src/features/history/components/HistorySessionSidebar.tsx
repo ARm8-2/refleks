@@ -211,8 +211,8 @@ function SessionSortFilter({
               sort === opt.value ? 'bg-surface-muted text-foreground' : 'text-surface-muted-foreground hover:bg-surface-emphasis hover:text-foreground',
             )}
           >
+            <span className="min-w-0 flex-1 text-left">{opt.label}</span>
             <Check className={cn('h-3 w-3 shrink-0', sort === opt.value ? 'opacity-100' : 'opacity-0')} />
-            {opt.label}
           </button>
         ))}
 
