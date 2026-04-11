@@ -6,7 +6,7 @@
   :root {
     --radius: 0.5rem;
 
-    /* ── Light theme (default) ─────────────────────────────────── */
+    /*  Light theme */
     --canvas: #f4f5f7;
     --canvas-foreground: #171b22;
     --surface: #ffffff;
@@ -119,7 +119,7 @@
     --surface-emphasis-foreground: #f1f1f1;
     --surface-panel: #1b1b1bb3;
     --surface-hover: #292929;
-    --popover: #232323;
+    --popover: #303030;
     --popover-foreground: #ececec;
     --primary: #4a8df7;
     --primary-foreground: #ffffff;
@@ -174,7 +174,7 @@
     --ink-strong: #0b1220;
     --ink-inverse: #f8fafc;
 
-    /* Scrollbar (dark-light overrides) */
+    /* Scrollbar */
     --scrollbar-thumb: #ffffff14;
     --scrollbar-thumb-hover: #ffffff29;
     --scrollbar-thumb-active: #ffffff3d;
@@ -207,7 +207,7 @@
     --surface-emphasis-foreground: #e6e6e6;
     --surface-panel: #141414b3;
     --surface-hover: #242424;
-    --popover: #1f1f1f;
+    --popover: #272727;
     --popover-foreground: #e6e6e6;
     --primary: #3c83f6;
     --primary-foreground: #ffffff;
@@ -259,7 +259,7 @@
     --ink-strong: #0b1220;
     --ink-inverse: #f8fafc;
 
-    /* Scrollbar (dark overrides) */
+    /* Scrollbar */
     --scrollbar-thumb: #ffffff14;
     --scrollbar-thumb-hover: #ffffff29;
     --scrollbar-thumb-active: #ffffff3d;
