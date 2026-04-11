@@ -58,6 +58,7 @@ export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnap
   const [storedBreakdownMode, setStoredBreakdownMode] = usePersistedState<BreakdownMode>(STORAGE_KEYS.overviewStreakBreakdownMode, 'day')
 
   const selectedDayTs = normalizeSelectedDayTs(storedSelectedDayTs)
+  const todayDayTs = normalizeSelectedDayTs(Date.now())
   const breakdownMode = normalizeBreakdownMode(storedBreakdownMode)
 
   const hasData = points.some(p => p.minutes > 0)
@@ -330,6 +331,7 @@ export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnap
                       }
 
                       const selected = selectedDayTs === cell.dayTs
+                      const today = todayDayTs === cell.dayTs
                       const streakLength = streakLengthByDayTs.get(cell.dayTs) ?? 0
                       const streakLabel = streakLength > 0 ? `${streakLength} ${pluralize('day', streakLength)}` : 'No streak'
 
@@ -338,14 +340,21 @@ export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnap
                           <TooltipTrigger asChild>
                             <button
                               type="button"
-                              className={`h-4 w-4 rounded-[3px] border border-border-subtle transition-[transform,box-shadow,border-color,background-color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.96] hover:scale-110 hover:border-foreground/40 hover:shadow-sm focus-visible:scale-110 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${selected ? 'scale-110 border-[color:var(--primary-border-strong)] ring-2 ring-[color:var(--primary-emphasis)] shadow-sm' : ''}`}
+                              className={`relative h-4 w-4 rounded-[3px] border border-border-subtle transition-[transform,box-shadow,border-color,background-color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.96] hover:scale-110 hover:border-foreground/40 hover:shadow-sm focus-visible:scale-110 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${selected ? 'scale-110 border-[color:var(--primary-border-strong)] ring-2 ring-[color:var(--primary-emphasis)] shadow-sm' : ''}`}
                               style={selected ? selectedActivityCellStyle(cell.level) : activityCellStyle(cell.level)}
-                              aria-label={`${dayFormatter.format(new Date(cell.dayTs))}: ${formatDuration(cell.playtimeMs)} playtime, ${streakLabel}`}
+                              aria-label={`${dayFormatter.format(new Date(cell.dayTs))}: ${formatDuration(cell.playtimeMs)} playtime, ${streakLabel}${today ? ', today' : ''}`}
                               aria-pressed={selected}
                               onClick={() => {
                                 selectActivityDay(cell.dayTs)
                               }}
-                            />
+                            >
+                              {today && (
+                                <span
+                                  aria-hidden="true"
+                                  className="pointer-events-none absolute right-[-1px] top-[-1px] h-1.5 w-1.5 rounded-full bg-[color:var(--primary)] shadow-sm ring-1 ring-[color:var(--surface)]"
+                                />
+                              )}
+                            </button>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-[14rem]">
                             <div className="space-y-1">
