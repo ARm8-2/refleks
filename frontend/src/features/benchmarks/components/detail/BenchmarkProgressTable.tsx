@@ -1,6 +1,6 @@
 
 import { REFLEKS_SYMBOL } from '@/assets'
-import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, TogglePill, TogglePillGroup } from '@/shared/components'
+import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, TogglePill } from '@/shared/components'
 import { usePersistedState, useStore } from '@/shared/hooks'
 import {
   benchmarkDetailProgressStorageBase,
@@ -236,11 +236,16 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
 
         {!shareMode && (
           <div className="flex flex-wrap items-center gap-2">
-            <TogglePillGroup>
-              <TogglePill active={compactMode} size="md" className="px-3 text-xs" onClick={() => setCompactMode(value => !value)}>
-                Compact
-              </TogglePill>
-            </TogglePillGroup>
+            <Button
+              variant={compactMode ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 px-3 text-xs"
+              onClick={() => setCompactMode(value => !value)}
+              aria-pressed={compactMode}
+              title={compactMode ? 'Disable compact mode' : 'Enable compact mode'}
+            >
+              Compact
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} title="View tracker settings">
               <Settings2 className="h-4 w-4" />
             </Button>

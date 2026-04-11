@@ -9,9 +9,9 @@ import {
 } from '@/features/benchmarks/components/detail/ScenarioRow'
 import { useBenchmarkDetailProgress } from '@/features/benchmarks/hooks/useBenchmarkDetailProgress'
 import { useBenchmarkVisibility } from '@/features/benchmarks/hooks/useBenchmarkVisibility'
-import { formatNumber, getScenarioName } from '@/features/benchmarks/lib/detailFormatting'
+import { getScenarioName } from '@/features/benchmarks/lib/detailFormatting'
 import { computeRecommendationScores, selectTopPicks, type ScenarioBenchmarkData } from '@/features/benchmarks/lib/detailRecommendations'
-import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, TogglePill, TogglePillGroup, Widget } from '@/shared/components'
+import { Button, Checkbox, Modal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, TogglePill, Widget } from '@/shared/components'
 import { useBenchmarks, usePersistedState, useStore } from '@/shared/hooks'
 import {
   benchmarkDetailProgressStorageBase,
@@ -258,11 +258,16 @@ export function BenchmarkOverviewWidget() {
 
   const headerControls = (
     <div className="flex flex-wrap items-center gap-2">
-      <TogglePillGroup>
-        <TogglePill active={compactMode} size="md" className="px-3 text-xs" onClick={() => setCompactMode(v => !v)}>
-          Compact
-        </TogglePill>
-      </TogglePillGroup>
+      <Button
+        variant={compactMode ? 'secondary' : 'ghost'}
+        size="sm"
+        className="h-8 px-3 text-xs"
+        onClick={() => setCompactMode(v => !v)}
+        aria-pressed={compactMode}
+        title={compactMode ? 'Disable compact mode' : 'Enable compact mode'}
+      >
+        Compact
+      </Button>
       <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} title="Widget settings">
         <Settings2 className="h-4 w-4" />
       </Button>
