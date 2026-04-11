@@ -1,7 +1,7 @@
 import { formatNumber } from '@/features/benchmarks/lib/detailFormatting'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Widget } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
-import { ChartContainer, ChartTooltip } from '@/shared/components/ui/chart'
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
 import { usePersistedState, useStore } from '@/shared/hooks'
 import {
   CHART_SERIES_COLORS,
@@ -159,7 +159,7 @@ export function PerformanceVsSensWidget({
       headerAction={headerActions}
       modalTitle={modalTitle}
       modalControls={headerActions}
-      modalContent={<PerformanceVsSensChartContent data={chartData} metric={metric} metricLabel={metricLabel} expanded />}
+      modalContent={<PerformanceVsSensChartContent data={chartData} metric={metric} metricLabel={metricLabel} />}
       className={className}
     >
       <PerformanceVsSensChartContent data={chartData} metric={metric} metricLabel={metricLabel} />
@@ -171,12 +171,10 @@ function PerformanceVsSensChartContent({
   data,
   metric,
   metricLabel,
-  expanded = false,
 }: {
   data: ReturnType<typeof buildChartData>
   metric: MetricKey
   metricLabel: string
-  expanded?: boolean
 }) {
   const chartConfig: ChartConfig = {
     performance: {
@@ -186,7 +184,7 @@ function PerformanceVsSensChartContent({
   }
 
   return (
-    <div className={`w-full h-full`}>
+    <div className="h-full w-full">
       <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
         <ScatterChart margin={{ top: 12, right: 12, left: 6, bottom: 4 }}>
           <CartesianGrid vertical={false} />
@@ -208,7 +206,35 @@ function PerformanceVsSensChartContent({
             tickFormatter={value => formatMetricTick(value, metric)}
           />
 
-          <ChartTooltip shared={false} cursor={false} content={<PerformanceVsSensTooltip metric={metric} metricLabel={metricLabel} />} />
+          <ChartTooltip
+            shared={false}
+            cursor={false}
+            content={(
+              <ChartTooltipContent
+                labelFormatter={(_, payload) => {
+                  const point = payload?.[0]?.payload as SensitivityPoint | undefined
+                  return point?.runLabel ?? null
+                }}
+                formatter={(value, _name, item) => {
+                  const point = item?.payload as SensitivityPoint | undefined
+                  if (!point) return null
+
+                  return (
+                    <div className="grid gap-0.5 text-popover-foreground/75">
+                      <div>
+                        Sensitivity:{' '}
+                        <span className="font-medium text-popover-foreground">{formatNumber(point.rawSensitivity, 2)} cm/360</span>
+                      </div>
+                      <div>
+                        {metricLabel}:{' '}
+                        <span className="font-medium text-popover-foreground">{formatMetricValue(Number(value), metric)}</span>
+                      </div>
+                    </div>
+                  )
+                }}
+              />
+            )}
+          />
 
           <Scatter
             name="performance"
@@ -221,36 +247,6 @@ function PerformanceVsSensChartContent({
           />
         </ScatterChart>
       </ChartContainer>
-    </div>
-  )
-}
-
-function PerformanceVsSensTooltip({
-  active,
-  payload,
-  metric,
-  metricLabel,
-}: {
-  active?: boolean
-  payload?: Array<{ payload?: SensitivityPoint }>
-  metric: MetricKey
-  metricLabel: string
-}) {
-  if (!active || !payload?.length) return null
-
-  const point = payload
-    .map(entry => entry.payload)
-    .find((candidate): candidate is SensitivityPoint => Boolean(candidate && typeof candidate === 'object' && 'rawSensitivity' in candidate))
-
-  if (!point) return null
-
-  return (
-    <div className="grid min-w-[14rem] gap-1.5 rounded-lg bg-canvas px-2.5 py-1.5 text-xs shadow-xl">
-      <div className="font-medium text-foreground">{point.runLabel}</div>
-      <div className="grid gap-0.5 text-surface-muted-foreground">
-        <div>Sensitivity: {formatNumber(point.rawSensitivity, 2)} cm/360</div>
-        <div>{metricLabel}: {formatMetricValue(point.performance, metric)}</div>
-      </div>
     </div>
   )
 }

@@ -175,7 +175,7 @@ const ChartTooltipContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "grid min-w-[8rem] items-start gap-1.5 rounded-lg bg-canvas px-2.5 py-1.5 text-xs shadow-xl",
+          "grid min-w-[8rem] items-start gap-1.5 rounded-md bg-popover px-3 py-1.5 text-xs text-popover-foreground shadow-md",
           className
         )}
       >
@@ -192,7 +192,7 @@ const ChartTooltipContent = React.forwardRef<
                 <div
                   key={item.dataKey}
                   className={cn(
-                    "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-surface-muted-foreground",
+                    "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-popover-foreground/70",
                     indicator === "dot" && "items-center"
                   )}
                 >
@@ -232,12 +232,12 @@ const ChartTooltipContent = React.forwardRef<
                       >
                         <div className="grid gap-1.5">
                           {nestLabel ? tooltipLabel : null}
-                          <span className="text-surface-muted-foreground">
+                          <span className="text-popover-foreground/75">
                             {itemConfig?.label || item.name}
                           </span>
                         </div>
                         {item.value && (
-                          <span className="font-mono font-medium tabular-nums text-foreground">
+                          <span className="font-mono font-medium tabular-nums text-popover-foreground">
                             {item.value.toLocaleString()}
                           </span>
                         )}

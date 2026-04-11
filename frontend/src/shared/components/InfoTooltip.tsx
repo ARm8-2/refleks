@@ -28,10 +28,7 @@ export function InfoTooltip({ children, side = 'bottom', className, iconClassNam
         </TooltipTrigger>
         <TooltipContent
           side={side}
-          className={cn(
-            'rounded-lg bg-canvas px-2.5 py-1.5 text-xs shadow-xl',
-            className,
-          )}
+          className={className}
         >
           {children}
         </TooltipContent>
