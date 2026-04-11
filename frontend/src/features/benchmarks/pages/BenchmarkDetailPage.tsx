@@ -159,13 +159,13 @@ export function BenchmarkDetailPage() {
         {!showInitialSkeleton && benchmark && progressLoading && <Loading />}
 
         {!showInitialSkeleton && benchmark && !progressLoading && error && (
-          <div className="rounded-xl border border-destructive-border bg-destructive-soft p-4 text-sm text-destructive">
+          <div className="route-content-enter rounded-xl border border-destructive-border bg-destructive-soft p-4 text-sm text-destructive">
             {error}
           </div>
         )}
 
         {!showInitialSkeleton && benchmark && !progressLoading && !error && progress && (
-          <>
+          <div className="route-content-enter">
             <BenchmarkProgressTable
               benchmark={benchmark}
               difficultyName={difficulty?.difficultyName || 'Unknown difficulty'}
@@ -187,11 +187,11 @@ export function BenchmarkDetailPage() {
               <StrengthWidget progress={progress} />
               <RankDistributionWidget progress={progress} />
             </div>
-          </>
+          </div>
         )}
 
         {!showInitialSkeleton && benchmark && !progressLoading && !error && !progress && (
-          <div className="rounded-xl bg-surface p-6 text-sm text-surface-muted-foreground shadow-sm">
+          <div className="route-content-enter rounded-xl bg-surface p-6 text-sm text-surface-muted-foreground shadow-sm">
             No progress data available yet for this difficulty.
           </div>
         )}
