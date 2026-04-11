@@ -1,6 +1,7 @@
 import { SegmentedControl, Widget, WidgetEmpty } from '@/shared/components'
 import type { ChartConfig } from '@/shared/components/ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/components/ui/chart'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/components/ui/tooltip'
 import { usePersistedState, useStore } from '@/shared/hooks'
 import { CHART_SERIES_COLORS, CHART_STYLE, STORAGE_KEYS } from '@/shared/lib'
 import { Flame, Trophy } from 'lucide-react'
@@ -18,7 +19,8 @@ const drilldownConfig: ChartConfig = {
   minutes: { label: 'Playtime', color: 'var(--streak)' },
 }
 
-const STREAK_RANGE_OPTIONS = [30, 90, 180, 365] as const
+const AUTO_RANGE_DAYS = 0
+const STREAK_RANGE_OPTIONS = [AUTO_RANGE_DAYS, 30, 90, 180, 365] as const
 const BREAKDOWN_MODES = ['day', 'week', 'streak'] as const
 
 type StreakRangeOption = (typeof STREAK_RANGE_OPTIONS)[number]
@@ -31,6 +33,12 @@ const dayFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
   year: 'numeric',
 })
+const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'short' })
+
+type MonthMarker = {
+  label: string
+  column: number
+}
 
 const weekdayFormatter = new Intl.DateTimeFormat('en-US', { weekday: 'short' })
 const streakDayFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
@@ -45,7 +53,7 @@ const intensityOpacityByLevel: Record<1 | 2 | 3 | 4, number> = {
 export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnapshot }) {
   const points = useDailyPlaytime(7)
   const sessions = useStore(state => state.sessions)
-  const [storedRangeDays, setStoredRangeDays] = usePersistedState<number>(STORAGE_KEYS.overviewStreakRangeDays, 365)
+  const [storedRangeDays, setStoredRangeDays] = usePersistedState<number>(STORAGE_KEYS.overviewStreakRangeDays, AUTO_RANGE_DAYS)
   const [storedSelectedDayTs, setStoredSelectedDayTs] = usePersistedState<number | null>(STORAGE_KEYS.overviewStreakSelectedDayTs, null)
   const [storedBreakdownMode, setStoredBreakdownMode] = usePersistedState<BreakdownMode>(STORAGE_KEYS.overviewStreakBreakdownMode, 'day')
 
@@ -57,10 +65,16 @@ export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnap
   const rangeDays = normalizeRangeDays(storedRangeDays)
 
   const streakActivity = useMemo(() => buildStreakActivity(sessions), [sessions])
+  const maxAvailableRangeDays = useMemo(() => {
+    const earliestDayTs = streakActivity.dailyPlaytime[0]?.dayTs
+    if (typeof earliestDayTs !== 'number') return 30
+    return Math.max(1, daysBetweenInclusive(earliestDayTs, Date.now()))
+  }, [streakActivity.dailyPlaytime])
+  const effectiveRangeDays = rangeDays === AUTO_RANGE_DAYS ? maxAvailableRangeDays : rangeDays
 
   const rangeSummary = useMemo(
-    () => buildActivityRange(streakActivity, rangeDays),
-    [rangeDays, streakActivity],
+    () => buildActivityRange(streakActivity, effectiveRangeDays),
+    [effectiveRangeDays, streakActivity],
   )
 
   const heatmapCells = useMemo(() => {
@@ -107,6 +121,49 @@ export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnap
       ...Array.from({ length: trailingPad }, () => null),
     ]
   }, [heatmapCells])
+
+  const monthMarkers = useMemo<MonthMarker[]>(() => {
+    const markers: MonthMarker[] = []
+    let lastMonthKey = ''
+
+    paddedHeatmapCells.forEach((cell, index) => {
+      if (!cell) return
+
+      const date = new Date(cell.dayTs)
+      const monthKey = `${date.getFullYear()}-${date.getMonth()}`
+      if (monthKey === lastMonthKey) return
+
+      lastMonthKey = monthKey
+      markers.push({
+        label: monthFormatter.format(date),
+        column: Math.floor(index / 7),
+      })
+    })
+
+    return markers
+  }, [paddedHeatmapCells])
+
+  const visibleMonthMarkers = useMemo(
+    () => monthMarkers.filter((marker, index) => !(monthMarkers.length > 1 && index === 0 && marker.column === 0)),
+    [monthMarkers],
+  )
+
+  const streakLengthByDayTs = useMemo(() => {
+    const map = new Map<number, number>()
+
+    for (const span of streakActivity.streakSpans) {
+      for (let cursor = span.startTs; cursor <= span.endTs;) {
+        map.set(cursor, span.days)
+
+        const nextCursor = new Date(cursor)
+        nextCursor.setDate(nextCursor.getDate() + 1)
+        nextCursor.setHours(0, 0, 0, 0)
+        cursor = nextCursor.getTime()
+      }
+    }
+
+    return map
+  }, [streakActivity.streakSpans])
 
   const topStreakDayTs = useMemo(() => {
     const targetDays = streakActivity.topStreak
@@ -171,14 +228,20 @@ export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnap
       ? weeklyBreakdown
       : streakBreakdown
   const hasSelectedBreakdown = selectedDayTs !== null
+  const selectedBreakdownLabel = selectedDayTs === null ? '' : dayFormatter.format(new Date(selectedDayTs))
 
   const selectActivityDay = (dayTs: number) => {
     const normalizedDayTs = normalizeSelectedDayTs(dayTs)
     if (normalizedDayTs === null) return
 
+    if (selectedDayTs === normalizedDayTs) {
+      setStoredSelectedDayTs(null)
+      return
+    }
+
     const requiredRangeDays = daysBetweenInclusive(normalizedDayTs, Date.now())
     const nextRangeDays = pickRangeDays(requiredRangeDays)
-    if (nextRangeDays > rangeDays) setStoredRangeDays(nextRangeDays)
+    if (rangeDays !== AUTO_RANGE_DAYS && nextRangeDays > effectiveRangeDays) setStoredRangeDays(nextRangeDays)
 
     setStoredSelectedDayTs(normalizedDayTs)
   }
@@ -192,7 +255,7 @@ export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnap
       value={rangeDays}
       options={STREAK_RANGE_OPTIONS.map(days => ({
         value: days,
-        label: days === 365 ? '1Y' : `${Math.round(days / 30)}M`,
+        label: days === AUTO_RANGE_DAYS ? 'All' : days === 365 ? '1Y' : `${Math.round(days / 30)}M`,
       }))}
       onValueChange={setStoredRangeDays}
       size="sm"
@@ -210,7 +273,7 @@ export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnap
           onClick={topStreakDayTs === null ? undefined : () => selectActivityDay(topStreakDayTs)}
           selected={topStreakDayTs !== null && selectedDayTs === topStreakDayTs}
         />
-        <MetricCard label="Active days" value={`${rangeSummary.activeDays}/${rangeDays}`} />
+        <MetricCard label="Active days" value={`${rangeSummary.activeDays}/${effectiveRangeDays}`} />
         <MetricCard label="Total playtime" value={formatDuration(rangeSummary.totalPlaytimeMs)} />
       </div>
 
@@ -226,49 +289,93 @@ export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnap
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <div className="grid grid-rows-7 gap-1 text-[10px] text-surface-muted-foreground pt-[1px]">
-            {weekdayLabels.map((label, index) => (
-              <span key={`${label}-${index}`} className="h-3 leading-3">{label}</span>
-            ))}
-          </div>
+        <div className="min-w-0 overflow-x-auto pb-1">
+          <div className="min-w-max">
+            {visibleMonthMarkers.length > 0 && (
+              <div className="mb-2 flex gap-2 text-[11px] font-medium text-surface-muted-foreground">
+                <div className="w-5" aria-hidden="true" />
+                <div
+                  className="grid min-w-max"
+                  style={{
+                    gridTemplateColumns: `repeat(${Math.max(1, Math.ceil(paddedHeatmapCells.length / 7))}, 14px)`,
+                    columnGap: '6px',
+                  }}
+                >
+                  {visibleMonthMarkers.map(marker => (
+                    <span
+                      key={`${marker.label}-${marker.column}`}
+                      className="whitespace-nowrap"
+                      style={{ gridColumnStart: marker.column + 1 }}
+                    >
+                      {marker.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
-          <div className="min-w-0 overflow-x-auto p-1 ">
-            <div className="grid grid-flow-col auto-cols-[12px] grid-rows-7 gap-1">
-              {paddedHeatmapCells.map((cell, index) => {
-                if (!cell) {
-                  return <span key={`blank-${index}`} className="h-3 w-3" aria-hidden="true" />
-                }
+            <div className="flex gap-2">
+              <div className="grid grid-rows-7 gap-1.5 pt-[2px] text-[11px] text-surface-muted-foreground">
+                {weekdayLabels.map((label, index) => (
+                  <span key={`${label}-${index}`} className="h-4 leading-4">{label}</span>
+                ))}
+              </div>
 
-                const minutes = Math.round(cell.playtimeMs / 60000)
-                const tooltip = minutes > 0
-                  ? `${dayFormatter.format(new Date(cell.dayTs))}: ${formatDuration(cell.playtimeMs)}`
-                  : `${dayFormatter.format(new Date(cell.dayTs))}: No activity`
-                const selected = selectedDayTs === cell.dayTs
+              <div className="p-1">
+                <TooltipProvider delayDuration={100}>
+                  <div className="grid grid-flow-col auto-cols-[14px] grid-rows-7 gap-1.5">
+                    {paddedHeatmapCells.map((cell, index) => {
+                      if (!cell) {
+                        return <span key={`blank-${index}`} className="h-4 w-4" aria-hidden="true" />
+                      }
 
-                return (
-                  <button
-                    key={cell.dayTs}
-                    type="button"
-                    className={`h-3 w-3 rounded-[3px] border border-border-subtle transition-[transform,box-shadow,border-color] hover:scale-110 hover:border-foreground/40 hover:shadow-sm focus-visible:scale-110 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${selected ? 'scale-110 border-[color:var(--primary-border-strong)] ring-2 ring-[color:var(--primary-emphasis)] shadow-sm' : ''}`}
-                    style={selected ? selectedActivityCellStyle(cell.level) : activityCellStyle(cell.level)}
-                    title={tooltip}
-                    aria-label={tooltip}
-                    aria-pressed={selected}
-                    onClick={() => {
-                      selectActivityDay(cell.dayTs)
-                    }}
-                  />
-                )
-              })}
+                      const selected = selectedDayTs === cell.dayTs
+                      const streakLength = streakLengthByDayTs.get(cell.dayTs) ?? 0
+                      const streakLabel = streakLength > 0 ? `${streakLength} ${pluralize('day', streakLength)}` : 'No streak'
+
+                      return (
+                        <Tooltip key={cell.dayTs}>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className={`h-4 w-4 rounded-[3px] border border-border-subtle transition-[transform,box-shadow,border-color,background-color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.96] hover:scale-110 hover:border-foreground/40 hover:shadow-sm focus-visible:scale-110 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${selected ? 'scale-110 border-[color:var(--primary-border-strong)] ring-2 ring-[color:var(--primary-emphasis)] shadow-sm' : ''}`}
+                              style={selected ? selectedActivityCellStyle(cell.level) : activityCellStyle(cell.level)}
+                              aria-label={`${dayFormatter.format(new Date(cell.dayTs))}: ${formatDuration(cell.playtimeMs)} playtime, ${streakLabel}`}
+                              aria-pressed={selected}
+                              onClick={() => {
+                                selectActivityDay(cell.dayTs)
+                              }}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[14rem]">
+                            <div className="space-y-1">
+                              <div className="font-medium text-popover-foreground">
+                                {dayFormatter.format(new Date(cell.dayTs))}
+                              </div>
+                              <div className="text-popover-foreground/75">
+                                Playtime: <span className="font-medium text-popover-foreground">{formatDuration(cell.playtimeMs)}</span>
+                              </div>
+                              <div className="text-popover-foreground/75">
+                                Streak: <span className="font-medium text-popover-foreground">{streakLabel}</span>
+                              </div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      )
+                    })}
+                  </div>
+                </TooltipProvider>
+              </div>
             </div>
           </div>
         </div>
 
-        {hasSelectedBreakdown ? (
-          <div className="mt-4 border-t border-border-subtle pt-4">
+        <div className="mt-4 border-t border-border-subtle pt-4">
+          <div
+            className={`overflow-hidden transition-[max-height,opacity,transform] duration-220 ease-emphasized ${hasSelectedBreakdown ? 'max-h-[360px] translate-y-0 opacity-100' : 'pointer-events-none max-h-0 -translate-y-1 opacity-0'}`}
+          >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-surface-muted-foreground">{dayFormatter.format(new Date(selectedDayTs))}</p>
+              <p className="text-sm font-semibold text-surface-muted-foreground">{selectedBreakdownLabel}</p>
               <SegmentedControl
                 value={breakdownMode}
                 options={BREAKDOWN_MODES.map(mode => ({
@@ -319,14 +426,16 @@ export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnap
               </BarChart>
             </ChartContainer>
           </div>
-        ) : (
-          <div className="mt-4 border-t border-border-subtle pt-4">
+
+          <div
+            className={`overflow-hidden transition-[max-height,opacity,transform] duration-220 ease-emphasized ${hasSelectedBreakdown ? 'pointer-events-none max-h-0 -translate-y-1 opacity-0' : 'max-h-[120px] translate-y-0 opacity-100'}`}
+          >
             <div className="px-4 py-5 text-center">
               <p className="text-sm font-medium text-foreground">Click a day above to inspect its playtime breakdown.</p>
               <p className="mt-1 text-xs text-surface-muted-foreground">You can switch between hour, weekday, and streak-day views after selecting a day.</p>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
@@ -369,7 +478,7 @@ export function StreakPlaytimeWidget({ snapshot }: { snapshot: RecentSessionSnap
 function normalizeRangeDays(value: number): StreakRangeOption {
   return STREAK_RANGE_OPTIONS.includes(value as StreakRangeOption)
     ? value as StreakRangeOption
-    : 90
+    : AUTO_RANGE_DAYS
 }
 
 function normalizeBreakdownMode(value: BreakdownMode): BreakdownMode {
