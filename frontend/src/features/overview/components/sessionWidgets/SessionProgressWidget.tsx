@@ -199,6 +199,8 @@ export function SessionProgressWidget({ snapshot }: { snapshot: RecentSessionSna
 
   const maxRun = Math.max(targetRuns, diminishingReturnsAt, currentRuns, 12)
   const toAngle = (run: number) => 90 - (Math.min(run, maxRun) / maxRun) * 360
+  const showCustomTargetMarker = isCustom && targetRuns < suggestedRuns
+  const targetAngle = (toAngle(targetRuns) * Math.PI) / 180
   const warmupEnd = Math.min(warmupRuns, maxRun)
   const peakEndClamped = Math.min(peakEnd, maxRun)
   const dimEnd = Math.min(diminishingReturnsAt, maxRun)
@@ -207,6 +209,13 @@ export function SessionProgressWidget({ snapshot }: { snapshot: RecentSessionSna
   const innerR = 64
   const cx = 100
   const cy = 100
+  const targetMarkerRadius = (outerR + innerR) / 2
+  const targetMarkerInnerRadius = targetMarkerRadius - 4
+  const targetMarkerOuterRadius = targetMarkerRadius + 4
+  const targetMarkerX1 = cx + targetMarkerInnerRadius * Math.cos(targetAngle)
+  const targetMarkerY1 = cy - targetMarkerInnerRadius * Math.sin(targetAngle)
+  const targetMarkerX2 = cx + targetMarkerOuterRadius * Math.cos(targetAngle)
+  const targetMarkerY2 = cy - targetMarkerOuterRadius * Math.sin(targetAngle)
 
   function arcPath(startRun: number, endRun: number): string {
     const a1 = (toAngle(startRun) * Math.PI) / 180
@@ -241,6 +250,18 @@ export function SessionProgressWidget({ snapshot }: { snapshot: RecentSessionSna
 
             {currentRuns > 0 && (
               <path d={arcPath(0, currentRuns)} fill={CHART_SERIES_COLORS.scoreHistory} opacity={0.55} />
+            )}
+
+            {showCustomTargetMarker && (
+              <line
+                x1={targetMarkerX1}
+                y1={targetMarkerY1}
+                x2={targetMarkerX2}
+                y2={targetMarkerY2}
+                className="stroke-primary"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+              />
             )}
 
             <text x={cx} y={cy - 10} textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-2xl font-bold">
