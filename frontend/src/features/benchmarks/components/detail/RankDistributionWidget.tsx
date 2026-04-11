@@ -120,6 +120,47 @@ export function RankDistributionWidget({ progress }: Props) {
     return `Subcategory scope: ${selectedGroups[safeSubcategoryIndex]?.name || 'Unknown'}`
   }, [scopeLevel, selectedCategory?.name, selectedGroups, safeSubcategoryIndex])
 
+  const scopeControls = (
+    <div className="flex items-center gap-2">
+      <Select value={scopeLevel} onValueChange={value => setScopeLevel(value as ScopeLevel)}>
+        <SelectTrigger className="h-8 min-w-[120px] w-auto px-2 text-xs bg-surface-subtle">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All</SelectItem>
+          <SelectItem value="category">Category</SelectItem>
+          <SelectItem value="subcategory">Subcategory</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {scopeLevel !== 'all' && categories.length > 0 && (
+        <Select value={String(safeCategoryIndex)} onValueChange={value => setCategoryIndex(Number(value) || 0)}>
+          <SelectTrigger className="h-8 min-w-[130px] w-auto max-w-[180px] px-2 text-xs bg-surface-subtle">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((category, index) => (
+              <SelectItem key={`${category.name}-${index}`} value={String(index)}>{category.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {scopeLevel === 'subcategory' && selectedGroups.length > 0 && (
+        <Select value={String(safeSubcategoryIndex)} onValueChange={value => setSubcategoryIndex(Number(value) || 0)}>
+          <SelectTrigger className="h-8 min-w-[130px] w-auto max-w-[180px] px-2 text-xs bg-surface-subtle">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {selectedGroups.map((group, index) => (
+              <SelectItem key={`${group.name || 'group'}-${index}`} value={String(index)}>{group.name || `Group ${index + 1}`}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    </div>
+  )
+
   const renderBody = (expanded: boolean) => {
     if (totalScenarios === 0) {
       return <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">No data.</div>
@@ -164,47 +205,9 @@ export function RankDistributionWidget({ progress }: Props) {
     <Widget
       title="Rank Distribution"
       description={scopeDescription}
-      headerAction={(
-        <div className="flex items-center gap-2">
-          <Select value={scopeLevel} onValueChange={value => setScopeLevel(value as ScopeLevel)}>
-            <SelectTrigger className="h-8 min-w-[120px] w-auto px-2 text-xs bg-surface-subtle">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="category">Category</SelectItem>
-              <SelectItem value="subcategory">Subcategory</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {scopeLevel !== 'all' && categories.length > 0 && (
-            <Select value={String(safeCategoryIndex)} onValueChange={value => setCategoryIndex(Number(value) || 0)}>
-              <SelectTrigger className="h-8 min-w-[130px] w-auto max-w-[180px] px-2 text-xs bg-surface-subtle">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category, index) => (
-                  <SelectItem key={`${category.name}-${index}`} value={String(index)}>{category.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {scopeLevel === 'subcategory' && selectedGroups.length > 0 && (
-            <Select value={String(safeSubcategoryIndex)} onValueChange={value => setSubcategoryIndex(Number(value) || 0)}>
-              <SelectTrigger className="h-8 min-w-[130px] w-auto max-w-[180px] px-2 text-xs bg-surface-subtle">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {selectedGroups.map((group, index) => (
-                  <SelectItem key={`${group.name || 'group'}-${index}`} value={String(index)}>{group.name || `Group ${index + 1}`}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-      )}
+      headerAction={scopeControls}
       modalTitle="Rank Distribution"
+      modalControls={scopeControls}
       modalContent={renderBody(true)}
       modalWidth={920}
       modalHeight={760}

@@ -23,6 +23,18 @@ const CARD_BACKGROUND = 'var(--surface)'
 
 export function StrengthWidget({ progress }: Props) {
   const [level, setLevel] = usePersistedState<StrengthLevel>(STORAGE_KEYS.benchmarksDetailStrengthLevel, 'category')
+  const levelControls = (
+    <Select value={level} onValueChange={value => setLevel(value as StrengthLevel)}>
+      <SelectTrigger className="h-8 min-w-[130px] w-auto px-2 text-xs bg-surface-subtle">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="category">Category</SelectItem>
+        <SelectItem value="subcategory">Subcategory</SelectItem>
+        <SelectItem value="scenario">Scenario</SelectItem>
+      </SelectContent>
+    </Select>
+  )
 
   const rows = useMemo<StrengthRow[]>(() => {
     const rankDefs = progress.ranks || []
@@ -132,19 +144,9 @@ export function StrengthWidget({ progress }: Props) {
     <Widget
       title="Strength Breakdown"
       description={`${levelLabel}-level progress toward max rank.`}
-      headerAction={(
-        <Select value={level} onValueChange={value => setLevel(value as StrengthLevel)}>
-          <SelectTrigger className="h-8 min-w-[130px] w-auto px-2 text-xs bg-surface-subtle">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="category">Category</SelectItem>
-            <SelectItem value="subcategory">Subcategory</SelectItem>
-            <SelectItem value="scenario">Scenario</SelectItem>
-          </SelectContent>
-        </Select>
-      )}
+      headerAction={levelControls}
       modalTitle="Strength Breakdown"
+      modalControls={levelControls}
       modalContent={renderBody(true)}
       modalWidth={900}
       modalHeight={760}
