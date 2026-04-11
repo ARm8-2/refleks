@@ -72,14 +72,14 @@ function SidebarItem({ active = false, icon, label, onClick, open, showNotificat
     </button>
   )
 
+  if (!collapsed) return item
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>{item}</TooltipTrigger>
-      {collapsed && (
-        <TooltipContent side="right" align="center">
-          {label}
-        </TooltipContent>
-      )}
+      <TooltipContent side="right" align="center">
+        {label}
+      </TooltipContent>
     </Tooltip>
   )
 }
@@ -125,14 +125,14 @@ function SidebarFavoriteItem({ abbreviation, active, color, label, open, onClick
     </button>
   )
 
+  if (!collapsed) return item
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>{item}</TooltipTrigger>
-      {collapsed && (
-        <TooltipContent side="right" align="center">
-          {label}
-        </TooltipContent>
-      )}
+      <TooltipContent side="right" align="center">
+        {label}
+      </TooltipContent>
     </Tooltip>
   )
 }
@@ -166,7 +166,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
   }, [])
 
   return (
-    <TooltipProvider delayDuration={0}>
+    <TooltipProvider key={collapsed ? 'collapsed' : 'expanded'} delayDuration={0}>
       <aside className="flex h-full min-h-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground">
         <div className="p-2">
           <SidebarItem
