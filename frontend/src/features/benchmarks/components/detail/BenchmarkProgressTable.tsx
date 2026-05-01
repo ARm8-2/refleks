@@ -414,7 +414,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
       </div>
 
       {shareMode && (
-        <div className="px-1 text-xs text-surface-muted-foreground">refleks-app.com</div>
+        <div className="px-1 text-xs text-surface-muted-foreground">refleksapp.com</div>
       )}
 
       {!shareMode && (

@@ -40,13 +40,13 @@ const RESOURCE_LINKS: WelcomeLink[] = [
     label: 'Browse the docs',
     description: 'Setup guides, walkthroughs, and troubleshooting for the newer RefleK\'s experience.',
     url: EXTERNAL_LINKS.docs,
-    urlLabel: 'refleks-app.com/docs/',
+    urlLabel: 'refleksapp.com/docs/',
   },
   {
     label: 'Read the changelog',
     description: 'See the fuller release history and version-by-version notes in the browser.',
     url: EXTERNAL_LINKS.changelog,
-    urlLabel: 'refleks-app.com/changelog/',
+    urlLabel: 'refleksapp.com/changelog/',
   },
 ]
 
