@@ -1,9 +1,289 @@
-@import './theme.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --radius: 0.5rem;
+
+    /*  Light theme */
+    --canvas: #f4f5f7;
+    --canvas-foreground: #171b22;
+    --surface: #ffffff;
+    --surface-foreground: #171b22;
+    --surface-subtle: #eff1f4;
+    --surface-subtle-foreground: #575e69;
+    --surface-subtle-hover: #e7ebf0;
+    --surface-muted: #dfe3e9;
+    --surface-muted-foreground: #707784;
+    --surface-muted-soft: #dfe3e959;
+    --surface-muted-strong: #dfe3e966;
+    --surface-emphasis: #d2d7df;
+    --surface-emphasis-foreground: #171b22;
+    --surface-panel: #eceff3b3;
+    --surface-hover: #e8ecf1;
+    --popover: #ffffff;
+    --popover-foreground: #171b22;
+    --primary: #0da2e7;
+    --primary-foreground: #ffffff;
+    --destructive: #ef4343;
+    --destructive-foreground: #ffffff;
+    --border: #c5ccd5;
+    --input: #c5ccd5;
+    --ring: #0da2e7;
+    --chart-1: #0da2e7;
+    --chart-2: #2eb88a;
+    --chart-3: #f5a524;
+    --chart-4: #af57db;
+    --chart-5: #e23670;
+
+    /* Semantic UI colors */
+    --border-subtle: #cccccc0d;
+    --border-soft: #cccccc1a;
+    --border-muted: #cccccc33;
+    --border-strong: #cccccc80;
+    --border-emphasis: #ccccccb3;
+    --primary-faint: #0da2e71a;
+    --primary-soft: #0da2e726;
+    --primary-muted: #0da2e733;
+    --primary-emphasis: #0da2e74d;
+    --primary-border: #0da2e766;
+    --primary-border-strong: #0da2e780;
+    --primary-hover: #0da2e7e6;
+    --destructive-soft: #ef43431a;
+    --destructive-border: #ef434366;
+    --destructive-hover: #ef4343e6;
+    --overlay: #000000cc;
+
+    /* App-specific semantic colors */
+    --success: #10b77f;
+    --warning: #f59f0a;
+    --streak: #f97415;
+    --success-soft: #10b77f24;
+    --warning-soft: #f59f0a29;
+    --warning-foreground: #b46e00;
+    --phase-warmup: #f59f0a;
+    --phase-warmup-soft: #f59f0a2e;
+    --phase-peak: #10b77f;
+    --phase-peak-soft: #10b77f2e;
+    --phase-diminishing: #ef4343;
+    --phase-diminishing-soft: #ef43431f;
+    --trace-compare: #14b8a6;
+    --trace-compare-end: #eab308;
+    --trace-box-fill: #2a2a2a66;
+    --trace-box-stroke: #5a5a5a88;
+    --trace-click: #f8fafc;
+    --trace-click-ring: #ffffffcc;
+    --ink-strong: #0b1220;
+    --ink-inverse: #f8fafc;
+
+    /* Fonts */
+    --font-stack-montserrat: "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-stack-inter: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-stack-jetbrains-mono: "JetBrains Mono", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, monospace;
+    --font-body: var(--font-stack-montserrat);
+    --font-mono: var(--font-stack-jetbrains-mono);
+
+    /* Scrollbar */
+    --scrollbar-size: 10px;
+    --scrollbar-track: #00000000;
+    --scrollbar-thumb: #00000026;
+    --scrollbar-thumb-hover: #00000040;
+    --scrollbar-thumb-active: #00000059;
+
+    /* Sidebar */
+    --sidebar-background: var(--surface);
+    --sidebar-foreground: var(--canvas-foreground);
+    --sidebar-foreground-muted: #171b22b3;
+    --sidebar-primary: #0da2e7;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: var(--surface-emphasis);
+    --sidebar-accent-foreground: #171b22;
+    --sidebar-border: var(--border);
+    --sidebar-ring: #0da2e7;
+  }
+
+  .dark {
+    --canvas: #151515;
+    --canvas-foreground: #ececec;
+    --surface: #202020;
+    --surface-foreground: #ececec;
+    --surface-subtle: #272727;
+    --surface-subtle-foreground: #c0c0c0;
+    --surface-subtle-hover: #2f2f2f;
+    --surface-muted: #2b2b2b;
+    --surface-muted-foreground: #a9a9a9;
+    --surface-muted-soft: #2b2b2b59;
+    --surface-muted-strong: #2b2b2b66;
+    --surface-emphasis: #3a3a3a;
+    --surface-emphasis-foreground: #f1f1f1;
+    --surface-panel: #1b1b1bb3;
+    --surface-hover: #292929;
+    --popover: #303030;
+    --popover-foreground: #ececec;
+    --primary: #4a8df7;
+    --primary-foreground: #ffffff;
+    --destructive: #ef4343;
+    --destructive-foreground: #ffffff;
+    --border: #343434;
+    --input: #343434;
+    --ring: #7fa7ff;
+    --chart-1: #4a8df7;
+    --chart-2: #38c48b;
+    --chart-3: #f6b44a;
+    --chart-4: #b66be3;
+    --chart-5: #e45579;
+
+    /* Semantic UI colors */
+    --border-subtle: #3434340d;
+    --border-soft: #3434341a;
+    --border-muted: #34343433;
+    --border-strong: #34343480;
+    --border-emphasis: #343434b3;
+    --primary-faint: #4a8df71a;
+    --primary-soft: #4a8df726;
+    --primary-muted: #4a8df733;
+    --primary-emphasis: #4a8df74d;
+    --primary-border: #4a8df766;
+    --primary-border-strong: #4a8df780;
+    --primary-hover: #4a8df7e6;
+    --destructive-soft: #ef43431a;
+    --destructive-border: #ef434366;
+    --destructive-hover: #ef4343e6;
+    --overlay: #000000cc;
+
+    /* App-specific semantic colors */
+    --success: #15bb84;
+    --warning: #f4a11a;
+    --streak: #ff7d18;
+    --success-soft: #15bb8424;
+    --warning-soft: #f4a11a29;
+    --warning-foreground: #d58a00;
+    --phase-warmup: #f4a11a;
+    --phase-warmup-soft: #f4a11a2e;
+    --phase-peak: #15bb84;
+    --phase-peak-soft: #15bb842e;
+    --phase-diminishing: #ef4343;
+    --phase-diminishing-soft: #ef43431f;
+    --trace-compare: #19b2a7;
+    --trace-compare-end: #dfb012;
+    --trace-box-fill: #2d2d2d66;
+    --trace-box-stroke: #66666688;
+    --trace-click: #f8fafc;
+    --trace-click-ring: #ffffffcc;
+    --ink-strong: #0b1220;
+    --ink-inverse: #f8fafc;
+
+    /* Scrollbar */
+    --scrollbar-thumb: #ffffff14;
+    --scrollbar-thumb-hover: #ffffff29;
+    --scrollbar-thumb-active: #ffffff3d;
+
+    /* Sidebar */
+    --sidebar-background: var(--surface);
+    --sidebar-foreground: var(--canvas-foreground);
+    --sidebar-foreground-muted: #e1e1e1b3;
+    --sidebar-primary: #4a8df7;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: var(--surface-emphasis);
+    --sidebar-accent-foreground: #f1f1f1;
+    --sidebar-border: var(--border);
+    --sidebar-ring: #7fa7ff;
+  }
+
+  .darker {
+    --canvas: #101010;
+    --canvas-foreground: #e6e6e6;
+    --surface: #171717;
+    --surface-foreground: #e6e6e6;
+    --surface-subtle: #202020;
+    --surface-subtle-foreground: #b8b8b8;
+    --surface-subtle-hover: #2a2a2a;
+    --surface-muted: #272727;
+    --surface-muted-foreground: #a3a3a3;
+    --surface-muted-soft: #27272759;
+    --surface-muted-strong: #27272766;
+    --surface-emphasis: #363636;
+    --surface-emphasis-foreground: #e6e6e6;
+    --surface-panel: #141414b3;
+    --surface-hover: #242424;
+    --popover: #272727;
+    --popover-foreground: #e6e6e6;
+    --primary: #3c83f6;
+    --primary-foreground: #ffffff;
+    --destructive: #ef4343;
+    --destructive-foreground: #ffffff;
+    --border: #3a3a3a;
+    --input: #3a3a3a;
+    --ring: #689ff8;
+    --chart-1: #3c83f6;
+    --chart-2: #2eb88a;
+    --chart-3: #f5a524;
+    --chart-4: #af57db;
+    --chart-5: #e23670;
+
+    /* Semantic UI colors */
+    --border-subtle: #3a3a3a0d;
+    --border-soft: #3a3a3a1a;
+    --border-muted: #3a3a3a33;
+    --border-strong: #3a3a3a80;
+    --border-emphasis: #3a3a3ab3;
+    --primary-faint: #3c83f61a;
+    --primary-soft: #3c83f626;
+    --primary-muted: #3c83f633;
+    --primary-emphasis: #3c83f64d;
+    --primary-border: #3c83f666;
+    --primary-border-strong: #3c83f680;
+    --primary-hover: #3c83f6e6;
+    --destructive-soft: #ef43431a;
+    --destructive-border: #ef434366;
+    --destructive-hover: #ef4343e6;
+    --overlay: #000000cc;
+
+    /* App-specific semantic colors */
+    --success-soft: #10b77f24;
+    --warning-soft: #f59f0a29;
+    --warning-foreground: #ffc96b;
+    --phase-warmup: #f59f0a;
+    --phase-warmup-soft: #f59f0a2e;
+    --phase-peak: #10b77f;
+    --phase-peak-soft: #10b77f2e;
+    --phase-diminishing: #ef4343;
+    --phase-diminishing-soft: #ef43431f;
+    --trace-compare: #14b8a6;
+    --trace-compare-end: #eab308;
+    --trace-box-fill: #2a2a2a66;
+    --trace-box-stroke: #6a6a6a88;
+    --trace-click: #f8fafc;
+    --trace-click-ring: #ffffffcc;
+    --ink-strong: #0b1220;
+    --ink-inverse: #f8fafc;
+
+    /* Scrollbar */
+    --scrollbar-thumb: #ffffff14;
+    --scrollbar-thumb-hover: #ffffff29;
+    --scrollbar-thumb-active: #ffffff3d;
+
+    /* Sidebar */
+    --sidebar-background: var(--surface);
+    --sidebar-foreground: var(--canvas-foreground);
+    --sidebar-foreground-muted: #e6e6e6b3;
+    --sidebar-primary: #3c83f6;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: var(--surface-emphasis);
+    --sidebar-accent-foreground: #e6e6e6;
+    --sidebar-border: var(--border);
+    --sidebar-ring: #689ff8;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--canvas-foreground);
+  }
 
   *,
   *::before,
@@ -14,85 +294,16 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-family: var(--font-body, "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+    font-family: var(--font-body);
   }
 
   body {
     margin: 0;
     min-height: 100vh;
-    font-family: var(--font-body, "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+    font-family: var(--font-body);
   }
 
-
-  /* Explicit font classes for reliable switching across platforms (e.g., WebView2) */
-  /* Small helper for range inputs when you want a white thumb but dark track.
-     Useful for scrub bars where the track stays background and the thumb should
-     be text-primary for better contrast. */
-  /* Range pill: pill-shaped thumb on a thin track, white thumb on dark track */
-  input[type="range"].range-pill {
-
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent;
-    outline: none;
-    cursor: pointer;
-  }
-
-  input[type="range"].range-pill::-webkit-slider-runnable-track {
-    height: var(--range-track-height);
-    border-radius: 9999px;
-    background: var(--range-track-bg);
-  }
-
-  input[type="range"].range-pill::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    box-sizing: border-box;
-    width: var(--range-thumb-width);
-    height: var(--range-thumb-height);
-    border-radius: 9999px;
-    background: var(--range-thumb-bg);
-    border: var(--range-thumb-border) solid var(--border-primary);
-    /* center the thumb relative to the track */
-    margin-top: calc((var(--range-track-height) - var(--range-thumb-height)) / 2);
-    transition: transform 120ms ease, box-shadow 120ms ease;
-  }
-
-  input[type="range"].range-pill:hover::-webkit-slider-thumb,
-  input[type="range"].range-pill:active::-webkit-slider-thumb {
-    transform: scale(1.05);
-  }
-
-  input[type="range"].range-pill:focus-visible::-webkit-slider-thumb {
-    box-shadow: 0 0 0 4px var(--focus-ring);
-  }
-
-  /* Firefox */
-  input[type="range"].range-pill::-moz-range-track {
-    height: var(--range-track-height);
-    border-radius: 9999px;
-    background: var(--range-track-bg);
-  }
-
-  input[type="range"].range-pill::-moz-range-thumb {
-    box-sizing: border-box;
-    width: var(--range-thumb-width);
-    height: var(--range-thumb-height);
-    border-radius: 9999px;
-    background: var(--range-thumb-bg);
-    border: var(--range-thumb-border) solid var(--border-primary);
-    transition: transform 120ms ease, box-shadow 120ms ease;
-    margin-top: calc((var(--range-track-height) - var(--range-thumb-height)) / 2);
-  }
-
-  input[type="range"].range-pill:hover::-moz-range-thumb,
-  input[type="range"].range-pill:active::-moz-range-thumb {
-    transform: scale(1.05);
-  }
-
-  input[type="range"].range-pill:focus-visible::-moz-range-thumb {
-    box-shadow: 0 0 0 4px var(--focus-ring);
-  }
+  /* ── Font classes ──────────────────────────────────────────── */
 
   html.font-montserrat,
   body.font-montserrat {
@@ -109,19 +320,13 @@
     font-family: var(--font-stack-jetbrains-mono) !important;
   }
 
-  /* Fleet-style global scrollbar
-     - Uses CSS variables for easy theming
-     - Works for WebKit/Chromium via ::-webkit-scrollbar and for Firefox via scrollbar-color/width
-     - Add the `.scrollbar-compact` class to elements that should show a smaller scrollbar
-  */
+  /* ── Scrollbar ─────────────────────────────────────────────── */
 
-  /* Firefox */
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
 
-  /* WebKit / Chromium */
   *::-webkit-scrollbar {
     width: var(--scrollbar-size);
     height: var(--scrollbar-size);
@@ -135,16 +340,12 @@
     background-color: var(--scrollbar-thumb);
     border-radius: 9999px;
     border: 2px solid transparent;
-    /* create padding around the thumb */
     background-clip: padding-box;
-    transition: background-color .15s ease, transform .12s ease, opacity .12s ease;
-    opacity: 0.9;
+    transition: background-color .15s ease;
   }
 
   *::-webkit-scrollbar-thumb:hover {
     background-color: var(--scrollbar-thumb-hover);
-    transform: scale(1.02);
-    opacity: 1;
   }
 
   *::-webkit-scrollbar-thumb:active {
@@ -155,16 +356,6 @@
     background: transparent;
   }
 
-  /* Keyboard focus / accessibility accent */
-  *:focus-visible::-webkit-scrollbar-thumb {
-    background-color: var(--scrollbar-accent);
-  }
-
-  *:focus-visible {
-    scrollbar-color: var(--scrollbar-accent) var(--scrollbar-track);
-  }
-
-  /* Compact helper class for tighter UI areas */
   .scrollbar-compact::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -173,68 +364,31 @@
   .scrollbar-compact {
     scrollbar-width: thin;
   }
+
+  .ease-emphasized {
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
 }
 
-/* Markdown / AI formatting enhancements */
-.markdown-root h1.mk-h1 {
-  font-size: 1.4rem;
-  line-height: 1.25;
-  font-weight: 600;
-  margin: 1.2rem 0 0.75rem;
+@keyframes route-content-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.markdown-root h2.mk-h2 {
-  font-size: 1.2rem;
-  line-height: 1.3;
-  font-weight: 600;
-  margin: 1.1rem 0 0.6rem;
+@layer utilities {
+  .route-content-enter {
+    animation: route-content-fade-in .16s ease-out backwards;
+  }
 }
 
-.markdown-root h3.mk-h3 {
-  font-size: 1.05rem;
-  line-height: 1.35;
-  font-weight: 600;
-  margin: 0.9rem 0 0.5rem;
-}
-
-.markdown-root hr.mk-hr {
-  border: 0;
-  border-top: 1px solid var(--border-primary);
-  margin: 1.1rem 0;
-  opacity: 0.6;
-}
-
-.markdown-root ul.mk-ul,
-.markdown-root ol.mk-ol {
-  margin: 0.4rem 0 0.8rem 1.2rem;
-  padding: 0;
-}
-
-.markdown-root ul.mk-ul li,
-.markdown-root ol.mk-ol li {
-  margin: 0.15rem 0;
-}
-
-.markdown-root ul.mk-ul {
-  list-style: disc;
-}
-
-.markdown-root ol.mk-ol {
-  list-style: decimal;
-}
-
-.markdown-root p {
-  margin: 0.6rem 0;
-}
-
-.markdown-root pre.mk-code {
-  background: var(--bg-tertiary);
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 4px;
-  font-size: 0.75rem;
-  overflow: auto;
-}
+/* ── Fonts ─────────────────────────────────────────────────── */
 
 @font-face {
   font-family: "Montserrat";

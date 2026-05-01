@@ -1,19 +1,40 @@
 package models
 
-type ScenarioRecord struct {
+type RunRecord struct {
 	FilePath string         `json:"filePath"`
 	FileName string         `json:"fileName"`
 	Stats    map[string]any `json:"stats"`
 	Events   [][]string     `json:"events"`
-	// Optional mouse trace captured locally. Absent when disabled or unavailable.
-	// Deprecated: Use TraceData (base64 binary) for performance.
-	MouseTrace []MousePoint `json:"mouseTrace,omitempty"`
-	// TraceData is the base64-encoded binary representation of the mouse trace.
-	// Format: [Count:4][TS:8][X:4][Y:4][Buttons:4]...
-	// Note: This is now loaded lazily. Use HasTrace to check availability.
-	TraceData string `json:"traceData,omitempty"`
-	// HasTrace indicates if a trace file exists on disk for this scenario.
-	HasTrace bool `json:"hasTrace"`
+	Env      RunEnvironment `json:"env"`
+}
+
+type RunEnvironment struct {
+	AppVersion  string `json:"appVersion"`
+	OS          string `json:"os"`
+	Arch        string `json:"arch"`
+	OSVersion   string `json:"osVersion"`
+	SteamID     string `json:"steamId"`
+	PersonaName string `json:"personaName"`
+
+	CPUName    string `json:"cpuName"`
+	CPUCores   int32  `json:"cpuCores"`
+	GPUName    string `json:"gpuName"`
+	RAMTotalMB int32  `json:"ramTotalMB"`
+
+	DisplayHz    float64 `json:"displayHz"`
+	ScreenWidth  int32   `json:"screenWidth"`
+	ScreenHeight int32   `json:"screenHeight"`
+	IsWindowed   bool    `json:"isWindowed"`
+
+	MouseName    string `json:"mouseName"`
+	MouseVID     string `json:"mouseVid"`
+	MousePID     string `json:"mousePid"`
+	MouseMI      string `json:"mouseMi"`
+	MouseBackend string `json:"mouseBackend"`
+
+	TracePoints   int32   `json:"tracePoints"`
+	TraceDuration float64 `json:"traceDuration"`
+	SampleRate    int32   `json:"sampleRate"`
 }
 
 type MousePoint struct {

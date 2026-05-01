@@ -1,16 +1,13 @@
 package constants
 
 const (
-	// DefaultRecentCap bounds how many recent scenarios we retain in memory when
-	// no explicit limit is set in configuration.
-	DefaultRecentCap = 500
-
 	// Default UI/analysis values
 	DefaultSessionGapMinutes  = 20
 	DefaultTheme              = "dark"
 	DefaultFont               = "montserrat"
 	DefaultMouseBufferMinutes = 2
-	DefaultMaxExistingOnStart = 1000
+	DefaultRecentRunsDays     = 90
+	DefaultRecentRunsMinCount = 1500
 
 	// Watcher defaults
 	DefaultPollIntervalSeconds = 5
@@ -27,6 +24,8 @@ const (
 	UpdaterHTTPTimeoutSeconds = 10
 	// UpdaterDownloadTimeoutSeconds is used for downloading installer assets. Larger to accommodate slow links.
 	UpdaterDownloadTimeoutSeconds = 600
+	// RunsSyncHTTPTimeoutSeconds is used for uploading .refleks files to the cloud API.
+	RunsSyncHTTPTimeoutSeconds = 20
 
 	// --- Sensitivity conversion defaults ---
 	// Default yaw (deg/count) constants for supported game scales. These are used

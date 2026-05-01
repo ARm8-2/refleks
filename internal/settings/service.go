@@ -45,7 +45,7 @@ func (s *Service) Load() error {
 	}
 	defer f.Close()
 
-	var loaded models.Settings
+	loaded := Default()
 	if err := json.NewDecoder(f).Decode(&loaded); err != nil {
 		return err
 	}

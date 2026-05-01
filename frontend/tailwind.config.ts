@@ -1,0 +1,100 @@
+import { Config } from 'tailwindcss'
+import tailwindcssAnimate from 'tailwindcss-animate'
+
+export default {
+  darkMode: ['class'],
+  content: [
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        border: {
+          DEFAULT: 'var(--border)',
+          subtle: 'var(--border-subtle)',
+          soft: 'var(--border-soft)',
+          muted: 'var(--border-muted)',
+          strong: 'var(--border-strong)',
+          emphasis: 'var(--border-emphasis)',
+        },
+        input: 'var(--input)',
+        ring: 'var(--ring)',
+        canvas: {
+          DEFAULT: 'var(--canvas)',
+          foreground: 'var(--canvas-foreground)',
+        },
+        surface: {
+          DEFAULT: 'var(--surface)',
+          foreground: 'var(--surface-foreground)',
+          subtle: 'var(--surface-subtle)',
+          'subtle-foreground': 'var(--surface-subtle-foreground)',
+          'subtle-hover': 'var(--surface-subtle-hover)',
+          muted: 'var(--surface-muted)',
+          'muted-foreground': 'var(--surface-muted-foreground)',
+          soft: 'var(--surface-muted-soft)',
+          strong: 'var(--surface-muted-strong)',
+          emphasis: 'var(--surface-emphasis)',
+          'emphasis-foreground': 'var(--surface-emphasis-foreground)',
+          panel: 'var(--surface-panel)',
+          hover: 'var(--surface-hover)',
+        },
+        foreground: 'var(--canvas-foreground)',
+        primary: {
+          DEFAULT: 'var(--primary)',
+          foreground: 'var(--primary-foreground)',
+          faint: 'var(--primary-faint)',
+          soft: 'var(--primary-soft)',
+          muted: 'var(--primary-muted)',
+          emphasis: 'var(--primary-emphasis)',
+          border: 'var(--primary-border)',
+          'border-strong': 'var(--primary-border-strong)',
+          hover: 'var(--primary-hover)',
+        },
+        destructive: {
+          DEFAULT: 'var(--destructive)',
+          foreground: 'var(--destructive-foreground)',
+          soft: 'var(--destructive-soft)',
+          border: 'var(--destructive-border)',
+          hover: 'var(--destructive-hover)',
+        },
+        popover: {
+          DEFAULT: 'var(--popover)',
+          foreground: 'var(--popover-foreground)',
+        },
+        chart: {
+          1: 'var(--chart-1)',
+          2: 'var(--chart-2)',
+          3: 'var(--chart-3)',
+          4: 'var(--chart-4)',
+          5: 'var(--chart-5)',
+        },
+        overlay: 'var(--overlay)',
+        success: 'var(--success)',
+        warning: 'var(--warning)',
+        streak: 'var(--streak)',
+        sidebar: {
+          DEFAULT: 'var(--sidebar-background)',
+          foreground: 'var(--sidebar-foreground)',
+          'foreground-muted': 'var(--sidebar-foreground-muted)',
+          primary: 'var(--sidebar-primary)',
+          'primary-foreground': 'var(--sidebar-primary-foreground)',
+          accent: 'var(--sidebar-accent)',
+          'accent-foreground': 'var(--sidebar-accent-foreground)',
+          border: 'var(--sidebar-border)',
+          ring: 'var(--sidebar-ring)',
+        },
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+      fontFamily: {
+        sans: ['var(--font-body)', 'sans-serif'],
+        mono: ['var(--font-mono)', 'monospace'],
+      },
+    },
+  },
+  plugins: [tailwindcssAnimate],
+} satisfies Config

@@ -28,14 +28,17 @@ func Default() models.Settings {
 	return models.Settings{
 		SteamInstallDir:      constants.DefaultWindowsSteamInstallDir,
 		StatsDir:             DefaultStatsDir(),
-		TracesDir:            DefaultTracesDirString(),
 		SessionGapMinutes:    constants.DefaultSessionGapMinutes,
+		RecentRunsDays:       constants.DefaultRecentRunsDays,
+		RecentRunsMinCount:   constants.DefaultRecentRunsMinCount,
 		Theme:                constants.DefaultTheme,
 		Font:                 constants.DefaultFont,
-		MouseTrackingEnabled: false,
+		MouseTrackingEnabled: true,
 		MouseBufferMinutes:   constants.DefaultMouseBufferMinutes,
-		MaxExistingOnStart:   constants.DefaultMaxExistingOnStart,
 		AutostartEnabled:     false,
+		AnonymousEnabled:     false,
+		RunSyncEnabled:       true,
+		LastSeenVersion:      "",
 	}
 }
 
@@ -47,11 +50,14 @@ func Sanitize(s models.Settings) models.Settings {
 	if s.StatsDir == "" {
 		s.StatsDir = DefaultStatsDir()
 	}
-	if strings.TrimSpace(s.TracesDir) == "" {
-		s.TracesDir = DefaultTracesDirString()
-	}
 	if s.SessionGapMinutes <= 0 {
 		s.SessionGapMinutes = constants.DefaultSessionGapMinutes
+	}
+	if s.RecentRunsDays <= 0 {
+		s.RecentRunsDays = constants.DefaultRecentRunsDays
+	}
+	if s.RecentRunsMinCount <= 0 {
+		s.RecentRunsMinCount = constants.DefaultRecentRunsMinCount
 	}
 	if strings.TrimSpace(s.Theme) == "" {
 		s.Theme = constants.DefaultTheme
@@ -61,9 +67,6 @@ func Sanitize(s models.Settings) models.Settings {
 	}
 	if s.MouseBufferMinutes <= 0 {
 		s.MouseBufferMinutes = constants.DefaultMouseBufferMinutes
-	}
-	if s.MaxExistingOnStart <= 0 {
-		s.MaxExistingOnStart = constants.DefaultMaxExistingOnStart
 	}
 	if s.ScenarioNotes == nil {
 		s.ScenarioNotes = make(map[string]models.ScenarioNote)
@@ -94,25 +97,6 @@ func EnsureConfigDir() (string, error) {
 		return "", err
 	}
 	return base, nil
-}
-
-// DefaultTracesDirString returns the default traces directory as a concrete path string.
-func DefaultTracesDirString() string {
-	base, err := GetConfigDir()
-	if err != nil {
-		// Fallback to relative subdir if home/config cannot be determined
-		return filepath.ToSlash(constants.TracesSubdirName)
-	}
-	return filepath.ToSlash(filepath.Join(base, constants.TracesSubdirName))
-}
-
-// DefaultTracesDir returns the resolved default traces directory ($HOME/.refleks/traces).
-func DefaultTracesDir() (string, error) {
-	base, err := GetConfigDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(base, constants.TracesSubdirName), nil
 }
 
 // ExpandPathPlaceholders normalizes a path string for the current OS. No placeholders are supported.

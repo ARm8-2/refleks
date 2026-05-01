@@ -1,19 +1,5 @@
 export namespace models {
 	
-	export class AIOptions {
-	    maxRunsPerScenario: number;
-	    systemPersona: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new AIOptions(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.maxRunsPerScenario = source["maxRunsPerScenario"];
-	        this.systemPersona = source["systemPersona"];
-	    }
-	}
 	export class BenchmarkSubcategory {
 	    subcategoryName: string;
 	    scenarioCount: number;
@@ -64,11 +50,25 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class RankDef {
+	    name: string;
+	    color: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new RankDef(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.color = source["color"];
+	    }
+	}
 	export class BenchmarkDifficulty {
 	    difficultyName: string;
 	    kovaaksBenchmarkId: number;
 	    sharecode: string;
-	    rankColors: Record<string, string>;
+	    ranks: RankDef[];
 	    categories: BenchmarkCategory[];
 	
 	    static createFrom(source: any = {}) {
@@ -80,7 +80,7 @@ export namespace models {
 	        this.difficultyName = source["difficultyName"];
 	        this.kovaaksBenchmarkId = source["kovaaksBenchmarkId"];
 	        this.sharecode = source["sharecode"];
-	        this.rankColors = source["rankColors"];
+	        this.ranks = this.convertValues(source["ranks"], RankDef);
 	        this.categories = this.convertValues(source["categories"], BenchmarkCategory);
 	    }
 	
@@ -108,6 +108,7 @@ export namespace models {
 	    abbreviation: string;
 	    color: string;
 	    spreadsheetURL: string;
+	    dateAdded?: string;
 	    difficulties: BenchmarkDifficulty[];
 	
 	    static createFrom(source: any = {}) {
@@ -121,6 +122,7 @@ export namespace models {
 	        this.abbreviation = source["abbreviation"];
 	        this.color = source["color"];
 	        this.spreadsheetURL = source["spreadsheetURL"];
+	        this.dateAdded = source["dateAdded"];
 	        this.difficulties = this.convertValues(source["difficulties"], BenchmarkDifficulty);
 	    }
 	
@@ -235,20 +237,6 @@ export namespace models {
 		    }
 		    return a;
 		}
-	}
-	export class RankDef {
-	    name: string;
-	    color: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new RankDef(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.color = source["color"];
-	    }
 	}
 	export class BenchmarkProgress {
 	    overallRank: number;
@@ -370,53 +358,72 @@ export namespace models {
 		}
 	}
 	
-	export class MousePoint {
-	    ts: number;
-	    x: number;
-	    y: number;
-	    buttons?: number;
+	
+	
+	
+	export class RunEnvironment {
+	    appVersion: string;
+	    os: string;
+	    arch: string;
+	    osVersion: string;
+	    steamId: string;
+	    personaName: string;
+	    cpuName: string;
+	    cpuCores: number;
+	    gpuName: string;
+	    ramTotalMB: number;
+	    displayHz: number;
+	    screenWidth: number;
+	    screenHeight: number;
+	    isWindowed: boolean;
+	    mouseName: string;
+	    mouseVid: string;
+	    mousePid: string;
+	    mouseMi: string;
+	    mouseBackend: string;
+	    tracePoints: number;
+	    traceDuration: number;
+	    sampleRate: number;
 	
 	    static createFrom(source: any = {}) {
-	        return new MousePoint(source);
+	        return new RunEnvironment(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.ts = source["ts"];
-	        this.x = source["x"];
-	        this.y = source["y"];
-	        this.buttons = source["buttons"];
+	        this.appVersion = source["appVersion"];
+	        this.os = source["os"];
+	        this.arch = source["arch"];
+	        this.osVersion = source["osVersion"];
+	        this.steamId = source["steamId"];
+	        this.personaName = source["personaName"];
+	        this.cpuName = source["cpuName"];
+	        this.cpuCores = source["cpuCores"];
+	        this.gpuName = source["gpuName"];
+	        this.ramTotalMB = source["ramTotalMB"];
+	        this.displayHz = source["displayHz"];
+	        this.screenWidth = source["screenWidth"];
+	        this.screenHeight = source["screenHeight"];
+	        this.isWindowed = source["isWindowed"];
+	        this.mouseName = source["mouseName"];
+	        this.mouseVid = source["mouseVid"];
+	        this.mousePid = source["mousePid"];
+	        this.mouseMi = source["mouseMi"];
+	        this.mouseBackend = source["mouseBackend"];
+	        this.tracePoints = source["tracePoints"];
+	        this.traceDuration = source["traceDuration"];
+	        this.sampleRate = source["sampleRate"];
 	    }
 	}
-	
-	
-	
-	export class ScenarioNote {
-	    notes: string;
-	    sens: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ScenarioNote(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.notes = source["notes"];
-	        this.sens = source["sens"];
-	    }
-	}
-	
-	export class ScenarioRecord {
+	export class RunRecord {
 	    filePath: string;
 	    fileName: string;
 	    stats: Record<string, any>;
 	    events: string[][];
-	    mouseTrace?: MousePoint[];
-	    traceData?: string;
-	    hasTrace: boolean;
+	    env: RunEnvironment;
 	
 	    static createFrom(source: any = {}) {
-	        return new ScenarioRecord(source);
+	        return new RunRecord(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -425,9 +432,7 @@ export namespace models {
 	        this.fileName = source["fileName"];
 	        this.stats = source["stats"];
 	        this.events = source["events"];
-	        this.mouseTrace = this.convertValues(source["mouseTrace"], MousePoint);
-	        this.traceData = source["traceData"];
-	        this.hasTrace = source["hasTrace"];
+	        this.env = this.convertValues(source["env"], RunEnvironment);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -448,6 +453,21 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class ScenarioNote {
+	    notes: string;
+	    sens: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ScenarioNote(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.notes = source["notes"];
+	        this.sens = source["sens"];
+	    }
+	}
+	
 	export class SessionNote {
 	    name: string;
 	    notes: string;
@@ -466,17 +486,19 @@ export namespace models {
 	    steamInstallDir: string;
 	    steamIdOverride?: string;
 	    personaNameOverride?: string;
+	    lastSeenVersion?: string;
 	    statsDir: string;
-	    tracesDir: string;
 	    sessionGapMinutes: number;
+	    recentRunsDays: number;
+	    recentRunsMinCount: number;
 	    theme: string;
 	    font?: string;
 	    favoriteBenchmarks?: string[];
 	    mouseTrackingEnabled: boolean;
 	    mouseBufferMinutes: number;
-	    maxExistingOnStart: number;
 	    autostartEnabled: boolean;
-	    geminiApiKey?: string;
+	    anonymousEnabled: boolean;
+	    runSyncEnabled: boolean;
 	    scenarioNotes?: Record<string, ScenarioNote>;
 	    sessionNotes?: Record<string, SessionNote>;
 	
@@ -489,17 +511,19 @@ export namespace models {
 	        this.steamInstallDir = source["steamInstallDir"];
 	        this.steamIdOverride = source["steamIdOverride"];
 	        this.personaNameOverride = source["personaNameOverride"];
+	        this.lastSeenVersion = source["lastSeenVersion"];
 	        this.statsDir = source["statsDir"];
-	        this.tracesDir = source["tracesDir"];
 	        this.sessionGapMinutes = source["sessionGapMinutes"];
+	        this.recentRunsDays = source["recentRunsDays"];
+	        this.recentRunsMinCount = source["recentRunsMinCount"];
 	        this.theme = source["theme"];
 	        this.font = source["font"];
 	        this.favoriteBenchmarks = source["favoriteBenchmarks"];
 	        this.mouseTrackingEnabled = source["mouseTrackingEnabled"];
 	        this.mouseBufferMinutes = source["mouseBufferMinutes"];
-	        this.maxExistingOnStart = source["maxExistingOnStart"];
 	        this.autostartEnabled = source["autostartEnabled"];
-	        this.geminiApiKey = source["geminiApiKey"];
+	        this.anonymousEnabled = source["anonymousEnabled"];
+	        this.runSyncEnabled = source["runSyncEnabled"];
 	        this.scenarioNotes = this.convertValues(source["scenarioNotes"], ScenarioNote, true);
 	        this.sessionNotes = this.convertValues(source["sessionNotes"], SessionNote, true);
 	    }

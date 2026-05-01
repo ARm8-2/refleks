@@ -8,15 +8,9 @@ const (
 	// Benchmark events
 	EventBenchmarkProgressUpdated = "benchmark:progress:updated"
 	EventBenchmarkProgressPrefix  = "benchmark:progress:" // + benchmarkId
+	EventBenchmarkCatalogUpdated  = "benchmark:catalog:updated"
 
-	// Watcher/Scenario events
-	EventWatcherStarted  = "watcher:started"
-	EventScenarioAdded   = "scenario:added"
-	EventScenarioUpdated = "scenario:updated"
-
-	// AI events
-	EventAISessionStart = "ai:session:start"
-	EventAISessionDelta = "ai:session:delta"
-	EventAISessionDone  = "ai:session:done"
-	EventAISessionError = "ai:session:error"
+	// Runs events
+	EventRunsWatcherStarted = "runs:watcher:started"
+	EventRunsAdded          = "runs:added"
 )

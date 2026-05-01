@@ -5,6 +5,9 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"regexp"
+	goruntime "runtime"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"sync"
@@ -14,10 +17,6 @@ import (
 
 	"refleks/internal/constants"
 	"refleks/internal/models"
-	"refleks/internal/parser"
-	"refleks/internal/sens"
-	"refleks/internal/traces"
-	"refleks/internal/util"
 )
 
 // Watcher monitors a directory for new stats files and emits events.
@@ -26,35 +25,40 @@ type Watcher struct {
 	cfg     models.WatcherConfig
 	mu      sync.RWMutex
 	running bool
+	gen     uint64
 	stopCh  chan struct{}
 	seen    map[string]struct{} // full file path set
+	mouse   models.MouseTraceProvider
+	runSvc  RunStore
 
-	recent    []models.ScenarioRecord
-	mouse     MouseProvider
-	tracesSvc *traces.Service
+	OnRunParsed func(models.RunRecord)
+}
 
-	OnScenarioParsed func(models.ScenarioRecord)
+type ingestOptions struct {
+	ignoreSeen   bool
+	notifyParsed bool
+	emitEvent    bool
+}
+
+// RunStore persists and loads runs from the source-of-truth storage.
+type RunStore interface {
+	Exists(statsFileName string) bool
+	IngestRun(fullPath string, mouse models.MouseTraceProvider) (models.RunRecord, error)
 }
 
 // New returns a new Watcher with the given config.
-func New(ctx context.Context, cfg models.WatcherConfig, tracesSvc *traces.Service) *Watcher {
+func New(ctx context.Context, cfg models.WatcherConfig, runSvc RunStore) *Watcher {
 	return &Watcher{
-		ctx:       ctx,
-		cfg:       cfg,
-		stopCh:    make(chan struct{}),
-		seen:      make(map[string]struct{}),
-		tracesSvc: tracesSvc,
+		ctx:    ctx,
+		cfg:    cfg,
+		stopCh: make(chan struct{}),
+		seen:   make(map[string]struct{}),
+		runSvc: runSvc,
 	}
 }
 
-// MouseProvider supplies time-ranged mouse traces for enrichment.
-type MouseProvider interface {
-	Enabled() bool
-	GetRange(start, end time.Time) []models.MousePoint
-}
-
-// SetMouseProvider injects a mouse provider to enrich scenario records.
-func (w *Watcher) SetMouseProvider(p MouseProvider) {
+// SetMouseProvider injects a mouse provider to enrich run records.
+func (w *Watcher) SetMouseProvider(p models.MouseTraceProvider) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.mouse = p
@@ -68,6 +72,8 @@ func (w *Watcher) Start() error {
 		return nil
 	}
 	w.running = true
+	w.gen++
+	currentGen := w.gen
 	w.mu.Unlock()
 
 	// Do not create the directory if it doesn't exist. Just log and continue.
@@ -79,11 +85,18 @@ func (w *Watcher) Start() error {
 		}
 	}
 
-	runtime.EventsEmit(w.ctx, constants.EventWatcherStarted, map[string]string{"path": w.cfg.Path})
+	allExisting := w.snapshotExistingStats()
+	catchUpFiles := w.filterStatsWithinDays(allExisting)
 
-	// Optionally parse existing files once
-	if w.cfg.ParseExistingOnStart {
-		_ = w.scanOnce(true)
+	// Everything already present when the watcher starts is treated as existing.
+	// Only the filtered catch-up subset is converted on startup; the live polling
+	// path is reserved for files that appear after startup.
+	w.markExistingStatsSeen(allExisting)
+	payload := map[string]string{"path": w.cfg.Path}
+	runtime.EventsEmit(w.ctx, constants.EventRunsWatcherStarted, payload)
+
+	if len(catchUpFiles) > 0 {
+		go w.catchUpExisting(catchUpFiles, currentGen)
 	}
 
 	go w.loop()
@@ -99,21 +112,21 @@ func (w *Watcher) Stop() error {
 	}
 	close(w.stopCh)
 	w.running = false
+	w.gen++
 	w.stopCh = make(chan struct{})
 	return nil
 }
 
-// SetOnScenarioParsed sets the callback for when a scenario is parsed.
-func (w *Watcher) SetOnScenarioParsed(fn func(models.ScenarioRecord)) {
+// SetOnRunParsed sets the callback for when a run is ingested.
+func (w *Watcher) SetOnRunParsed(fn func(models.RunRecord)) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	w.OnScenarioParsed = fn
+	w.OnRunParsed = fn
 }
 
 func (w *Watcher) Clear() {
 	w.mu.Lock()
 	w.seen = make(map[string]struct{})
-	w.recent = nil
 	w.mu.Unlock()
 }
 
@@ -125,23 +138,21 @@ func (w *Watcher) loop() {
 		case <-w.stopCh:
 			return
 		case <-ticker.C:
-			_ = w.scanOnce(false)
+			_ = w.scanOnce()
 		}
 	}
 }
 
 // scanOnce lists directory and emits events for newly discovered files.
-func (w *Watcher) scanOnce(includeAll bool) error {
+func (w *Watcher) scanOnce() error {
+	if strings.TrimSpace(w.cfg.Path) == "" {
+		return nil
+	}
+
 	entries, err := os.ReadDir(w.cfg.Path)
 	if err != nil {
 		return err
 	}
-	// Build list with parsed timestamps so we can sort by date, not filename
-	type fileRec struct {
-		path string
-		t    time.Time
-	}
-	var files []fileRec
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
@@ -152,248 +163,153 @@ func (w *Watcher) scanOnce(includeAll bool) error {
 		}
 		full := filepath.Join(w.cfg.Path, name)
 
-		// Optimization: If we're not forcing a re-scan, skip files we've already processed.
-		// This avoids expensive regex parsing on thousands of files every poll interval.
-		if !includeAll {
-			w.mu.RLock()
-			_, known := w.seen[full]
-			w.mu.RUnlock()
-			if known {
-				continue
-			}
-		}
-
-		info, err := parser.ParseFilename(name)
-		if err != nil {
-			continue
-		}
-		files = append(files, fileRec{path: full, t: info.DatePlayed})
-	}
-	// Sort by time ascending (oldest first)
-	sort.Slice(files, func(i, j int) bool { return files[i].t.Before(files[j].t) })
-	// If includeAll with a limit, restrict to last N files
-	if includeAll && w.cfg.ParseExistingLimit > 0 && len(files) > w.cfg.ParseExistingLimit {
-		// mark older files as seen so we don't parse them later
-		older := files[:len(files)-w.cfg.ParseExistingLimit]
-		w.mu.Lock()
-		for _, fr := range older {
-			w.seen[fr.path] = struct{}{}
-		}
-		w.mu.Unlock()
-		// keep only the last N files for parsing now
-		files = files[len(files)-w.cfg.ParseExistingLimit:]
-	}
-	for _, fr := range files {
-		full := fr.path
 		w.mu.RLock()
 		_, known := w.seen[full]
 		w.mu.RUnlock()
-		if known && !includeAll {
+		if known {
 			continue
 		}
 
-		rec, err := w.parseFile(full)
-		if err != nil {
-			runtime.LogErrorf(w.ctx, "parse error for %s: %v", full, err)
-			continue
-		}
-
-		w.mu.Lock()
-		w.seen[full] = struct{}{}
-		w.recent = append(w.recent, rec)
-		cap := w.effectiveRecentCap()
-		if cap > 0 && len(w.recent) > cap {
-			w.recent = w.recent[len(w.recent)-cap:]
-		}
-		w.mu.Unlock()
-
-		if w.OnScenarioParsed != nil {
-			w.OnScenarioParsed(rec)
-		}
-
-		// Emit a flat ScenarioRecord to simplify the IPC contract.
-		runtime.EventsEmit(w.ctx, constants.EventScenarioAdded, rec)
+		w.ingestStatsFile(full, name, ingestOptions{notifyParsed: true, emitEvent: true})
 	}
 	return nil
 }
 
-func (w *Watcher) parseFile(fullPath string) (models.ScenarioRecord, error) {
-	info, err := parser.ParseFilename(filepath.Base(fullPath))
-	if err != nil {
-		return models.ScenarioRecord{}, err
-	}
-	events, stats, err := parser.ParseStatsFile(fullPath)
-	if err != nil {
-		return models.ScenarioRecord{}, err
-	}
-
-	// Augment stats with derived fields
-	stats["Date Played"] = info.DatePlayed.Format(time.RFC3339)
-	// Accuracy = Hit Count / (Hit Count + Miss Count)
-	var hit, miss float64
-	if v, ok := stats["Hit Count"]; ok {
-		hit = util.ToFloat(v)
-	}
-	if v, ok := stats["Miss Count"]; ok {
-		miss = util.ToFloat(v)
-	}
-	denom := hit + miss
-	if denom > 0 {
-		stats["Accuracy"] = hit / denom
-	} else {
-		stats["Accuracy"] = 0.0
-	}
-
-	// Real Avg TTK = average time between consecutive kill events (in seconds)
-	if len(events) >= 2 {
-		var times []time.Time
-		for _, row := range events {
-			if len(row) < 2 {
-				continue
-			}
-			if t, ok := parseTODOnDate(row[1], info.DatePlayed); ok {
-				times = append(times, t)
-			}
-		}
-		if len(times) >= 2 {
-			var sum time.Duration
-			for i := 1; i < len(times); i++ {
-				dt := times[i].Sub(times[i-1])
-				if dt > 0 {
-					sum += dt
-				}
-			}
-			intervals := len(times) - 1
-			if intervals > 0 {
-				stats["Real Avg TTK"] = sum.Seconds() / float64(intervals)
-			}
-		}
-	}
-
-	// Sensitivity normalized to cm/360 for filtering and charts. Always set; 0 means unsupported.
-	if cm, _ := sens.Cm360FromStats(stats); true {
-		stats["cm/360"] = cm
-	}
-
-	// Calculate duration
-	start, end := deriveScenarioWindow(info.DatePlayed, stats, events)
-	if !start.IsZero() && !end.IsZero() {
-		duration := end.Sub(start).Seconds()
-		stats["Duration"] = duration
-	}
-
-	rec := models.ScenarioRecord{
-		FilePath: fullPath,
-		FileName: filepath.Base(fullPath),
-		Stats:    stats,
-		Events:   events,
-	}
-
-	// Optionally enrich with mouse trace based on Challenge Start -> DatePlayed interval
-	w.mu.RLock()
-	mp := w.mouse
-	w.mu.RUnlock()
-	if mp != nil && mp.Enabled() {
-		start, end := deriveScenarioWindow(info.DatePlayed, stats, events)
-		if !start.IsZero() && !end.IsZero() && start.Before(end) {
-			rec.MouseTrace = mp.GetRange(start, end)
-			// debug
-			runtime.LogDebugf(w.ctx, "MouseTrace: %d points for %s in window %s - %s", len(rec.MouseTrace), rec.FileName, start.Format(time.RFC3339), end.Format(time.RFC3339))
-		}
-	}
-
-	// If we captured a trace, persist it to disk for future reloads.
-	if len(rec.MouseTrace) > 0 {
-		// Only write if not already present to avoid churn.
-		if !w.tracesSvc.Exists(rec.FileName) {
-			_ = w.tracesSvc.Save(traces.ScenarioData{
-				Version:      1,
-				FileName:     rec.FileName,
-				ScenarioName: info.ScenarioName,
-				DatePlayed:   info.DatePlayed.Format(time.RFC3339),
-				MouseTrace:   rec.MouseTrace,
-			})
-		}
-		// We have a trace, but we don't send it immediately to save bandwidth/memory.
-		// The frontend will request it if needed.
-		rec.HasTrace = true
-		rec.MouseTrace = nil
-	} else {
-		// No live capture available (e.g., after restart). Check if persisted data exists.
-		if w.tracesSvc.Exists(rec.FileName) {
-			rec.HasTrace = true
-		}
-	}
-	return rec, nil
-}
-
-// deriveScenarioWindow attempts to compute the [start, end] timespan of a scenario.
-// end is taken from the filename timestamp (DatePlayed). Start prefers the
-// "Challenge Start" key in stats, falling back to the first event timestamp.
-func deriveScenarioWindow(end time.Time, stats map[string]any, events [][]string) (time.Time, time.Time) {
-	// Try stats["Challenge Start"] first
-	var start time.Time
-	if v, ok := stats["Challenge Start"]; ok {
-		if s, ok := v.(string); ok {
-			if t, ok := parseTODOnDate(s, end); ok {
-				start = t
-			}
-		}
-	}
-	// Do NOT use "Fight Time" directly: its units vary and often represent active time, not total duration.
-	// Fallback to the first event timestamp's time-of-day
-	if start.IsZero() && len(events) > 0 && len(events[0]) > 1 {
-		ts := events[0][1]
-		if t, ok := parseTODOnDate(ts, end); ok {
-			start = t
-		}
-	}
-	// Final fallback: assume a 60s scenario
-	if start.IsZero() {
-		start = end.Add(-60 * time.Second)
-	}
-	// If start ended up after end (e.g., crossed midnight), shift by -1 day
-	if start.After(end) {
-		start = start.AddDate(0, 0, -1)
-	}
-	return start, end
-}
-
-// parseTODOnDate parses a clock time string onto the provided date.
-func parseTODOnDate(s string, date time.Time) (time.Time, bool) {
-	// Support common formats with/without fractional seconds
-	layouts := []string{
-		"15:04:05.000000",
-		"15:04:05.000",
-		"15:04:05",
-	}
-	for _, layout := range layouts {
-		if t, err := time.ParseInLocation(layout, s, time.Local); err == nil {
-			return time.Date(date.Year(), date.Month(), date.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), date.Location()), true
-		}
-	}
-	return time.Time{}, false
-}
-
-// removed duplicate toFloat: use util.ToFloat instead
-
-// GetRecent returns up to limit most recent scenarios.
-func (w *Watcher) GetRecent(limit int) []models.ScenarioRecord {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	total := len(w.recent)
-	if total == 0 {
+func (w *Watcher) snapshotExistingStats() []string {
+	if strings.TrimSpace(w.cfg.Path) == "" {
 		return nil
 	}
-	if limit <= 0 || limit > total {
-		limit = total
+
+	entries, err := os.ReadDir(w.cfg.Path)
+	if err != nil {
+		runtime.LogWarningf(w.ctx, "failed to read watch path for catch-up: %v", err)
+		return nil
 	}
-	out := make([]models.ScenarioRecord, limit)
-	// Return most-recent-first: copy from the end backwards
-	for i := 0; i < limit; i++ {
-		out[i] = w.recent[total-1-i]
+
+	files := make([]string, 0, len(entries))
+	for _, e := range entries {
+		if e.IsDir() || !isKovaaksStatsFile(e.Name()) {
+			continue
+		}
+		files = append(files, filepath.Join(w.cfg.Path, e.Name()))
+	}
+	sort.Slice(files, func(i, j int) bool {
+		return existingStatsTimestamp(files[i]) > existingStatsTimestamp(files[j])
+	})
+	return files
+}
+
+func (w *Watcher) filterStatsWithinDays(files []string) []string {
+	days := w.cfg.RecentRunsDays
+	minCount := w.cfg.RecentRunsMinCount
+	if days <= 0 {
+		days = constants.DefaultRecentRunsDays
+	}
+	if minCount <= 0 {
+		minCount = constants.DefaultRecentRunsMinCount
+	}
+	if days <= 0 {
+		if minCount > 0 && len(files) > minCount {
+			return files[:minCount]
+		}
+		return files
+	}
+
+	cutoff := time.Now().AddDate(0, 0, -days).UnixMilli()
+	out := make([]string, 0, len(files))
+	for _, full := range files {
+		if existingStatsTimestamp(full) >= cutoff {
+			out = append(out, full)
+		}
+	}
+
+	if minCount > 0 && len(out) < minCount {
+		want := minCount
+		if want > len(files) {
+			want = len(files)
+		}
+		if want > len(out) {
+			return files[:want]
+		}
 	}
 	return out
+}
+
+func (w *Watcher) markExistingStatsSeen(files []string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for _, full := range files {
+		w.seen[full] = struct{}{}
+	}
+}
+
+func (w *Watcher) catchUpExisting(files []string, gen uint64) {
+	if len(files) == 0 {
+		return
+	}
+	ingested := false
+	for _, full := range files {
+		if !w.isGenerationCurrent(gen) {
+			return
+		}
+		if w.ingestStatsFile(full, filepath.Base(full), ingestOptions{ignoreSeen: true}) {
+			ingested = true
+		}
+	}
+
+	// Release memory accumulated during bulk conversion.
+	goruntime.GC()
+	debug.FreeOSMemory()
+
+	if ingested && w.isGenerationCurrent(gen) {
+		runtime.EventsEmit(w.ctx, constants.EventRunsAdded, nil)
+	}
+}
+
+// ingestStatsFile ingests a stats file with behavior controlled by options.
+// Catch-up uses ignoreSeen without callbacks/events; live ingestion enables both.
+func (w *Watcher) ingestStatsFile(fullPath, name string, options ingestOptions) bool {
+	w.mu.RLock()
+	_, known := w.seen[fullPath]
+	mouse := w.mouse
+	onParsed := w.OnRunParsed
+	w.mu.RUnlock()
+	if known && !options.ignoreSeen {
+		return false
+	}
+
+	if w.runSvc.Exists(name) {
+		w.mu.Lock()
+		w.seen[fullPath] = struct{}{}
+		w.mu.Unlock()
+		return false
+	}
+
+	rec, err := w.runSvc.IngestRun(fullPath, mouse)
+	if err != nil {
+		runtime.LogErrorf(w.ctx, "parse error for %s: %v", fullPath, err)
+		return false
+	}
+
+	w.mu.Lock()
+	w.seen[fullPath] = struct{}{}
+	w.mu.Unlock()
+
+	if options.notifyParsed && onParsed != nil {
+		onParsed(rec)
+	}
+
+	if options.emitEvent {
+		runtime.EventsEmit(w.ctx, constants.EventRunsAdded, nil)
+	}
+
+	return true
+}
+
+func (w *Watcher) isGenerationCurrent(gen uint64) bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.gen == gen && w.running
 }
 
 // IsRunning indicates if the watcher loop is active.
@@ -414,41 +330,39 @@ func (w *Watcher) UpdateConfig(cfg models.WatcherConfig) error {
 	return nil
 }
 
-// ReloadTraces checks for persisted mouse traces for recent scenarios.
-// If a record didn't have a trace but now does, a 'ScenarioUpdated' event is emitted.
-func (w *Watcher) ReloadTraces() int {
-	// Copy updated records to emit outside the lock
-	var toEmit []models.ScenarioRecord
-	w.mu.Lock()
-	for i := range w.recent {
-		rec := w.recent[i]
-		// Check if trace exists on disk
-		if !rec.HasTrace && w.tracesSvc.Exists(rec.FileName) {
-			rec.HasTrace = true
-			w.recent[i] = rec
-			toEmit = append(toEmit, rec)
-		}
-	}
-	w.mu.Unlock()
-
-	for _, rec := range toEmit {
-		runtime.EventsEmit(w.ctx, constants.EventScenarioUpdated, rec)
-	}
-	return len(toEmit)
-}
-
 // isKovaaksStatsFile reports whether a filename looks like a Kovaak's exported stats csv.
 func isKovaaksStatsFile(name string) bool {
 	lower := strings.ToLower(name)
-	return strings.HasSuffix(lower, " stats.csv")
+	return strings.HasSuffix(lower, " stats"+constants.StatsFileExt)
 }
 
-// effectiveRecentCap returns the in-memory cap for recent scenarios.
-// If ParseExistingLimit is zero (parse all), we still bound memory to a sensible default.
-func (w *Watcher) effectiveRecentCap() int {
-	cap := w.cfg.ParseExistingLimit
-	if cap <= 0 {
-		cap = constants.DefaultRecentCap
+func existingStatsTimestamp(path string) int64 {
+	base := filepath.Base(path)
+	if info, ok := parseStatsFilenameTimestamp(base); ok {
+		return info
 	}
-	return cap
+	if fi, statErr := os.Stat(path); statErr == nil {
+		return fi.ModTime().UnixMilli()
+	}
+	return 0
+}
+
+var statsFilenameRe = regexp.MustCompile(
+	`^(?P<name>.+?)\s-\s.*?\s-\s(?P<dt>\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})\sStats` + regexp.QuoteMeta(constants.StatsFileExt) + `$`,
+)
+
+func parseStatsFilenameTimestamp(filename string) (int64, bool) {
+	candidate := filename
+	if strings.HasSuffix(strings.ToLower(candidate), constants.RunFileExt) {
+		candidate = strings.TrimSuffix(candidate, constants.RunFileExt) + constants.StatsFileExt
+	}
+	m := statsFilenameRe.FindStringSubmatch(candidate)
+	if m == nil {
+		return 0, false
+	}
+	t, err := time.ParseInLocation("2006.01.02-15.04.05", m[2], time.Local)
+	if err != nil {
+		return 0, false
+	}
+	return t.UnixMilli(), true
 }

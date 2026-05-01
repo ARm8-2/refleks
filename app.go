@@ -8,31 +8,28 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"refleks/internal/ai"
 	"refleks/internal/autostart"
 	"refleks/internal/benchmarks"
 	"refleks/internal/cache"
 	"refleks/internal/constants"
 	"refleks/internal/models"
 	"refleks/internal/process"
+	"refleks/internal/runs"
 	"refleks/internal/scenarios"
 	appsettings "refleks/internal/settings"
-	"refleks/internal/traces"
-	"refleks/internal/tracking"
 	"refleks/internal/updater"
 )
 
 // App struct
 type App struct {
 	ctx            context.Context
-	trackingSvc    *tracking.Service
-	aiSvc          *ai.Service
+	runsRuntimeSvc *runs.RuntimeService
 	settingsSvc    *appsettings.Service
 	benchmarkSvc   *benchmarks.Service
 	scenarioSvc    *scenarios.Service
 	updaterSvc     *updater.Service
 	cacheSvc       *cache.Service
-	tracesSvc      *traces.Service
+	runStore       *runs.Store
 	autostartSvc   *autostart.Service
 	processWatcher *process.Watcher
 	watcherCancel  context.CancelFunc
@@ -59,22 +56,18 @@ func (a *App) startup(ctx context.Context) {
 
 	// Initialize Core Services
 	a.cacheSvc = cache.NewService()
-	a.tracesSvc = traces.NewService()
+	a.runStore = runs.NewStore(a.settingsSvc)
 	a.updaterSvc = updater.NewService(constants.GitHubOwner, constants.GitHubRepo, constants.AppVersion)
-
-	// Configure traces storage directory
-	tracesDir := appsettings.ExpandPathPlaceholders(settings.TracesDir)
-	a.tracesSvc.SetBaseDir(tracesDir)
 
 	// Initialize Domain Services
 	a.benchmarkSvc = benchmarks.NewService(a.settingsSvc, a.cacheSvc)
 	a.scenarioSvc = scenarios.NewService(a.settingsSvc)
+	a.benchmarkSvc.SetOnBenchmarksUpdated(func(items []models.Benchmark) {
+		runtime.EventsEmit(a.ctx, constants.EventBenchmarkCatalogUpdated, map[string]any{"count": len(items)})
+	})
 
-	// Initialize Tracking Service (coordinates Watcher + Mouse)
-	a.trackingSvc = tracking.NewService(a.ctx, a.settingsSvc, a.benchmarkSvc, a.tracesSvc)
-
-	// Initialize AI Service
-	a.aiSvc = ai.NewService(a.ctx, a.settingsSvc)
+	// Initialize runs runtime service (coordinates Watcher + Mouse)
+	a.runsRuntimeSvc = runs.NewRuntimeService(a.ctx, a.settingsSvc, a.benchmarkSvc, a.runStore)
 
 	// Initialize Autostart Service
 	a.autostartSvc = autostart.NewService()
@@ -85,13 +78,15 @@ func (a *App) startup(ctx context.Context) {
 	}
 
 	// Auto-start watcher
-	if err := a.trackingSvc.StartWatcher(""); err != nil {
+	if err := a.runsRuntimeSvc.StartWatcher(""); err != nil {
 		runtime.LogWarningf(a.ctx, "Auto-start watcher failed: %v", err)
 	}
 
-	// Fire-and-forget benchmark cache warmup/sync
+	// Fire-and-forget benchmark definitions + progress cache warmup/sync
 	go func() {
-		time.Sleep(1 * time.Second)
+		if err := a.benchmarkSvc.SyncBenchmarksCache(); err != nil {
+			runtime.LogErrorf(a.ctx, "benchmark definitions sync failed: %v", err)
+		}
 		_, err := a.benchmarkSvc.GetAllBenchmarkProgresses()
 		if err != nil {
 			runtime.LogErrorf(a.ctx, "benchmark cache sync failed: %v", err)
@@ -115,17 +110,29 @@ func (a *App) startup(ctx context.Context) {
 
 // StartWatcher begins monitoring the given directory for new Kovaak's CSV files.
 func (a *App) StartWatcher(path string) error {
-	return a.trackingSvc.StartWatcher(path)
+	return a.runsRuntimeSvc.StartWatcher(path)
 }
 
 // StopWatcher stops the watcher if running.
 func (a *App) StopWatcher() error {
-	return a.trackingSvc.StopWatcher()
+	return a.runsRuntimeSvc.StopWatcher()
 }
 
-// GetRecentScenarios returns most recent parsed scenarios, up to optional limit.
-func (a *App) GetRecentScenarios(limit int) []models.ScenarioRecord {
-	return a.trackingSvc.GetRecent(limit)
+// GetRecentRuns returns most recent parsed runs, up to optional limit.
+func (a *App) GetRecentRuns(limit int) []models.RunRecord {
+	return a.runsRuntimeSvc.GetRecent(limit)
+}
+
+// GetRunEvents returns the kill event rows for a single run file.
+// Events are loaded on demand (not stored in the index) to keep memory usage low.
+func (a *App) GetRunEvents(filePath string) ([][]string, error) {
+	return a.runStore.LoadRunEvents(filePath)
+}
+
+// GetRunTrace retrieves the binary trace data for a run, encoded as Base64.
+// This is called lazily by the frontend when the user views the trace tab.
+func (a *App) GetRunTrace(filePath string) (string, error) {
+	return a.runStore.LoadRunTrace(filePath)
 }
 
 // GetLastScenarioScores fetches the last 10 scores for a given scenario from KovaaK's API.
@@ -133,7 +140,7 @@ func (a *App) GetLastScenarioScores(scenarioName string) ([]models.KovaaksLastSc
 	return a.scenarioSvc.GetLastScores(scenarioName)
 }
 
-// GetBenchmarks returns the embedded benchmarks list for the Explore UI.
+// GetBenchmarks returns the cached benchmark list for the Explore UI.
 func (a *App) GetBenchmarks() ([]models.Benchmark, error) {
 	return a.benchmarkSvc.GetBenchmarks()
 }
@@ -179,7 +186,7 @@ func (a *App) GetSettings() models.Settings {
 
 // UpdateSettings updates settings and persists them; applies to watcher if needed.
 func (a *App) UpdateSettings(s models.Settings) error {
-	return a.trackingSvc.UpdateSettings(s)
+	return a.runsRuntimeSvc.UpdateSettings(s)
 }
 
 // Favorites helpers
@@ -199,15 +206,17 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		defaults := appsettings.Default()
 		newSettings.SteamInstallDir = defaults.SteamInstallDir
 		newSettings.StatsDir = defaults.StatsDir
-		newSettings.TracesDir = defaults.TracesDir
 		newSettings.SessionGapMinutes = defaults.SessionGapMinutes
+		newSettings.RecentRunsDays = defaults.RecentRunsDays
+		newSettings.RecentRunsMinCount = defaults.RecentRunsMinCount
 		newSettings.Theme = defaults.Theme
 		newSettings.Font = defaults.Font
 		newSettings.MouseTrackingEnabled = defaults.MouseTrackingEnabled
 		newSettings.MouseBufferMinutes = defaults.MouseBufferMinutes
-		newSettings.MaxExistingOnStart = defaults.MaxExistingOnStart
-		newSettings.GeminiAPIKey = defaults.GeminiAPIKey
 		newSettings.AutostartEnabled = defaults.AutostartEnabled
+		newSettings.AnonymousEnabled = defaults.AnonymousEnabled
+		newSettings.RunSyncEnabled = defaults.RunSyncEnabled
+		newSettings.LastSeenVersion = defaults.LastSeenVersion
 
 		// Sync autostart state
 		if newSettings.AutostartEnabled {
@@ -231,7 +240,7 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		newSettings.SessionNotes = nil
 	}
 
-	return a.trackingSvc.OverwriteSettings(newSettings)
+	return a.runsRuntimeSvc.OverwriteSettings(newSettings)
 }
 
 // --- App metadata ---
@@ -292,33 +301,14 @@ func (a *App) DownloadAndInstallUpdate(version string) error {
 	return nil
 }
 
-// --- AI Insights (Sessions) ---
-
-// GenerateSessionInsights starts a streaming AI analysis for the provided session records.
-func (a *App) GenerateSessionInsights(sessionId string, records []models.ScenarioRecord, prompt string, options models.AIOptions) (string, error) {
-	if sessionId == "" {
-		sessionId = "session"
-	}
-	reqID := a.aiSvc.NewRequestID()
-	// Pass options directly (models.AIOptions) into the AI service.
-	a.aiSvc.GenerateSessionInsights(reqID, sessionId, records, prompt, options)
-	return reqID, nil
-}
-
-// CancelSessionInsights cancels a running AI stream by requestId.
-func (a *App) CancelSessionInsights(requestId string) error {
-	a.aiSvc.Cancel(requestId)
-	return nil
-}
-
 // SaveScenarioNote persists a user note and sensitivity for a scenario.
 func (a *App) SaveScenarioNote(scenario, notes, sens string) error {
-	return a.trackingSvc.SaveScenarioNote(scenario, notes, sens)
+	return a.runsRuntimeSvc.SaveScenarioNote(scenario, notes, sens)
 }
 
 // SaveSessionNote persists a user name and notes for a session.
 func (a *App) SaveSessionNote(sessionID, name, notes string) error {
-	return a.trackingSvc.SaveSessionNote(sessionID, name, notes)
+	return a.runsRuntimeSvc.SaveSessionNote(sessionID, name, notes)
 }
 
 // ClearCache clears the application cache.
@@ -328,19 +318,6 @@ func (a *App) ClearCache() error {
 		return err
 	}
 	return nil
-}
-
-// GetScenarioTrace retrieves the binary trace data for a scenario, encoded as Base64.
-// This is called lazily by the frontend when the user views the trace tab.
-func (a *App) GetScenarioTrace(fileName string) (string, error) {
-	if !a.tracesSvc.Exists(fileName) {
-		return "", fmt.Errorf("trace not found")
-	}
-	data, err := a.tracesSvc.Load(fileName)
-	if err != nil {
-		return "", err
-	}
-	return traces.EncodeTraceBase64(data.MouseTrace)
 }
 
 // --- Autostart & Monitoring ---
