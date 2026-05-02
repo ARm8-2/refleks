@@ -28,7 +28,7 @@ type Props = {
   onFilterPbChange: (v: boolean | ((prev: boolean) => boolean)) => void
 }
 
-export function HistorySessionSidebar({
+export function HistorySessionList({
   sessions,
   selectedSessionId,
   collapsed,
@@ -63,7 +63,7 @@ export function HistorySessionSidebar({
           </div>
         )}
         {!collapsed && (
-          <SessionSortFilter
+          <SessionListSortFilter
             sort={sort}
             onSortChange={onSortChange}
             filterPb={filterPb}
@@ -171,7 +171,7 @@ const SESSION_SORT_OPTIONS: { value: SessionSortKey; label: string }[] = [
   { value: 'longest', label: 'Longest' },
 ]
 
-function SessionSortFilter({
+function SessionListSortFilter({
   sort,
   onSortChange,
   filterPb,

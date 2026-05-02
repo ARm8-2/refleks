@@ -3,8 +3,8 @@ import { Loading } from '@/shared/components'
 import { useStore } from '@/shared/hooks'
 import { HistoryRunDetailPane } from '../components/HistoryRunDetailPane'
 import { HistoryRunList } from '../components/HistoryRunList'
+import { HistorySessionList } from '../components/HistorySessionList'
 import { HistorySessionOverview } from '../components/HistorySessionOverview'
-import { HistorySessionSidebar } from '../components/HistorySessionSidebar'
 import { useHistoryPageState } from '../hooks/useHistoryPageState'
 
 export function HistoryPage() {
@@ -62,7 +62,7 @@ export function HistoryPage() {
   return (
     <div className="flex flex-1 flex-col overflow-hidden text-sm">
       <div className="flex min-h-0 flex-1 gap-4 overflow-hidden p-4 xl:p-5">
-        <HistorySessionSidebar
+        <HistorySessionList
           sessions={filteredSessions}
           selectedSessionId={selectedSessionId}
           collapsed={sessionListCollapsed}
