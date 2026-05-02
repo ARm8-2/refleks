@@ -217,7 +217,8 @@ function PerformanceVsSensChartContent({
                 }}
                 formatter={(value, _name, item) => {
                   const point = item?.payload as SensitivityPoint | undefined
-                  if (!point) return null
+                  // Only show formatter for the performance dataKey, not for x-axis
+                  if (!point || item.dataKey !== 'performance') return null
 
                   return (
                     <div className="grid gap-0.5 text-popover-foreground/75">

@@ -63,7 +63,7 @@ export function HistoryRunList({
             <Input
               value={query}
               onChange={e => onQueryChange(e.target.value)}
-              placeholder="Search runs..."
+              placeholder="Search..."
               className="h-9 pl-8"
             />
           </div>
