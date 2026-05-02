@@ -10,24 +10,40 @@ import (
 	"refleks/internal/models"
 )
 
-// DefaultStatsDir returns an OS-appropriate default Kovaak's stats directory.
-func DefaultStatsDir() string {
-	// Allow an environment override in all environments
-	if env := GetEnv(constants.EnvStatsDirVar); strings.TrimSpace(env) != "" {
-		return ExpandPathPlaceholders(strings.TrimSpace(env))
+// DefaultKovaaksInstallDir returns an OS-appropriate default Kovaak's install directory.
+func DefaultKovaaksInstallDir() string {
+	if env := strings.TrimSpace(GetEnv(constants.EnvKovaaksInstallDirVar)); env != "" {
+		return NormalizeKovaaksInstallDir(env)
 	}
 	if runtime.GOOS == "windows" {
-		return constants.DefaultWindowsKovaaksStatsDir
+		return constants.DefaultWindowsKovaaksInstallDir
 	}
-	// No fallback for non-Windows; leave empty so user/env must configure
 	return ""
+}
+
+// NormalizeKovaaksInstallDir trims, normalizes separators, and cleans the install path.
+func NormalizeKovaaksInstallDir(p string) string {
+	p = strings.TrimSpace(ExpandPathPlaceholders(p))
+	if p == "" {
+		return ""
+	}
+	return filepath.Clean(p)
+}
+
+// ResolveKovaaksStatsDir derives the stats directory from the configured install directory.
+func ResolveKovaaksStatsDir(installDir string) string {
+	installDir = NormalizeKovaaksInstallDir(installDir)
+	if installDir == "" {
+		return ""
+	}
+	return filepath.Join(installDir, constants.KovaaksDataDirName, constants.KovaaksStatsDirName)
 }
 
 // Default returns sane default settings for a fresh install.
 func Default() models.Settings {
 	return models.Settings{
 		SteamInstallDir:      constants.DefaultWindowsSteamInstallDir,
-		StatsDir:             DefaultStatsDir(),
+		KovaaksInstallDir:    DefaultKovaaksInstallDir(),
 		SessionGapMinutes:    constants.DefaultSessionGapMinutes,
 		RecentRunsDays:       constants.DefaultRecentRunsDays,
 		RecentRunsMinCount:   constants.DefaultRecentRunsMinCount,
@@ -47,8 +63,9 @@ func Sanitize(s models.Settings) models.Settings {
 	if strings.TrimSpace(s.SteamInstallDir) == "" {
 		s.SteamInstallDir = constants.DefaultWindowsSteamInstallDir
 	}
-	if s.StatsDir == "" {
-		s.StatsDir = DefaultStatsDir()
+	s.KovaaksInstallDir = NormalizeKovaaksInstallDir(s.KovaaksInstallDir)
+	if s.KovaaksInstallDir == "" {
+		s.KovaaksInstallDir = DefaultKovaaksInstallDir()
 	}
 	if s.SessionGapMinutes <= 0 {
 		s.SessionGapMinutes = constants.DefaultSessionGapMinutes

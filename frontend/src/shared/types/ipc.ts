@@ -177,10 +177,10 @@ import type { Font, Theme } from '../lib/theme'
 
 export interface Settings {
   steamInstallDir?: string
+  kovaaksInstallDir: string
   steamIdOverride?: string
   personaNameOverride?: string
   lastSeenVersion?: string
-  statsDir: string
   sessionGapMinutes: number
   recentRunsDays: number
   recentRunsMinCount: number

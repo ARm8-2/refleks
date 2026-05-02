@@ -8,8 +8,12 @@ const (
 	RunFileExt     = ".refleks"
 	StatsFileExt   = ".csv"
 
-	// Default Kovaak's stats directory on Windows
-	DefaultWindowsKovaaksStatsDir = `C:\\Program Files (x86)\\Steam\\steamapps\\common\\FPSAimTrainer\\FPSAimTrainer\\stats`
+	KovaaksDataDirName         = "FPSAimTrainer"
+	KovaaksStatsDirName        = "stats"
+	KovaaksPerformancesDirName = "performances"
+
+	// Default Kovaak's install directory on Windows.
+	DefaultWindowsKovaaksInstallDir = `C:\\Program Files (x86)\\Steam\\steamapps\\common\\FPSAimTrainer`
 
 	// Default Steam install directory (used to locate config/loginusers.vdf)
 	DefaultWindowsSteamInstallDir = `C:\\Program Files (x86)\\Steam`
@@ -19,8 +23,8 @@ const (
 	EnvSteamIDVar = "REFLEKS_STEAM_ID"
 	// If set, this overrides PersonaName detection from loginusers.vdf
 	EnvPersonaNameVar = "REFLEKS_PERSONA_NAME"
-	// If set, this overrides the default stats directory (useful in dev containers)
-	EnvStatsDirVar = "REFLEKS_STATS_DIR"
+	// If set, this overrides the default Kovaak's install directory (useful in dev containers)
+	EnvKovaaksInstallDirVar = "REFLEKS_KOVAAKS_INSTALL_DIR"
 	// If set, this overrides the default run sync API endpoint.
 	EnvRunsSyncURLVar = "REFLEKS_RUNS_SYNC_URL"
 	// If set, this overrides the default benchmarks API endpoint.
