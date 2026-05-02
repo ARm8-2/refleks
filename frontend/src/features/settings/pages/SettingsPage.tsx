@@ -14,6 +14,7 @@ import {
   STORAGE_KEYS,
   THEMES,
   checkForUpdates,
+  downloadAndInstallUpdate,
   getSettings,
   getVersion,
   openURL,
@@ -61,6 +62,8 @@ export function SettingsPage() {
   const [update, setUpdate] = useState<UpdateInfo | null>(null)
   const [checking, setChecking] = useState<boolean>(false)
   const [checkError, setCheckError] = useState<string>('')
+  const [downloading, setDownloading] = useState<boolean>(false)
+  const [downloadError, setDownloadError] = useState<string>('')
   const [isResetOpen, setIsResetOpen] = useState(false)
   const [isClearCacheOpen, setIsClearCacheOpen] = useState(false)
   const [welcomePresentation, setWelcomePresentation] = useState<WelcomePresentation | null>(null)
@@ -145,6 +148,18 @@ export function SettingsPage() {
     } finally {
       setChecking(false)
     }
+  }
+
+  const handleDownloadInstall = async () => {
+    setDownloading(true)
+    setDownloadError('')
+    try {
+      await downloadAndInstallUpdate(update?.latestVersion ?? '')
+    } catch (e) {
+      setDownloadError((e as Error)?.message || 'Failed to download update')
+      setDownloading(false)
+    }
+    // On success the app quits — no need to reset state
   }
 
   const handleOpenWelcome = () => {
@@ -252,18 +267,18 @@ export function SettingsPage() {
                   <span className="text-sm font-medium text-foreground">Version {update.latestVersion} available</span>
                 </div>
                 <p className="text-xs text-surface-muted-foreground">
-                  You&apos;re on {update.currentVersion || currentVersion || MISSING_VALUE}. Download the latest release or review the changelog.
+                  You&apos;re on {update.currentVersion || currentVersion || MISSING_VALUE}. Click <strong>Install Update</strong> to download in the background — the app will close and the installer will launch automatically.
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => update.downloadUrl && openURL(update.downloadUrl)} variant="default" size="sm">
-                    <Download className="mr-1.5 h-4 w-4" />
-                    Download
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button onClick={handleDownloadInstall} disabled={downloading} variant="default" size="sm">
+                    {downloading
+                      ? <><RefreshCw className="mr-1.5 h-4 w-4 animate-spin" />Downloading...</>
+                      : <><Download className="mr-1.5 h-4 w-4" />Install Update</>}
                   </Button>
-                  {update?.hasUpdate && (
-                    <Button onClick={() => openURL(EXTERNAL_LINKS.changelog)} variant="outline" size="sm">
-                      View Changelog
-                    </Button>
-                  )}
+                  <Button onClick={() => openURL(EXTERNAL_LINKS.changelog)} variant="outline" size="sm">
+                    View Changelog
+                  </Button>
+                  {downloadError && <span className="text-sm text-destructive">{downloadError}</span>}
                 </div>
               </div>
             )}
