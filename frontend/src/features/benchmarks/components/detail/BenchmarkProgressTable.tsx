@@ -55,6 +55,7 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
   const storageBase = benchmarkDetailProgressStorageBase(benchmark.benchmarkName)
 
   const [compactMode, setCompactMode] = usePersistedState<boolean>(benchmarkDetailProgressStorageKey(benchmark.benchmarkName, 'compact'), false)
+  const [showLastPlayedHighlight, setShowLastPlayedHighlight] = usePersistedState<boolean>(benchmarkDetailProgressStorageKey(benchmark.benchmarkName, 'showLastPlayedHighlight'), true)
   const [showNotesCol, setShowNotesCol] = usePersistedState<boolean>(benchmarkDetailProgressStorageKey(benchmark.benchmarkName, 'showNotes'), true)
   const [showRecCol, setShowRecCol] = usePersistedState<boolean>(benchmarkDetailProgressStorageKey(benchmark.benchmarkName, 'showRec'), true)
   const [showPlayCol, setShowPlayCol] = usePersistedState<boolean>(benchmarkDetailProgressStorageKey(benchmark.benchmarkName, 'showPlay'), true)
@@ -120,6 +121,18 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
     }
     return Array.from(names)
   }, [categories])
+
+  const currentScenarioName = useMemo(() => {
+    for (const session of sessions) {
+      for (const item of session.items) {
+        const name = getScenarioName(item)
+        if (wantedNames.includes(name)) {
+          return name
+        }
+      }
+    }
+    return null
+  }, [sessions, wantedNames])
 
   const lastSessionCount = useMemo(() => {
     const map = new Map<string, number>()
@@ -246,6 +259,16 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
             >
               Compact
             </Button>
+            <Button
+              variant={showLastPlayedHighlight ? 'secondary' : 'ghost'}
+              size="sm"
+              className="h-8 px-3 text-xs"
+              onClick={() => setShowLastPlayedHighlight(value => !value)}
+              aria-pressed={showLastPlayedHighlight}
+              title={showLastPlayedHighlight ? 'Hide last played highlight' : 'Show last played highlight'}
+            >
+              Last Played
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)} title="View tracker settings">
               <Settings2 className="h-4 w-4" />
             </Button>
@@ -314,33 +337,35 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
                         )}
                       </div>
 
-                      <div className="shrink-0 bg-transparent pl-2 pr-2">
+                      <div className="shrink-0 bg-transparent">
                         <div className={rowSpacingClass}>
                           {group.scenarios.map(scenario => {
                             const recommendation = getRecommendation(scenario.name)
                             const completedThreshold = Math.max(1, (scenario.thresholds?.length ?? 0) - 1)
                             const completed = scenario.scenarioRank >= completedThreshold
                             const hasSavedNote = Boolean(settings?.scenarioNotes?.[scenario.name]?.notes)
+                            const isCurrentScenarioRow = currentScenarioName === scenario.name
 
                             return (
-                              <ScenarioInfoRow
-                                key={scenario.name}
-                                scenarioName={scenario.name}
-                                score={scenario.score || 0}
-                                gridTemplate={infoGridTemplate}
-                                cls={cls}
-                                showNotesCol={effectiveShowNotesCol}
-                                showRecCol={effectiveShowRecCol}
-                                showPlayCol={effectiveShowPlayCol}
-                                showHistoryCol={effectiveShowHistoryCol}
-                                hasSavedNote={hasSavedNote}
-                                recommendation={recommendation}
-                                isTopPick={isTopPick(scenario.name)}
-                                completed={completed}
-                                onNotes={() => openNotes(scenario.name)}
-                                onHistory={() => openHistory(scenario.name, scenario.thresholds || [])}
-                                onPlay={() => launchScenario(scenario.name, 'challenge').catch(() => { })}
-                              />
+                              <div key={scenario.name} className={`rounded-l-md pl-2 pr-2 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? 'bg-surface-subtle-hover' : ''}`}>
+                                <ScenarioInfoRow
+                                  scenarioName={scenario.name}
+                                  score={scenario.score || 0}
+                                  gridTemplate={infoGridTemplate}
+                                  cls={cls}
+                                  showNotesCol={effectiveShowNotesCol}
+                                  showRecCol={effectiveShowRecCol}
+                                  showPlayCol={effectiveShowPlayCol}
+                                  showHistoryCol={effectiveShowHistoryCol}
+                                  hasSavedNote={hasSavedNote}
+                                  recommendation={recommendation}
+                                  isTopPick={isTopPick(scenario.name)}
+                                  completed={completed}
+                                  onNotes={() => openNotes(scenario.name)}
+                                  onHistory={() => openHistory(scenario.name, scenario.thresholds || [])}
+                                  onPlay={() => launchScenario(scenario.name, 'challenge').catch(() => { })}
+                                />
+                              </div>
                             )
                           })}
                         </div>
@@ -379,28 +404,32 @@ export function BenchmarkProgressTable({ benchmark, difficultyName, progress, sh
             </div>
 
             {categories.map(category => (
-              <div key={`${category.name}-right`} className={`min-w-full pr-1 ${categoryPaddingClass}`}>
+              <div key={`${category.name}-right`} className={`min-w-full ${categoryPaddingClass}`}>
                 <div className="flex">
                   <div className={`w-full flex-1 ${categorySpacingClass}`}>
                     {category.groups.map((group, groupIndex) => (
                       <div key={`${category.name}-${groupIndex}-right`} className="relative flex">
                         <div className="flex-1">
                           <div className={rowSpacingClass}>
-                            {group.scenarios.map(scenario => (
-                              <ScenarioRankCells
-                                key={`${scenario.name}-ranks`}
-                                scenarioName={scenario.name}
-                                score={scenario.score || 0}
-                                scenarioRank={scenario.scenarioRank}
-                                thresholds={scenario.thresholds || []}
-                                rankDefs={rankDefs}
-                                visibleRankIndices={visibleRankIndices}
-                                hasVisibleRanks={hasVisibleRanks}
-                                rightGridTemplate={rightGridTemplate}
-                                rightGridMinWidth={rightGridMinWidth}
-                                cls={cls}
-                              />
-                            ))}
+                            {group.scenarios.map(scenario => {
+                              const isCurrentScenarioRow = currentScenarioName === scenario.name
+                              return (
+                                <div key={`${scenario.name}-ranks`} className={`rounded-r-md pr-1 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? 'bg-surface-subtle-hover' : ''}`}>
+                                  <ScenarioRankCells
+                                    scenarioName={scenario.name}
+                                    score={scenario.score || 0}
+                                    scenarioRank={scenario.scenarioRank}
+                                    thresholds={scenario.thresholds || []}
+                                    rankDefs={rankDefs}
+                                    visibleRankIndices={visibleRankIndices}
+                                    hasVisibleRanks={hasVisibleRanks}
+                                    rightGridTemplate={rightGridTemplate}
+                                    rightGridMinWidth={rightGridMinWidth}
+                                    cls={cls}
+                                  />
+                                </div>
+                              )
+                            })}
                           </div>
                         </div>
                       </div>
