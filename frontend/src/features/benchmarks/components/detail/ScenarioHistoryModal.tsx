@@ -171,7 +171,7 @@ function buildRankBands(thresholds: number[], rankDefs: RankDef[], domain: [numb
     bands.push({
       y1,
       y2,
-      color: rankDefs[index]?.color || CHART_SERIES_COLORS.accuracy,
+      color: rankDefs[index - 1]?.color,
     })
   }
 
