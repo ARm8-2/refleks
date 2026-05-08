@@ -1,19 +1,19 @@
 {
-	"name": "RefleK's",
-	"build": {
-		"dockerfile": "Dockerfile"
-	},
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"astro-build.astro-vscode",
-				"bradlc.vscode-tailwindcss",
-				"golang.go"
-			]
-		}
-	}
-	// "mounts": [
-	// 	"source=C:/Program Files (x86)/Steam,target=/mnt/steam,type=bind,consistency=cached",
-	// 	"source=C:/Program Files (x86)/Steam/steamapps/common/FPSAimTrainer/FPSAimTrainer,target=/mnt/kovaaks,type=bind,consistency=cached"
-	// ]
+  "name": "RefleK's",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "astro-build.astro-vscode",
+        "bradlc.vscode-tailwindcss",
+        "golang.go"
+      ]
+    }
+  }
+  // "mounts": [
+  //   "source=C:/Program Files (x86)/Steam,target=/mnt/steam,type=bind,consistency=cached",
+  //   "source=C:/Program Files (x86)/Steam/steamapps/common/FPSAimTrainer,target=/mnt/kovaaks,type=bind,consistency=cached"
+  // ]
 }
