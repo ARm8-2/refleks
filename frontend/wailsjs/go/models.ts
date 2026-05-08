@@ -484,10 +484,10 @@ export namespace models {
 	}
 	export class Settings {
 	    steamInstallDir: string;
+	    kovaaksInstallDir: string;
 	    steamIdOverride?: string;
 	    personaNameOverride?: string;
 	    lastSeenVersion?: string;
-	    statsDir: string;
 	    sessionGapMinutes: number;
 	    recentRunsDays: number;
 	    recentRunsMinCount: number;
@@ -509,10 +509,10 @@ export namespace models {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.steamInstallDir = source["steamInstallDir"];
+	        this.kovaaksInstallDir = source["kovaaksInstallDir"];
 	        this.steamIdOverride = source["steamIdOverride"];
 	        this.personaNameOverride = source["personaNameOverride"];
 	        this.lastSeenVersion = source["lastSeenVersion"];
-	        this.statsDir = source["statsDir"];
 	        this.sessionGapMinutes = source["sessionGapMinutes"];
 	        this.recentRunsDays = source["recentRunsDays"];
 	        this.recentRunsMinCount = source["recentRunsMinCount"];

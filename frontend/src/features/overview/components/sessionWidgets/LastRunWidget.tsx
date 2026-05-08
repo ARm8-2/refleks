@@ -37,7 +37,7 @@ export function LastRunWidget({ snapshot }: { snapshot: RecentSessionSnapshot })
         {lastRunAccuracy !== null && (
           <div className="flex items-baseline gap-1.5">
             <Crosshair className="h-3 w-3 text-surface-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">{lastRunAccuracy.toFixed(1)}%</span>
+            <span className="text-sm font-medium text-foreground">{(lastRunAccuracy * 100).toFixed(1)}%</span>
             <TrendIndicator trend={lastRunAccTrend} />
           </div>
         )}

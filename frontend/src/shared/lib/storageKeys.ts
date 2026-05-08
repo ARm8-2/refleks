@@ -60,6 +60,7 @@ export type BenchmarkDetailProgressPreference =
   | 'showRec'
   | 'showPlay'
   | 'showHistory'
+  | 'showLastPlayedHighlight'
 
 export type BenchmarkDetailVisibilityPreference =
   | 'autoHide'

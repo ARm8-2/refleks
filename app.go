@@ -108,9 +108,9 @@ func (a *App) startup(ctx context.Context) {
 	}()
 }
 
-// StartWatcher begins monitoring the given directory for new Kovaak's CSV files.
-func (a *App) StartWatcher(path string) error {
-	return a.runsRuntimeSvc.StartWatcher(path)
+// StartWatcher begins monitoring the configured Kovaak's install directory.
+func (a *App) StartWatcher(installDir string) error {
+	return a.runsRuntimeSvc.StartWatcher(installDir)
 }
 
 // StopWatcher stops the watcher if running.
@@ -205,7 +205,7 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 	if resetConfig {
 		defaults := appsettings.Default()
 		newSettings.SteamInstallDir = defaults.SteamInstallDir
-		newSettings.StatsDir = defaults.StatsDir
+		newSettings.KovaaksInstallDir = defaults.KovaaksInstallDir
 		newSettings.SessionGapMinutes = defaults.SessionGapMinutes
 		newSettings.RecentRunsDays = defaults.RecentRunsDays
 		newSettings.RecentRunsMinCount = defaults.RecentRunsMinCount

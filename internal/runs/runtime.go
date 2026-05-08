@@ -49,7 +49,7 @@ func NewRuntimeService(ctx context.Context, settingsSvc *appsettings.Service, be
 	}
 
 	defaultCfg := models.WatcherConfig{
-		Path:               settings.StatsDir,
+		Path:               appsettings.ResolveKovaaksStatsDir(settings.KovaaksInstallDir),
 		SessionGap:         time.Duration(settings.SessionGapMinutes) * time.Minute,
 		PollInterval:       time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
 		RecentRunsDays:     settings.RecentRunsDays,
@@ -73,19 +73,19 @@ func NewRuntimeService(ctx context.Context, settingsSvc *appsettings.Service, be
 	return svc
 }
 
-func (s *RuntimeService) StartWatcher(path string) error {
+func (s *RuntimeService) StartWatcher(installDir string) error {
 	current := s.settingsSvc.Get()
-	if path != "" {
-		current.StatsDir = path
+	if installDir != "" {
+		current.KovaaksInstallDir = installDir
 		if err := s.settingsSvc.Update(current); err != nil {
 			return err
 		}
 		current = s.settingsSvc.Get()
 	}
 
-	finalPath := current.StatsDir
+	finalPath := appsettings.ResolveKovaaksStatsDir(current.KovaaksInstallDir)
 	if finalPath == "" {
-		finalPath = appsettings.DefaultStatsDir()
+		finalPath = appsettings.ResolveKovaaksStatsDir(appsettings.DefaultKovaaksInstallDir())
 	}
 
 	cfg := models.WatcherConfig{
@@ -175,7 +175,7 @@ func (s *RuntimeService) OverwriteSettings(newS models.Settings) error {
 	}
 
 	needsWatcherRestart := true
-	if prevSettings.StatsDir == newS.StatsDir &&
+	if prevSettings.KovaaksInstallDir == newS.KovaaksInstallDir &&
 		prevSettings.SessionGapMinutes == newS.SessionGapMinutes &&
 		prevSettings.RecentRunsDays == newS.RecentRunsDays &&
 		prevSettings.RecentRunsMinCount == newS.RecentRunsMinCount {
@@ -194,7 +194,7 @@ func (s *RuntimeService) updateWatcher(newS models.Settings, needsRestart bool) 
 	}
 
 	cfg := models.WatcherConfig{
-		Path:               newS.StatsDir,
+		Path:               appsettings.ResolveKovaaksStatsDir(newS.KovaaksInstallDir),
 		SessionGap:         time.Duration(newS.SessionGapMinutes) * time.Minute,
 		PollInterval:       time.Duration(constants.DefaultPollIntervalSeconds) * time.Second,
 		RecentRunsDays:     newS.RecentRunsDays,

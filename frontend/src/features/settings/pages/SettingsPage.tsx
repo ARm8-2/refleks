@@ -287,11 +287,11 @@ export function SettingsPage() {
           <div className="grid gap-4 xl:grid-cols-2">
             <div className="space-y-4">
               <SettingsSection title="General" description="Core folders and session behavior.">
-                <SettingsField label="Stats Directory" description="Path to KovaaK's stats folder">
+                <SettingsField label="KovaaK's Install Folder" description="Path to the KovaaK's install folder used to locate FPSAimTrainer/stats and FPSAimTrainer/performances">
                   <Input
                     type="text"
-                    value={settings.statsDir}
-                    onChange={e => updateField('statsDir', e.target.value)}
+                    value={settings.kovaaksInstallDir}
+                    onChange={e => updateField('kovaaksInstallDir', e.target.value)}
                     onKeyDown={handleInputKeyDown}
                     className="w-full max-w-xl"
                   />

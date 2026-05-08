@@ -48,7 +48,9 @@ func cm360FromStats(stats map[string]any) (float64, bool) {
 }
 
 var yawByScale = map[string]float64{
-	"CSGO": constants.YawDegPerCountCSGO,
+	"Apex Legends":   constants.YawDegPerCountSource,
+	"CSGO":           constants.YawDegPerCountSource,
+	"Counter-Strike": constants.YawDegPerCountSource,
 }
 
 func toFloat(v any) float64 {

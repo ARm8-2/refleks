@@ -32,6 +32,6 @@ const (
 	// by the sensitivity converter to derive cm/360 for linear engines where
 	// rotation = sensitivity * yaw * counts.
 
-	// Counter‑Strike (CS:GO / CS2) default m_yaw
-	YawDegPerCountCSGO = 0.022
+	// Source-family defaults used by Counter-Strike and Apex Legends
+	YawDegPerCountSource = 0.022
 )
