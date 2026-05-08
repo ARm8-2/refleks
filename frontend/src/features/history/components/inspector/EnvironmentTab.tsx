@@ -178,17 +178,11 @@ function SingleEnvironmentView({ primaryRun, anonymousEnabled, onClearPrimaryRun
 
   return (
     <>
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="font-medium text-foreground">{primaryRun.scenarioName}</div>
-          <div className="mt-0.5 text-xs text-surface-muted-foreground">
-            {formatRunTimestamp(primaryRun.playedAt)} · {formatSessionTitle(primaryRun.session)}
-          </div>
+      <div className="min-w-0">
+        <div className="font-medium text-foreground">{primaryRun.scenarioName}</div>
+        <div className="mt-0.5 text-xs text-surface-muted-foreground">
+          {formatRunTimestamp(primaryRun.playedAt)} · {formatSessionTitle(primaryRun.session)}
         </div>
-        <Button variant="ghost" size="sm" onClick={onClearPrimaryRun}>
-          <PinOff className="mr-1 h-3.5 w-3.5" />
-          Clear
-        </Button>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

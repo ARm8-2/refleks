@@ -1,7 +1,7 @@
 import { Button, SegmentedControl } from '@/shared/components'
 import { usePersistedState } from '@/shared/hooks'
 import { cn, getSettings, STORAGE_KEYS } from '@/shared/lib'
-import { Columns2, Layers, PanelRightClose, Rows2, Trophy } from 'lucide-react'
+import { Columns2, Layers, PanelRightClose, PinOff, Rows2, Trophy } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { HistoryRun } from '../lib/historyModels'
 import { INSPECTOR_TABS, type InspectorTab } from '../lib/inspectorTabs'
@@ -95,6 +95,12 @@ export function HistoryRunDetailPane({
             <Button variant="ghost" size="sm" onClick={onClearComparison}>
               <Rows2 className="mr-1 h-3.5 w-3.5" />
               Single
+            </Button>
+          )}
+          {primaryRun && (
+            <Button variant="ghost" size="sm" onClick={onClearPrimaryRun}>
+              <PinOff className="mr-1 h-3.5 w-3.5" />
+              Clear
             </Button>
           )}
           <Button variant="ghost" size="icon" onClick={onClose} title="Close inspector">
