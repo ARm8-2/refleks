@@ -32,6 +32,13 @@ const (
 	// by the sensitivity converter to derive cm/360 for linear engines where
 	// rotation = sensitivity * yaw * counts.
 
-	// Source-family defaults used by Counter-Strike and Apex Legends
+	// Source-family yaw (0.022 deg/count) shared by Counter-Strike, CSGO,
+	// Apex Legends, Quake/Source, and Quake Champions.
 	YawDegPerCountSource = 0.022
+
+	// Yaw shared by Overwatch, Call of Duty, and Destiny 2 (0.0066 deg/count).
+	YawDegPerCountOverwatch = 0.0066
+
+	// Valorant yaw (0.06996 deg/count), per Kovaak's FovSensConfig.json.
+	YawDegPerCountValorant = 0.06996
 )
