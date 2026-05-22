@@ -48,7 +48,8 @@ func cm360FromStats(stats map[string]any) (float64, bool) {
 }
 
 // yawByScale maps Kovaak's "Sens Scale" string to the corresponding yaw
-// constant (degrees of rotation per mouse count at sensitivity 1.0).
+// constant from internal/constants (degrees of rotation per mouse count at
+// sensitivity 1.0).
 //
 // Values are sourced from Kovaak's official FovSensConfig.json. Only scales
 // using a linear IncrementFormula of the form "Sens * yaw" are listed here.
@@ -67,28 +68,28 @@ var yawByScale = map[string]float64{
 	"Call of Duty": constants.YawDegPerCountOverwatch,
 	"Destiny 2":    constants.YawDegPerCountOverwatch,
 
-	// Riot
-	"Valorant": constants.YawDegPerCountValorant,
+	// Single-game scales
+	"Valorant":         constants.YawDegPerCountValorant,
+	"Halo":             constants.YawDegPerCountHalo,
+	"Fortnite":         constants.YawDegPerCountFortnite,
+	"Diabotical":       constants.YawDegPerCountDiabotical,
+	"Rust":             constants.YawDegPerCountRust,
+	"UE4":              constants.YawDegPerCountUE4,
+	"Hunt: Showdown":   constants.YawDegPerCountHuntShowdown,
+	"Gundam Evolution": constants.YawDegPerCountGundamEvolution,
+	"The FINALS":       constants.YawDegPerCountTheFinals,
+	"Roblox":           constants.YawDegPerCountRoblox,
+	"Roblox Arsenal":   constants.YawDegPerCountRobloxArsenal,
+	"Marvel Rivals":    constants.YawDegPerCountMarvelRivals,
+	"Deadlock":         constants.YawDegPerCountDeadlock,
+	"Fragpunk":         constants.YawDegPerCountFragpunk,
+	"Strinova":         constants.YawDegPerCountStrinova,
+	"Delta Force":      constants.YawDegPerCountDeltaForce,
+	"Batallion":        constants.YawDegPerCountBatallion,
 
-	// Unique scales
-	"Halo":              0.022222,
-	"Fortnite":          0.005555,
-	"Diabotical":        1.0 / 60.0,
-	"Rust":              0.1125,
-	"UE4":               0.07,
-	"Hunt: Showdown":    0.0429718162181364,
-	"Gundam Evolution":  0.0003888500001,
-	"The FINALS":        0.001,
-	"Roblox":            1.01061008,
-	"Roblox Arsenal":    0.375,
-	"Marvel Rivals":     0.0175,
-	"Deadlock":          0.044,
-	"Fragpunk":          0.05555,
-	"Strinova":          0.01388194363,
-	"Delta Force":       0.03,
-	"Batallion":         0.017501,
-	"Rainbow 6: Siege":  0.018 / math.Pi,
-	"Reflex Arena":      0.018 / math.Pi,
+	// Shared yaw (0.018 / pi)
+	"Rainbow 6: Siege": constants.YawDegPerCountSiege,
+	"Reflex Arena":     constants.YawDegPerCountSiege,
 }
 
 func toFloat(v any) float64 {
