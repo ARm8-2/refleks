@@ -4,13 +4,19 @@ import { ArrowRightLeft, EyeOff, PinOff } from 'lucide-react'
 import { formatNumber, formatRunTimestamp, formatSessionTitle, type HistoryRun } from '../../lib/historyModels'
 import { HeroStat, StatsGroup } from './shared'
 
-type EnvField = { label: string; key: keyof RunEnvironment; privacyNote?: string }
+type EnvField = {
+  label: string
+  key?: keyof RunEnvironment
+  value?: (run: HistoryRun) => string
+  privacyNote?: string
+}
 
 const ENV_GROUPS: Array<{ label: string; fields: EnvField[] }> = [
   {
     label: 'App & OS',
     fields: [
       { label: 'App Version', key: 'appVersion' },
+      { label: 'File Version', value: run => formatRunFileVersion(run.item.fileVersion) },
       { label: 'OS', key: 'os' },
       { label: 'Architecture', key: 'arch' },
       { label: 'OS Version', key: 'osVersion' },
@@ -90,6 +96,11 @@ function formatEnvValue(env: RunEnvironment, key: keyof RunEnvironment): string 
   }
 
   return '—'
+}
+
+function formatRunFileVersion(version: number | undefined): string {
+  if (typeof version !== 'number' || !Number.isFinite(version) || version <= 0) return '—'
+  return `${Math.trunc(version)}`
 }
 
 export function EnvironmentTab({ primaryRun, compareRun, anonymousEnabled, onClearPrimaryRun, onClearComparison }: {
@@ -196,9 +207,9 @@ function SingleEnvironmentView({ primaryRun, anonymousEnabled, onClearPrimaryRun
         <StatsGroup key={group.label} label={group.label}>
           {group.fields.map(field => (
             <EnvironmentStatRow
-              key={field.key}
+              key={field.label}
               label={field.label}
-              value={formatEnvValue(env, field.key)}
+              value={field.value ? field.value(primaryRun) : formatEnvValue(env, field.key!)}
               privacyNote={field.privacyNote}
               showPrivacyHint={anonymousEnabled}
             />
@@ -248,10 +259,10 @@ function CompareEnvironmentView({ primaryRun, compareRun, anonymousEnabled, onCl
         <StatsGroup key={group.label} label={group.label}>
           {group.fields.map(field => (
             <EnvironmentCompareStatRow
-              key={field.key}
+              key={field.label}
               label={field.label}
-              a={formatEnvValue(primaryEnv, field.key)}
-              b={formatEnvValue(compareEnv, field.key)}
+              a={field.value ? field.value(primaryRun) : formatEnvValue(primaryEnv, field.key!)}
+              b={field.value ? field.value(compareRun) : formatEnvValue(compareEnv, field.key!)}
               privacyNote={field.privacyNote}
               showPrivacyHint={anonymousEnabled}
             />

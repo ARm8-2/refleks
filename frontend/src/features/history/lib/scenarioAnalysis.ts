@@ -1,5 +1,7 @@
 import type { RunRecord } from '@/shared/types'
 
+type ScenarioAnalysisInput = Pick<RunRecord, 'stats'> & { events: string[][] }
+
 /* ─── Types ─── */
 
 export type AnalysisSummary = {
@@ -148,7 +150,7 @@ function fmtRel(sec: number): string {
 
 /* ─── Main analysis ─── */
 
-export function computeScenarioAnalysis(item: RunRecord): ScenarioAnalysis | null {
+export function computeScenarioAnalysis(item: ScenarioAnalysisInput): ScenarioAnalysis | null {
   const kills = Array.isArray(item.events) ? item.events : []
   if (kills.length < 2) return null
 

@@ -2,6 +2,7 @@ package runs
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -17,8 +18,10 @@ import (
 )
 
 const (
-	runMagic   = "RFLK"
-	runVersion = 1
+	runMagic          = "RFLK"
+	runVersionV1      = 1
+	runVersionV2      = 2
+	runVersionCurrent = runVersionV2
 
 	runCompressionNone uint8 = 0
 	runCompressionZstd uint8 = 1
@@ -31,27 +34,105 @@ const (
 	statTypeBool   = 4
 )
 
-// RunRecord contains a parsed run persisted in a .refleks file.
-type RunRecord struct {
-	FilePath   string
-	FileName   string
-	EpochMilli int64
-	Stats      map[string]any
-	Events     [][]string
-	MouseTrace []models.MousePoint
-	Env        models.RunEnvironment
-}
-
 type readRecordOptions struct {
-	skipEvents     bool
-	skipMouseTrace bool
+	skipStatsEvents       bool
+	skipPerformanceEvents bool
+	skipMouseTrace        bool
 }
 
-func writeRecord(w io.Writer, rec RunRecord) error {
+type storedRunRecord struct {
+	FileVersion  uint8
+	FileName     string
+	EpochMilli   int64
+	Stats        map[string]any
+	Performances *models.RunPerformanceData
+	MouseTrace   []models.MousePoint
+	Env          models.RunEnvironment
+}
+
+func cloneStatsWithoutEvents(stats map[string]any) map[string]any {
+	if len(stats) == 0 {
+		return map[string]any{}
+	}
+	cloned := make(map[string]any, len(stats))
+	for key, value := range stats {
+		if key == "events" {
+			continue
+		}
+		cloned[key] = value
+	}
+	return cloned
+}
+
+func withStatsEvents(stats map[string]any, statsEvents [][]string) map[string]any {
+	normalized := cloneStatsWithoutEvents(stats)
+	if statsEvents != nil {
+		normalized["events"] = statsEvents
+	}
+	return normalized
+}
+
+func clonePerformanceWithoutEvents(performances *models.RunPerformanceData) *models.RunPerformanceData {
+	if performances == nil {
+		return nil
+	}
+	return &models.RunPerformanceData{Header: performances.Header}
+}
+
+func withPerformanceEvents(performances *models.RunPerformanceData, performanceEvents []models.RunPerformanceEvent) *models.RunPerformanceData {
+	normalized := clonePerformanceWithoutEvents(performances)
+	if normalized == nil {
+		return nil
+	}
+	if performanceEvents != nil {
+		normalized.Events = performanceEvents
+	}
+	return normalized
+}
+
+func runStatsEvents(stats map[string]any) [][]string {
+	raw, ok := stats["events"]
+	if !ok || raw == nil {
+		return nil
+	}
+	if events, ok := raw.([][]string); ok {
+		return events
+	}
+	rows, ok := raw.([]any)
+	if !ok {
+		return nil
+	}
+	events := make([][]string, 0, len(rows))
+	for _, row := range rows {
+		cols, ok := row.([]any)
+		if !ok {
+			continue
+		}
+		parsedRow := make([]string, 0, len(cols))
+		for _, col := range cols {
+			text, ok := col.(string)
+			if !ok {
+				continue
+			}
+			parsedRow = append(parsedRow, text)
+		}
+		events = append(events, parsedRow)
+	}
+	return events
+}
+
+func runPerformanceEvents(performances *models.RunPerformanceData) []models.RunPerformanceEvent {
+	if performances == nil {
+		return nil
+	}
+	return performances.Events
+}
+
+func writeRecord(w io.Writer, rec storedRunRecord) error {
 	if _, err := w.Write([]byte(runMagic)); err != nil {
 		return err
 	}
-	if err := binary.Write(w, binary.LittleEndian, uint8(runVersion)); err != nil {
+	if err := binary.Write(w, binary.LittleEndian, uint8(runVersionCurrent)); err != nil {
 		return err
 	}
 
@@ -75,11 +156,15 @@ func writeRecord(w io.Writer, rec RunRecord) error {
 		_ = closePayload()
 		return err
 	}
-	if err := writeStats(payloadWriter, rec.Stats); err != nil {
+	if err := writeStats(payloadWriter, cloneStatsWithoutEvents(rec.Stats)); err != nil {
 		_ = closePayload()
 		return err
 	}
-	if err := writeEvents(payloadWriter, rec.Events); err != nil {
+	if err := writeStatsEvents(payloadWriter, runStatsEvents(rec.Stats)); err != nil {
+		_ = closePayload()
+		return err
+	}
+	if err := writePerformanceData(payloadWriter, rec.Performances); err != nil {
 		_ = closePayload()
 		return err
 	}
@@ -100,50 +185,50 @@ func writeRecord(w io.Writer, rec RunRecord) error {
 	return binary.Write(w, binary.LittleEndian, checksum)
 }
 
-func readRecordFile(path string, options readRecordOptions) (RunRecord, error) {
+func readRecordFile(path string, options readRecordOptions) (storedRunRecord, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 	defer f.Close()
 
 	fi, err := f.Stat()
 	if err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 	if fi.Size() < runHeaderSize+runChecksumSize {
-		return RunRecord{}, fmt.Errorf("invalid run file: too small")
+		return storedRunRecord{}, fmt.Errorf("invalid run file: too small")
 	}
 
 	var magic [4]byte
 	if _, err := io.ReadFull(f, magic[:]); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 	if string(magic[:]) != runMagic {
-		return RunRecord{}, fmt.Errorf("invalid run file: bad magic")
+		return storedRunRecord{}, fmt.Errorf("invalid run file: bad magic")
 	}
 
 	var version uint8
 	if err := binary.Read(f, binary.LittleEndian, &version); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
-	if version != runVersion {
-		return RunRecord{}, fmt.Errorf("unsupported run version: %d", version)
+	if version != runVersionV1 && version != runVersionV2 {
+		return storedRunRecord{}, fmt.Errorf("unsupported run version: %d", version)
 	}
 
 	var compression uint8
 	if err := binary.Read(f, binary.LittleEndian, &compression); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 
 	var epochMilli int64
 	if err := binary.Read(f, binary.LittleEndian, &epochMilli); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 
 	encodedLen := fi.Size() - runHeaderSize - runChecksumSize
 	if encodedLen < 0 {
-		return RunRecord{}, fmt.Errorf("invalid run file: negative payload size")
+		return storedRunRecord{}, fmt.Errorf("invalid run file: negative payload size")
 	}
 
 	hasher := xxh3.New()
@@ -151,88 +236,165 @@ func readRecordFile(path string, options readRecordOptions) (RunRecord, error) {
 	teedPayload := io.TeeReader(encodedReader, hasher)
 	payloadReader, closePayload, err := newRunPayloadReader(teedPayload, compression)
 	if err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 
-	fileName, err := readString(payloadReader)
+	var record storedRunRecord
+	switch version {
+	case runVersionV1:
+		record, err = readRecordV1Payload(payloadReader, epochMilli, options)
+	case runVersionV2:
+		record, err = readRecordV2Payload(payloadReader, epochMilli, options)
+	}
 	if err != nil {
 		_ = closePayload()
-		return RunRecord{}, err
-	}
-
-	stats, err := readStats(payloadReader)
-	if err != nil {
-		_ = closePayload()
-		return RunRecord{}, err
-	}
-
-	var events [][]string
-	if options.skipEvents {
-		if err := skipEvents(payloadReader); err != nil {
-			_ = closePayload()
-			return RunRecord{}, err
-		}
-	} else {
-		events, err = readEvents(payloadReader)
-		if err != nil {
-			_ = closePayload()
-			return RunRecord{}, err
-		}
-	}
-
-	trace := []models.MousePoint(nil)
-	if options.skipMouseTrace {
-		if err := skipMouseTrace(payloadReader); err != nil {
-			_ = closePayload()
-			return RunRecord{}, err
-		}
-	} else {
-		trace, err = readMouseTrace(payloadReader)
-		if err != nil {
-			_ = closePayload()
-			return RunRecord{}, err
-		}
-	}
-
-	env, err := readRunEnvironment(payloadReader)
-	if err != nil {
-		_ = closePayload()
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 
 	var trailing [1]byte
 	if _, err := payloadReader.Read(trailing[:]); err != io.EOF {
 		_ = closePayload()
 		if err == nil {
-			return RunRecord{}, fmt.Errorf("invalid run file: trailing payload data")
+			return storedRunRecord{}, fmt.Errorf("invalid run file: trailing payload data")
 		}
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 	if err := closePayload(); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 
 	var wantChecksum uint64
 	if err := binary.Read(f, binary.LittleEndian, &wantChecksum); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 	if gotChecksum := hasher.Sum64(); gotChecksum != wantChecksum {
-		return RunRecord{}, fmt.Errorf("invalid run file: checksum mismatch")
+		return storedRunRecord{}, fmt.Errorf("invalid run file: checksum mismatch")
 	}
 
 	if extra, err := io.ReadAll(f); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	} else if len(extra) > 0 {
-		return RunRecord{}, fmt.Errorf("invalid run file: trailing bytes after checksum")
+		return storedRunRecord{}, fmt.Errorf("invalid run file: trailing bytes after checksum")
 	}
 
-	return RunRecord{
+	record.FileVersion = version
+
+	return record, nil
+}
+
+func readRecordV1Payload(payloadReader io.Reader, epochMilli int64, options readRecordOptions) (storedRunRecord, error) {
+	fileName, err := readString(payloadReader)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+	stats, err := readStats(payloadReader)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+
+	var statsEvents [][]string
+	if options.skipStatsEvents {
+		if err := skipStatsEvents(payloadReader); err != nil {
+			return storedRunRecord{}, err
+		}
+	} else {
+		statsEvents, err = readStatsEvents(payloadReader)
+		if err != nil {
+			return storedRunRecord{}, err
+		}
+		stats = withStatsEvents(stats, statsEvents)
+	}
+
+	trace := []models.MousePoint(nil)
+	if options.skipMouseTrace {
+		if err := skipMouseTrace(payloadReader); err != nil {
+			return storedRunRecord{}, err
+		}
+	} else {
+		trace, err = readMouseTrace(payloadReader)
+		if err != nil {
+			return storedRunRecord{}, err
+		}
+	}
+
+	env, err := readRunEnvironment(payloadReader)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+
+	return storedRunRecord{
 		FileName:   fileName,
 		EpochMilli: epochMilli,
 		Stats:      stats,
-		Events:     events,
 		MouseTrace: trace,
 		Env:        env,
+	}, nil
+}
+
+func readRecordV2Payload(payloadReader io.Reader, epochMilli int64, options readRecordOptions) (storedRunRecord, error) {
+	fileName, err := readString(payloadReader)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+	stats, err := readStats(payloadReader)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+
+	var statsEvents [][]string
+	if options.skipStatsEvents {
+		if err := skipStatsEvents(payloadReader); err != nil {
+			return storedRunRecord{}, err
+		}
+	} else {
+		statsEvents, err = readStatsEvents(payloadReader)
+		if err != nil {
+			return storedRunRecord{}, err
+		}
+		stats = withStatsEvents(stats, statsEvents)
+	}
+
+	var performances *models.RunPerformanceData
+	performancePayload, err := readPerformancePayload(payloadReader)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+	performances, err = readPerformanceData(performancePayload)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+	if !options.skipPerformanceEvents {
+		performanceEvents, err := readPerformanceEvents(performancePayload)
+		if err != nil {
+			return storedRunRecord{}, err
+		}
+		performances = withPerformanceEvents(performances, performanceEvents)
+	}
+
+	trace := []models.MousePoint(nil)
+	if options.skipMouseTrace {
+		if err := skipMouseTrace(payloadReader); err != nil {
+			return storedRunRecord{}, err
+		}
+	} else {
+		trace, err = readMouseTrace(payloadReader)
+		if err != nil {
+			return storedRunRecord{}, err
+		}
+	}
+
+	env, err := readRunEnvironment(payloadReader)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+
+	return storedRunRecord{
+		FileName:     fileName,
+		EpochMilli:   epochMilli,
+		Stats:        stats,
+		Performances: performances,
+		MouseTrace:   trace,
+		Env:          env,
 	}, nil
 }
 
@@ -466,11 +628,11 @@ func coerceStat(v any) (typ uint8, sval string, ival int64, fval float64, bval b
 	}
 }
 
-func writeEvents(w io.Writer, events [][]string) error {
-	if err := binary.Write(w, binary.LittleEndian, uint32(len(events))); err != nil {
+func writeStatsEvents(w io.Writer, statsEvents [][]string) error {
+	if err := binary.Write(w, binary.LittleEndian, uint32(len(statsEvents))); err != nil {
 		return err
 	}
-	for _, row := range events {
+	for _, row := range statsEvents {
 		if err := binary.Write(w, binary.LittleEndian, uint32(len(row))); err != nil {
 			return err
 		}
@@ -483,13 +645,13 @@ func writeEvents(w io.Writer, events [][]string) error {
 	return nil
 }
 
-func readEvents(r io.Reader) ([][]string, error) {
+func readStatsEvents(r io.Reader) ([][]string, error) {
 	var rows uint32
 	if err := binary.Read(r, binary.LittleEndian, &rows); err != nil {
 		return nil, err
 	}
 
-	events := make([][]string, rows)
+	statsEvents := make([][]string, rows)
 	for i := uint32(0); i < rows; i++ {
 		var cols uint32
 		if err := binary.Read(r, binary.LittleEndian, &cols); err != nil {
@@ -503,9 +665,66 @@ func readEvents(r io.Reader) ([][]string, error) {
 			}
 			row[j] = v
 		}
-		events[i] = row
+		statsEvents[i] = row
 	}
-	return events, nil
+	return statsEvents, nil
+}
+
+func writePerformanceData(w io.Writer, performances *models.RunPerformanceData) error {
+	if performances == nil {
+		return binary.Write(w, binary.LittleEndian, uint32(0))
+	}
+	payload, err := json.Marshal(performances)
+	if err != nil {
+		return err
+	}
+	if err := binary.Write(w, binary.LittleEndian, uint32(len(payload))); err != nil {
+		return err
+	}
+	if len(payload) == 0 {
+		return nil
+	}
+	_, err = w.Write(payload)
+	return err
+}
+
+func readPerformancePayload(r io.Reader) ([]byte, error) {
+	var size uint32
+	if err := binary.Read(r, binary.LittleEndian, &size); err != nil {
+		return nil, err
+	}
+	if size == 0 {
+		return nil, nil
+	}
+	payload := make([]byte, size)
+	if _, err := io.ReadFull(r, payload); err != nil {
+		return nil, err
+	}
+	return payload, nil
+}
+
+func readPerformanceData(payload []byte) (*models.RunPerformanceData, error) {
+	if payload == nil {
+		return nil, nil
+	}
+	var summary struct {
+		Header models.RunPerformanceHeader `json:"header"`
+	}
+	if err := json.Unmarshal(payload, &summary); err != nil {
+		return nil, err
+	}
+	return &models.RunPerformanceData{Header: summary.Header}, nil
+}
+
+func readPerformanceEvents(payload []byte) ([]models.RunPerformanceEvent, error) {
+	if payload == nil {
+		return nil, nil
+	}
+	var performances models.RunPerformanceData
+	if err := json.Unmarshal(payload, &performances); err != nil {
+		return nil, err
+	}
+	return performances.Events, nil
 }
 
 func writeMouseTrace(w io.Writer, points []models.MousePoint) error {
@@ -769,7 +988,7 @@ func skipString(r io.Reader) error {
 	return nil
 }
 
-func skipEvents(r io.Reader) error {
+func skipStatsEvents(r io.Reader) error {
 	var rows uint32
 	if err := binary.Read(r, binary.LittleEndian, &rows); err != nil {
 		return err

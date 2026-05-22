@@ -3,10 +3,11 @@ package constants
 const (
 	// Settings + paths
 	// Name of the app config folder in the user's home directory
-	ConfigDirName  = ".refleks"
-	RunsSubdirName = "runs"
-	RunFileExt     = ".refleks"
-	StatsFileExt   = ".csv"
+	ConfigDirName      = ".refleks"
+	RunsSubdirName     = "runs"
+	RunFileExt         = ".refleks"
+	StatsFileExt       = ".csv"
+	PerformanceFileExt = ".perf"
 
 	KovaaksDataDirName         = "FPSAimTrainer"
 	KovaaksStatsDirName        = "stats"

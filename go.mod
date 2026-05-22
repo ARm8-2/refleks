@@ -11,6 +11,7 @@ require (
 	github.com/zeebo/xxh3 v1.1.0
 	golang.org/x/sys v0.37.0
 	golang.org/x/text v0.30.0
+	google.golang.org/protobuf v1.36.10
 )
 
 require (

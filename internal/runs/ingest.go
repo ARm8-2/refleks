@@ -1,6 +1,7 @@
 package runs
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -17,7 +18,7 @@ func (s *Store) IngestRun(fullPath string, mouse models.MouseTraceProvider) (mod
 	if err != nil {
 		return models.RunRecord{}, err
 	}
-	events, stats, err := ParseStatsFile(fullPath)
+	statsEvents, stats, err := ParseStatsFile(fullPath)
 	if err != nil {
 		return models.RunRecord{}, err
 	}
@@ -37,9 +38,9 @@ func (s *Store) IngestRun(fullPath string, mouse models.MouseTraceProvider) (mod
 		stats["Accuracy"] = 0.0
 	}
 
-	if len(events) >= 2 {
+	if len(statsEvents) >= 2 {
 		var times []time.Time
-		for _, row := range events {
+		for _, row := range statsEvents {
 			if len(row) < 2 {
 				continue
 			}
@@ -64,18 +65,24 @@ func (s *Store) IngestRun(fullPath string, mouse models.MouseTraceProvider) (mod
 		stats["cm/360"] = cm
 	}
 
-	start, end := deriveScenarioWindow(info.DatePlayed, stats, events)
+	start, end := deriveScenarioWindow(info.DatePlayed, stats, statsEvents)
 	if !start.IsZero() && !end.IsZero() {
 		stats["Duration"] = end.Sub(start).Seconds()
 	}
 
-	fileName := strings.TrimSuffix(filepath.Base(fullPath), constants.StatsFileExt)
+	fileName := runFileNameFromStatsPath(fullPath)
+	performanceData, err := parseMatchingPerformanceFile(fullPath)
+	if err != nil {
+		return models.RunRecord{}, err
+	}
+	normalizedStats := withStatsEvents(stats, statsEvents)
 
 	rec := models.RunRecord{
-		FilePath: fullPath,
-		FileName: fileName,
-		Stats:    stats,
-		Events:   events,
+		FileVersion:  runVersionCurrent,
+		FilePath:     fullPath,
+		FileName:     fileName,
+		Stats:        normalizedStats,
+		Performances: performanceData,
 	}
 
 	var steamID, personaName string
@@ -92,13 +99,14 @@ func (s *Store) IngestRun(fullPath string, mouse models.MouseTraceProvider) (mod
 		}
 	}
 
-	runPath, err := s.Save(RunRecord{
-		FileName:   rec.FileName,
-		EpochMilli: info.DatePlayed.UnixMilli(),
-		Stats:      rec.Stats,
-		Events:     rec.Events,
-		MouseTrace: trace,
-		Env:        environment.CollectRunEnvironment(mouse, start, end, len(trace), steamID, personaName),
+	runPath, err := s.Save(storedRunRecord{
+		FileVersion:  runVersionCurrent,
+		FileName:     rec.FileName,
+		EpochMilli:   info.DatePlayed.UnixMilli(),
+		Stats:        rec.Stats,
+		Performances: rec.Performances,
+		MouseTrace:   trace,
+		Env:          environment.CollectRunEnvironment(mouse, start, end, len(trace), steamID, personaName),
 	})
 	if err != nil {
 		return models.RunRecord{}, err
@@ -108,8 +116,35 @@ func (s *Store) IngestRun(fullPath string, mouse models.MouseTraceProvider) (mod
 	return rec, nil
 }
 
+func parseMatchingPerformanceFile(statsPath string) (*models.RunPerformanceData, error) {
+	perfPath := matchingPerformancePath(statsPath)
+	if _, err := os.Stat(perfPath); err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return ParsePerformanceFile(perfPath)
+}
+
+func matchingPerformancePath(statsPath string) string {
+	return filepath.Join(filepath.Dir(filepath.Dir(statsPath)), constants.KovaaksPerformancesDirName, performanceFileNameFromStatsPath(statsPath))
+}
+
+func runFileNameFromStatsPath(statsPath string) string {
+	name := filepath.Base(statsPath)
+	name = strings.TrimSuffix(name, constants.StatsFileExt)
+	return strings.TrimSuffix(name, " Stats")
+}
+
+func performanceFileNameFromStatsPath(statsPath string) string {
+	name := filepath.Base(statsPath)
+	name = strings.TrimSuffix(name, constants.StatsFileExt)
+	return strings.TrimSuffix(name, " Stats") + " Performance" + constants.PerformanceFileExt
+}
+
 // deriveScenarioWindow attempts to compute the [start, end] timespan of a scenario.
-func deriveScenarioWindow(end time.Time, stats map[string]any, events [][]string) (time.Time, time.Time) {
+func deriveScenarioWindow(end time.Time, stats map[string]any, statsEvents [][]string) (time.Time, time.Time) {
 	var start time.Time
 	if v, ok := stats["Challenge Start"]; ok {
 		if s, ok := v.(string); ok {
@@ -118,8 +153,8 @@ func deriveScenarioWindow(end time.Time, stats map[string]any, events [][]string
 			}
 		}
 	}
-	if start.IsZero() && len(events) > 0 && len(events[0]) > 1 {
-		if t, ok := parseTODOnDate(events[0][1], end); ok {
+	if start.IsZero() && len(statsEvents) > 0 && len(statsEvents[0]) > 1 {
+		if t, ok := parseTODOnDate(statsEvents[0][1], end); ok {
 			start = t
 		}
 	}

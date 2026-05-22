@@ -4,7 +4,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/shared/comp
 import { CHART_SERIES_COLORS, CHART_STYLE, chartDot } from '@/shared/lib'
 import { useMemo } from 'react'
 import { CartesianGrid, Line, LineChart, Scatter, ScatterChart, XAxis, YAxis } from 'recharts'
-import { useRunEvents } from '../../hooks/useRunEvents'
+import { useRunStatsEvents } from '../../hooks/useRunStatsEvents'
 import type { HistoryRun } from '../../lib/historyModels'
 import { computeScenarioAnalysis, type ScenarioAnalysis } from '../../lib/scenarioAnalysis'
 
@@ -74,8 +74,8 @@ const scatterOverlayConfig: ChartConfig = {
 }
 
 export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: HistoryRun; compareRun: HistoryRun | null; overlay: boolean }) {
-  const primaryEvents = useRunEvents(primaryRun)
-  const compareEvents = useRunEvents(compareRun)
+  const primaryEvents = useRunStatsEvents(primaryRun)
+  const compareEvents = useRunStatsEvents(compareRun)
 
   const primaryItem = useMemo(() => primaryEvents ? { ...primaryRun.item, events: primaryEvents } : null, [primaryRun.item, primaryEvents])
   const compareItem = useMemo(() => compareRun && compareEvents ? { ...compareRun.item, events: compareEvents } : null, [compareRun?.item, compareEvents])

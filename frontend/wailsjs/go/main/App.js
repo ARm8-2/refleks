@@ -42,8 +42,12 @@ export function GetRecentRuns(arg1) {
   return window['go']['main']['App']['GetRecentRuns'](arg1);
 }
 
-export function GetRunEvents(arg1) {
-  return window['go']['main']['App']['GetRunEvents'](arg1);
+export function GetRunPerformanceEvents(arg1) {
+  return window['go']['main']['App']['GetRunPerformanceEvents'](arg1);
+}
+
+export function GetRunStatsEvents(arg1) {
+  return window['go']['main']['App']['GetRunStatsEvents'](arg1);
 }
 
 export function GetRunTrace(arg1) {

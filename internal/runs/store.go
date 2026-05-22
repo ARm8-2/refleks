@@ -44,14 +44,17 @@ func (s *Store) Exists(statsFileName string) bool {
 	if err != nil {
 		return false
 	}
-	statsName := filepath.Base(statsFileName)
-	runName := strings.TrimSuffix(statsName, constants.StatsFileExt) + constants.RunFileExt
-	_, err = os.Stat(filepath.Join(dir, runName))
-	return err == nil
+	for _, runName := range candidateRunFileNames(statsFileName) {
+		_, err = os.Stat(filepath.Join(dir, runName))
+		if err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 // Save persists a run record to disk and returns its final file path.
-func (s *Store) Save(rec RunRecord) (string, error) {
+func (s *Store) Save(rec storedRunRecord) (string, error) {
 	if strings.TrimSpace(rec.FileName) == "" {
 		return "", errors.New("missing file name")
 	}
@@ -88,22 +91,38 @@ func (s *Store) Save(rec RunRecord) (string, error) {
 	return outPath, nil
 }
 
-// LoadRunEvents reads a single .refleks file by full path and returns its kill events.
-func (s *Store) LoadRunEvents(filePath string) ([][]string, error) {
-	rec, err := readRecordFile(filePath, readRecordOptions{})
+// LoadRunStatsEvents reads a single .refleks file by full path and returns the
+// CSV-derived event rows nested under stats.events.
+func (s *Store) LoadRunStatsEvents(filePath string) ([][]string, error) {
+	rec, err := readRecordFile(filePath, readRecordOptions{skipPerformanceEvents: true, skipMouseTrace: true})
 	if err != nil {
 		return nil, err
 	}
-	if rec.Events == nil {
+	statsEvents := runStatsEvents(rec.Stats)
+	if statsEvents == nil {
 		return [][]string{}, nil
 	}
-	return rec.Events, nil
+	return statsEvents, nil
+}
+
+// LoadRunPerformanceEvents reads a single .refleks file by full path and
+// returns the performance event list stored in the v2 performance payload.
+func (s *Store) LoadRunPerformanceEvents(filePath string) ([]models.RunPerformanceEvent, error) {
+	rec, err := readRecordFile(filePath, readRecordOptions{skipStatsEvents: true, skipMouseTrace: true})
+	if err != nil {
+		return nil, err
+	}
+	performanceEvents := runPerformanceEvents(rec.Performances)
+	if performanceEvents == nil {
+		return []models.RunPerformanceEvent{}, nil
+	}
+	return performanceEvents, nil
 }
 
 // LoadRunTrace reads a single .refleks file by full path and returns its mouse
 // trace encoded in the frontend wire format.
 func (s *Store) LoadRunTrace(filePath string) (string, error) {
-	rec, err := readRecordFile(filePath, readRecordOptions{})
+	rec, err := readRecordFile(filePath, readRecordOptions{skipStatsEvents: true, skipPerformanceEvents: true})
 	if err != nil {
 		return "", err
 	}
@@ -118,7 +137,8 @@ func (s *Store) LoadRunTrace(filePath string) (string, error) {
 }
 
 // LoadRecentRuns returns recent runs in oldest-to-newest order.
-// Events are omitted to save memory; use LoadRunEvents for on-demand event access.
+// Stats events, performance event lists, and trace data are omitted to keep the
+// bulk recent-runs payload informative but lightweight.
 func (s *Store) LoadRecentRuns(limit int) ([]models.RunRecord, error) {
 	selected, err := s.selectRecentFiles(limit)
 	if err != nil {
@@ -127,16 +147,17 @@ func (s *Store) LoadRecentRuns(limit int) ([]models.RunRecord, error) {
 
 	out := make([]models.RunRecord, 0, len(selected))
 	for _, v := range selected {
-		rec, err := readRecordFile(v.path, readRecordOptions{skipEvents: true, skipMouseTrace: true})
+		rec, err := readRecordFile(v.path, readRecordOptions{skipStatsEvents: true, skipPerformanceEvents: true, skipMouseTrace: true})
 		if err != nil {
 			continue
 		}
 		out = append(out, models.RunRecord{
-			FilePath: v.path,
-			FileName: rec.FileName,
-			Stats:    rec.Stats,
-			Events:   nil,
-			Env:      rec.Env,
+			FileVersion:  rec.FileVersion,
+			FilePath:     v.path,
+			FileName:     rec.FileName,
+			Stats:        rec.Stats,
+			Performances: rec.Performances,
+			Env:          rec.Env,
 		})
 	}
 	return out, nil
@@ -237,14 +258,23 @@ func runTimestampFromFileName(fileName, path string) int64 {
 		return ts
 	}
 
-	base := strings.TrimSuffix(fileName, constants.RunFileExt) + constants.StatsFileExt
-	if info, err := ParseFilename(base); err == nil {
+	if info, err := ParseFilename(fileName); err == nil {
 		return info.DatePlayed.UnixMilli()
 	}
 	if fi, err := os.Stat(path); err == nil {
 		return fi.ModTime().UnixMilli()
 	}
 	return 0
+}
+
+func candidateRunFileNames(statsFileName string) []string {
+	statsName := filepath.Base(statsFileName)
+	legacyName := strings.TrimSuffix(statsName, constants.StatsFileExt) + constants.RunFileExt
+	v2Name := runFileNameFromStatsPath(statsName) + constants.RunFileExt
+	if v2Name == legacyName {
+		return []string{legacyName}
+	}
+	return []string{v2Name, legacyName}
 }
 
 func runEpochFromFile(path string) (int64, bool) {
@@ -266,7 +296,7 @@ func runEpochFromFile(path string) (int64, bool) {
 	if err := binary.Read(f, binary.LittleEndian, &version); err != nil {
 		return 0, false
 	}
-	if version != runVersion {
+	if version != runVersionV1 && version != runVersionV2 {
 		return 0, false
 	}
 

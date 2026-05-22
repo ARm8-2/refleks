@@ -77,9 +77,10 @@ export interface ScenarioStats {
   'Reloads'?: number
   'Avg Target Scale'?: number
   'Avg Time Dilation'?: number
+  'events'?: string[][]
 
   // Index signature for unknown/future stats
-  [key: string]: string | number | undefined
+  [key: string]: string | number | string[][] | undefined
 }
 
 /** Union of all known stat keys. Use to type-check stat key references at compile time. */
@@ -88,11 +89,48 @@ export type StatKey = keyof {
 }
 
 export interface RunRecord {
+  fileVersion: number
   filePath: string
   fileName: string
   stats: ScenarioStats
-  events: string[][]
+  performances?: RunPerformanceData
   env: RunEnvironment
+}
+
+export interface RunPerformanceData {
+  header: RunPerformanceHeader
+  events?: RunPerformanceEvent[]
+}
+
+export interface RunPerformanceHeader {
+  scenarioName: string
+  scenarioHash: string
+  challengeStartUtc: number
+  schemaVersion: number
+  challengeProfile: ChallengeProfileSnapshot
+}
+
+export interface ChallengeProfileSnapshot {
+  timeLimit: number
+  playerProfile: string
+  addedBots: string[]
+  playerMaxLives: number
+  botMaxLives: number[]
+  playerTeam: number
+  botTeams: number[]
+  mapName: string
+  mapScale: number
+  timescale: number
+  endChallengeAfterKills: number
+  endChallengeAfterDamage: number
+}
+
+export interface RunPerformanceEvent {
+  timestamp: number
+  payloadType: string
+  count?: number
+  delta?: number
+  value?: number
 }
 
 export interface RunEnvironment {

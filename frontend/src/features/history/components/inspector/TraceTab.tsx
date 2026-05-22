@@ -3,7 +3,7 @@ import { cn } from '@/shared/lib/utils'
 import type { MousePoint } from '@/shared/types/ipc'
 import { Copy } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useRunEvents } from '../../hooks/useRunEvents'
+import { useRunStatsEvents } from '../../hooks/useRunStatsEvents'
 import { useRunTrace } from '../../hooks/useRunTrace'
 import type { HistoryRun } from '../../lib/historyModels'
 import {
@@ -73,7 +73,7 @@ function fmtPct(n: number): string {
 export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: HistoryRun; compareRun: HistoryRun | null; overlay: boolean }) {
   const primaryPoints = useRunTrace(primaryRun)
   const comparePoints = useRunTrace(compareRun)
-  const primaryEvents = useRunEvents(primaryRun)
+  const primaryEvents = useRunStatsEvents(primaryRun)
   const primaryResolution = String(primaryRun.item.stats?.Resolution ?? '')
   const compareResolution = String(compareRun?.item.stats?.Resolution ?? '')
 

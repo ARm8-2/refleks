@@ -123,10 +123,16 @@ func (a *App) GetRecentRuns(limit int) []models.RunRecord {
 	return a.runsRuntimeSvc.GetRecent(limit)
 }
 
-// GetRunEvents returns the kill event rows for a single run file.
-// Events are loaded on demand (not stored in the index) to keep memory usage low.
-func (a *App) GetRunEvents(filePath string) ([][]string, error) {
-	return a.runStore.LoadRunEvents(filePath)
+// GetRunStatsEvents returns the CSV-derived event rows nested under stats.events.
+// They are loaded on demand instead of being included in the bulk recent-runs payload.
+func (a *App) GetRunStatsEvents(filePath string) ([][]string, error) {
+	return a.runStore.LoadRunStatsEvents(filePath)
+}
+
+// GetRunPerformanceEvents returns the event list stored in the v2 performance payload.
+// They are loaded on demand instead of being included in the bulk recent-runs payload.
+func (a *App) GetRunPerformanceEvents(filePath string) ([]models.RunPerformanceEvent, error) {
+	return a.runStore.LoadRunPerformanceEvents(filePath)
 }
 
 // GetRunTrace retrieves the binary trace data for a run, encoded as Base64.

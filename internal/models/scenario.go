@@ -1,11 +1,48 @@
 package models
 
 type RunRecord struct {
-	FilePath string         `json:"filePath"`
-	FileName string         `json:"fileName"`
-	Stats    map[string]any `json:"stats"`
-	Events   [][]string     `json:"events"`
-	Env      RunEnvironment `json:"env"`
+	FileVersion  uint8               `json:"fileVersion"`
+	FilePath     string              `json:"filePath"`
+	FileName     string              `json:"fileName"`
+	Stats        map[string]any      `json:"stats"`
+	Performances *RunPerformanceData `json:"performances,omitempty"`
+	Env          RunEnvironment      `json:"env"`
+}
+
+type RunPerformanceData struct {
+	Header RunPerformanceHeader  `json:"header"`
+	Events []RunPerformanceEvent `json:"events,omitempty"`
+}
+
+type RunPerformanceHeader struct {
+	ScenarioName      string                   `json:"scenarioName"`
+	ScenarioHash      string                   `json:"scenarioHash"`
+	ChallengeStartUTC int64                    `json:"challengeStartUtc"`
+	SchemaVersion     uint32                   `json:"schemaVersion"`
+	ChallengeProfile  ChallengeProfileSnapshot `json:"challengeProfile"`
+}
+
+type ChallengeProfileSnapshot struct {
+	TimeLimit               float32  `json:"timeLimit"`
+	PlayerProfile           string   `json:"playerProfile"`
+	AddedBots               []string `json:"addedBots"`
+	PlayerMaxLives          int32    `json:"playerMaxLives"`
+	BotMaxLives             []int32  `json:"botMaxLives"`
+	PlayerTeam              int32    `json:"playerTeam"`
+	BotTeams                []int32  `json:"botTeams"`
+	MapName                 string   `json:"mapName"`
+	MapScale                float32  `json:"mapScale"`
+	Timescale               float32  `json:"timescale"`
+	EndChallengeAfterKills  float32  `json:"endChallengeAfterKills"`
+	EndChallengeAfterDamage float32  `json:"endChallengeAfterDamage"`
+}
+
+type RunPerformanceEvent struct {
+	Timestamp   float32  `json:"timestamp"`
+	PayloadType string   `json:"payloadType"`
+	Count       *int32   `json:"count,omitempty"`
+	Delta       *float32 `json:"delta,omitempty"`
+	Value       *float32 `json:"value,omitempty"`
 }
 
 type RunEnvironment struct {
