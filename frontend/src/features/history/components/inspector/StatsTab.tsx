@@ -14,7 +14,7 @@ import { CompareMetric, CompareStatRow, HeroStat, StatRow, StatsGroup } from './
 
 /** Read a raw numeric value from a run's stats map. */
 function readNumericStat(run: HistoryRun, key: StatKey): number | null {
-  const raw = run.item.stats?.[key]
+  const raw = run.item.stats?.summary[key]
   if (typeof raw === 'number' && Number.isFinite(raw)) return raw
   return null
 }
@@ -22,7 +22,7 @@ function readNumericStat(run: HistoryRun, key: StatKey): number | null {
 /** Read a formatted stat value produced by buildRunStats. */
 function readFormattedStat(run: HistoryRun, key: StatKey): string {
   const all = buildRunStats(run.item)
-  return all.find(s => s.label === key)?.value ?? '–'
+  return all.find(s => s.key === key)?.value ?? '–'
 }
 
 /** Percentage change from A to B. Returns null when A is zero. */
@@ -31,53 +31,20 @@ function computeDelta(a: number, b: number): number | null {
   return ((b - a) / Math.abs(a)) * 100
 }
 
-const STAT_CATEGORIES: [string, StatKey[]][] = [
-  ['Overview', ['Score', 'Kills', 'Hit Count', 'Accuracy']],
-  ['Accuracy Details', ['Hit Count', 'Miss Count', 'Total Overshots', 'Damage Done', 'Damage Taken']],
-  ['Timing', ['Fight Time', 'Time Remaining', 'Avg TTK', 'Real Avg TTK', 'Pause Count', 'Pause Duration', 'Challenge Start', 'Duration']],
-  ['Controls', ['Sens Scale', 'Sens Increment', 'Horiz Sens', 'Vert Sens', 'DPI', 'cm/360']],
-  ['Display', ['FOV', 'FOVScale', 'Resolution', 'Hide Gun', 'Crosshair', 'Crosshair Scale', 'Crosshair Color']],
-  ['Technical', ['Input Lag', 'Max FPS (config)', 'Avg FPS', 'Resolution Scale']],
-  ['Game Information', ['Scenario', 'Hash', 'Game Version', 'Score', 'Date Played', 'Distance Traveled', 'MBS Points', 'Challenge Start']],
-  ['Additional Stats', ['Midairs', 'Midaired', 'Directs', 'Directed', 'Deaths', 'Avg Target Scale', 'Avg Time Dilation', 'Reloads']],
-]
-
-/** Map each stat label into its category. First match wins. */
-function buildCategoryLookup(): Map<string, string> {
-  const lookup = new Map<string, string>()
-  for (const [cat, keys] of STAT_CATEGORIES) {
-    for (const k of keys) {
-      if (!lookup.has(k)) lookup.set(k, cat)
-    }
-  }
-  return lookup
-}
-const CATEGORY_LOOKUP = buildCategoryLookup()
-
-type CategorizedStats = { category: string; stats: Array<{ label: string; value: string }> }[]
+type CategorizedStats = { category: string; stats: Array<{ key: StatKey; label: string; value: string }> }[]
 
 function getCategorizedStats(run: HistoryRun): CategorizedStats {
   const all = buildRunStats(run.item)
-  const buckets = new Map<string, Array<{ label: string; value: string }>>()
+  const buckets = new Map<string, Array<{ key: StatKey; label: string; value: string }>>()
 
   for (const s of all) {
-    const cat = CATEGORY_LOOKUP.get(s.label) ?? 'Other'
+    const cat = s.category
     let arr = buckets.get(cat)
     if (!arr) { arr = []; buckets.set(cat, arr) }
-    arr.push(s)
+    arr.push({ key: s.key, label: s.label, value: s.value })
   }
 
-  const result: CategorizedStats = []
-  const definedCats = new Set(STAT_CATEGORIES.map(([cat]) => cat))
-  for (const [cat] of STAT_CATEGORIES) {
-    const stats = buckets.get(cat)
-    if (stats && stats.length > 0) result.push({ category: cat, stats })
-  }
-  const otherStats = buckets.get('Other')
-  if (otherStats && otherStats.length > 0 && !definedCats.has('Other')) {
-    result.push({ category: 'Other', stats: otherStats })
-  }
-  return result
+  return [...buckets.entries()].map(([category, stats]) => ({ category, stats }))
 }
 
 export function StatsTab({ primaryRun, compareRun, onClearPrimaryRun, onClearComparison }: {
@@ -148,9 +115,6 @@ function CompareStatsView({ primaryRun, compareRun, onClearPrimaryRun, onClearCo
   }
 
   const allCategories = [...new Set([...primaryCats.map(c => c.category), ...compareCats.map(c => c.category)])]
-  const orderedCategories = STAT_CATEGORIES
-    .map(([cat]) => cat)
-    .filter(cat => allCategories.includes(cat))
 
   return (
     <>
@@ -178,8 +142,8 @@ function CompareStatsView({ primaryRun, compareRun, onClearPrimaryRun, onClearCo
       </div>
 
       {(() => {
-        const ttkA = readNumericStat(primaryRun, 'Avg TTK')
-        const ttkB = readNumericStat(compareRun, 'Avg TTK')
+        const ttkA = readNumericStat(primaryRun, 'avgTtk')
+        const ttkB = readNumericStat(compareRun, 'avgTtk')
 
         return (
           <div className="grid grid-cols-3 gap-3">
@@ -199,8 +163,8 @@ function CompareStatsView({ primaryRun, compareRun, onClearPrimaryRun, onClearCo
             />
             <CompareMetric
               label="Avg TTK"
-              a={readFormattedStat(primaryRun, 'Avg TTK')}
-              b={readFormattedStat(compareRun, 'Avg TTK')}
+              a={readFormattedStat(primaryRun, 'avgTtk')}
+              b={readFormattedStat(compareRun, 'avgTtk')}
               delta={ttkA != null && ttkB != null ? computeDelta(ttkA, ttkB) : null}
               lowerIsBetter
             />
@@ -208,7 +172,7 @@ function CompareStatsView({ primaryRun, compareRun, onClearPrimaryRun, onClearCo
         )
       })()}
 
-      {orderedCategories.map(cat => {
+      {allCategories.map(cat => {
         const pMap = primaryMaps.get(cat) ?? new Map<string, string>()
         const cMap = compareMaps.get(cat) ?? new Map<string, string>()
         const mergedKeys = [...new Set([...pMap.keys(), ...cMap.keys()])]

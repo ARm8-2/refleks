@@ -74,8 +74,8 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
   const primaryPoints = useRunTrace(primaryRun)
   const comparePoints = useRunTrace(compareRun)
   const primaryEvents = useRunStatsEvents(primaryRun)
-  const primaryResolution = String(primaryRun.item.stats?.Resolution ?? '')
-  const compareResolution = String(compareRun?.item.stats?.Resolution ?? '')
+  const primaryResolution = String(primaryRun.item.stats.summary.resolution ?? '')
+  const compareResolution = String(compareRun?.item.stats.summary.resolution ?? '')
 
   const [selectedKill, setSelectedKill] = useState<KillAnalysis | null>(null)
 
@@ -85,13 +85,13 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
   // Compute analysis
   const analysis: MouseTraceAnalysis | null = useMemo(() => {
     if (!primaryPoints || primaryPoints.length === 0 || !primaryEvents) return null
-    return computeMouseTraceAnalysis(primaryRun.item.stats, primaryEvents, primaryPoints)
-  }, [primaryRun.item.stats, primaryEvents, primaryPoints])
+    return computeMouseTraceAnalysis(primaryRun.item.stats.summary, primaryEvents, primaryPoints)
+  }, [primaryRun.item.stats.summary, primaryEvents, primaryPoints])
 
   const suggestion: SensSuggestion | null = useMemo(() => {
     if (!analysis) return null
-    return computeSuggestedSens(analysis, primaryRun.item.stats)
-  }, [analysis, primaryRun.item.stats])
+    return computeSuggestedSens(analysis, primaryRun.item.stats.summary)
+  }, [analysis, primaryRun.item.stats.summary])
 
   // Highlight: show the last flick from the prior click to the current kill click
   const highlight: TraceHighlight | undefined = useMemo(() => {

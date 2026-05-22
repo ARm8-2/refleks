@@ -125,11 +125,11 @@ func (a *App) GetRecentRuns(limit int) []models.RunRecord {
 
 // GetRunStatsEvents returns the CSV-derived event rows nested under stats.events.
 // They are loaded on demand instead of being included in the bulk recent-runs payload.
-func (a *App) GetRunStatsEvents(filePath string) ([][]string, error) {
+func (a *App) GetRunStatsEvents(filePath string) ([]models.RunStatsEvent, error) {
 	return a.runStore.LoadRunStatsEvents(filePath)
 }
 
-// GetRunPerformanceEvents returns the event list stored in the v2 performance payload.
+// GetRunPerformanceEvents returns the event list stored in the v2 performances payload.
 // They are loaded on demand instead of being included in the bulk recent-runs payload.
 func (a *App) GetRunPerformanceEvents(filePath string) ([]models.RunPerformanceEvent, error) {
 	return a.runStore.LoadRunPerformanceEvents(filePath)

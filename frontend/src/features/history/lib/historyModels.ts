@@ -39,6 +39,62 @@ export type HistoryRun = {
   orderInSession: number
 }
 
+type RunStatFieldDefinition = {
+  key: StatKey
+  label: string
+  category: string
+}
+
+const RUN_STAT_FIELDS: RunStatFieldDefinition[] = [
+  { key: 'score', label: 'Score', category: 'Overview' },
+  { key: 'kills', label: 'Kills', category: 'Overview' },
+  { key: 'hitCount', label: 'Hit Count', category: 'Overview' },
+  { key: 'accuracy', label: 'Accuracy', category: 'Overview' },
+  { key: 'missCount', label: 'Miss Count', category: 'Accuracy Details' },
+  { key: 'totalOvershots', label: 'Total Overshots', category: 'Accuracy Details' },
+  { key: 'damageDone', label: 'Damage Done', category: 'Accuracy Details' },
+  { key: 'damageTaken', label: 'Damage Taken', category: 'Accuracy Details' },
+  { key: 'fightTime', label: 'Fight Time', category: 'Timing' },
+  { key: 'timeRemaining', label: 'Time Remaining', category: 'Timing' },
+  { key: 'avgTtk', label: 'Avg TTK', category: 'Timing' },
+  { key: 'realAvgTtk', label: 'Real Avg TTK', category: 'Timing' },
+  { key: 'pauseCount', label: 'Pause Count', category: 'Timing' },
+  { key: 'pauseDuration', label: 'Pause Duration', category: 'Timing' },
+  { key: 'challengeStart', label: 'Challenge Start', category: 'Timing' },
+  { key: 'duration', label: 'Duration', category: 'Timing' },
+  { key: 'sensScale', label: 'Sens Scale', category: 'Controls' },
+  { key: 'sensIncrement', label: 'Sens Increment', category: 'Controls' },
+  { key: 'horizSens', label: 'Horiz Sens', category: 'Controls' },
+  { key: 'vertSens', label: 'Vert Sens', category: 'Controls' },
+  { key: 'dpi', label: 'DPI', category: 'Controls' },
+  { key: 'cm360', label: 'cm/360', category: 'Controls' },
+  { key: 'fov', label: 'FOV', category: 'Display' },
+  { key: 'fovScale', label: 'FOVScale', category: 'Display' },
+  { key: 'resolution', label: 'Resolution', category: 'Display' },
+  { key: 'hideGun', label: 'Hide Gun', category: 'Display' },
+  { key: 'crosshair', label: 'Crosshair', category: 'Display' },
+  { key: 'crosshairScale', label: 'Crosshair Scale', category: 'Display' },
+  { key: 'crosshairColor', label: 'Crosshair Color', category: 'Display' },
+  { key: 'inputLag', label: 'Input Lag', category: 'Technical' },
+  { key: 'maxFpsConfig', label: 'Max FPS (config)', category: 'Technical' },
+  { key: 'avgFps', label: 'Avg FPS', category: 'Technical' },
+  { key: 'resolutionScale', label: 'Resolution Scale', category: 'Technical' },
+  { key: 'scenario', label: 'Scenario', category: 'Game Information' },
+  { key: 'hash', label: 'Hash', category: 'Game Information' },
+  { key: 'gameVersion', label: 'Game Version', category: 'Game Information' },
+  { key: 'datePlayed', label: 'Date Played', category: 'Game Information' },
+  { key: 'distanceTraveled', label: 'Distance Traveled', category: 'Game Information' },
+  { key: 'mbsPoints', label: 'MBS Points', category: 'Game Information' },
+  { key: 'midairs', label: 'Midairs', category: 'Additional Stats' },
+  { key: 'midaired', label: 'Midaired', category: 'Additional Stats' },
+  { key: 'directs', label: 'Directs', category: 'Additional Stats' },
+  { key: 'directed', label: 'Directed', category: 'Additional Stats' },
+  { key: 'deaths', label: 'Deaths', category: 'Additional Stats' },
+  { key: 'avgTargetScale', label: 'Avg Target Scale', category: 'Additional Stats' },
+  { key: 'avgTimeDilation', label: 'Avg Time Dilation', category: 'Additional Stats' },
+  { key: 'reloads', label: 'Reloads', category: 'Additional Stats' },
+]
+
 export function buildHistoryRuns(sessions: Session[]): HistoryRun[] {
   return sessions.flatMap(session => session.items.map((item, index) => ({
     id: item.filePath || `${session.id}:${index}`,
@@ -298,49 +354,32 @@ export function matchRunSearch(run: HistoryRun, query: string): boolean {
     || formatRunTimestamp(run.playedAt).toLowerCase().includes(normalized)
 }
 
-export function buildRunStats(item: RunRecord): Array<{ label: string; value: string }> {
-  const stats = item.stats ?? {}
-  const entries: Array<{ label: string; value: string }> = []
-  const seen = new Set<string>()
-  const priorityKeys: StatKey[] = [
-    'Score',
-    'Accuracy',
-    'Duration',
-    'Kills',
-    'Damage Done',
-    'Hit Count',
-    'Avg TTK',
-  ]
+export function buildRunStats(item: RunRecord): Array<{ key: StatKey; label: string; value: string; category: string }> {
+  const summary = item.stats?.summary
+  const entries: Array<{ key: StatKey; label: string; value: string; category: string }> = []
 
-  const pushEntry = (key: string) => {
-    if (seen.has(key) || !(key in stats)) return
+  for (const field of RUN_STAT_FIELDS) {
+    const raw = summary?.[field.key]
+    if (raw == null) continue
 
-    const raw = stats[key]
     let value = '--'
 
-    if (key === 'Accuracy') {
+    if (field.key === 'accuracy') {
       value = formatPercent(readRunAccuracy(item))
-    } else if (key === 'Duration') {
+    } else if (field.key === 'duration') {
       value = formatDurationLabel(readRunDurationMs(item))
     } else if (typeof raw === 'number') {
       value = formatNumber(raw, Number.isInteger(raw) ? 0 : 2)
+    } else if (typeof raw === 'boolean') {
+      value = raw ? 'true' : 'false'
     } else if (typeof raw === 'string') {
       const trimmed = raw.trim()
       if (trimmed) value = trimmed
     }
 
     if (value !== '--') {
-      entries.push({ label: key, value })
-      seen.add(key)
+      entries.push({ key: field.key, label: field.label, value, category: field.category })
     }
-  }
-
-  for (const key of priorityKeys) {
-    pushEntry(key)
-  }
-
-  for (const key of Object.keys(stats)) {
-    pushEntry(key)
   }
 
   return entries

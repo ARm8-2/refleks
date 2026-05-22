@@ -111,7 +111,7 @@ export function computeRecommendationScores(input: RecommendationInputs): Map<st
       const name = getScenarioName(item)
       if (!wantedSet.has(name)) continue
 
-      const score = Number(item.stats?.['Score'] ?? 0)
+      const score = Number(item.stats?.summary.score ?? 0)
       if (!historyMap.has(name)) historyMap.set(name, [])
       historyMap.get(name)?.push({ time: sessionTime, score })
     }

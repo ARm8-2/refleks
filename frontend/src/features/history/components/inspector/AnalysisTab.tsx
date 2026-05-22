@@ -77,11 +77,8 @@ export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: H
   const primaryEvents = useRunStatsEvents(primaryRun)
   const compareEvents = useRunStatsEvents(compareRun)
 
-  const primaryItem = useMemo(() => primaryEvents ? { ...primaryRun.item, events: primaryEvents } : null, [primaryRun.item, primaryEvents])
-  const compareItem = useMemo(() => compareRun && compareEvents ? { ...compareRun.item, events: compareEvents } : null, [compareRun?.item, compareEvents])
-
-  const primaryAnalysis = useMemo(() => primaryItem ? computeScenarioAnalysis(primaryItem) : null, [primaryItem])
-  const compareAnalysis = useMemo(() => compareItem ? computeScenarioAnalysis(compareItem) : null, [compareItem])
+  const primaryAnalysis = useMemo(() => primaryEvents ? computeScenarioAnalysis(primaryRun.item.stats.summary, primaryEvents) : null, [primaryRun.item.stats.summary, primaryEvents])
+  const compareAnalysis = useMemo(() => compareRun && compareEvents ? computeScenarioAnalysis(compareRun.item.stats.summary, compareEvents) : null, [compareRun?.item.stats.summary, compareEvents])
 
   if (primaryEvents === null || (compareRun && compareEvents === null)) {
     return (

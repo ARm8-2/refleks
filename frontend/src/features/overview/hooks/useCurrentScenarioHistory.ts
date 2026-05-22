@@ -1,5 +1,6 @@
 import { getScenarioName } from '@/features/benchmarks/lib/detailFormatting'
 import { useStore } from '@/shared/hooks'
+import type { RunRecord } from '@/shared/types'
 import { useMemo } from 'react'
 
 const shortDateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -96,13 +97,13 @@ export function useCurrentScenarioHistory(): CurrentScenarioHistory {
   }, [sessions])
 }
 
-function readRunScore(item: { stats?: Record<string, unknown> }): number {
-  const score = Number(item.stats?.['Score'] ?? 0)
+function readRunScore(item: Pick<RunRecord, 'stats'>): number {
+  const score = Number(item.stats?.summary.score ?? 0)
   return Number.isFinite(score) ? score : 0
 }
 
-function readRunTimestamp(item: { stats?: Record<string, unknown> }): number {
-  const raw = item.stats?.['Date Played']
+function readRunTimestamp(item: Pick<RunRecord, 'stats'>): number {
+  const raw = item.stats?.summary.datePlayed
   if (!raw) return 0
 
   const timestamp = Date.parse(String(raw))

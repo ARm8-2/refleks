@@ -27,7 +27,7 @@ import {
   StopWatcher as _StopWatcher,
   UpdateSettings as _UpdateSettings
 } from '@wails/go/main/App'
-import type { Benchmark, BenchmarkProgress, KovaaksLastScore, RunPerformanceEvent, RunRecord, Settings, UpdateInfo } from '../types/ipc'
+import type { Benchmark, BenchmarkProgress, KovaaksLastScore, RunPerformanceEvent, RunRecord, RunStatsEvent, Settings, UpdateInfo } from '../types/ipc'
 
 // Typed wrappers around Wails-generated bindings with normalized results
 
@@ -52,9 +52,9 @@ export async function getRecentRuns(limit = 0): Promise<RunRecord[]> {
   return (Array.isArray(res) ? res : []) as unknown as RunRecord[]
 }
 
-export async function getRunStatsEvents(filePath: string): Promise<string[][]> {
+export async function getRunStatsEvents(filePath: string): Promise<RunStatsEvent[]> {
   const res = await _GetRunStatsEvents(filePath)
-  return Array.isArray(res) ? res : []
+  return (Array.isArray(res) ? res : []) as unknown as RunStatsEvent[]
 }
 
 export async function getRunPerformanceEvents(filePath: string): Promise<RunPerformanceEvent[]> {

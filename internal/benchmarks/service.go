@@ -201,15 +201,11 @@ func (s *Service) RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgr
 
 // CheckAndRefreshIfNeeded checks if a run updates any benchmark progress.
 func (s *Service) CheckAndRefreshIfNeeded(rec models.RunRecord) {
-	scenarioName, ok := rec.Stats["Scenario"].(string)
-	if !ok {
+	if rec.Stats.Summary.Scenario == "" {
 		return
 	}
-	scoreVal, ok := rec.Stats["Score"]
-	if !ok {
-		return
-	}
-	score := toFloat(scoreVal)
+	scenarioName := rec.Stats.Summary.Scenario
+	score := rec.Stats.Summary.Score
 
 	s.mu.Lock()
 	if len(s.progressCache) == 0 {

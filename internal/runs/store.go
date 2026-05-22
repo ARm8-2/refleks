@@ -12,6 +12,7 @@ import (
 
 	"refleks/internal/constants"
 	"refleks/internal/models"
+	"refleks/internal/runs/kovaaks"
 	appsettings "refleks/internal/settings"
 )
 
@@ -93,30 +94,29 @@ func (s *Store) Save(rec storedRunRecord) (string, error) {
 
 // LoadRunStatsEvents reads a single .refleks file by full path and returns the
 // CSV-derived event rows nested under stats.events.
-func (s *Store) LoadRunStatsEvents(filePath string) ([][]string, error) {
+func (s *Store) LoadRunStatsEvents(filePath string) ([]models.RunStatsEvent, error) {
 	rec, err := readRecordFile(filePath, readRecordOptions{skipPerformanceEvents: true, skipMouseTrace: true})
 	if err != nil {
 		return nil, err
 	}
-	statsEvents := runStatsEvents(rec.Stats)
+	statsEvents := rec.Stats.Events
 	if statsEvents == nil {
-		return [][]string{}, nil
+		return []models.RunStatsEvent{}, nil
 	}
 	return statsEvents, nil
 }
 
 // LoadRunPerformanceEvents reads a single .refleks file by full path and
-// returns the performance event list stored in the v2 performance payload.
+// returns the performance event list stored in the v2 performances payload.
 func (s *Store) LoadRunPerformanceEvents(filePath string) ([]models.RunPerformanceEvent, error) {
 	rec, err := readRecordFile(filePath, readRecordOptions{skipStatsEvents: true, skipMouseTrace: true})
 	if err != nil {
 		return nil, err
 	}
-	performanceEvents := runPerformanceEvents(rec.Performances)
-	if performanceEvents == nil {
+	if rec.Performances == nil || rec.Performances.Events == nil {
 		return []models.RunPerformanceEvent{}, nil
 	}
-	return performanceEvents, nil
+	return rec.Performances.Events, nil
 }
 
 // LoadRunTrace reads a single .refleks file by full path and returns its mouse
@@ -258,7 +258,7 @@ func runTimestampFromFileName(fileName, path string) int64 {
 		return ts
 	}
 
-	if info, err := ParseFilename(fileName); err == nil {
+	if info, err := kovaaks.ParseFilename(fileName); err == nil {
 		return info.DatePlayed.UnixMilli()
 	}
 	if fi, err := os.Stat(path); err == nil {

@@ -1,4 +1,4 @@
-import type { MousePoint, ScenarioStats } from '@/shared/types/ipc'
+import type { MousePoint, RunStatsEvent, RunStatsSummary } from '@/shared/types/ipc'
 
 /* ─── Types ─── */
 
@@ -56,21 +56,6 @@ function clamp(v: number, lo: number, hi: number) {
   return v < lo ? lo : v > hi ? hi : v
 }
 
-function parseTTK(s: unknown): number {
-  const m = String(s ?? '').match(/([0-9]*\.?[0-9]+)s/i)
-  return m ? parseFloat(m[1]) : NaN
-}
-
-function toInt(s: unknown): number {
-  const n = parseInt(String(s ?? ''), 10)
-  return Number.isFinite(n) ? n : NaN
-}
-
-function toFloat(s: unknown): number {
-  const n = parseFloat(String(s ?? ''))
-  return Number.isFinite(n) ? n : NaN
-}
-
 function lowerBound(points: MousePoint[], targetMs: number, lo = 0, hi = points.length - 1): number {
   let l = Math.max(0, lo)
   let r = Math.max(l, hi)
@@ -92,7 +77,7 @@ type KillEvent = {
 
 /* ─── Event parsing ─── */
 
-function parseEventsToKills(events: string[][], baseIso: string): KillEvent[] {
+function parseEventsToKills(events: RunStatsEvent[], baseIso: string): KillEvent[] {
   const out: KillEvent[] = []
   const end = new Date(baseIso)
   const baseY = end.getFullYear()
@@ -100,10 +85,9 @@ function parseEventsToKills(events: string[][], baseIso: string): KillEvent[] {
   const baseD = end.getDate()
   const endTOD = end.getHours() * 3600 + end.getMinutes() * 60 + end.getSeconds() + end.getMilliseconds() / 1000
 
-  for (const row of events) {
-    if (!row || row.length < 7) continue
-    const idx = toInt(row[0])
-    const m = String(row[1] ?? '').match(/^(\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))?$/)
+  for (const event of events) {
+    const idx = event.killIndex
+    const m = String(event.timestamp ?? '').match(/^(\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))?$/)
     if (!m) continue
     const hh = parseInt(m[1], 10)
     const mm = parseInt(m[2], 10)
@@ -114,7 +98,7 @@ function parseEventsToKills(events: string[][], baseIso: string): KillEvent[] {
     if (Number.isFinite(endTOD) && tsSec > endTOD + 1) {
       evt.setDate(evt.getDate() - 1)
     }
-    out.push({ idx, tsAbsMs: evt.getTime(), ttkSec: parseTTK(row[4]), shots: toFloat(row[5]), hits: toFloat(row[6]) })
+    out.push({ idx, tsAbsMs: evt.getTime(), ttkSec: event.ttkSeconds, shots: event.shots, hits: event.hits })
   }
   out.sort((a, b) => a.tsAbsMs - b.tsAbsMs)
   for (let i = 1; i < out.length; i++) {
@@ -338,12 +322,12 @@ function analyzeWindow(
 /* ─── Main entry point ─── */
 
 export function computeMouseTraceAnalysis(
-  stats: ScenarioStats,
-  events: string[][],
+  stats: RunStatsSummary,
+  events: RunStatsEvent[],
   points: MousePoint[],
 ): MouseTraceAnalysis | null {
   if (points.length < 4 || events.length === 0) return null
-  const baseIso = String(stats['Date Played'] ?? '')
+  const baseIso = String(stats.datePlayed ?? '')
   if (!baseIso) return null
   const kills = parseEventsToKills(events, baseIso)
   if (!kills.length) return null
@@ -392,14 +376,14 @@ export function computeMouseTraceAnalysis(
     avgOvershootPixels: overshootKillN > 0 ? totalOvershootPx / overshootKillN : 0,
     avgUndershootPixels: undershootKillN > 0 ? totalUndershootPx / undershootKillN : 0,
     severityCounts,
-    cm360: Number(stats['cm/360']) || null,
+    cm360: Number(stats.cm360) || null,
   }
 }
 
 /* ─── Sensitivity suggestion ─── */
 
-export function computeSuggestedSens(analysis: MouseTraceAnalysis, stats: ScenarioStats): SensSuggestion | null {
-  const curr = Number(stats['cm/360'] ?? 0)
+export function computeSuggestedSens(analysis: MouseTraceAnalysis, stats: RunStatsSummary): SensSuggestion | null {
+  const curr = Number(stats.cm360 ?? 0)
   if (!Number.isFinite(curr) || curr <= 0) return null
   const total = Math.max(1, analysis.kills.length)
 

@@ -9,42 +9,35 @@ import (
 	"refleks/internal/constants"
 	"refleks/internal/models"
 	"refleks/internal/runs/environment"
+	"refleks/internal/runs/kovaaks"
 	"refleks/internal/steam"
 )
 
 // IngestRun parses a KovaaK's stats CSV, enriches it, persists it, and returns the stored record.
 func (s *Store) IngestRun(fullPath string, mouse models.MouseTraceProvider) (models.RunRecord, error) {
-	info, err := ParseFilename(filepath.Base(fullPath))
+	info, err := kovaaks.ParseFilename(filepath.Base(fullPath))
 	if err != nil {
 		return models.RunRecord{}, err
 	}
-	statsEvents, stats, err := ParseStatsFile(fullPath)
+	stats, err := kovaaks.ParseStatsFile(fullPath)
 	if err != nil {
 		return models.RunRecord{}, err
 	}
 
-	stats["Date Played"] = info.DatePlayed.Format(time.RFC3339)
+	stats.Summary.DatePlayed = info.DatePlayed.Format(time.RFC3339)
 
-	var hit, miss float64
-	if v, ok := stats["Hit Count"]; ok {
-		hit = toFloat(v)
-	}
-	if v, ok := stats["Miss Count"]; ok {
-		miss = toFloat(v)
-	}
+	hit := float64(stats.Summary.HitCount)
+	miss := float64(stats.Summary.MissCount)
 	if denom := hit + miss; denom > 0 {
-		stats["Accuracy"] = hit / denom
+		stats.Summary.Accuracy = hit / denom
 	} else {
-		stats["Accuracy"] = 0.0
+		stats.Summary.Accuracy = 0
 	}
 
-	if len(statsEvents) >= 2 {
+	if len(stats.Events) >= 2 {
 		var times []time.Time
-		for _, row := range statsEvents {
-			if len(row) < 2 {
-				continue
-			}
-			if t, ok := parseTODOnDate(row[1], info.DatePlayed); ok {
+		for _, event := range stats.Events {
+			if t, ok := parseTODOnDate(event.Timestamp, info.DatePlayed); ok {
 				times = append(times, t)
 			}
 		}
@@ -56,32 +49,31 @@ func (s *Store) IngestRun(fullPath string, mouse models.MouseTraceProvider) (mod
 				}
 			}
 			if intervals := len(times) - 1; intervals > 0 {
-				stats["Real Avg TTK"] = sum.Seconds() / float64(intervals)
+				stats.Summary.RealAvgTTK = sum.Seconds() / float64(intervals)
 			}
 		}
 	}
 
-	if cm, ok := cm360FromStats(stats); ok {
-		stats["cm/360"] = cm
+	if cm, ok := cm360FromStats(stats.Summary); ok {
+		stats.Summary.Cm360 = cm
 	}
 
-	start, end := deriveScenarioWindow(info.DatePlayed, stats, statsEvents)
+	start, end := deriveScenarioWindow(info.DatePlayed, stats.Summary, stats.Events)
 	if !start.IsZero() && !end.IsZero() {
-		stats["Duration"] = end.Sub(start).Seconds()
+		stats.Summary.Duration = end.Sub(start).Seconds()
 	}
 
 	fileName := runFileNameFromStatsPath(fullPath)
-	performanceData, err := parseMatchingPerformanceFile(fullPath)
+	performanceData, err := parseMatchingPerformancesFile(fullPath)
 	if err != nil {
 		return models.RunRecord{}, err
 	}
-	normalizedStats := withStatsEvents(stats, statsEvents)
 
 	rec := models.RunRecord{
 		FileVersion:  runVersionCurrent,
 		FilePath:     fullPath,
 		FileName:     fileName,
-		Stats:        normalizedStats,
+		Stats:        stats,
 		Performances: performanceData,
 	}
 
@@ -116,19 +108,19 @@ func (s *Store) IngestRun(fullPath string, mouse models.MouseTraceProvider) (mod
 	return rec, nil
 }
 
-func parseMatchingPerformanceFile(statsPath string) (*models.RunPerformanceData, error) {
-	perfPath := matchingPerformancePath(statsPath)
+func parseMatchingPerformancesFile(statsPath string) (*models.RunPerformanceData, error) {
+	perfPath := matchingPerformancesPath(statsPath)
 	if _, err := os.Stat(perfPath); err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	return ParsePerformanceFile(perfPath)
+	return kovaaks.ParsePerformancesFile(perfPath)
 }
 
-func matchingPerformancePath(statsPath string) string {
-	return filepath.Join(filepath.Dir(filepath.Dir(statsPath)), constants.KovaaksPerformancesDirName, performanceFileNameFromStatsPath(statsPath))
+func matchingPerformancesPath(statsPath string) string {
+	return filepath.Join(filepath.Dir(filepath.Dir(statsPath)), constants.KovaaksPerformancesDirName, performancesFileNameFromStatsPath(statsPath))
 }
 
 func runFileNameFromStatsPath(statsPath string) string {
@@ -137,24 +129,22 @@ func runFileNameFromStatsPath(statsPath string) string {
 	return strings.TrimSuffix(name, " Stats")
 }
 
-func performanceFileNameFromStatsPath(statsPath string) string {
+func performancesFileNameFromStatsPath(statsPath string) string {
 	name := filepath.Base(statsPath)
 	name = strings.TrimSuffix(name, constants.StatsFileExt)
 	return strings.TrimSuffix(name, " Stats") + " Performance" + constants.PerformanceFileExt
 }
 
 // deriveScenarioWindow attempts to compute the [start, end] timespan of a scenario.
-func deriveScenarioWindow(end time.Time, stats map[string]any, statsEvents [][]string) (time.Time, time.Time) {
+func deriveScenarioWindow(end time.Time, stats models.RunStatsSummary, statsEvents []models.RunStatsEvent) (time.Time, time.Time) {
 	var start time.Time
-	if v, ok := stats["Challenge Start"]; ok {
-		if s, ok := v.(string); ok {
-			if t, ok := parseTODOnDate(s, end); ok {
-				start = t
-			}
+	if challengeStart := stats.ChallengeStart; challengeStart != "" {
+		if t, ok := parseTODOnDate(challengeStart, end); ok {
+			start = t
 		}
 	}
-	if start.IsZero() && len(statsEvents) > 0 && len(statsEvents[0]) > 1 {
-		if t, ok := parseTODOnDate(statsEvents[0][1], end); ok {
+	if start.IsZero() && len(statsEvents) > 0 {
+		if t, ok := parseTODOnDate(statsEvents[0].Timestamp, end); ok {
 			start = t
 		}
 	}

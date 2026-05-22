@@ -1,6 +1,4 @@
-import type { RunRecord } from '@/shared/types'
-
-type ScenarioAnalysisInput = Pick<RunRecord, 'stats'> & { events: string[][] }
+import type { RunStatsEvent, RunStatsSummary } from '@/shared/types'
 
 /* ─── Types ─── */
 
@@ -150,12 +148,12 @@ function fmtRel(sec: number): string {
 
 /* ─── Main analysis ─── */
 
-export function computeScenarioAnalysis(item: ScenarioAnalysisInput): ScenarioAnalysis | null {
-  const kills = Array.isArray(item.events) ? item.events : []
+export function computeScenarioAnalysis(stats: RunStatsSummary, events: RunStatsEvent[]): ScenarioAnalysis | null {
+  const kills = Array.isArray(events) ? events : []
   if (kills.length < 2) return null
 
-  const firstKillSec = toSec(kills[0]?.[1])
-  const startSecRaw = toSec(item.stats?.['Challenge Start'])
+  const firstKillSec = toSec(kills[0]?.timestamp)
+  const startSecRaw = toSec(stats?.challengeStart)
   const originSec = Number.isFinite(firstKillSec) ? firstKillSec : (Number.isFinite(startSecRaw) ? startSecRaw : 0)
 
   const labels: string[] = []
@@ -169,8 +167,8 @@ export function computeScenarioAnalysis(item: ScenarioAnalysisInput): ScenarioAn
   let cumShots = 0, cumHits = 0, prevSec = originSec
   let idx = 0, longestGap = 0, sumGap = 0
 
-  for (const row of kills) {
-    const ts = toSec(row[1])
+  for (const event of kills) {
+    const ts = toSec(event.timestamp)
     if (!Number.isFinite(ts)) continue
 
     const rel = ts >= originSec ? (ts - originSec) : (ts + (SEC_IN_DAY - originSec))
@@ -191,8 +189,8 @@ export function computeScenarioAnalysis(item: ScenarioAnalysisInput): ScenarioAn
       prevSec = ts
     }
 
-    const shots = parseFloat(row[5] || '0')
-    const hits = parseFloat(row[6] || '0')
+    const shots = event.shots
+    const hits = event.hits
     if (Number.isFinite(shots)) cumShots += shots
     if (Number.isFinite(hits)) cumHits += hits
 
