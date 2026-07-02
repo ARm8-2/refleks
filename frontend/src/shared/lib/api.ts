@@ -9,7 +9,8 @@ import {
   GetFavoriteBenchmarks as _GetFavoriteBenchmarks,
   GetLastScenarioScores as _GetLastScenarioScores,
   GetRecentRuns as _GetRecentRuns,
-  GetRunEvents as _GetRunEvents,
+  GetRunPerformanceEvents as _GetRunPerformanceEvents,
+  GetRunStatsEvents as _GetRunStatsEvents,
   GetRunTrace as _GetRunTrace,
   GetSettings as _GetSettings,
   GetVersion as _GetVersion,
@@ -26,7 +27,7 @@ import {
   StopWatcher as _StopWatcher,
   UpdateSettings as _UpdateSettings
 } from '@wails/go/main/App'
-import type { Benchmark, BenchmarkProgress, KovaaksLastScore, RunRecord, Settings, UpdateInfo } from '../types/ipc'
+import type { Benchmark, BenchmarkProgress, KovaaksLastScore, RunPerformanceEvent, RunRecord, RunStatsEvent, Settings, UpdateInfo } from '../types/ipc'
 
 // Typed wrappers around Wails-generated bindings with normalized results
 
@@ -51,9 +52,14 @@ export async function getRecentRuns(limit = 0): Promise<RunRecord[]> {
   return (Array.isArray(res) ? res : []) as unknown as RunRecord[]
 }
 
-export async function getRunEvents(filePath: string): Promise<string[][]> {
-  const res = await _GetRunEvents(filePath)
-  return Array.isArray(res) ? res : []
+export async function getRunStatsEvents(filePath: string): Promise<RunStatsEvent[]> {
+  const res = await _GetRunStatsEvents(filePath)
+  return (Array.isArray(res) ? res : []) as unknown as RunStatsEvent[]
+}
+
+export async function getRunPerformanceEvents(filePath: string): Promise<RunPerformanceEvent[]> {
+  const res = await _GetRunPerformanceEvents(filePath)
+  return (Array.isArray(res) ? res : []) as unknown as RunPerformanceEvent[]
 }
 
 export async function getRunTrace(filePath: string): Promise<string> {

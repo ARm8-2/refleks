@@ -20,6 +20,13 @@ export type TraceHighlight = {
   color: string
 }
 
+export type TraceTargetFrame = {
+  x: number
+  y: number
+  radius: number
+  alpha: number
+}
+
 export type RenderOpts = {
   width: number
   height: number
@@ -36,6 +43,7 @@ export type RenderOpts = {
   colors: TraceColors
   drawBox?: boolean
   highlight?: TraceHighlight
+  targetFrame?: TraceTargetFrame | null
 }
 
 export type TraceColors = {
@@ -235,6 +243,26 @@ export function renderTrace(ctx: CanvasRenderingContext2D, opts: RenderOpts) {
     ctx.beginPath(); ctx.arc(toX(last.x), toY(last.y), 2, 0, Math.PI * 2); ctx.fill()
   }
 
+  // ── Target inference ──
+  if (opts.targetFrame && opts.targetFrame.alpha > 0) {
+    const frame = opts.targetFrame
+    const x = toX(frame.x)
+    const y = toY(frame.y)
+    const radiusPx = Math.max(4, frame.radius * scale)
+    const fillAlpha = clamp(frame.alpha * 0.22, 0.05, 0.22)
+    const strokeAlpha = clamp(frame.alpha * 0.95, 0.18, 0.82)
+
+    ctx.save()
+    ctx.fillStyle = `rgba(255,255,255,${fillAlpha})`
+    ctx.strokeStyle = `rgba(255,255,255,${strokeAlpha})`
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.arc(x, y, radiusPx, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.stroke()
+    ctx.restore()
+  }
+
   // ── Highlight overlay ──
   if (opts.highlight && count >= 2) {
     const hStart = findPointIndex(points, opts.highlight.startTs)
@@ -242,7 +270,7 @@ export function renderTrace(ctx: CanvasRenderingContext2D, opts: RenderOpts) {
     if (hEnd > hStart) {
       ctx.lineWidth = 3
       ctx.strokeStyle = opts.highlight.color
-      ctx.globalAlpha = 0.85
+      ctx.globalAlpha = 0.35
       let prev = points[hStart]
       for (let i = hStart + 1; i < hEnd; i++) {
         const p = points[i]

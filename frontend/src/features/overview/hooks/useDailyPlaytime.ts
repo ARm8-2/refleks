@@ -23,7 +23,7 @@ export function useDailyPlaytime(days = 7): DailyPlaytimePoint[] {
 
     for (const session of sessions) {
       for (const item of session.items) {
-        const raw = item.stats?.['Date Played']
+        const raw = item.stats?.summary.datePlayed
         if (!raw) continue
         const ts = Date.parse(String(raw))
         if (!Number.isFinite(ts)) continue
@@ -32,7 +32,7 @@ export function useDailyPlaytime(days = 7): DailyPlaytimePoint[] {
         const existing = dayBuckets.get(key)
         if (existing === undefined) continue
 
-        const seconds = Number(item.stats?.['Duration'] ?? 0)
+        const seconds = Number(item.stats?.summary.duration ?? 0)
         if (!Number.isFinite(seconds) || seconds <= 0) continue
         dayBuckets.set(key, existing + seconds / 60)
       }

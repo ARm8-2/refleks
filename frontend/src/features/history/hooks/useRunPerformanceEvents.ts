@@ -1,14 +1,11 @@
-import { getRunEvents } from '@/shared/lib/api'
+import { getRunPerformanceEvents } from '@/shared/lib/api'
+import type { RunPerformanceEvent } from '@/shared/types/ipc'
 import { useEffect, useState } from 'react'
 import type { HistoryRun } from '../lib/historyModels'
 
-/**
- * Lazily loads kill events for a run from local storage.
- * Bulk history data strips events to stay memory-efficient, so inspector views
- * read them back from disk on demand.
- */
-export function useRunEvents(run: HistoryRun | null): string[][] | null {
-  const [events, setEvents] = useState<string[][] | null>(null)
+// Lazily load the v2 performance events for a run from local storage.
+export function useRunPerformanceEvents(run: HistoryRun | null): RunPerformanceEvent[] | null {
+  const [events, setEvents] = useState<RunPerformanceEvent[] | null>(null)
 
   useEffect(() => {
     if (!run) {
@@ -25,7 +22,7 @@ export function useRunEvents(run: HistoryRun | null): string[][] | null {
     let cancelled = false
     setEvents(null)
 
-    getRunEvents(filePath)
+    getRunPerformanceEvents(filePath)
       .then(result => {
         if (cancelled) return
         setEvents(result)

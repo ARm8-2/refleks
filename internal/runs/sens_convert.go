@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"refleks/internal/constants"
+	"refleks/internal/models"
 )
 
 // cm360 converts horizontal sensitivity data into centimeters per 360-degree turn.
@@ -36,15 +37,9 @@ func cm360(scale string, horizSens, dpi float64) (cm float64, ok bool) {
 	}
 }
 
-// cm360FromStats extracts the needed values from a stats map and computes cm/360.
-func cm360FromStats(stats map[string]any) (float64, bool) {
-	if stats == nil {
-		return 0, false
-	}
-	scale, _ := stats["Sens Scale"].(string)
-	s := toFloat(stats["Horiz Sens"])
-	dpi := toFloat(stats["DPI"])
-	return cm360(scale, s, dpi)
+// cm360FromStats extracts the needed values from a stats summary and computes cm/360.
+func cm360FromStats(stats models.RunStatsSummary) (float64, bool) {
+	return cm360(stats.SensScale, stats.HorizSens, stats.DPI)
 }
 
 var yawByScale = map[string]float64{

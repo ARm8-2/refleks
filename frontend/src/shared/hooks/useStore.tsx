@@ -178,7 +178,7 @@ function groupSessions(items: RunRecord[], gapMinutes = 30, notes: Record<string
 }
 
 function endTs(it: RunRecord): number {
-  const raw = it.stats?.['Date Played']
+  const raw = it.stats?.summary.datePlayed
   if (!raw) return 0
   return Date.parse(String(raw)) || 0
 }

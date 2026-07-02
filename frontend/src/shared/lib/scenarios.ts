@@ -1,4 +1,4 @@
-import type { RunRecord, ScenarioStats } from '../types'
+import type { RunRecord, RunStatsData } from '../types'
 
 function readString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
@@ -40,9 +40,9 @@ function parseDurationMs(value: unknown): number {
   return seconds > 0 ? seconds * 1000 : 0
 }
 
-export function getScenarioName(input: RunRecord | { fileName?: string; stats?: ScenarioStats }): string {
-  const stats = input.stats
-  const direct = readString(stats?.['Scenario'])
+export function getScenarioName(input: RunRecord | { fileName?: string; stats?: RunStatsData }): string {
+  const summary = input.stats?.summary
+  const direct = readString(summary?.scenario)
   if (direct) return direct
 
   const fileName = readString(input.fileName)
@@ -54,7 +54,7 @@ export function getScenarioName(input: RunRecord | { fileName?: string; stats?: 
 }
 
 export function readRunTimestamp(item: RunRecord): number {
-  const raw = item.stats?.['Date Played']
+  const raw = item.stats?.summary.datePlayed
   if (!raw) return 0
 
   const timestamp = Date.parse(String(raw))
@@ -62,11 +62,11 @@ export function readRunTimestamp(item: RunRecord): number {
 }
 
 export function readRunScore(item: RunRecord): number {
-  return parseNumber(item.stats?.['Score']) ?? 0
+  return parseNumber(item.stats?.summary.score) ?? 0
 }
 
 export function readRunAccuracy(item: RunRecord): number | null {
-  const raw = parseNumber(item.stats?.['Accuracy'])
+  const raw = parseNumber(item.stats?.summary.accuracy)
   if (raw === null) return null
   // Values in 0–1 range are ratios (0.85 = 85%); normalize to percentage
   return raw > 0 && raw <= 1 ? raw * 100 : raw
@@ -74,8 +74,8 @@ export function readRunAccuracy(item: RunRecord): number | null {
 
 export function readRunDurationMs(item: RunRecord): number {
   return parseDurationMs(
-    item.stats?.['Duration']
-    ?? item.stats?.['Scenario Time']
-    ?? item.stats?.['Time'],
+    item.stats?.summary.duration
+    ?? item.stats?.summary.scenarioTime
+    ?? item.stats?.summary.time,
   )
 }

@@ -22,7 +22,9 @@ export function GetLastScenarioScores(arg1:string):Promise<Array<models.KovaaksL
 
 export function GetRecentRuns(arg1:number):Promise<Array<models.RunRecord>>;
 
-export function GetRunEvents(arg1:string):Promise<Array<any>>;
+export function GetRunPerformanceEvents(arg1:string):Promise<Array<models.RunPerformanceEvent>>;
+
+export function GetRunStatsEvents(arg1:string):Promise<Array<models.RunStatsEvent>>;
 
 export function GetRunTrace(arg1:string):Promise<string>;
 

@@ -176,7 +176,7 @@ function computeLastRunStats(session: Session) {
   const lastItem = session.items[0]
   const scenario = getScenarioName(lastItem).trim()
   const score = readRunScore(lastItem)
-  const accuracy = Number(lastItem.stats?.['Accuracy'] ?? 0)
+  const accuracy = Number(lastItem.stats?.summary.accuracy ?? 0)
 
   const result = {
     scenario,
@@ -206,8 +206,8 @@ function computeLastRunStats(session: Session) {
     result.scoreTrend = delta > 0.02 ? 'up' : delta < -0.02 ? 'down' : 'flat'
   }
 
-  const earlyAccs = earlyRuns.map(r => Number(r.stats?.['Accuracy'] ?? 0)).filter(a => Number.isFinite(a) && a > 0)
-  const lateAccs = lateRuns.map(r => Number(r.stats?.['Accuracy'] ?? 0)).filter(a => Number.isFinite(a) && a > 0)
+  const earlyAccs = earlyRuns.map(r => Number(r.stats?.summary.accuracy ?? 0)).filter(a => Number.isFinite(a) && a > 0)
+  const lateAccs = lateRuns.map(r => Number(r.stats?.summary.accuracy ?? 0)).filter(a => Number.isFinite(a) && a > 0)
   if (earlyAccs.length > 0 && lateAccs.length > 0) {
     const earlyAvg = earlyAccs.reduce((a, b) => a + b, 0) / earlyAccs.length
     const lateAvg = lateAccs.reduce((a, b) => a + b, 0) / lateAccs.length
@@ -621,12 +621,12 @@ function sumSessionPlaytimeMs(session: Session): number {
 }
 
 function readRunScore(item: RunRecord): number {
-  const score = Number(item.stats?.['Score'] ?? 0)
+  const score = Number(item.stats?.summary.score ?? 0)
   return Number.isFinite(score) ? score : 0
 }
 
 function readRunTimestamp(item: RunRecord): number {
-  const raw = item.stats?.['Date Played']
+  const raw = item.stats?.summary.datePlayed
   if (!raw) return 0
 
   const timestamp = Date.parse(String(raw))
@@ -634,7 +634,7 @@ function readRunTimestamp(item: RunRecord): number {
 }
 
 function readRunDurationMs(item: RunRecord): number {
-  const seconds = Number(item.stats?.['Duration'] ?? 0)
+  const seconds = Number(item.stats?.summary.duration ?? 0)
   if (!Number.isFinite(seconds) || seconds <= 0) return 0
   return seconds * 1000
 }

@@ -1,4 +1,4 @@
-import type { Session } from '@/shared/types'
+import type { RunStatsData, Session } from '@/shared/types'
 
 export type DailyPlaytime = {
   dayTs: number
@@ -222,16 +222,16 @@ function buildStreakSpans(sortedDays: number[]): StreakSpan[] {
   return spans
 }
 
-function readRunTimestamp(stats: Record<string, unknown> | undefined): number {
-  const raw = stats?.['Date Played']
+function readRunTimestamp(stats: RunStatsData | undefined): number {
+  const raw = stats?.summary.datePlayed
   if (!raw) return 0
 
   const timestamp = Date.parse(String(raw))
   return Number.isFinite(timestamp) ? timestamp : 0
 }
 
-function readRunDurationMs(stats: Record<string, unknown> | undefined): number {
-  const seconds = Number(stats?.['Duration'] ?? 0)
+function readRunDurationMs(stats: RunStatsData | undefined): number {
+  const seconds = Number(stats?.summary.duration ?? 0)
   if (!Number.isFinite(seconds) || seconds <= 0) return 0
   return seconds * 1000
 }

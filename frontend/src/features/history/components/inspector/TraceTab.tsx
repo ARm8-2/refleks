@@ -3,7 +3,8 @@ import { cn } from '@/shared/lib/utils'
 import type { MousePoint } from '@/shared/types/ipc'
 import { Copy } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useRunEvents } from '../../hooks/useRunEvents'
+import { useRunPerformanceEvents } from '../../hooks/useRunPerformanceEvents'
+import { useRunStatsEvents } from '../../hooks/useRunStatsEvents'
 import { useRunTrace } from '../../hooks/useRunTrace'
 import type { HistoryRun } from '../../lib/historyModels'
 import {
@@ -13,6 +14,7 @@ import {
   type MouseTraceAnalysis,
   type SensSuggestion,
 } from '../../lib/mouseAnalysis'
+import { computeTargetInference } from '../../lib/targetInference'
 import type { TraceHighlight } from '../../lib/traceRenderer'
 import { TraceReplay } from '../TraceReplay'
 
@@ -73,9 +75,12 @@ function fmtPct(n: number): string {
 export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: HistoryRun; compareRun: HistoryRun | null; overlay: boolean }) {
   const primaryPoints = useRunTrace(primaryRun)
   const comparePoints = useRunTrace(compareRun)
-  const primaryEvents = useRunEvents(primaryRun)
-  const primaryResolution = String(primaryRun.item.stats?.Resolution ?? '')
-  const compareResolution = String(compareRun?.item.stats?.Resolution ?? '')
+  const primaryEvents = useRunStatsEvents(primaryRun)
+  const compareEvents = useRunStatsEvents(compareRun)
+  const primaryPerformanceEvents = useRunPerformanceEvents(primaryRun)
+  const comparePerformanceEvents = useRunPerformanceEvents(compareRun)
+  const primaryResolution = String(primaryRun.item.stats.summary.resolution ?? '')
+  const compareResolution = String(compareRun?.item.stats.summary.resolution ?? '')
 
   const [selectedKill, setSelectedKill] = useState<KillAnalysis | null>(null)
 
@@ -85,13 +90,38 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
   // Compute analysis
   const analysis: MouseTraceAnalysis | null = useMemo(() => {
     if (!primaryPoints || primaryPoints.length === 0 || !primaryEvents) return null
-    return computeMouseTraceAnalysis(primaryRun.item.stats, primaryEvents, primaryPoints)
-  }, [primaryRun.item.stats, primaryEvents, primaryPoints])
+    return computeMouseTraceAnalysis(primaryRun.item.stats.summary, primaryEvents, primaryPoints)
+  }, [primaryRun.item.stats.summary, primaryEvents, primaryPoints])
+
+  const compareAnalysis: MouseTraceAnalysis | null = useMemo(() => {
+    if (!compareRun || !comparePoints || comparePoints.length === 0 || !compareEvents) return null
+    return computeMouseTraceAnalysis(compareRun.item.stats.summary, compareEvents, comparePoints)
+  }, [compareEvents, comparePoints, compareRun])
 
   const suggestion: SensSuggestion | null = useMemo(() => {
     if (!analysis) return null
-    return computeSuggestedSens(analysis, primaryRun.item.stats)
-  }, [analysis, primaryRun.item.stats])
+    return computeSuggestedSens(analysis, primaryRun.item.stats.summary)
+  }, [analysis, primaryRun.item.stats.summary])
+
+  const primaryTargetInference = useMemo(() => {
+    if (!primaryPoints || primaryPoints.length === 0 || !primaryPerformanceEvents) return []
+    return computeTargetInference(
+      primaryPoints,
+      primaryRun.item.performances?.header,
+      primaryPerformanceEvents,
+      analysis,
+    )
+  }, [analysis, primaryPerformanceEvents, primaryPoints, primaryRun.item.performances?.header])
+
+  const compareTargetInference = useMemo(() => {
+    if (!compareRun || !comparePoints || comparePoints.length === 0 || !comparePerformanceEvents) return []
+    return computeTargetInference(
+      comparePoints,
+      compareRun.item.performances?.header,
+      comparePerformanceEvents,
+      compareAnalysis,
+    )
+  }, [compareAnalysis, comparePerformanceEvents, comparePoints, compareRun])
 
   // Highlight: show the last flick from the prior click to the current kill click
   const highlight: TraceHighlight | undefined = useMemo(() => {
@@ -111,7 +141,12 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
 
   const clearSelection = useCallback(() => setSelectedKill(null), [])
 
-  if (primaryPoints === null || (compareRun && comparePoints === null) || primaryEvents === null) {
+  if (
+    primaryPoints === null
+    || primaryEvents === null
+    || primaryPerformanceEvents === null
+    || (compareRun && (comparePoints === null || compareEvents === null || comparePerformanceEvents === null))
+  ) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <p className="text-sm text-surface-muted-foreground">Loading trace…</p>
@@ -141,8 +176,11 @@ export function TraceTab({ primaryRun, compareRun, overlay }: { primaryRun: Hist
           compareResolution={hasCompare ? (compareResolution || undefined) : undefined}
           layout={hasCompare && !overlay ? 'split' : 'overlay'}
           highlight={highlight}
+          targetInference={primaryTargetInference}
+          compareTargetInference={hasCompare ? compareTargetInference : undefined}
           seekToMs={seekToMs}
           onReset={clearSelection}
+          onHighlightChange={(h) => h === null && setSelectedKill(null)}
         />
       </div>
 

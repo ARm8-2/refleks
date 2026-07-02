@@ -284,7 +284,7 @@ function buildChartData(sessions: Session[], scenarioName: string | null, metric
     for (const item of session.items) {
       if (getScenarioName(item).trim() !== resolvedScenarioName) continue
 
-      const rawSensitivity = Number(item.stats?.['cm/360'] ?? 0)
+      const rawSensitivity = Number(item.stats?.summary.cm360 ?? 0)
       if (!Number.isFinite(rawSensitivity) || rawSensitivity <= 0) continue
 
       const performance = readMetricValue(item, metric)
@@ -332,7 +332,7 @@ function readMetricValue(item: RunRecord, metric: MetricKey): number | null {
     return accuracy !== null && Number.isFinite(accuracy) ? accuracy : null
   }
 
-  const ttk = Number(item.stats?.['Real Avg TTK'] ?? NaN)
+  const ttk = Number(item.stats?.summary.realAvgTtk ?? NaN)
   return Number.isFinite(ttk) ? ttk : null
 }
 

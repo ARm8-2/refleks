@@ -1,4 +1,4 @@
-import type { MousePoint, ScenarioStats } from '@/shared/types/ipc'
+import type { MousePoint, RunStatsEvent, RunStatsSummary } from '@/shared/types/ipc'
 
 /* ─── Types ─── */
 
@@ -24,6 +24,7 @@ export type KillAnalysis = {
   crossingCount: number
   clickedWhileMoving: boolean
   correctionCount: number
+  estRadius: number
 }
 
 export type MouseTraceAnalysis = {
@@ -56,21 +57,6 @@ function clamp(v: number, lo: number, hi: number) {
   return v < lo ? lo : v > hi ? hi : v
 }
 
-function parseTTK(s: unknown): number {
-  const m = String(s ?? '').match(/([0-9]*\.?[0-9]+)s/i)
-  return m ? parseFloat(m[1]) : NaN
-}
-
-function toInt(s: unknown): number {
-  const n = parseInt(String(s ?? ''), 10)
-  return Number.isFinite(n) ? n : NaN
-}
-
-function toFloat(s: unknown): number {
-  const n = parseFloat(String(s ?? ''))
-  return Number.isFinite(n) ? n : NaN
-}
-
 function lowerBound(points: MousePoint[], targetMs: number, lo = 0, hi = points.length - 1): number {
   let l = Math.max(0, lo)
   let r = Math.max(l, hi)
@@ -92,7 +78,7 @@ type KillEvent = {
 
 /* ─── Event parsing ─── */
 
-function parseEventsToKills(events: string[][], baseIso: string): KillEvent[] {
+function parseEventsToKills(events: RunStatsEvent[], baseIso: string): KillEvent[] {
   const out: KillEvent[] = []
   const end = new Date(baseIso)
   const baseY = end.getFullYear()
@@ -100,10 +86,9 @@ function parseEventsToKills(events: string[][], baseIso: string): KillEvent[] {
   const baseD = end.getDate()
   const endTOD = end.getHours() * 3600 + end.getMinutes() * 60 + end.getSeconds() + end.getMilliseconds() / 1000
 
-  for (const row of events) {
-    if (!row || row.length < 7) continue
-    const idx = toInt(row[0])
-    const m = String(row[1] ?? '').match(/^(\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))?$/)
+  for (const event of events) {
+    const idx = event.killIndex
+    const m = String(event.timestamp ?? '').match(/^(\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))?$/)
     if (!m) continue
     const hh = parseInt(m[1], 10)
     const mm = parseInt(m[2], 10)
@@ -114,7 +99,7 @@ function parseEventsToKills(events: string[][], baseIso: string): KillEvent[] {
     if (Number.isFinite(endTOD) && tsSec > endTOD + 1) {
       evt.setDate(evt.getDate() - 1)
     }
-    out.push({ idx, tsAbsMs: evt.getTime(), ttkSec: parseTTK(row[4]), shots: toFloat(row[5]), hits: toFloat(row[6]) })
+    out.push({ idx, tsAbsMs: evt.getTime(), ttkSec: event.ttkSeconds, shots: event.shots, hits: event.hits })
   }
   out.sort((a, b) => a.tsAbsMs - b.tsAbsMs)
   for (let i = 1; i < out.length; i++) {
@@ -169,11 +154,18 @@ function analyzeWindow(
     }
   }
 
-  // Overshoot detection
-  const primaryAxisIsX = Math.abs(killPoint.x - startPoint.x) > Math.abs(killPoint.y - startPoint.y)
-  const approachSign = primaryAxisIsX
-    ? Math.sign(killPoint.x - startPoint.x)
-    : Math.sign(killPoint.y - startPoint.y)
+  // Overshoot detection - projects each point onto the actual (possibly
+  // diagonal) approach direction from start to kill point, rather than
+  // picking whichever single axis moved more. A point's projection is
+  // positive when it sits further along that direction than the target
+  // itself - i.e. the cursor travelled past it, the real overshoot side -
+  // and negative while still short of it, regardless of whether the flick
+  // was horizontal, vertical, or diagonal.
+  const approachDx = killPoint.x - startPoint.x
+  const approachDy = killPoint.y - startPoint.y
+  const approachLen = Math.hypot(approachDx, approachDy) || 1
+  const approachUx = approachDx / approachLen
+  const approachUy = approachDy / approachLen
 
   let maxOvershootDist = 0
   let crossingCount = 0
@@ -184,16 +176,14 @@ function analyzeWindow(
   for (let i = 0; i < distSq.length; i++) {
     const { dx, dy } = signedDistances[i]
     const dist = Math.sqrt(distSq[i])
-    const curSide = primaryAxisIsX
-      ? Math.sign(dx) * -approachSign
-      : Math.sign(dy) * -approachSign
+    const alongTravel = dx * approachUx + dy * approachUy
+    const curSide = Math.sign(alongTravel)
 
     if (lastSide !== 0 && curSide !== 0 && lastSide !== curSide && dist < radius * 4) crossingCount++
     lastSide = curSide || lastSide
 
     if (curSide > 0) {
-      const od = primaryAxisIsX ? Math.abs(dx) : Math.abs(dy)
-      maxOvershootDist = Math.max(maxOvershootDist, od)
+      maxOvershootDist = Math.max(maxOvershootDist, Math.abs(alongTravel))
     }
     if (zoneEntryIndex === -1) {
       if (distSq[i] <= radiusSq) zoneEntryIndex = i
@@ -332,18 +322,19 @@ function analyzeWindow(
     undershootPixels: isUndershoot ? undershootMagnitude : 0,
     overshootSeverity, undershootSeverity,
     confidence, maxVelocity, crossingCount, clickedWhileMoving, correctionCount,
+    estRadius: radius,
   }
 }
 
 /* ─── Main entry point ─── */
 
 export function computeMouseTraceAnalysis(
-  stats: ScenarioStats,
-  events: string[][],
+  stats: RunStatsSummary,
+  events: RunStatsEvent[],
   points: MousePoint[],
 ): MouseTraceAnalysis | null {
   if (points.length < 4 || events.length === 0) return null
-  const baseIso = String(stats['Date Played'] ?? '')
+  const baseIso = String(stats.datePlayed ?? '')
   if (!baseIso) return null
   const kills = parseEventsToKills(events, baseIso)
   if (!kills.length) return null
@@ -392,14 +383,14 @@ export function computeMouseTraceAnalysis(
     avgOvershootPixels: overshootKillN > 0 ? totalOvershootPx / overshootKillN : 0,
     avgUndershootPixels: undershootKillN > 0 ? totalUndershootPx / undershootKillN : 0,
     severityCounts,
-    cm360: Number(stats['cm/360']) || null,
+    cm360: Number(stats.cm360) || null,
   }
 }
 
 /* ─── Sensitivity suggestion ─── */
 
-export function computeSuggestedSens(analysis: MouseTraceAnalysis, stats: ScenarioStats): SensSuggestion | null {
-  const curr = Number(stats['cm/360'] ?? 0)
+export function computeSuggestedSens(analysis: MouseTraceAnalysis, stats: RunStatsSummary): SensSuggestion | null {
+  const curr = Number(stats.cm360 ?? 0)
   if (!Number.isFinite(curr) || curr <= 0) return null
   const total = Math.max(1, analysis.kills.length)
 
