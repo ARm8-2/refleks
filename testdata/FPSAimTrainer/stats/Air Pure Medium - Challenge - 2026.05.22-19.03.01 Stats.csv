@@ -1,23 +1,23 @@
 Kill #,Timestamp,Bot,Weapon,TTK,Shots,Hits,Accuracy,Damage Done,Damage Possible,Efficiency,Cheated,OverShots
-1,10:19:15.661,AIR1_Short_close,test1,22.818001s,2283,1000,0.438020,1000.000000,2283.000000,0.438020,0,14
-2,10:19:38.791,AIR1_Short_far,test1,21.718000s,2173,1000,0.460193,1000.000000,2173.000000,0.460193,0,25
-3,10:19:58.981,AIR2_Long3D_mid,test1,19.985001s,1889,1000,0.529381,1000.000000,1889.000000,0.529381,0,20
-4,10:20:25.332,AIR2_Short_close,test1,25.089001s,2510,1000,0.398406,1000.000000,2510.000000,0.398406,0,22
-5,10:20:53.218,AIR2_Mid_UFO,test1,26.767002s,2678,1000,0.373413,1000.000000,2678.000000,0.373413,0,0
+1,19:01:33.253,AIR1_Short_close,test1,24.825001s,2484,1000,0.402576,1000.000000,2484.000000,0.402576,0,25
+2,19:01:59.072,AIR1_Short_far,test1,25.561001s,2460,1000,0.406504,1000.000000,2460.000000,0.406504,0,25
+3,19:02:14.842,AIR2_Long3D_mid,test1,15.511001s,1466,1000,0.682128,1000.000000,1466.000000,0.682128,0,25
+4,19:02:36.124,AIR2_Short_close,test1,21.021002s,2029,1000,0.492854,1000.000000,2029.000000,0.492854,0,25
+5,19:03:01.729,AIR2_Mid_UFO,test1,25.596001s,2463,1000,0.406009,1000.000000,2463.000000,0.406009,0,0
 
 Weapon,Shots,Hits,Damage Done,Damage Possible,,Sens Scale,Horiz Sens,Vert Sens,FOV,Hide Gun,Crosshair,Crosshair Scale,Crosshair Color,ADS Sens,ADS Zoom Scale,Avg Target Scale,Avg Time Dilation
-test1,11533,5000,5000.0,11533.0,
+test1,10902,5000,5000.0,10902.0,
 
 Kills:,5
 Deaths:,0
-Fight Time:,116.376999
+Fight Time:,112.514
 Time Remaining:,0.0
-Avg TTK:,24.137232
+Avg TTK:,22.786823
 Damage Done:,5000.0
-Total Overshots:,81
+Total Overshots:,100
 Damage Taken:,0.0
 Hit Count:,5000
-Miss Count:,6533
+Miss Count:,5902
 Midairs:,0
 Midaired:,0
 Directs:,0
@@ -25,11 +25,11 @@ Directed:,0
 Reloads:,0
 Distance Traveled:,0.0
 MBS Points:,0.0
-Score:,879.305115
+Score:,886.056824
 Scenario:,Air Pure Medium
 Hash:,d852bc1c12b4bfd7cac1752067620ce2
-Game Version:,3.9.0.2026-04-27-18-43-07-15870d84c21e
-Challenge Start:,10:18:52.525
+Game Version:,3.9.1.2026-05-06-17-06-54-4967be094932
+Challenge Start:,19:01:07.785
 Pause Count:,0
 Pause Duration:,0
 Avg Target Scale:,1.0
@@ -37,10 +37,10 @@ Avg Time Dilation:,1.0
 
 Input Lag:,0
 Max FPS (config):,999.0
-Sens Scale:,CSGO
+Sens Scale:,Battlefield 6
 Sens Increment:,0.471429
-Horiz Sens:,1.5
-Vert Sens:,1.5
+Horiz Sens:,17.673321
+Vert Sens:,17.673321
 DPI:,800
 FOV:,90.0
 FOVScale:,Counter-Strike
@@ -49,5 +49,5 @@ Crosshair:,ch.png
 Crosshair Scale:,1.0
 Crosshair Color:,000100FF
 Resolution:,1920x1080
-Avg FPS:,262.2836
+Avg FPS:,268.400726
 Resolution Scale:,100.0
