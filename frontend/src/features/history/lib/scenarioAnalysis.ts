@@ -150,7 +150,7 @@ function fmtRel(sec: number): string {
 
 export function computeScenarioAnalysis(stats: RunStatsSummary, events: RunStatsEvent[]): ScenarioAnalysis | null {
   const kills = Array.isArray(events) ? events : []
-  if (kills.length < 2) return null
+  if (kills.length < 1) return null
 
   const firstKillSec = toSec(kills[0]?.timestamp)
   const startSecRaw = toSec(stats?.challengeStart)
@@ -204,7 +204,7 @@ export function computeScenarioAnalysis(stats: RunStatsSummary, events: RunStats
     kpm.push(lastD > 0 ? 60 / lastD : 0)
   }
 
-  if (timeSec.length < 2) return null
+  if (timeSec.length < 1) return null
 
   const avgGap = sumGap / Math.max(1, timeSec.length - 1)
   const ma5 = rollingAvg(realTTK, 5)

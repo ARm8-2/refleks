@@ -133,10 +133,8 @@ function buildEventsTimeline(
   performanceEvents: RunPerformanceEvent[],
   timeLimitSec: number,
 ): { events: EventsChartPoint[]; domainMax: number } {
-  if (statsEvents.length === 0) return { events: [], domainMax: 0 }
-
   const challengeStartSec = toClockSec(summary.challengeStart)
-  const firstKillSec = toClockSec(statsEvents[0]?.timestamp)
+  const firstKillSec = statsEvents.length > 0 ? toClockSec(statsEvents[0]?.timestamp) : Number.NaN
 
   // Prefer the challenge start as the origin so the performance samples line up.
   // If it is missing (older v1 files) fall back to the first kill and skip the
@@ -145,10 +143,11 @@ function buildEventsTimeline(
   const originSec = useChallengeOrigin ? challengeStartSec : firstKillSec
   if (!Number.isFinite(originSec)) return { events: [], domainMax: 0 }
 
-  const killSamples = buildKillSamples(statsEvents, originSec)
-  if (killSamples.length === 0) return { events: [], domainMax: 0 }
-
+  // Kill markers come from the legacy stats stream; the performance stream can
+  // still supply an accuracy trend even before the first kill lands.
+  const killSamples = statsEvents.length > 0 ? buildKillSamples(statsEvents, originSec) : []
   const performanceAccuracy = useChallengeOrigin ? withBootstrapAccuracy(buildPerformanceAccuracy(performanceEvents)) : []
+  if (killSamples.length === 0 && performanceAccuracy.length === 0) return { events: [], domainMax: 0 }
 
   const byKey = new Map<string, EventsChartPoint>()
   const keyOf = (timeSec: number) => timeSec.toFixed(TIME_PRECISION)
@@ -195,7 +194,7 @@ function buildEventsTimeline(
 }
 
 export function buildAnalysisChartData(
-  analysis: ScenarioAnalysis,
+  analysis: ScenarioAnalysis | null,
   summary: RunStatsSummary,
   statsEvents: RunStatsEvent[],
   performanceEvents: RunPerformanceEvent[],
@@ -206,14 +205,14 @@ export function buildAnalysisChartData(
   return {
     events,
     eventsDomainMax: domainMax,
-    ttk: analysis.timeSec.map((timeSec, index) => ({
+    ttk: analysis ? analysis.timeSec.map((timeSec, index) => ({
       timeSec: round(timeSec, TIME_PRECISION),
       realTTK: round(analysis.realTTK[index], 3),
       ma5: round(analysis.movingAvg.ma5[index], 3),
-    })),
-    scatter: analysis.kpm.map((kpm, index) => ({
+    })) : [],
+    scatter: analysis ? analysis.kpm.map((kpm, index) => ({
       x: round(kpm, 1),
       y: round(analysis.perKillAcc[index] * 100, 1),
-    })),
+    })) : [],
   }
 }

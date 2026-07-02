@@ -460,9 +460,6 @@ export function computeTargetInference(
 ): Array<TargetInferenceFrame | null> {
   if (!header || points.length < 2 || performanceEvents.length === 0) return []
 
-  const kills = analysis?.kills ?? []
-  if (kills.length === 0) return []
-
   const smoothed = smoothPoints(points)
   const motion = computeMotionSignals(points, smoothed)
 
@@ -474,6 +471,7 @@ export function computeTargetInference(
 
   const n = points.length
   const frames: Array<TargetInferenceFrame | null> = new Array(n).fill(null)
+  const kills = analysis?.kills ?? []
   const fallbackRadius = resolveReferenceRadius(kills)
 
   // --- Pass 1: per-point confidence -----------------------------------

@@ -70,13 +70,13 @@ export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: H
   )
 
   const primary = useMemo(
-    () => primaryAnalysis && primaryEvents && primaryPerformanceEvents
+    () => primaryEvents && primaryPerformanceEvents
       ? buildAnalysisChartData(primaryAnalysis, primaryRun.item.stats.summary, primaryEvents, primaryPerformanceEvents, primaryRun.item.performances?.header?.challengeProfile?.timeLimit ?? 0)
       : null,
     [primaryAnalysis, primaryRun.item.stats.summary, primaryEvents, primaryPerformanceEvents, primaryRun.item.performances],
   )
   const compare = useMemo(
-    () => compareRun && compareAnalysis && compareEvents && comparePerformanceEvents
+    () => compareRun && compareEvents && comparePerformanceEvents
       ? buildAnalysisChartData(compareAnalysis, compareRun.item.stats.summary, compareEvents, comparePerformanceEvents, compareRun.item.performances?.header?.challengeProfile?.timeLimit ?? 0)
       : null,
     [compareAnalysis, compareEvents, comparePerformanceEvents, compareRun],
@@ -94,58 +94,64 @@ export function AnalysisTab({ primaryRun, compareRun, overlay }: { primaryRun: H
     )
   }
 
-  if (!primaryAnalysis) {
+  if (!primary || primary.events.length === 0) {
     return (
       <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">
-        Not enough event data to analyze. At least 2 kills are required.
+        No event data available for this run.
       </div>
     )
   }
 
-  if (!primary) return null
-
   if (!compareAnalysis || !compare) {
     return (
       <div className="space-y-3">
-        <SummaryMetrics analysis={primaryAnalysis} />
+        {primaryAnalysis && <SummaryMetrics analysis={primaryAnalysis} />}
         <Widget
-          title="Kills over time"
+          title="Accuracy over time"
           className="bg-surface-subtle h-[360px]"
-          modalTitle="Kills over time"
+          modalTitle="Accuracy over time"
           modalContent={<EventsChart data={primary.events} domainMax={primary.eventsDomainMax} />}
         >
           <EventsChart data={primary.events} domainMax={primary.eventsDomainMax} />
         </Widget>
-        <div className="grid gap-3 lg:grid-cols-2">
-          <Widget
-            title="TTK trend"
-            description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill · R² ${primaryAnalysis.movingAvg.r2.toFixed(3)}`}
-            className="bg-surface-subtle h-[360px]"
-            modalTitle="TTK moving average"
-            modalContent={<TTKChart data={primary.ttk} />}
-          >
-            <TTKChart data={primary.ttk} />
-          </Widget>
-          <Widget
-            title="Accuracy vs speed"
-            description={`Pearson r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-            className="bg-surface-subtle h-[360px]"
-            modalTitle="Accuracy vs speed"
-            modalContent={<ScatterPlot data={primary.scatter} />}
-          >
-            <ScatterPlot data={primary.scatter} />
-          </Widget>
-        </div>
+        {primaryAnalysis ? (
+          <div className="grid gap-3 lg:grid-cols-2">
+            <Widget
+              title="TTK trend"
+              description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill · R² ${primaryAnalysis.movingAvg.r2.toFixed(3)}`}
+              className="bg-surface-subtle h-[360px]"
+              modalTitle="TTK moving average"
+              modalContent={<TTKChart data={primary.ttk} />}
+            >
+              <TTKChart data={primary.ttk} />
+            </Widget>
+            <Widget
+              title="Accuracy vs speed"
+              description={`Pearson r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
+              className="bg-surface-subtle h-[360px]"
+              modalTitle="Accuracy vs speed"
+              modalContent={<ScatterPlot data={primary.scatter} />}
+            >
+              <ScatterPlot data={primary.scatter} />
+            </Widget>
+          </div>
+        ) : (
+          <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">
+            Waiting for the first kill to compute TTK trend, accuracy vs speed, and summary stats.
+          </div>
+        )}
       </div>
     )
   }
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-3 md:grid-cols-2">
-        <SummaryMetrics analysis={primaryAnalysis} label="Pinned" />
-        <SummaryMetrics analysis={compareAnalysis} label="Compare" />
-      </div>
+      {primaryAnalysis && compareAnalysis && (
+        <div className="grid gap-3 md:grid-cols-2">
+          <SummaryMetrics analysis={primaryAnalysis} label="Pinned" />
+          <SummaryMetrics analysis={compareAnalysis} label="Compare" />
+        </div>
+      )}
 
       {overlay ? (
         <OverlayCharts
@@ -174,71 +180,75 @@ function SplitCharts({
 }: {
   primary: AnalysisChartData
   compare: AnalysisChartData
-  primaryAnalysis: ScenarioAnalysis
-  compareAnalysis: ScenarioAnalysis
+  primaryAnalysis: ScenarioAnalysis | null
+  compareAnalysis: ScenarioAnalysis | null
 }) {
   return (
     <div className="space-y-3">
       <div className="grid gap-3 md:grid-cols-2">
         <Widget
-          title="Kills over time — Pinned"
+          title="Accuracy over time — Pinned"
           className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
-          modalTitle="Kills over time — Pinned"
+          modalTitle="Accuracy over time — Pinned"
           modalContent={<EventsChart data={primary.events} domainMax={primary.eventsDomainMax} />}
         >
           <EventsChart data={primary.events} domainMax={primary.eventsDomainMax} />
         </Widget>
         <Widget
-          title="Kills over time — Compare"
+          title="Accuracy over time — Compare"
           className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
-          modalTitle="Kills over time — Compare"
+          modalTitle="Accuracy over time — Compare"
           modalContent={<EventsChart data={compare.events} domainMax={compare.eventsDomainMax} />}
         >
           <EventsChart data={compare.events} domainMax={compare.eventsDomainMax} />
         </Widget>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <Widget
-          title="TTK trend — Pinned"
-          description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill`}
-          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
-          modalTitle="TTK trend — Pinned"
-          modalContent={<TTKChart data={primary.ttk} />}
-        >
-          <TTKChart data={primary.ttk} />
-        </Widget>
-        <Widget
-          title="TTK trend — Compare"
-          description={`Slope: ${compareAnalysis.movingAvg.slope >= 0 ? '+' : ''}${compareAnalysis.movingAvg.slope.toFixed(4)}s/kill`}
-          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
-          modalTitle="TTK trend — Compare"
-          modalContent={<TTKChart data={compare.ttk} />}
-        >
-          <TTKChart data={compare.ttk} />
-        </Widget>
-      </div>
+      {primaryAnalysis && compareAnalysis && (
+        <div className="grid gap-3 md:grid-cols-2">
+          <Widget
+            title="TTK trend — Pinned"
+            description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill`}
+            className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+            modalTitle="TTK trend — Pinned"
+            modalContent={<TTKChart data={primary.ttk} />}
+          >
+            <TTKChart data={primary.ttk} />
+          </Widget>
+          <Widget
+            title="TTK trend — Compare"
+            description={`Slope: ${compareAnalysis.movingAvg.slope >= 0 ? '+' : ''}${compareAnalysis.movingAvg.slope.toFixed(4)}s/kill`}
+            className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+            modalTitle="TTK trend — Compare"
+            modalContent={<TTKChart data={compare.ttk} />}
+          >
+            <TTKChart data={compare.ttk} />
+          </Widget>
+        </div>
+      )}
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <Widget
-          title="Acc vs speed — Pinned"
-          description={`r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
-          modalTitle="Accuracy vs speed — Pinned"
-          modalContent={<ScatterPlot data={primary.scatter} />}
-        >
-          <ScatterPlot data={primary.scatter} />
-        </Widget>
-        <Widget
-          title="Acc vs speed — Compare"
-          description={`r: ${compareAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
-          modalTitle="Accuracy vs speed — Compare"
-          modalContent={<ScatterPlot data={compare.scatter} />}
-        >
-          <ScatterPlot data={compare.scatter} />
-        </Widget>
-      </div>
+      {primaryAnalysis && compareAnalysis && (
+        <div className="grid gap-3 md:grid-cols-2">
+          <Widget
+            title="Acc vs speed — Pinned"
+            description={`r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
+            className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+            modalTitle="Accuracy vs speed — Pinned"
+            modalContent={<ScatterPlot data={primary.scatter} />}
+          >
+            <ScatterPlot data={primary.scatter} />
+          </Widget>
+          <Widget
+            title="Acc vs speed — Compare"
+            description={`r: ${compareAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
+            className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+            modalTitle="Accuracy vs speed — Compare"
+            modalContent={<ScatterPlot data={compare.scatter} />}
+          >
+            <ScatterPlot data={compare.scatter} />
+          </Widget>
+        </div>
+      )}
     </div>
   )
 }
@@ -275,8 +285,8 @@ function OverlayCharts({
 }: {
   primary: AnalysisChartData
   compare: AnalysisChartData
-  primaryAnalysis: ScenarioAnalysis
-  compareAnalysis: ScenarioAnalysis
+  primaryAnalysis: ScenarioAnalysis | null
+  compareAnalysis: ScenarioAnalysis | null
 }) {
   const eventsOverlay = useMemo(
     () => mergeByTime(primary.events, compare.events, 'cmp', ['killsOverTime', 'accOverTime']),
@@ -291,33 +301,35 @@ function OverlayCharts({
   return (
     <div className="space-y-3">
       <Widget
-        title="Kills over time"
+        title="Accuracy over time"
         className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
-        modalTitle="Kills over time — Overlay"
+        modalTitle="Accuracy over time — Overlay"
         modalContent={<EventsChartOverlay data={eventsOverlay} domainMax={eventsDomainMax} />}
       >
         <EventsChartOverlay data={eventsOverlay} domainMax={eventsDomainMax} />
       </Widget>
-      <div className="grid gap-3 lg:grid-cols-2">
-        <Widget
-          title="TTK trend"
-          description={`Pinned slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)} · Compare: ${compareAnalysis.movingAvg.slope >= 0 ? '+' : ''}${compareAnalysis.movingAvg.slope.toFixed(4)}`}
-          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
-          modalTitle="TTK trend — Overlay"
-          modalContent={<TTKChartOverlay data={ttkOverlay} />}
-        >
-          <TTKChartOverlay data={ttkOverlay} />
-        </Widget>
-        <Widget
-          title="Accuracy vs speed"
-          description={`Pinned r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)} · Compare: ${compareAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
-          modalTitle="Accuracy vs speed — Overlay"
-          modalContent={<ScatterPlotOverlay primary={primary.scatter} compare={compare.scatter} />}
-        >
-          <ScatterPlotOverlay primary={primary.scatter} compare={compare.scatter} />
-        </Widget>
-      </div>
+      {primaryAnalysis && compareAnalysis && (
+        <div className="grid gap-3 lg:grid-cols-2">
+          <Widget
+            title="TTK trend"
+            description={`Pinned slope: ${primaryAnalysis.movingAvg.slope >= 0 ? '+' : ''}${primaryAnalysis.movingAvg.slope.toFixed(4)} · Compare: ${compareAnalysis.movingAvg.slope >= 0 ? '+' : ''}${compareAnalysis.movingAvg.slope.toFixed(4)}`}
+            className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+            modalTitle="TTK trend — Overlay"
+            modalContent={<TTKChartOverlay data={ttkOverlay} />}
+          >
+            <TTKChartOverlay data={ttkOverlay} />
+          </Widget>
+          <Widget
+            title="Accuracy vs speed"
+            description={`Pinned r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)} · Compare: ${compareAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
+            className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+            modalTitle="Accuracy vs speed — Overlay"
+            modalContent={<ScatterPlotOverlay primary={primary.scatter} compare={compare.scatter} />}
+          >
+            <ScatterPlotOverlay primary={primary.scatter} compare={compare.scatter} />
+          </Widget>
+        </div>
+      )}
     </div>
   )
 }
