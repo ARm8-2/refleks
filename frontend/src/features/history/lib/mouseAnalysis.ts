@@ -24,6 +24,7 @@ export type KillAnalysis = {
   crossingCount: number
   clickedWhileMoving: boolean
   correctionCount: number
+  estRadius: number
 }
 
 export type MouseTraceAnalysis = {
@@ -153,11 +154,18 @@ function analyzeWindow(
     }
   }
 
-  // Overshoot detection
-  const primaryAxisIsX = Math.abs(killPoint.x - startPoint.x) > Math.abs(killPoint.y - startPoint.y)
-  const approachSign = primaryAxisIsX
-    ? Math.sign(killPoint.x - startPoint.x)
-    : Math.sign(killPoint.y - startPoint.y)
+  // Overshoot detection - projects each point onto the actual (possibly
+  // diagonal) approach direction from start to kill point, rather than
+  // picking whichever single axis moved more. A point's projection is
+  // positive when it sits further along that direction than the target
+  // itself - i.e. the cursor travelled past it, the real overshoot side -
+  // and negative while still short of it, regardless of whether the flick
+  // was horizontal, vertical, or diagonal.
+  const approachDx = killPoint.x - startPoint.x
+  const approachDy = killPoint.y - startPoint.y
+  const approachLen = Math.hypot(approachDx, approachDy) || 1
+  const approachUx = approachDx / approachLen
+  const approachUy = approachDy / approachLen
 
   let maxOvershootDist = 0
   let crossingCount = 0
@@ -168,16 +176,14 @@ function analyzeWindow(
   for (let i = 0; i < distSq.length; i++) {
     const { dx, dy } = signedDistances[i]
     const dist = Math.sqrt(distSq[i])
-    const curSide = primaryAxisIsX
-      ? Math.sign(dx) * -approachSign
-      : Math.sign(dy) * -approachSign
+    const alongTravel = dx * approachUx + dy * approachUy
+    const curSide = Math.sign(alongTravel)
 
     if (lastSide !== 0 && curSide !== 0 && lastSide !== curSide && dist < radius * 4) crossingCount++
     lastSide = curSide || lastSide
 
     if (curSide > 0) {
-      const od = primaryAxisIsX ? Math.abs(dx) : Math.abs(dy)
-      maxOvershootDist = Math.max(maxOvershootDist, od)
+      maxOvershootDist = Math.max(maxOvershootDist, Math.abs(alongTravel))
     }
     if (zoneEntryIndex === -1) {
       if (distSq[i] <= radiusSq) zoneEntryIndex = i
@@ -316,6 +322,7 @@ function analyzeWindow(
     undershootPixels: isUndershoot ? undershootMagnitude : 0,
     overshootSeverity, undershootSeverity,
     confidence, maxVelocity, crossingCount, clickedWhileMoving, correctionCount,
+    estRadius: radius,
   }
 }
 

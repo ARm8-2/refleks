@@ -40,6 +40,7 @@ export const STORAGE_KEYS = {
   traceClicks: 'refleks.trace.clicks',
   traceZoom: 'refleks.trace.zoom',
   traceSyncByTime: 'refleks.trace.syncByTime',
+  traceTargetInference: 'refleks.trace.targetInference',
 
   overviewSessionProgressTargetRuns: 'refleks.overview.sessionProgress.targetRuns',
   overviewRecentScoresRunCount: 'refleks.overview.recentScores.runCount',

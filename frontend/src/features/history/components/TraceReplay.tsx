@@ -4,8 +4,9 @@ import { usePersistedState } from '@/shared/hooks'
 import { cn, STORAGE_KEYS } from '@/shared/lib'
 import type { MousePoint } from '@/shared/types/ipc'
 import {
-  Crosshair,
+  CircleDot,
   Eye,
+  LineSquiggle,
   Link,
   Maximize2,
   MousePointerClick,
@@ -16,6 +17,7 @@ import {
   SkipForward,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { TargetInferenceFrame } from '../lib/targetInference'
 import type { ClickMode, TraceColors, TraceHighlight, TrailMode } from '../lib/traceRenderer'
 import {
   computeBounds,
@@ -66,15 +68,30 @@ type TraceReplayProps = {
   compareResolution?: string
   layout?: 'overlay' | 'split'
   highlight?: TraceHighlight
+  targetInference?: Array<TargetInferenceFrame | null>
+  compareTargetInference?: Array<TargetInferenceFrame | null>
   seekToMs?: number | null
   onReset?: () => void
+  onHighlightChange?: (highlight: TraceHighlight | null) => void
 }
 
 const SPEED_MIN = 0.1
 const SPEED_MAX = 4
 const SPEED_DEFAULT = 1
 
-export function TraceReplay({ points, resolution, comparePoints, compareResolution, layout = 'overlay', highlight, seekToMs, onReset }: TraceReplayProps) {
+export function TraceReplay({
+  points,
+  resolution,
+  comparePoints,
+  compareResolution,
+  layout = 'overlay',
+  highlight,
+  targetInference,
+  compareTargetInference,
+  seekToMs,
+  onReset,
+  onHighlightChange,
+}: TraceReplayProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const [modalTraceSet, setModalTraceSet] = useState<'primary' | 'compare' | 'both'>('both')
   const openModal = useCallback((traceSet: 'primary' | 'compare' | 'both') => {
@@ -106,6 +123,12 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
   const [clickMode, setClickMode] = usePersistedState<ClickMode>(STORAGE_KEYS.traceClicks, 'down')
   const [zoom, setZoom] = usePersistedState(STORAGE_KEYS.traceZoom, 1)
   const [syncByTime, setSyncByTime] = usePersistedState(STORAGE_KEYS.traceSyncByTime, false)
+  const [showTargetInference, setShowTargetInference] = usePersistedState(STORAGE_KEYS.traceTargetInference, false)
+
+  const hasTargetInference = useMemo(
+    () => Boolean(targetInference?.some(Boolean) || compareTargetInference?.some(Boolean)),
+    [compareTargetInference, targetInference],
+  )
 
   const autoFollowRef = useRef(autoFollow)
   useEffect(() => { autoFollowRef.current = autoFollow }, [autoFollow])
@@ -144,6 +167,30 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
 
   const [state, actions] = useTracePlayback(points, speed, onIndexChange)
   const { playIndex, isPlaying, progressMs, durationMs } = state
+
+  const t0 = points[0]?.ts ?? 0
+
+  const [isDragging, setIsDragging] = useState(false)
+
+  // Bounded playback: when a highlight exists and playback reaches its end, loop back to start
+  // But if user is dragging, don't loop—let them seek outside bounds. Instead, deselect the highlight.
+  useEffect(() => {
+    if (!highlight || !isPlaying) return
+
+    const curTs = points[Math.max(0, Math.min(points.length - 1, playIndex))]?.ts ?? t0
+    const { startTs: boundStart, endTs: boundEnd } = highlight
+
+    // If user is dragging and we're outside bounds, deselect the highlight
+    if (isDragging && (curTs < boundStart || curTs > boundEnd)) {
+      onHighlightChange?.(null)
+      return
+    }
+
+    // If we've exceeded the bound end and NOT dragging, loop back to start
+    if (!isDragging && curTs >= boundEnd) {
+      actions.seekTo(boundStart - t0)
+    }
+  }, [highlight, playIndex, isPlaying, isDragging, points, actions, t0, onHighlightChange])
 
   // Theme colors (computed once, refreshed on theme change)
   const colors = useMemo((): TraceColors => {
@@ -231,6 +278,7 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
       renderTrace(ctx, {
         width: cssW, height: cssH, points, startIdx, endIdx, step, bounds, zoom,
         center, trailMode, clickMode, curT, colors, highlight,
+        targetFrame: showTargetInference ? targetInference?.[idx] : undefined,
       })
     }
 
@@ -262,9 +310,10 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
         trailMode, clickMode, curT: cCurT,
         colors: traceSet === 'compare' ? colors : compareColorSet,
         drawBox,
+        targetFrame: showTargetInference ? compareTargetInference?.[Math.max(0, Math.min(comparePoints.length - 1, cEndIdx - 1))] : undefined,
       })
     }
-  }, [points, comparePoints, playIndex, trailMode, clickMode, bounds, zoom, colors, compareColorSet, durationMs, progressMs, syncByTime, highlight])
+  }, [points, comparePoints, playIndex, trailMode, clickMode, bounds, zoom, colors, compareColorSet, durationMs, progressMs, syncByTime, highlight, showTargetInference, targetInference, compareTargetInference])
 
   useEffect(() => {
     if (modalOpen) {
@@ -392,7 +441,7 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
   const renderControls = (inModal: boolean) => (
     <div className="shrink-0 space-y-2">
       {/* Timeline scrubber */}
-      <TimelineScrubber progressMs={progressMs} durationMs={durationMs} onSeek={actions.seekTo} />
+      <TimelineScrubber progressMs={progressMs} durationMs={durationMs} onSeek={actions.seekTo} onDraggingChange={setIsDragging} />
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-1.5">
@@ -432,7 +481,7 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
         {/* Toggles */}
         <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
           <OptionToggle
-            icon={<Crosshair className="h-3.5 w-3.5" />}
+            icon={<LineSquiggle className="h-3.5 w-3.5" />}
             label={trailMode === 'all' ? 'All' : '2s'}
             title={`Trail: ${trailMode === 'all' ? 'Full path' : 'Last 2 seconds'}`}
             onClick={() => setTrailMode(m => m === 'all' ? 'last2' : 'all')}
@@ -450,6 +499,15 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
             title={`Click markers: ${clickMode}`}
             onClick={() => setClickMode(m => m === 'down' ? 'all' : m === 'all' ? 'none' : 'down')}
           />
+          {hasTargetInference && (
+            <OptionToggle
+              icon={<CircleDot className="h-3.5 w-3.5" />}
+              label={showTargetInference ? 'Target' : 'Target'}
+              title={showTargetInference ? 'Hide target inference' : 'Show target inference'}
+              active={showTargetInference}
+              onClick={() => setShowTargetInference(v => !v)}
+            />
+          )}
         </div>
 
         {/* Sync toggle (compare mode only) */}
@@ -540,60 +598,52 @@ export function TraceReplay({ points, resolution, comparePoints, compareResoluti
 
 /* ─── Timeline scrubber ─── */
 
-function TimelineScrubber({ progressMs, durationMs, onSeek }: {
+function TimelineScrubber({ progressMs, durationMs, onSeek, onDraggingChange }: {
   progressMs: number
   durationMs: number
   onSeek: (ms: number) => void
+  onDraggingChange?: (isDragging: boolean) => void
 }) {
-  const trackRef = useRef<HTMLDivElement>(null)
-  const [dragging, setDragging] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const lastSeekPctRef = useRef(0)
 
-  const pct = durationMs > 0 ? (progressMs / durationMs) * 100 : 0
+  // Only update pct from progressMs if not currently dragging
+  const pct = isDragging ? lastSeekPctRef.current : (durationMs > 0 ? (progressMs / durationMs) * 100 : 0)
 
-  const seekFromEvent = useCallback((e: { clientX: number }) => {
-    const track = trackRef.current
-    if (!track) return
-    const rect = track.getBoundingClientRect()
-    const ratio = clamp((e.clientX - rect.left) / rect.width, 0, 1)
-    onSeek(ratio * durationMs)
+  const handleValueChange = useCallback(([v]: number[]) => {
+    lastSeekPctRef.current = v
+    onSeek((v / 100) * durationMs)
   }, [durationMs, onSeek])
 
-  useEffect(() => {
-    if (!dragging) return
-    const onMove = (e: PointerEvent) => seekFromEvent(e)
-    const onUp = () => setDragging(false)
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
-    return () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-    }
-  }, [dragging, seekFromEvent])
+  const handlePointerDown = useCallback(() => {
+    setIsDragging(true)
+    onDraggingChange?.(true)
+  }, [onDraggingChange])
+
+  const handlePointerUp = useCallback(() => {
+    setIsDragging(false)
+    onDraggingChange?.(false)
+  }, [onDraggingChange])
+
+  const handlePointerLeave = useCallback(() => {
+    setIsDragging(false)
+    onDraggingChange?.(false)
+  }, [onDraggingChange])
 
   return (
     <div className="flex items-center gap-2">
       <div
-        ref={trackRef}
-        className="group relative h-5 flex-1 cursor-pointer"
-        onPointerDown={(e) => {
-          setDragging(true)
-          seekFromEvent(e)
-        }}
+        className="flex-1"
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
       >
-        {/* Track bg */}
-        <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-surface-subtle" />
-        {/* Filled portion */}
-        <div
-          className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-surface-muted-foreground/50 transition-[width] duration-75"
-          style={{ left: 0, width: `${pct}%` }}
-        />
-        {/* Thumb */}
-        <div
-          className={cn(
-            'absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow transition-transform',
-            dragging ? 'scale-125' : 'scale-100 group-hover:scale-110',
-          )}
-          style={{ left: `${pct}%` }}
+        <Slider
+          value={[pct]}
+          min={0}
+          max={100}
+          step={0.1}
+          onValueChange={handleValueChange}
         />
       </div>
       <span className="min-w-[6.5rem] text-right font-mono text-[11px] text-surface-muted-foreground">
