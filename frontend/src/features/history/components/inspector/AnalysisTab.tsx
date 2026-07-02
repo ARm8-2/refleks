@@ -352,7 +352,7 @@ function EventsChart({ data, domainMax }: { data: EventsChartPoint[]; domainMax:
         <YAxis yAxisId="acc" orientation="right" tickLine={false} axisLine={false} tickMargin={8} width={44} domain={[0, 100]} tickFormatter={value => `${value}%`} />
         <ChartTooltip content={<ChartTooltipContent labelFormatter={formatTooltipTime} />} />
         <Line yAxisId="kills" isAnimationActive={false} type="stepAfter" dataKey="killsOverTime" stroke="var(--color-killsOverTime)" strokeWidth={CHART_STYLE.linePrimaryWidth} dot={false} connectNulls />
-        <Line yAxisId="acc" isAnimationActive={false} type="linear" dataKey="accOverTime" stroke="var(--color-accOverTime)" strokeWidth={CHART_STYLE.lineAccentWidth} dot={chartDot('var(--color-accOverTime)', CHART_STYLE.pointRadiusSmall)} connectNulls />
+        <Line yAxisId="acc" isAnimationActive={false} type="monotone" dataKey="accOverTime" stroke="var(--color-accOverTime)" strokeWidth={CHART_STYLE.linePrimaryWidth} dot={false} connectNulls />
       </LineChart>
     </ChartContainer>
   )
@@ -408,9 +408,9 @@ function EventsChartOverlay({ data, domainMax }: { data: Array<Record<string, un
         <YAxis yAxisId="acc" orientation="right" tickLine={false} axisLine={false} tickMargin={8} width={44} domain={[0, 100]} tickFormatter={value => `${value}%`} />
         <ChartTooltip content={<ChartTooltipContent labelFormatter={formatTooltipTime} />} />
         <Line yAxisId="kills" isAnimationActive={false} type="stepAfter" dataKey="killsOverTime" stroke="var(--color-killsOverTime)" strokeWidth={CHART_STYLE.linePrimaryWidth} dot={false} connectNulls />
-        <Line yAxisId="acc" isAnimationActive={false} type="linear" dataKey="accOverTime" stroke="var(--color-accOverTime)" strokeWidth={CHART_STYLE.lineAccentWidth} dot={chartDot('var(--color-accOverTime)', CHART_STYLE.pointRadiusSmall)} connectNulls />
+        <Line yAxisId="acc" isAnimationActive={false} type="monotone" dataKey="accOverTime" stroke="var(--color-accOverTime)" strokeWidth={CHART_STYLE.linePrimaryWidth} dot={false} connectNulls />
         <Line yAxisId="kills" isAnimationActive={false} type="stepAfter" dataKey="cmpKillsOverTime" stroke="var(--color-cmpKillsOverTime)" strokeWidth={CHART_STYLE.linePrimaryWidth} dot={false} opacity={0.7} connectNulls />
-        <Line yAxisId="acc" isAnimationActive={false} type="linear" dataKey="cmpAccOverTime" stroke="var(--color-cmpAccOverTime)" strokeWidth={CHART_STYLE.lineAccentWidth} dot={chartDot('var(--color-cmpAccOverTime)', CHART_STYLE.pointRadiusSmall)} opacity={0.7} connectNulls />
+        <Line yAxisId="acc" isAnimationActive={false} type="monotone" dataKey="cmpAccOverTime" stroke="var(--color-cmpAccOverTime)" strokeWidth={CHART_STYLE.linePrimaryWidth} dot={false} opacity={0.7} connectNulls />
       </LineChart>
     </ChartContainer>
   )
