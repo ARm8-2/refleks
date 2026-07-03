@@ -62,6 +62,7 @@ export function WelcomeModalSession({
       initialAnonymousEnabled={presentation.initialAnonymousEnabled}
       initialMouseTrackingEnabled={presentation.initialMouseTrackingEnabled}
       showMouseTraceChoice={presentation.showMouseTraceChoice}
+      showAnonymousChoice={presentation.showAnonymousChoice}
       runSyncEnabled={presentation.runSyncEnabled}
       closeOnOutsideClick={closeOnOutsideClick}
       closeOnEscapeKey={closeOnEscapeKey}

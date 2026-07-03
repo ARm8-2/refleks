@@ -18,27 +18,10 @@ export type WelcomeLink = {
   urlLabel: string
 }
 
-type ReleaseCopy = {
-  details: string[]
-  highlights: string[]
-}
-
-const APP_REFRESH_COPY: ReleaseCopy = {
-  details: [
-    'We\'re introducing an Overview page and a History page to make it easier to move between sessions and runs. The frontend has been rebuilt with a cleaner layout and more consistent components, and the desktop app underneath now runs faster and more reliably.',
-  ],
-  highlights: [
-    'A redesigned UI with reworked layouts, components, and theme treatment across the desktop app.',
-    'A new Overview page for quick progress checks and a richer History flow for sessions and runs.',
-    'Cleaner navigation between the main parts of the app.',
-    'Under-the-hood improvements that make the app faster, lighter, and smoother to use.',
-  ],
-}
-
 const RESOURCE_LINKS: WelcomeLink[] = [
   {
     label: 'Browse the docs',
-    description: 'Setup guides, walkthroughs, and troubleshooting for the newer RefleK\'s experience.',
+    description: 'Setup guides, walkthroughs, and troubleshooting for RefleK\'s.',
     url: EXTERNAL_LINKS.docs,
     urlLabel: 'refleksapp.com/docs/',
   },
@@ -60,12 +43,19 @@ export function resolveWelcomeContent(currentVersion: string, previousVersion: s
       ? `Welcome to RefleK\'s v${trimmedCurrent}`
       : `Welcome back to RefleK\'s v${trimmedCurrent}`,
     intro: isFirstLaunch
-      ? 'Thank you for installing RefleK\'s. This release is a major refresh for RefleK\'s, with much of the UI and supporting app code reworked, and it should feel more complete from the moment you open it.'
-      : 'Welcome back. This release is a major refresh for RefleK\'s, with much of the UI and supporting app code reworked, and it should feel more complete from the moment you open it.',
-    details: APP_REFRESH_COPY.details,
-    highlightsTitle: 'What\'s New',
-    highlights: APP_REFRESH_COPY.highlights,
-    linksTitle: 'Docs and Changelog',
+      ? 'Thank you for installing RefleK\'s. Check out the changelog and docs to get up to speed with the latest features and improvements.'
+      : 'Welcome back. Check out the changelog to see what\'s new in this release.',
+    details: [
+      'For detailed information about what\'s changed, features, and improvements, please visit the changelog linked below. It\'s always kept up to date with the latest release notes.',
+    ],
+    highlightsTitle: 'Getting Started',
+    highlights: [
+      'Visit the changelog for detailed release information and feature updates.',
+      'Check the documentation for guides, walkthroughs, and troubleshooting.',
+      'Customize your preferences in Settings to tailor RefleK\'s to your needs.',
+      'Join the community and share your experience.',
+    ],
+    linksTitle: 'Resources',
     links: RESOURCE_LINKS,
     ctaLabel: isFirstLaunch ? 'Start exploring' : 'Jump back in',
   }

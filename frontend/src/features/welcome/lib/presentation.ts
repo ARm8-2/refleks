@@ -5,6 +5,7 @@ export type WelcomePresentation = {
   content: WelcomeContent
   currentVersion: string
   showMouseTraceChoice: boolean
+  showAnonymousChoice: boolean
   initialAnonymousEnabled: boolean
   initialMouseTrackingEnabled: boolean
   runSyncEnabled: boolean
@@ -21,6 +22,7 @@ function buildPresentation(settings: Settings, currentVersion: string, previousV
     content: resolveWelcomeContent(currentVersion, previousVersion),
     currentVersion,
     showMouseTraceChoice: isFirstLaunch,
+    showAnonymousChoice: isFirstLaunch,
     initialAnonymousEnabled: settings.anonymousEnabled === true,
     initialMouseTrackingEnabled: settings.mouseTrackingEnabled === true,
     runSyncEnabled: settings.runSyncEnabled !== false,

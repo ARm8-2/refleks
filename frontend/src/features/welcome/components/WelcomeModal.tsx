@@ -10,6 +10,7 @@ type WelcomeModalProps = {
   initialAnonymousEnabled: boolean
   initialMouseTrackingEnabled: boolean
   showMouseTraceChoice?: boolean
+  showAnonymousChoice?: boolean
   runSyncEnabled: boolean
   closeOnOutsideClick?: boolean
   closeOnEscapeKey?: boolean
@@ -151,6 +152,7 @@ export function WelcomeModal({
   initialAnonymousEnabled,
   initialMouseTrackingEnabled,
   showMouseTraceChoice = false,
+  showAnonymousChoice = false,
   runSyncEnabled,
   closeOnOutsideClick = true,
   closeOnEscapeKey = true,
@@ -221,91 +223,97 @@ export function WelcomeModal({
             </div>
           </div>
 
-          <WelcomeSection
-            title={showMouseTraceChoice ? 'First-Time Setup' : "RefleK's Index Profile"}
-            description={showMouseTraceChoice
-              ? 'Pick how you want your uploads and mouse traces to start. You can change these choices later in Settings.'
-              : 'Review how you want your runs to appear on the RefleK\'s Index. You can change this later in Privacy settings.'}
-          >
-            <div className="space-y-3">
-              <ChoiceGroup
-                icon={<Database className="h-3.5 w-3.5" />}
-                label="RefleK's Index"
-                description="Completed runs can be uploaded to the RefleK's Index, a shared dataset that feeds rankings, comparisons, and research across the global player base."
-                helper={syncStatus}
-              >
-                <ChoiceCard
-                  eyebrow="Recommended"
-                  eyebrowTone="primary"
-                  label="Public Profile"
-                  subtitle="Show my Steam name on the Index."
-                  description="Best if you want your Steam name shown with the runs you upload."
-                  bullets={[
-                    'Your Steam name appears on runs you upload to the Index.',
-                    'You can switch to Anonymous later in Privacy settings.',
-                  ]}
-                  selected={privacyMode === 'public'}
-                  onSelect={() => setPrivacyMode('public')}
-                  icon={<Globe2 className="h-4 w-4" />}
-                />
+          {(showMouseTraceChoice || showAnonymousChoice) && (
+            <WelcomeSection
+              title={showMouseTraceChoice ? 'First-Time Setup' : showAnonymousChoice ? 'Profile Settings' : 'Settings'}
+              description={showMouseTraceChoice
+                ? 'Pick how you want your uploads and mouse traces to start. You can change these choices later in Settings.'
+                : showAnonymousChoice
+                  ? 'Choose how you want your runs to appear on the RefleK\'s Index. You can change this later in Privacy settings.'
+                  : 'Review your current settings. You can change these anytime in the Settings panel.'}
+            >
+              <div className="space-y-3">
+                {showAnonymousChoice && (
+                  <ChoiceGroup
+                    icon={<Database className="h-3.5 w-3.5" />}
+                    label="RefleK's Index"
+                    description="Completed runs can be uploaded to the RefleK's Index, a shared dataset that feeds rankings, comparisons, and research across the global player base."
+                    helper={syncStatus}
+                  >
+                    <ChoiceCard
+                      eyebrow="Recommended"
+                      eyebrowTone="primary"
+                      label="Public Profile"
+                      subtitle="Show my Steam name on the Index."
+                      description="Best if you want your Steam name shown with the runs you upload."
+                      bullets={[
+                        'Your Steam name appears on runs you upload to the Index.',
+                        'You can switch to Anonymous later in Privacy settings.',
+                      ]}
+                      selected={privacyMode === 'public'}
+                      onSelect={() => setPrivacyMode('public')}
+                      icon={<Globe2 className="h-4 w-4" />}
+                    />
 
-                <ChoiceCard
-                  eyebrow="Private"
-                  label="Anonymous"
-                  subtitle="Private identity, shared contribution."
-                  description="Best if you want to contribute data while keeping identifying information out of uploads."
-                  bullets={[
-                    'Steam ID and persona name are scrubbed before upload.',
-                    'Your runs still help the shared dataset, analysis, and research.',
-                    'You can switch back to Public later in Privacy settings.',
-                  ]}
-                  selected={privacyMode === 'anonymous'}
-                  onSelect={() => setPrivacyMode('anonymous')}
-                  icon={<EyeOff className="h-4 w-4" />}
-                />
-              </ChoiceGroup>
+                    <ChoiceCard
+                      eyebrow="Private"
+                      label="Anonymous"
+                      subtitle="Private identity, shared contribution."
+                      description="Best if you want to contribute data while keeping identifying information out of uploads."
+                      bullets={[
+                        'Steam ID and persona name are scrubbed before upload.',
+                        'Your runs still help the shared dataset, analysis, and research.',
+                        'You can switch back to Public later in Privacy settings.',
+                      ]}
+                      selected={privacyMode === 'anonymous'}
+                      onSelect={() => setPrivacyMode('anonymous')}
+                      icon={<EyeOff className="h-4 w-4" />}
+                    />
+                  </ChoiceGroup>
+                )}
 
-              {showMouseTraceChoice && (
-                <ChoiceGroup
-                  icon={<MousePointer2 className="h-3.5 w-3.5" />}
-                  label="Mouse Traces"
-                  description="Mouse traces capture your movement during runs so you can replay and compare them later. Tracing is designed to have no performance impact during play."
-                  helper="This is just your starting point — you can change it later in General settings."
-                >
-                  <ChoiceCard
-                    eyebrow="Recommended"
-                    eyebrowTone="primary"
-                    label="Enable Mouse Traces"
-                    subtitle="Capture movement during supported runs."
-                    description="Best if you want richer history and replay tools from your very first session."
-                    bullets={[
-                      'No performance impact during play.',
-                      'Lets you replay and compare runs in the History view.',
-                      'Can be turned off anytime in General settings.',
-                    ]}
-                    selected={mouseTraceMode === 'enabled'}
-                    onSelect={() => setMouseTraceMode('enabled')}
-                    icon={<MousePointer2 className="h-4 w-4" />}
-                  />
+                {showMouseTraceChoice && (
+                  <ChoiceGroup
+                    icon={<MousePointer2 className="h-3.5 w-3.5" />}
+                    label="Mouse Traces"
+                    description="Mouse traces capture your movement during runs so you can replay and compare them later. Tracing is designed to have no performance impact during play."
+                    helper="This is just your starting point — you can change it later in General settings."
+                  >
+                    <ChoiceCard
+                      eyebrow="Recommended"
+                      eyebrowTone="primary"
+                      label="Enable Mouse Traces"
+                      subtitle="Capture movement during supported runs."
+                      description="Best if you want richer history and replay tools from your very first session."
+                      bullets={[
+                        'No performance impact during play.',
+                        'Lets you replay and compare runs in the History view.',
+                        'Can be turned off anytime in General settings.',
+                      ]}
+                      selected={mouseTraceMode === 'enabled'}
+                      onSelect={() => setMouseTraceMode('enabled')}
+                      icon={<MousePointer2 className="h-4 w-4" />}
+                    />
 
-                  <ChoiceCard
-                    eyebrow="Later"
-                    label="Not Right Now"
-                    subtitle="Start without trace capture and enable it whenever you want."
-                    description="A good starting point if you want to get familiar with the app first and decide about traces after a few sessions."
-                    bullets={[
-                      'Keeps first-time setup simple.',
-                      'Enable traces anytime later in General settings.',
-                      'The rest of the app works the same either way.',
-                    ]}
-                    selected={mouseTraceMode === 'disabled'}
-                    onSelect={() => setMouseTraceMode('disabled')}
-                    icon={<Clock className="h-4 w-4" />}
-                  />
-                </ChoiceGroup>
-              )}
-            </div>
-          </WelcomeSection>
+                    <ChoiceCard
+                      eyebrow="Later"
+                      label="Not Right Now"
+                      subtitle="Start without trace capture and enable it whenever you want."
+                      description="A good starting point if you want to get familiar with the app first and decide about traces after a few sessions."
+                      bullets={[
+                        'Keeps first-time setup simple.',
+                        'Enable traces anytime later in General settings.',
+                        'The rest of the app works the same either way.',
+                      ]}
+                      selected={mouseTraceMode === 'disabled'}
+                      onSelect={() => setMouseTraceMode('disabled')}
+                      icon={<Clock className="h-4 w-4" />}
+                    />
+                  </ChoiceGroup>
+                )}
+              </div>
+            </WelcomeSection>
+          )}
 
           <WelcomeSection title={content.highlightsTitle}>
             <div className="grid gap-2.5 md:grid-cols-2">
