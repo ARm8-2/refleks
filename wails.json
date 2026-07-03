@@ -1,5 +1,4 @@
 {
-  "$schema": "https://wails.io/schemas/config.v2.json",
   "name": "RefleK's",
   "outputfilename": "refleks",
   "frontend:install": "npm install",

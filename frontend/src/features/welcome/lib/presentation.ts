@@ -1,22 +1,26 @@
-import type { Settings } from '@/shared/types'
-import { resolveWelcomeContent, type WelcomeContent } from './content'
+import type { Settings } from "@/shared/types";
+import { resolveWelcomeContent, type WelcomeContent } from "./content";
 
 export type WelcomePresentation = {
-  content: WelcomeContent
-  currentVersion: string
-  showMouseTraceChoice: boolean
-  showAnonymousChoice: boolean
-  initialAnonymousEnabled: boolean
-  initialMouseTrackingEnabled: boolean
-  runSyncEnabled: boolean
-}
+  content: WelcomeContent;
+  currentVersion: string;
+  showMouseTraceChoice: boolean;
+  showAnonymousChoice: boolean;
+  initialAnonymousEnabled: boolean;
+  initialMouseTrackingEnabled: boolean;
+  runSyncEnabled: boolean;
+};
 
 function getLastSeenVersion(settings: Settings): string {
-  return settings.lastSeenVersion?.trim() ?? ''
+  return settings.lastSeenVersion?.trim() ?? "";
 }
 
-function buildPresentation(settings: Settings, currentVersion: string, previousVersion: string): WelcomePresentation {
-  const isFirstLaunch = previousVersion === ''
+function buildPresentation(
+  settings: Settings,
+  currentVersion: string,
+  previousVersion: string,
+): WelcomePresentation {
+  const isFirstLaunch = previousVersion === "";
 
   return {
     content: resolveWelcomeContent(currentVersion, previousVersion),
@@ -26,56 +30,66 @@ function buildPresentation(settings: Settings, currentVersion: string, previousV
     initialAnonymousEnabled: settings.anonymousEnabled === true,
     initialMouseTrackingEnabled: settings.mouseTrackingEnabled === true,
     runSyncEnabled: settings.runSyncEnabled !== false,
-  }
+  };
 }
 
-export function buildVersionWelcomePresentation(settings: Settings, version: string): WelcomePresentation | null {
-  const currentVersion = version.trim()
-  if (currentVersion === '') {
-    return null
+export function buildVersionWelcomePresentation(
+  settings: Settings,
+  version: string,
+): WelcomePresentation | null {
+  const currentVersion = version.trim();
+  if (currentVersion === "") {
+    return null;
   }
 
-  const previousVersion = getLastSeenVersion(settings)
-  const shouldShow = previousVersion !== currentVersion
+  const previousVersion = getLastSeenVersion(settings);
+  const shouldShow = previousVersion !== currentVersion;
   if (!shouldShow) {
-    return null
+    return null;
   }
 
-  return buildPresentation(settings, currentVersion, previousVersion)
+  return buildPresentation(settings, currentVersion, previousVersion);
 }
 
-export function buildManualWelcomePresentation(settings: Settings, version: string): WelcomePresentation | null {
-  const currentVersion = version.trim()
-  if (currentVersion === '') {
-    return null
+export function buildManualWelcomePresentation(
+  settings: Settings,
+  version: string,
+): WelcomePresentation | null {
+  const currentVersion = version.trim();
+  if (currentVersion === "") {
+    return null;
   }
 
-  const previousVersion = getLastSeenVersion(settings) || currentVersion
-  return buildPresentation(settings, currentVersion, previousVersion)
+  const previousVersion = getLastSeenVersion(settings) || currentVersion;
+  return buildPresentation(settings, currentVersion, previousVersion);
 }
 
-export function buildWelcomeSeenSettingsUpdate(settings: Settings, version: string): Settings {
-  const currentVersion = version.trim()
-  if (currentVersion === '') {
-    return settings
+export function buildWelcomeSeenSettingsUpdate(
+  settings: Settings,
+  version: string,
+): Settings {
+  const currentVersion = version.trim();
+  if (currentVersion === "") {
+    return settings;
   }
 
   return {
     ...settings,
     lastSeenVersion: currentVersion,
-  }
+  };
 }
 
 export function buildWelcomeSettingsUpdate(
   settings: Settings,
   updates: {
-    anonymousEnabled: boolean
-    mouseTrackingEnabled?: boolean | null
+    anonymousEnabled: boolean;
+    mouseTrackingEnabled?: boolean | null;
   },
 ): Settings {
   return {
     ...settings,
     anonymousEnabled: updates.anonymousEnabled,
-    mouseTrackingEnabled: updates.mouseTrackingEnabled ?? settings.mouseTrackingEnabled,
-  }
+    mouseTrackingEnabled:
+      updates.mouseTrackingEnabled ?? settings.mouseTrackingEnabled,
+  };
 }

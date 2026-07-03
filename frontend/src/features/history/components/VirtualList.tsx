@@ -1,16 +1,16 @@
-import { useVirtualizer } from '@tanstack/react-virtual'
-import type { ReactNode } from 'react'
-import { useRef } from 'react'
+import { useVirtualizer } from "@tanstack/react-virtual";
+import type { ReactNode } from "react";
+import { useRef } from "react";
 
 type VirtualListProps<T> = {
-  items: T[]
-  estimateSize?: number
-  gap?: number
-  overscan?: number
-  renderItem: (item: T, index: number) => ReactNode
-  emptyContent?: ReactNode
-  className?: string
-}
+  items: T[];
+  estimateSize?: number;
+  gap?: number;
+  overscan?: number;
+  renderItem: (item: T, index: number) => ReactNode;
+  emptyContent?: ReactNode;
+  className?: string;
+};
 
 export function VirtualList<T>({
   items,
@@ -21,7 +21,7 @@ export function VirtualList<T>({
   emptyContent,
   className,
 }: VirtualListProps<T>) {
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const virtualizer = useVirtualizer({
     count: items.length,
@@ -29,14 +29,14 @@ export function VirtualList<T>({
     estimateSize: () => estimateSize,
     gap,
     overscan,
-  })
+  });
 
   if (items.length === 0 && emptyContent) {
     return (
       <div ref={scrollRef} className={className}>
         {emptyContent}
       </div>
-    )
+    );
   }
 
   return (
@@ -45,7 +45,7 @@ export function VirtualList<T>({
         className="relative w-full"
         style={{ height: virtualizer.getTotalSize() }}
       >
-        {virtualizer.getVirtualItems().map(virtualRow => (
+        {virtualizer.getVirtualItems().map((virtualRow) => (
           <div
             key={virtualRow.key}
             data-index={virtualRow.index}
@@ -58,5 +58,5 @@ export function VirtualList<T>({
         ))}
       </div>
     </div>
-  )
+  );
 }

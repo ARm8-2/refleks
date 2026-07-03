@@ -15,6 +15,7 @@ Download the latest release for Windows at [refleksapp.com](https://refleksapp.c
 ## Contributing
 
 We welcome contributions. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to:
+
 - Report bugs and request features
 - Build and run from source
 - Submit pull requests

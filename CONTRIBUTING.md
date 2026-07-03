@@ -9,6 +9,7 @@ If you find a bug or have a feature request, please open an issue on GitHub.
 Before opening a new issue, please search existing issues to see if it has already been reported.
 
 When reporting a bug, please include:
+
 - Steps to reproduce
 - Expected vs. actual result
 - A sample `Stats.csv` file if relevant

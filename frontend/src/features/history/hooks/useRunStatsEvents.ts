@@ -1,38 +1,42 @@
-import { getRunStatsEvents } from '@/shared/lib/api'
-import type { RunStatsEvent } from '@/shared/types/ipc'
-import { useEffect, useState } from 'react'
-import type { HistoryRun } from '../lib/historyModels'
+import { getRunStatsEvents } from "@/shared/lib/api";
+import type { RunStatsEvent } from "@/shared/types/ipc";
+import { useEffect, useState } from "react";
+import type { HistoryRun } from "../lib/historyModels";
 
 // Lazily load the CSV-derived stats events for a run from local storage.
-export function useRunStatsEvents(run: HistoryRun | null): RunStatsEvent[] | null {
-  const [events, setEvents] = useState<RunStatsEvent[] | null>(null)
+export function useRunStatsEvents(
+  run: HistoryRun | null,
+): RunStatsEvent[] | null {
+  const [events, setEvents] = useState<RunStatsEvent[] | null>(null);
 
   useEffect(() => {
     if (!run) {
-      setEvents(null)
-      return
+      setEvents(null);
+      return;
     }
 
-    const filePath = run.item.filePath
+    const filePath = run.item.filePath;
     if (!filePath) {
-      setEvents(null)
-      return
+      setEvents(null);
+      return;
     }
 
-    let cancelled = false
-    setEvents(null)
+    let cancelled = false;
+    setEvents(null);
 
     getRunStatsEvents(filePath)
-      .then(result => {
-        if (cancelled) return
-        setEvents(result)
+      .then((result) => {
+        if (cancelled) return;
+        setEvents(result);
       })
       .catch(() => {
-        if (!cancelled) setEvents([])
-      })
+        if (!cancelled) setEvents([]);
+      });
 
-    return () => { cancelled = true }
-  }, [run?.item.filePath])
+    return () => {
+      cancelled = true;
+    };
+  }, [run?.item.filePath]);
 
-  return events
+  return events;
 }

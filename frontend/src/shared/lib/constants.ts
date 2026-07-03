@@ -1,1 +1,1 @@
-export const MISSING_VALUE = 'N/A'
+export const MISSING_VALUE = "N/A";

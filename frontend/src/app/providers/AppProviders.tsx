@@ -1,16 +1,14 @@
-import { BenchmarkProvider, StoreProvider } from '@/shared/hooks'
-import type { ReactNode } from 'react'
+import { BenchmarkProvider, StoreProvider } from "@/shared/hooks";
+import type { ReactNode } from "react";
 
 interface AppProvidersProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <StoreProvider>
-      <BenchmarkProvider>
-        {children}
-      </BenchmarkProvider>
+      <BenchmarkProvider>{children}</BenchmarkProvider>
     </StoreProvider>
-  )
+  );
 }
