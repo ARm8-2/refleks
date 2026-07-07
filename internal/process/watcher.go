@@ -26,10 +26,14 @@ func (w *Watcher) Start(ctx context.Context) {
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
 
-	// Initial check to populate state, but don't fire events yet?
-	// Or fire events immediately if running?
-	// Existing logic initialized running=false, so it FIRES onStart if running.
-	running := false
+	// Immediate initial check so tracking isn't delayed by the first poll interval.
+	// When the mouse tracker starts after this watcher (e.g. user toggles tracking
+	// ON while KovaaK's is already running), this prevents a ~3 second dead window
+	// where runs would be ingested without trace data.
+	running := isRunning(w.processName)
+	if running && w.onStart != nil {
+		w.onStart()
+	}
 
 	for {
 		select {
