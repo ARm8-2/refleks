@@ -370,7 +370,13 @@ function AnalysisPanel({
       </div>
 
       {/* Sensitivity suggestion */}
-      {suggestion && <SensSuggestionCard suggestion={suggestion} />}
+      {suggestion ? (
+        <SensSuggestionCard suggestion={suggestion} />
+      ) : (
+        <div className="rounded-xl bg-surface-subtle px-3 py-2 text-xs text-surface-muted-foreground">
+          No training sensitivity suggested — continue on your current sens.
+        </div>
+      )}
 
       {/* Kill list — scrollable row */}
       <div
