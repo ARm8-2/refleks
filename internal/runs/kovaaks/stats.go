@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/csv"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -135,14 +134,6 @@ func ParseStatsFile(path string) (models.RunStatsData, error) {
 	}, nil
 }
 
-func EncodeStatsSummary(summary models.RunStatsSummary) map[string]any {
-	raw := make(map[string]any, len(summaryFields))
-	for _, field := range summaryFields {
-		raw[field.rawKey] = field.value(summary)
-	}
-	return raw
-}
-
 func DecodeStatsSummary(raw map[string]any) models.RunStatsSummary {
 	var summary models.RunStatsSummary
 	for _, field := range summaryFields {
@@ -179,31 +170,6 @@ func ParseStatsSummaryValues(lines []string) map[string]any {
 		values[key] = rawValue
 	}
 	return values
-}
-
-func EncodeStatsEventRows(events []models.RunStatsEvent) [][]string {
-	if len(events) == 0 {
-		return nil
-	}
-	rows := make([][]string, 0, len(events))
-	for _, event := range events {
-		rows = append(rows, []string{
-			strconv.FormatInt(int64(event.KillIndex), 10),
-			event.Timestamp,
-			event.Bot,
-			event.Weapon,
-			fmt.Sprintf("%.6fs", event.TTKSeconds),
-			strconv.FormatInt(int64(event.Shots), 10),
-			strconv.FormatInt(int64(event.Hits), 10),
-			fmt.Sprintf("%.6f", event.Accuracy),
-			fmt.Sprintf("%.6f", event.DamageDone),
-			fmt.Sprintf("%.6f", event.DamagePossible),
-			fmt.Sprintf("%.6f", event.Efficiency),
-			strconv.FormatBool(event.Cheated),
-			strconv.FormatInt(int64(event.OverShots), 10),
-		})
-	}
-	return rows
 }
 
 func DecodeStatsEventRows(rows [][]string) []models.RunStatsEvent {
