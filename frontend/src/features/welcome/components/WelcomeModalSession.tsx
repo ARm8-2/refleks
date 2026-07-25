@@ -9,6 +9,7 @@ type WelcomeModalSessionProps = {
   onConfirm: (choices: {
     anonymousEnabled: boolean;
     mouseTrackingEnabled: boolean | null;
+    screenCaptureEnabled: boolean | null;
   }) => Promise<void> | void;
   onDismissed: (reason: "confirm" | "dismiss") => void;
   closeOnOutsideClick?: boolean;
@@ -64,7 +65,9 @@ export function WelcomeModalSession({
       content={presentation.content}
       initialAnonymousEnabled={presentation.initialAnonymousEnabled}
       initialMouseTrackingEnabled={presentation.initialMouseTrackingEnabled}
+      initialScreenCaptureEnabled={presentation.initialScreenCaptureEnabled}
       showMouseTraceChoice={presentation.showMouseTraceChoice}
+      showScreenCaptureChoice={presentation.showScreenCaptureChoice}
       showAnonymousChoice={presentation.showAnonymousChoice}
       runSyncEnabled={presentation.runSyncEnabled}
       closeOnOutsideClick={closeOnOutsideClick}

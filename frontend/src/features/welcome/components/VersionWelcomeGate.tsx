@@ -40,9 +40,11 @@ export function VersionWelcomeGate() {
   const handleConfirm = async ({
     anonymousEnabled,
     mouseTrackingEnabled,
+    screenCaptureEnabled,
   }: {
     anonymousEnabled: boolean;
     mouseTrackingEnabled: boolean | null;
+    screenCaptureEnabled: boolean | null;
   }) => {
     if (!presentation) {
       return;
@@ -54,6 +56,7 @@ export function VersionWelcomeGate() {
         buildWelcomeSettingsUpdate(settings, {
           anonymousEnabled,
           mouseTrackingEnabled,
+          screenCaptureEnabled,
         }),
         presentation.currentVersion,
       );

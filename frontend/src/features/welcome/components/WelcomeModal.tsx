@@ -1,6 +1,14 @@
 import { Button, Modal } from "@/shared/components";
 import { cn, openURL } from "@/shared/lib";
-import { Clock, Database, EyeOff, Globe2, MousePointer2 } from "lucide-react";
+import {
+  Clock,
+  Database,
+  EyeOff,
+  Globe2,
+  MonitorPlay,
+  MousePointer2,
+  Video,
+} from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import type { WelcomeContent } from "../lib/content";
 
@@ -9,7 +17,9 @@ type WelcomeModalProps = {
   content: WelcomeContent;
   initialAnonymousEnabled: boolean;
   initialMouseTrackingEnabled: boolean;
+  initialScreenCaptureEnabled: boolean;
   showMouseTraceChoice?: boolean;
+  showScreenCaptureChoice?: boolean;
   showAnonymousChoice?: boolean;
   runSyncEnabled: boolean;
   closeOnOutsideClick?: boolean;
@@ -18,6 +28,7 @@ type WelcomeModalProps = {
   onConfirm: (choices: {
     anonymousEnabled: boolean;
     mouseTrackingEnabled: boolean | null;
+    screenCaptureEnabled: boolean | null;
   }) => Promise<void> | void;
   onClose: () => void;
 };
@@ -206,7 +217,9 @@ export function WelcomeModal({
   content,
   initialAnonymousEnabled,
   initialMouseTrackingEnabled,
+  initialScreenCaptureEnabled,
   showMouseTraceChoice = false,
+  showScreenCaptureChoice = false,
   showAnonymousChoice = false,
   runSyncEnabled,
   closeOnOutsideClick = true,
@@ -220,6 +233,9 @@ export function WelcomeModal({
   );
   const [mouseTraceMode, setMouseTraceMode] = useState<MouseTraceMode>(
     initialMouseTrackingEnabled ? "enabled" : "disabled",
+  );
+  const [screenCaptureMode, setScreenCaptureMode] = useState<MouseTraceMode>(
+    initialScreenCaptureEnabled ? "enabled" : "disabled",
   );
   const [isSaving, setIsSaving] = useState(false);
 
@@ -248,6 +264,9 @@ export function WelcomeModal({
         anonymousEnabled: privacyMode === "anonymous",
         mouseTrackingEnabled: showMouseTraceChoice
           ? mouseTraceMode === "enabled"
+          : null,
+        screenCaptureEnabled: showScreenCaptureChoice
+          ? screenCaptureMode === "enabled"
           : null,
       });
     } finally {
@@ -289,7 +308,9 @@ export function WelcomeModal({
             </div>
           </div>
 
-          {(showMouseTraceChoice || showAnonymousChoice) && (
+          {(showMouseTraceChoice ||
+            showScreenCaptureChoice ||
+            showAnonymousChoice) && (
             <WelcomeSection
               title={
                 showMouseTraceChoice
@@ -381,6 +402,46 @@ export function WelcomeModal({
                       ]}
                       selected={mouseTraceMode === "disabled"}
                       onSelect={() => setMouseTraceMode("disabled")}
+                      icon={<Clock className="h-4 w-4" />}
+                    />
+                  </ChoiceGroup>
+                )}
+
+                {showScreenCaptureChoice && (
+                  <ChoiceGroup
+                    icon={<MonitorPlay className="h-3.5 w-3.5" />}
+                    label="Screen Replay"
+                    description="Record a video replay of your runs so you can rewatch and analyze your crosshair placement, movement, and decision-making directly in the app."
+                    helper="Requires FFmpeg. Can be changed later in General settings."
+                  >
+                    <ChoiceCard
+                      eyebrow="Recommended"
+                      eyebrowTone="primary"
+                      label="Enable Replay Recording"
+                      subtitle="Capture screen during runs (hardware accelerated)."
+                      description="Best if you want to visually review your gameplay alongside your stats and mouse trace."
+                      bullets={[
+                        "Records at 30 fps with hardware GPU encoding — zero CPU impact.",
+                        "Replays appear as a new tab in the run inspector after each match.",
+                        "Can be turned off anytime in General settings.",
+                      ]}
+                      selected={screenCaptureMode === "enabled"}
+                      onSelect={() => setScreenCaptureMode("enabled")}
+                      icon={<MonitorPlay className="h-4 w-4" />}
+                    />
+
+                    <ChoiceCard
+                      eyebrow="Later"
+                      label="Start Without Recording"
+                      subtitle="Begin with mouse tracking only and add screen replays whenever."
+                      description="A low-friction starting point. You can enable replay recording later once you're comfortable with the app."
+                      bullets={[
+                        "Keeps first-time setup simple.",
+                        "Mouse traces and all other features still work.",
+                        "Enable screen capture anytime in General settings.",
+                      ]}
+                      selected={screenCaptureMode === "disabled"}
+                      onSelect={() => setScreenCaptureMode("disabled")}
                       icon={<Clock className="h-4 w-4" />}
                     />
                   </ChoiceGroup>

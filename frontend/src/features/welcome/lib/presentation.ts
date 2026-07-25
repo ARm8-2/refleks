@@ -5,9 +5,11 @@ export type WelcomePresentation = {
   content: WelcomeContent;
   currentVersion: string;
   showMouseTraceChoice: boolean;
+  showScreenCaptureChoice: boolean;
   showAnonymousChoice: boolean;
   initialAnonymousEnabled: boolean;
   initialMouseTrackingEnabled: boolean;
+  initialScreenCaptureEnabled: boolean;
   runSyncEnabled: boolean;
 };
 
@@ -26,9 +28,11 @@ function buildPresentation(
     content: resolveWelcomeContent(currentVersion, previousVersion),
     currentVersion,
     showMouseTraceChoice: isFirstLaunch,
+    showScreenCaptureChoice: true, // show on first launch AND version upgrades
     showAnonymousChoice: isFirstLaunch,
     initialAnonymousEnabled: settings.anonymousEnabled === true,
     initialMouseTrackingEnabled: settings.mouseTrackingEnabled === true,
+    initialScreenCaptureEnabled: settings.screenCaptureEnabled === true,
     runSyncEnabled: settings.runSyncEnabled !== false,
   };
 }
@@ -84,6 +88,7 @@ export function buildWelcomeSettingsUpdate(
   updates: {
     anonymousEnabled: boolean;
     mouseTrackingEnabled?: boolean | null;
+    screenCaptureEnabled?: boolean | null;
   },
 ): Settings {
   return {
@@ -91,5 +96,7 @@ export function buildWelcomeSettingsUpdate(
     anonymousEnabled: updates.anonymousEnabled,
     mouseTrackingEnabled:
       updates.mouseTrackingEnabled ?? settings.mouseTrackingEnabled,
+    screenCaptureEnabled:
+      updates.screenCaptureEnabled ?? settings.screenCaptureEnabled,
   };
 }
