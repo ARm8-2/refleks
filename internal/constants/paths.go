@@ -6,6 +6,7 @@ const (
 	ConfigDirName      = ".refleks"
 	RunsSubdirName     = "runs"
 	RunFileExt         = ".refleks"
+	ReplaysSubdirName  = "replays"
 	StatsFileExt       = ".csv"
 	PerformanceFileExt = ".perf"
 

@@ -42,19 +42,22 @@ func ResolveKovaaksStatsDir(installDir string) string {
 // Default returns sane default settings for a fresh install.
 func Default() models.Settings {
 	return models.Settings{
-		SteamInstallDir:      constants.DefaultWindowsSteamInstallDir,
-		KovaaksInstallDir:    DefaultKovaaksInstallDir(),
-		SessionGapMinutes:    constants.DefaultSessionGapMinutes,
-		RecentRunsDays:       constants.DefaultRecentRunsDays,
-		RecentRunsMinCount:   constants.DefaultRecentRunsMinCount,
-		Theme:                constants.DefaultTheme,
-		Font:                 constants.DefaultFont,
-		MouseTrackingEnabled: true,
-		MouseBufferMinutes:   constants.DefaultMouseBufferMinutes,
-		AutostartEnabled:     false,
-		AnonymousEnabled:     false,
-		RunSyncEnabled:       true,
-		LastSeenVersion:      "",
+		SteamInstallDir:         constants.DefaultWindowsSteamInstallDir,
+		KovaaksInstallDir:       DefaultKovaaksInstallDir(),
+		SessionGapMinutes:       constants.DefaultSessionGapMinutes,
+		RecentRunsDays:          constants.DefaultRecentRunsDays,
+		RecentRunsMinCount:      constants.DefaultRecentRunsMinCount,
+		Theme:                   constants.DefaultTheme,
+		Font:                    constants.DefaultFont,
+		MouseTrackingEnabled:    true,
+		MouseBufferMinutes:      constants.DefaultMouseBufferMinutes,
+		ScreenCaptureEnabled:    false,
+		ScreenCaptureFPS:        constants.DefaultScreenCaptureFPS,
+		ScreenCaptureResolution: constants.DefaultScreenCaptureResolution,
+		AutostartEnabled:        false,
+		AnonymousEnabled:        false,
+		RunSyncEnabled:          true,
+		LastSeenVersion:         "",
 	}
 }
 
@@ -85,6 +88,13 @@ func Sanitize(s models.Settings) models.Settings {
 	if s.MouseBufferMinutes <= 0 {
 		s.MouseBufferMinutes = constants.DefaultMouseBufferMinutes
 	}
+	if s.ScreenCaptureFPS <= 0 {
+		s.ScreenCaptureFPS = constants.DefaultScreenCaptureFPS
+	}
+	if s.ScreenCaptureResolution == "" {
+		s.ScreenCaptureResolution = constants.DefaultScreenCaptureResolution
+	}
+	
 	if s.ScenarioNotes == nil {
 		s.ScenarioNotes = make(map[string]models.ScenarioNote)
 	}

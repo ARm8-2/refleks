@@ -12,6 +12,11 @@ type Watcher struct {
 	onStop      func()
 }
 
+// IsRunning reports whether a process with the given executable name exists.
+func IsRunning(processName string) bool {
+	return processIsRunning(processName)
+}
+
 // NewWatcher creates a watcher that calls onStart when the process appears
 // and onStop when it disappears. Pass nil for unused callbacks.
 func NewWatcher(processName string, onStart, onStop func()) *Watcher {
@@ -30,7 +35,7 @@ func (w *Watcher) Start(ctx context.Context) {
 	// When the mouse tracker starts after this watcher (e.g. user toggles tracking
 	// ON while KovaaK's is already running), this prevents a ~3 second dead window
 	// where runs would be ingested without trace data.
-	running := isRunning(w.processName)
+	running := processIsRunning(w.processName)
 	if running && w.onStart != nil {
 		w.onStart()
 	}
@@ -40,7 +45,7 @@ func (w *Watcher) Start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			currentlyRunning := isRunning(w.processName)
+			currentlyRunning := processIsRunning(w.processName)
 
 			if currentlyRunning && !running {
 				if w.onStart != nil {

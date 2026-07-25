@@ -1,12 +1,13 @@
 package models
 
 type RunRecord struct {
-	FileVersion  uint8               `json:"fileVersion"`
-	FilePath     string              `json:"filePath"`
-	FileName     string              `json:"fileName"`
-	Stats        RunStatsData        `json:"stats"`
-	Performances *RunPerformanceData `json:"performances,omitempty"`
-	Env          RunEnvironment      `json:"env"`
+	FileVersion     uint8               `json:"fileVersion"`
+	FilePath        string              `json:"filePath"`
+	FileName        string              `json:"fileName"`
+	Stats           RunStatsData        `json:"stats"`
+	Performances    *RunPerformanceData `json:"performances,omitempty"`
+	Env             RunEnvironment      `json:"env"`
+	ScreenRecording string              `json:"screenRecording,omitempty"`
 }
 
 type RunStatsData struct {

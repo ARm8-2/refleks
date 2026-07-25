@@ -1,6 +1,7 @@
 package runs
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
 	"io"
@@ -8,22 +9,56 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"refleks/internal/constants"
 	"refleks/internal/models"
 	"refleks/internal/runs/kovaaks"
+	"refleks/internal/runs/screen"
 	appsettings "refleks/internal/settings"
 )
 
 // Store manages the .refleks run directory.
 type Store struct {
-	settingsSvc *appsettings.Service
+	settingsSvc    *appsettings.Service
+	ctx            context.Context
+	screenProvider screen.Provider
+	encoder        *screen.Encoder
+
+	screenMu             sync.Mutex
+	screenTrimCounts     map[string]int  // in-flight trims keyed by capture session directory
+	screenFinalizing     map[string]bool // sessions awaiting release once their trims finish
+	screenReleasePending map[string]bool // grace timer scheduled for a stopped session
+
+	// replayMu serializes replay publication/deletion. A deletion tombstone is
+	// retained only while a trim for that run is active, preventing resurrection
+	// without retaining one map entry forever for every deleted replay.
+	replayMu          sync.Mutex
+	activeReplayTrims map[string]int
+	deletedReplays    map[string]struct{}
 }
 
 // NewStore constructs a run store.
 func NewStore(settingsSvc *appsettings.Service) *Store {
-	return &Store{settingsSvc: settingsSvc}
+	return &Store{
+		settingsSvc:          settingsSvc,
+		screenTrimCounts:     make(map[string]int),
+		screenFinalizing:     map[string]bool{},
+		screenReleasePending: map[string]bool{},
+		activeReplayTrims:    make(map[string]int),
+		deletedReplays:       make(map[string]struct{}),
+	}
+}
+
+// SetScreenCapture configures the screen capture provider and encoder used
+// during run ingestion to generate screen recordings.
+func (s *Store) SetScreenCapture(ctx context.Context, prov screen.Provider, enc *screen.Encoder) {
+	s.screenMu.Lock()
+	defer s.screenMu.Unlock()
+	s.ctx = ctx
+	s.screenProvider = prov
+	s.encoder = enc
 }
 
 func (s *Store) runsDir() (string, error) {
@@ -37,6 +72,98 @@ func (s *Store) runsDir() (string, error) {
 		return "", err
 	}
 	return dir, nil
+}
+
+// ReplaysDir returns the screen recording replay directory, creating it if needed.
+func (s *Store) ReplaysDir() (string, error) {
+	base, err := appsettings.GetConfigDir()
+	if err != nil {
+		return "", err
+	}
+	dir := filepath.Join(base, constants.ReplaysSubdirName)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", err
+	}
+	return dir, nil
+}
+
+// ReplayPath returns the full path to a replay file derived from a run's file path.
+// The replay filename uses the same base name as the run record with the given extension.
+func (s *Store) ReplayPath(runFilePath string, ext string) (string, error) {
+	dir, err := s.ReplaysDir()
+	if err != nil {
+		return "", err
+	}
+	base := strings.TrimSuffix(filepath.Base(runFilePath), constants.RunFileExt)
+	return filepath.Join(dir, base+ext), nil
+}
+
+// DeleteReplay removes all supported replay containers for a run. It is
+// coordinated with publication so a trim that completes at the same time
+// cannot make a user-deleted replay reappear.
+func (s *Store) DeleteReplay(runFilePath string) error {
+	s.replayMu.Lock()
+	defer s.replayMu.Unlock()
+
+	if s.activeReplayTrims[runFilePath] > 0 {
+		s.deletedReplays[runFilePath] = struct{}{}
+	}
+	var firstErr error
+	for _, ext := range []string{".mp4", ".webm"} {
+		path, err := s.ReplayPath(runFilePath, ext)
+		if err != nil {
+			if firstErr == nil {
+				firstErr = err
+			}
+			continue
+		}
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) && firstErr == nil {
+			firstErr = err
+		}
+	}
+	return firstErr
+}
+
+func (s *Store) beginReplayTrim(runPath string) {
+	s.replayMu.Lock()
+	s.activeReplayTrims[runPath]++
+	s.replayMu.Unlock()
+}
+
+func (s *Store) finishReplayTrim(runPath string) {
+	s.replayMu.Lock()
+	defer s.replayMu.Unlock()
+	if s.activeReplayTrims[runPath] <= 1 {
+		delete(s.activeReplayTrims, runPath)
+		delete(s.deletedReplays, runPath)
+		return
+	}
+	s.activeReplayTrims[runPath]--
+}
+
+// replayFileSet scans the replays directory and returns a set of base names (without
+// extension) that have replay files.
+func (s *Store) replayFileSet() map[string]struct{} {
+	dir, err := s.ReplaysDir()
+	if err != nil {
+		return nil
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+	set := make(map[string]struct{}, len(entries))
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		ext := filepath.Ext(name)
+		if ext == ".mp4" || ext == ".webm" {
+			set[strings.TrimSuffix(name, ext)] = struct{}{}
+		}
+	}
+	return set
 }
 
 // Exists reports whether the given stats file already has a stored run record.
@@ -66,12 +193,13 @@ func (s *Store) Save(rec storedRunRecord) (string, error) {
 	}
 
 	outPath := filepath.Join(dir, filepath.Base(rec.FileName)+constants.RunFileExt)
-	tmpPath := outPath + ".tmp"
-
-	f, err := os.Create(tmpPath)
+	// A unique temporary file keeps overlapping watcher/scan ingestion from
+	// corrupting each other's record before the atomic publish rename.
+	f, err := os.CreateTemp(dir, "."+filepath.Base(outPath)+"-*.tmp")
 	if err != nil {
 		return "", err
 	}
+	tmpPath := f.Name()
 
 	writeErr := writeRecord(f, rec)
 	closeErr := f.Close()
@@ -145,20 +273,28 @@ func (s *Store) LoadRecentRuns(limit int) ([]models.RunRecord, error) {
 		return nil, err
 	}
 
+	replays := s.replayFileSet()
+
 	out := make([]models.RunRecord, 0, len(selected))
 	for _, v := range selected {
 		rec, err := readRecordFile(v.path, readRecordOptions{skipStatsEvents: true, skipPerformanceEvents: true, skipMouseTrace: true})
 		if err != nil {
 			continue
 		}
-		out = append(out, models.RunRecord{
+		rr := models.RunRecord{
 			FileVersion:  rec.FileVersion,
 			FilePath:     v.path,
 			FileName:     rec.FileName,
 			Stats:        rec.Stats,
 			Performances: rec.Performances,
 			Env:          rec.Env,
-		})
+		}
+		// Check if a screen recording exists for this run
+		runBase := strings.TrimSuffix(filepath.Base(v.path), constants.RunFileExt)
+		if _, ok := replays[runBase]; ok {
+			rr.ScreenRecording = runBase
+		}
+		out = append(out, rr)
 	}
 	return out, nil
 }
