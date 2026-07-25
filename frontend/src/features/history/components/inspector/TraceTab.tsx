@@ -199,7 +199,7 @@ export function TraceTab({
         comparePerformanceEvents === null))
   ) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
         <p className="text-sm text-surface-muted-foreground">Loading trace…</p>
       </div>
     );
@@ -207,7 +207,7 @@ export function TraceTab({
 
   if (!primaryPoints || primaryPoints.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
         <p className="text-sm text-surface-muted-foreground">
           No mouse trace data. Enable mouse tracking in settings to record
           traces.
@@ -220,29 +220,24 @@ export function TraceTab({
   const hasAnalysis = analysis != null && analysis.kills.length > 0;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2">
-      {/* Trace viewer — takes up remaining space, never shrinks */}
-      <div className="min-h-0 flex-1">
-        <TraceReplay
-          points={primaryPoints}
-          resolution={primaryResolution || undefined}
-          comparePoints={hasCompare ? comparePoints! : undefined}
-          compareResolution={
-            hasCompare ? compareResolution || undefined : undefined
-          }
-          layout={hasCompare && !overlay ? "split" : "overlay"}
-          highlight={highlight}
-          targetInference={primaryTargetInference}
-          compareTargetInference={
-            hasCompare ? compareTargetInference : undefined
-          }
-          seekToMs={seekToMs}
-          onReset={clearSelection}
-          onHighlightChange={(h) => h === null && setSelectedKill(null)}
-        />
-      </div>
+    <div className="space-y-3">
+      <TraceReplay
+        points={primaryPoints}
+        resolution={primaryResolution || undefined}
+        comparePoints={hasCompare ? comparePoints! : undefined}
+        compareResolution={
+          hasCompare ? compareResolution || undefined : undefined
+        }
+        layout={hasCompare && !overlay ? "split" : "overlay"}
+        highlight={highlight}
+        targetInference={primaryTargetInference}
+        compareTargetInference={hasCompare ? compareTargetInference : undefined}
+        seekToMs={seekToMs}
+        onReset={clearSelection}
+        onHighlightChange={(h) => h === null && setSelectedKill(null)}
+      />
 
-      {/* Analysis panel — fixed height, scrollable kill list */}
+      {/* Analysis panel */}
       {hasAnalysis && (
         <AnalysisPanel
           analysis={analysis}

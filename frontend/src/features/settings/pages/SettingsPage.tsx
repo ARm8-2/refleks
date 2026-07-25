@@ -8,6 +8,7 @@ import {
 import {
   Button,
   Checkbox,
+  InfoTooltip,
   Input,
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ import {
   THEMES,
   checkForUpdates,
   downloadAndInstallUpdate,
+  getScreenCaptureInfo,
   getSettings,
   getVersion,
   openURL,
@@ -40,7 +42,7 @@ import {
   type Font,
   type Theme,
 } from "@/shared/lib";
-import type { Settings, UpdateInfo } from "@/shared/types";
+import type { ScreenCaptureInfo, Settings, UpdateInfo } from "@/shared/types";
 import { ChevronDown, ChevronUp, Download, RefreshCw } from "lucide-react";
 import {
   useEffect,
@@ -90,6 +92,9 @@ export function SettingsPage() {
   const [isClearCacheOpen, setIsClearCacheOpen] = useState(false);
   const [welcomePresentation, setWelcomePresentation] =
     useState<WelcomePresentation | null>(null);
+  const [screenCaptureInfo, setScreenCaptureInfo] =
+    useState<ScreenCaptureInfo | null>(null);
+  const [screenCaptureLoading, setScreenCaptureLoading] = useState(true);
 
   useEffect(() => {
     getSettings()
@@ -98,6 +103,10 @@ export function SettingsPage() {
     getVersion()
       .then((v) => setCurrentVersion(v))
       .catch(() => setCurrentVersion(""));
+    getScreenCaptureInfo()
+      .then((info) => setScreenCaptureInfo(info))
+      .catch(() => setScreenCaptureInfo(null))
+      .finally(() => setScreenCaptureLoading(false));
   }, []);
 
   useEffect(() => {
@@ -207,9 +216,11 @@ export function SettingsPage() {
   const handleWelcomeConfirm = async ({
     anonymousEnabled,
     mouseTrackingEnabled,
+    screenCaptureEnabled,
   }: {
     anonymousEnabled: boolean;
     mouseTrackingEnabled: boolean | null;
+    screenCaptureEnabled: boolean | null;
   }) => {
     if (!settings || !welcomePresentation) return;
 
@@ -217,6 +228,7 @@ export function SettingsPage() {
       buildWelcomeSettingsUpdate(settings, {
         anonymousEnabled,
         mouseTrackingEnabled,
+        screenCaptureEnabled,
       }),
       welcomePresentation.currentVersion,
     );
@@ -426,6 +438,143 @@ export function SettingsPage() {
                   />
                 </SettingsField>
 
+                {settings.mouseTrackingEnabled && (
+                  <div className="space-y-3 pl-6">
+                    <SettingsField
+                      label="Buffer Duration"
+                      description="Minutes of mouse data to keep in memory"
+                    >
+                      <Input
+                        type="number"
+                        value={settings.mouseBufferMinutes}
+                        onChange={(e) =>
+                          updateField(
+                            "mouseBufferMinutes",
+                            parseInt(e.target.value, 10) || 5,
+                          )
+                        }
+                        onKeyDown={handleInputKeyDown}
+                        min={1}
+                        max={60}
+                        className="w-20 text-center"
+                      />
+                    </SettingsField>
+                  </div>
+                )}
+
+                <SettingsField
+                  label={
+                    <span className="inline-flex items-center gap-1.5">
+                      Screen Capture
+                      {screenCaptureLoading ? null : (
+                        <InfoTooltip
+                          side="bottom"
+                          icon={
+                            <span
+                              className={`inline-block h-2 w-2 rounded-full ${
+                                screenCaptureInfo
+                                  ? "bg-emerald-500"
+                                  : "bg-amber-500"
+                              }`}
+                            />
+                          }
+                          iconClassName="h-auto w-auto"
+                        >
+                          {screenCaptureInfo ? (
+                            <div className="max-w-xs space-y-1 text-[11px]">
+                              <p className="font-medium text-popover-foreground">
+                                FFmpeg ready
+                              </p>
+                              <p className="text-popover-foreground/70">
+                                Using {screenCaptureInfo.encoderName}
+                                {screenCaptureInfo.isHardware
+                                  ? " (hardware accelerated)"
+                                  : " (software)"}
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="max-w-xs space-y-1 text-[11px]">
+                              <p className="font-medium text-popover-foreground">
+                                FFmpeg not detected
+                              </p>
+                              <p className="text-popover-foreground/70">
+                                Place{" "}
+                                <code className="rounded bg-surface-muted px-1 py-0.5 font-mono">
+                                  ffmpeg.exe
+                                </code>{" "}
+                                alongside{" "}
+                                <code className="rounded bg-surface-muted px-1 py-0.5 font-mono">
+                                  refleks.exe
+                                </code>
+                                .
+                              </p>
+                            </div>
+                          )}
+                        </InfoTooltip>
+                      )}
+                    </span>
+                  }
+                  description="Record screen during scenarios for video replays (Windows only, requires FFmpeg)"
+                  checkbox
+                >
+                  <Checkbox
+                    checked={!!settings.screenCaptureEnabled}
+                    onCheckedChange={(v) =>
+                      updateField("screenCaptureEnabled", v === true, true)
+                    }
+                  />
+                </SettingsField>
+
+                {settings.screenCaptureEnabled && (
+                  <div className="space-y-3 pl-6">
+                    <SettingsField
+                      label="Resolution"
+                      description="Recording resolution (scaled by the GPU encoder, zero CPU cost)"
+                    >
+                      <Select
+                        value={settings.screenCaptureResolution || "720"}
+                        onValueChange={(v) =>
+                          updateField("screenCaptureResolution", v, true)
+                        }
+                      >
+                        <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="native">
+                            Native (monitor res)
+                          </SelectItem>
+                          <SelectItem value="1080">
+                            1080p (1920×1080)
+                          </SelectItem>
+                          <SelectItem value="900">900p (1600×900)</SelectItem>
+                          <SelectItem value="720">720p (1280×720)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </SettingsField>
+
+                    <SettingsField
+                      label="Capture FPS"
+                      description="Frames per second to capture"
+                    >
+                      <Input
+                        type="number"
+                        value={settings.screenCaptureFps ?? 30}
+                        onChange={(e) =>
+                          updateField(
+                            "screenCaptureFps",
+                            parseInt(e.target.value, 10) || 30,
+                          )
+                        }
+                        onKeyDown={handleInputKeyDown}
+                        min={5}
+                        max={60}
+                        className="w-20 text-center"
+                      />
+                    </SettingsField>
+                  </div>
+                )}
+
                 <SettingsField
                   label="Session Gap"
                   description="Minutes of inactivity before starting a new session"
@@ -607,29 +756,9 @@ export function SettingsPage() {
 
                     <div className="space-y-3 pt-4">
                       <div className="text-xs font-medium uppercase tracking-wide text-surface-muted-foreground">
-                        Mouse Traces
+                        Data Retention
                       </div>
                       <div className="space-y-4">
-                        <SettingsField
-                          label="Buffer Duration"
-                          description="Minutes of mouse data to keep in memory"
-                        >
-                          <Input
-                            type="number"
-                            value={settings.mouseBufferMinutes}
-                            onChange={(e) =>
-                              updateField(
-                                "mouseBufferMinutes",
-                                parseInt(e.target.value, 10) || 5,
-                              )
-                            }
-                            onKeyDown={handleInputKeyDown}
-                            min={1}
-                            max={60}
-                            className="w-20 text-center"
-                          />
-                        </SettingsField>
-
                         <SettingsField
                           label="Recent Runs Window (Days)"
                           description="Only runs from the last N days are loaded and shown"

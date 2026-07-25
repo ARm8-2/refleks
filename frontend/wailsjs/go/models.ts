@@ -724,6 +724,7 @@ export namespace models {
 	    stats: RunStatsData;
 	    performances?: RunPerformanceData;
 	    env: RunEnvironment;
+	    screenRecording?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new RunRecord(source);
@@ -737,6 +738,7 @@ export namespace models {
 	        this.stats = this.convertValues(source["stats"], RunStatsData);
 	        this.performances = this.convertValues(source["performances"], RunPerformanceData);
 	        this.env = this.convertValues(source["env"], RunEnvironment);
+	        this.screenRecording = source["screenRecording"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -803,6 +805,9 @@ export namespace models {
 	    favoriteBenchmarks?: string[];
 	    mouseTrackingEnabled: boolean;
 	    mouseBufferMinutes: number;
+	    screenCaptureEnabled: boolean;
+	    screenCaptureFps: number;
+	    screenCaptureResolution?: string;
 	    autostartEnabled: boolean;
 	    anonymousEnabled: boolean;
 	    runSyncEnabled: boolean;
@@ -828,6 +833,9 @@ export namespace models {
 	        this.favoriteBenchmarks = source["favoriteBenchmarks"];
 	        this.mouseTrackingEnabled = source["mouseTrackingEnabled"];
 	        this.mouseBufferMinutes = source["mouseBufferMinutes"];
+	        this.screenCaptureEnabled = source["screenCaptureEnabled"];
+	        this.screenCaptureFps = source["screenCaptureFps"];
+	        this.screenCaptureResolution = source["screenCaptureResolution"];
 	        this.autostartEnabled = source["autostartEnabled"];
 	        this.anonymousEnabled = source["anonymousEnabled"];
 	        this.runSyncEnabled = source["runSyncEnabled"];
@@ -871,6 +879,49 @@ export namespace models {
 	        this.hasUpdate = source["hasUpdate"];
 	        this.downloadUrl = source["downloadUrl"];
 	        this.releaseNotes = source["releaseNotes"];
+	    }
+	}
+
+}
+
+export namespace screen {
+	
+	export class EncoderInfo {
+	    encoderName: string;
+	    container: string;
+	    isHardware: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new EncoderInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.encoderName = source["encoderName"];
+	        this.container = source["container"];
+	        this.isHardware = source["isHardware"];
+	    }
+	}
+	export class ReplayFileInfo {
+	    width: number;
+	    height: number;
+	    fps: number;
+	    codec: string;
+	    durationSeconds: number;
+	    sizeBytes: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ReplayFileInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.width = source["width"];
+	        this.height = source["height"];
+	        this.fps = source["fps"];
+	        this.codec = source["codec"];
+	        this.durationSeconds = source["durationSeconds"];
+	        this.sizeBytes = source["sizeBytes"];
 	    }
 	}
 

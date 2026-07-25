@@ -87,6 +87,7 @@ export interface RunRecord {
   stats: RunStatsData;
   performances?: RunPerformanceData;
   env: RunEnvironment;
+  screenRecording?: string;
 }
 
 export interface RunPerformanceData {
@@ -219,6 +220,9 @@ export interface Settings {
   favoriteBenchmarks?: string[];
   mouseTrackingEnabled?: boolean;
   mouseBufferMinutes?: number;
+  screenCaptureEnabled?: boolean;
+  screenCaptureFps?: number;
+  screenCaptureResolution?: string;
   autostartEnabled?: boolean;
   anonymousEnabled?: boolean;
   runSyncEnabled?: boolean;
@@ -242,6 +246,21 @@ export interface UpdateInfo {
   hasUpdate: boolean;
   downloadUrl?: string;
   releaseNotes?: string;
+}
+
+export interface ScreenCaptureInfo {
+  encoderName: string;
+  container: string;
+  isHardware: boolean;
+}
+
+export interface ReplayFileInfo {
+  width: number;
+  height: number;
+  fps: number;
+  codec: string;
+  durationSeconds: number;
+  sizeBytes: number;
 }
 
 export interface KovaaksScoreAttributes {

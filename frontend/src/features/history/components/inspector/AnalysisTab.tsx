@@ -153,16 +153,21 @@ export function AnalysisTab({
       (compareEvents === null || comparePerformanceEvents === null))
   ) {
     return (
-      <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">
-        Loading event data...
+      <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
+        <p className="text-sm text-surface-muted-foreground">
+          Loading event data...
+        </p>
       </div>
     );
   }
 
   if (!primary || primary.events.length === 0) {
     return (
-      <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">
-        No event data available for this run.
+      <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
+        <p className="text-sm text-surface-muted-foreground">
+          No event data available for this run. Ensure Kovaak's is saving event
+          details in the stats CSV.
+        </p>
       </div>
     );
   }
@@ -209,9 +214,11 @@ export function AnalysisTab({
             </Widget>
           </div>
         ) : (
-          <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">
-            Waiting for the first kill to compute TTK trend, accuracy vs speed,
-            and summary stats.
+          <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
+            <p className="text-sm text-surface-muted-foreground">
+              Waiting for the first kill to compute TTK trend, accuracy vs
+              speed, and summary stats.
+            </p>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import {
   CheckForUpdates as _CheckForUpdates,
   ClearCache as _ClearCache,
+  DeleteRunReplay as _DeleteRunReplay,
   DownloadAndInstallUpdate as _DownloadAndInstallUpdate,
   GetAllBenchmarkProgresses as _GetAllBenchmarkProgresses,
   GetBenchmarkProgress as _GetBenchmarkProgress,
@@ -10,8 +11,11 @@ import {
   GetLastScenarioScores as _GetLastScenarioScores,
   GetRecentRuns as _GetRecentRuns,
   GetRunPerformanceEvents as _GetRunPerformanceEvents,
+  GetRunReplay as _GetRunReplay,
+  GetRunReplayInfo as _GetRunReplayInfo,
   GetRunStatsEvents as _GetRunStatsEvents,
   GetRunTrace as _GetRunTrace,
+  GetScreenCaptureInfo as _GetScreenCaptureInfo,
   GetSettings as _GetSettings,
   GetVersion as _GetVersion,
   LaunchKovaaksPlaylist as _LaunchKovaaksPlaylist,
@@ -31,9 +35,11 @@ import type {
   Benchmark,
   BenchmarkProgress,
   KovaaksLastScore,
+  ReplayFileInfo,
   RunPerformanceEvent,
   RunRecord,
   RunStatsEvent,
+  ScreenCaptureInfo,
   Settings,
   UpdateInfo,
 } from "../types/ipc";
@@ -193,6 +199,25 @@ export async function launchPlaylist(sharecode: string): Promise<void> {
 
 export async function clearCache(): Promise<void> {
   await _ClearCache();
+}
+
+export async function getRunReplay(filePath: string): Promise<string | null> {
+  const res = await _GetRunReplay(filePath);
+  return res || null;
+}
+
+export async function getRunReplayInfo(
+  filePath: string,
+): Promise<ReplayFileInfo | null> {
+  return (await _GetRunReplayInfo(filePath)) || null;
+}
+
+export async function deleteRunReplay(filePath: string): Promise<void> {
+  await _DeleteRunReplay(filePath);
+}
+
+export async function getScreenCaptureInfo(): Promise<ScreenCaptureInfo | null> {
+  return (await _GetScreenCaptureInfo()) || null;
 }
 
 // Runtime helpers

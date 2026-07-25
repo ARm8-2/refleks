@@ -14,6 +14,7 @@ type InfoTooltipProps = {
   className?: string;
   iconClassName?: string;
   icon?: ReactNode;
+  ariaLabel?: string;
 };
 
 export function InfoTooltip({
@@ -22,6 +23,7 @@ export function InfoTooltip({
   className,
   iconClassName,
   icon,
+  ariaLabel = "More information",
 }: InfoTooltipProps) {
   return (
     <TooltipProvider delayDuration={150}>
@@ -29,6 +31,7 @@ export function InfoTooltip({
         <TooltipTrigger asChild>
           <button
             type="button"
+            aria-label={ariaLabel}
             className={cn(
               "inline-flex h-5 w-5 items-center justify-center rounded-md text-surface-muted-foreground transition-colors hover:text-foreground",
               iconClassName,

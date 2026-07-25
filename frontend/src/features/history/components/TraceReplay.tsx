@@ -96,6 +96,8 @@ type TraceReplayProps = {
 const SPEED_MIN = 0.1;
 const SPEED_MAX = 4;
 const SPEED_DEFAULT = 1;
+// Slightly shorter than 16:9 to keep the trace viewer compact.
+const TRACE_ASPECT_RATIO = 1.85;
 
 export function TraceReplay({
   points,
@@ -318,10 +320,18 @@ export function TraceReplay({
       traceSet: "primary" | "compare" | "both" = "both",
     ) => {
       const pts = traceSet === "compare" ? comparePoints : points;
-      if (!canvas || !wrap || !pts || pts.length === 0) return;
+      if (
+        !canvas ||
+        !wrap ||
+        !pts ||
+        pts.length === 0 ||
+        wrap.clientWidth === 0 ||
+        wrap.clientHeight === 0
+      )
+        return;
       const dpr = window.devicePixelRatio || 1;
-      const cssW = Math.max(320, wrap.clientWidth);
-      const cssH = Math.max(200, wrap.clientHeight);
+      const cssW = wrap.clientWidth;
+      const cssH = wrap.clientHeight;
 
       canvas.style.width = `${cssW}px`;
       canvas.style.height = `${cssH}px`;
@@ -725,16 +735,17 @@ export function TraceReplay({
   return (
     <>
       {/* Inline view */}
-      <div className="flex h-full flex-col gap-2">
+      <div className="flex flex-col gap-2">
         {isSplit ? (
-          <div className="grid min-h-0 flex-1 grid-cols-2 gap-3">
-            <div className="flex min-h-0 flex-col gap-1">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
               <div className="text-[11px] font-medium text-surface-muted-foreground">
                 Pinned
               </div>
               <div
                 ref={wrapRef}
-                className="relative min-h-0 flex-1 rounded-xl bg-surface-subtle"
+                className="relative rounded-xl bg-surface-subtle"
+                style={{ aspectRatio: TRACE_ASPECT_RATIO }}
               >
                 <canvas
                   ref={canvasRef}
@@ -743,13 +754,14 @@ export function TraceReplay({
                 {renderCanvasOverlay("primary")}
               </div>
             </div>
-            <div className="flex min-h-0 flex-col gap-1">
+            <div className="flex flex-col gap-1">
               <div className="text-[11px] font-medium text-surface-muted-foreground">
                 Compare
               </div>
               <div
                 ref={splitWrapRef}
-                className="relative min-h-0 flex-1 rounded-xl bg-surface-subtle"
+                className="relative rounded-xl bg-surface-subtle"
+                style={{ aspectRatio: TRACE_ASPECT_RATIO }}
               >
                 <canvas
                   ref={splitCanvasRef}
@@ -762,7 +774,8 @@ export function TraceReplay({
         ) : (
           <div
             ref={wrapRef}
-            className="relative min-h-0 flex-1 rounded-xl bg-surface-subtle"
+            className="relative rounded-xl bg-surface-subtle"
+            style={{ aspectRatio: TRACE_ASPECT_RATIO }}
           >
             <canvas
               ref={canvasRef}

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 type SettingsFieldProps = {
-  label: string;
+  label: ReactNode;
   description?: string;
   children: ReactNode;
   /** When true, children (checkbox) appear to the left of the label. */

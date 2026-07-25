@@ -1,6 +1,6 @@
 import { Button, SegmentedControl } from "@/shared/components";
 import { usePersistedState } from "@/shared/hooks";
-import { cn, getSettings, STORAGE_KEYS } from "@/shared/lib";
+import { getSettings, STORAGE_KEYS } from "@/shared/lib";
 import {
   Columns2,
   Layers,
@@ -14,6 +14,7 @@ import type { HistoryRun } from "../lib/historyModels";
 import { INSPECTOR_TABS, type InspectorTab } from "../lib/inspectorTabs";
 import { AnalysisTab } from "./inspector/AnalysisTab";
 import { EnvironmentTab } from "./inspector/EnvironmentTab";
+import { ReplayTab } from "./inspector/ReplayTab";
 import { StatsTab } from "./inspector/StatsTab";
 import { TraceTab } from "./inspector/TraceTab";
 
@@ -139,14 +140,7 @@ export function HistoryRunDetailPane({
           </p>
         </div>
       ) : (
-        <div
-          className={cn(
-            "min-h-0 flex-1",
-            activeTab === "trace"
-              ? "flex flex-col p-3 pt-1"
-              : "scrollbar-compact overflow-y-auto p-5 pt-2 space-y-4",
-          )}
-        >
+        <div className="scrollbar-compact overflow-y-auto p-5 pt-2 space-y-4 min-h-0 flex-1">
           {activeTab === "stats" && (
             <StatsTab
               primaryRun={primaryRun}
@@ -168,6 +162,9 @@ export function HistoryRunDetailPane({
               compareRun={compareRun}
               overlay={overlay}
             />
+          )}
+          {activeTab === "replay" && (
+            <ReplayTab primaryRun={primaryRun} compareRun={compareRun} />
           )}
           {activeTab === "environment" && (
             <EnvironmentTab

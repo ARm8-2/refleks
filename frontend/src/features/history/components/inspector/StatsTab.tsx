@@ -89,6 +89,16 @@ export function StatsTab({
 
   const categories = getCategorizedStats(primaryRun);
 
+  if (categories.length === 0) {
+    return (
+      <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
+        <p className="text-sm text-surface-muted-foreground">
+          No stats available for this run.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="min-w-0">
