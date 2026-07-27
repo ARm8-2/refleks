@@ -1,6 +1,6 @@
 import { InfoTooltip } from "@/shared/components";
 import { cn } from "@/shared/lib/utils";
-import type { MousePoint } from "@/shared/types/ipc";
+
 import { Copy } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRunPerformanceEvents } from "../../hooks/useRunPerformanceEvents";
@@ -36,31 +36,15 @@ const CLASSIFICATION_STYLES = {
     text: "text-emerald-400",
     highlight: "rgba(16,185,129,0.8)",
   },
+  unknown: {
+    dot: "bg-surface-muted-foreground",
+    text: "text-surface-muted-foreground",
+    highlight: "rgba(148,163,184,0.8)",
+  },
 } as const;
 
-function isLeftDown(point: MousePoint | undefined): boolean {
-  return ((point?.buttons ?? 0) & 1) !== 0;
-}
-
-function getFlickStartTs(points: MousePoint[], kill: KillAnalysis): number {
-  const startIndex = Math.max(0, Math.min(points.length - 1, kill.startIndex));
-  const endIndex = Math.max(
-    startIndex,
-    Math.min(points.length - 1, kill.endIndex),
-  );
-  const clickDownTs: number[] = [];
-
-  let prevDown = isLeftDown(points[startIndex]);
-  for (let i = startIndex + 1; i <= endIndex; i++) {
-    const curDown = isLeftDown(points[i]);
-    if (!prevDown && curDown) {
-      clickDownTs.push(points[i].ts);
-    }
-    prevDown = curDown;
-  }
-
-  if (clickDownTs.length >= 2) return clickDownTs[clickDownTs.length - 2];
-  return kill.startMs;
+function getFlickStartTs(kill: KillAnalysis): number {
+  return Math.max(kill.startMs, kill.movementOnsetMs - 40);
 }
 
 /* ─── Formatting helpers ─── */
@@ -112,8 +96,14 @@ export function TraceTab({
       primaryRun.item.stats.summary,
       primaryEvents,
       primaryPoints,
+      primaryRun.item.performances?.header,
     );
-  }, [primaryRun.item.stats.summary, primaryEvents, primaryPoints]);
+  }, [
+    primaryEvents,
+    primaryPoints,
+    primaryRun.item.performances?.header,
+    primaryRun.item.stats.summary,
+  ]);
 
   const compareAnalysis: MouseTraceAnalysis | null = useMemo(() => {
     if (
@@ -127,8 +117,14 @@ export function TraceTab({
       compareRun.item.stats.summary,
       compareEvents,
       comparePoints,
+      compareRun.item.performances?.header,
     );
-  }, [compareEvents, comparePoints, compareRun]);
+  }, [
+    compareEvents,
+    comparePoints,
+    compareRun,
+    compareRun?.item.performances?.header,
+  ]);
 
   const suggestion: SensSuggestion | null = useMemo(() => {
     if (!analysis) return null;
@@ -173,13 +169,13 @@ export function TraceTab({
 
   // Highlight: show the last flick from the prior click to the current kill click
   const highlight: TraceHighlight | undefined = useMemo(() => {
-    if (!selectedKill || !primaryPoints) return undefined;
+    if (!selectedKill) return undefined;
     return {
-      startTs: getFlickStartTs(primaryPoints, selectedKill),
+      startTs: getFlickStartTs(selectedKill),
       endTs: selectedKill.endMs,
       color: CLASSIFICATION_STYLES[selectedKill.classification].highlight,
     };
-  }, [selectedKill, primaryPoints]);
+  }, [selectedKill]);
 
   const seekToMs = selectedKill?.endMs ?? null;
 
@@ -313,8 +309,25 @@ function AnalysisPanel({
               {counts.optimal} optimal
             </span>
           )}
+          {counts.unknown > 0 && (
+            <span className="flex items-center gap-1">
+              <span
+                className={cn(
+                  "inline-block h-1.5 w-1.5 rounded-full",
+                  CLASSIFICATION_STYLES.unknown.dot,
+                )}
+              />
+              {counts.unknown} unknown
+            </span>
+          )}
           <span>·</span>
-          <span>{fmtPct(analysis.avgEfficiency)} eff</span>
+          <span>{fmtPct(analysis.avgEfficiency)} path eff</span>
+          <span className="text-[11px]">({analysis.coordinateSpace})</span>
+          {analysis.skippedKillCount > 0 && (
+            <span className="text-[11px]">
+              {analysis.skippedKillCount} outside trace
+            </span>
+          )}
         </div>
         <div className="ml-auto">
           <InfoTooltip side="left">
@@ -323,8 +336,10 @@ function AnalysisPanel({
                 Mouse Path Analysis
               </p>
               <p className="text-popover-foreground/70">
-                Classifies each kill's approach as overshoot, undershoot, or
-                optimal by analyzing mouse movement patterns.
+                Uses time-normalized kinematics, trace quality, button
+                transitions, and the recorded kill clock to classify movement
+                shape. Existing traces do not contain target centers, so
+                distances are raw-input units rather than pixels.
               </p>
               <div className="space-y-0.5 text-popover-foreground/70">
                 <p>
@@ -343,17 +358,25 @@ function AnalysisPanel({
                   <span className={CLASSIFICATION_STYLES.optimal.text}>
                     Optimal
                   </span>{" "}
-                  — direct path to target
+                  — direct, low-correction approach
+                </p>
+                <p>
+                  <span className={CLASSIFICATION_STYLES.unknown.text}>
+                    Unknown
+                  </span>{" "}
+                  — trace coverage or timing evidence is insufficient
                 </p>
               </div>
               {analysis.avgOvershootPixels > 0 && (
                 <p className="text-popover-foreground/70">
-                  Avg overshoot: {fmtNum(analysis.avgOvershootPixels)}px
+                  Avg overshoot: {fmtNum(analysis.avgOvershootPixels)} trace
+                  units
                 </p>
               )}
               {analysis.avgUndershootPixels > 0 && (
                 <p className="text-popover-foreground/70">
-                  Avg undershoot: {fmtNum(analysis.avgUndershootPixels)}px
+                  Avg undershoot: {fmtNum(analysis.avgUndershootPixels)} trace
+                  units
                 </p>
               )}
               <p className="text-popover-foreground/50">
@@ -413,7 +436,7 @@ function KillChip({
       type="button"
       data-kill={kill.killIdx}
       onClick={onClick}
-      title={`Kill #${kill.killIdx} — ${kill.classification}${px > 0 ? ` (${fmtNum(px, 0)}px)` : ""} — ${fmtPct(kill.efficiency)} eff`}
+      title={`Kill #${kill.killIdx} — ${kill.classification}${px > 0 ? ` (${fmtNum(px, 0)} trace units)` : ""} — ${fmtPct(kill.efficiency)} eff`}
       className={cn(
         "flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] tabular-nums transition-colors",
         selected
@@ -448,7 +471,7 @@ function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-xs text-surface-muted-foreground">
-            Suggested sens
+            Suggested training sens
           </span>
           <span className="font-medium text-foreground">
             {fmtNum(suggestion.recommended, 2)} cm/360
