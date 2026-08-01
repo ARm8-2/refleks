@@ -245,29 +245,11 @@ func (c *captureWin) Start() error {
 		// Bound GOP length as well as forcing wall-clock keyframes. This keeps
 		// each browser seek to at most one second of decode work.
 		"-g", strconv.Itoa(gopFrames),
-		"-c:v", encName,
-		// Browser and WebView2 hardware decoders reliably support 4:2:0 H.264.
-		// Leaving the pixel format implicit can produce 4:4:4 output from BGRA
-		// input, which is valid video but commonly unplayable in Chromium.
-		"-pix_fmt", "yuv420p",
-		"-profile:v", "high",
 	}
-	switch {
-	case strings.Contains(encName, "nvenc"):
-		// NVENC otherwise may make a forced intra frame non-IDR; IDR frames are
-		// independently decodable after a segment boundary or browser seek.
-		args = append(args, "-preset", "p1", "-cq", "23", "-forced-idr", "1")
-	case strings.Contains(encName, "amf"):
-		args = append(args, "-quality", "balanced", "-qp_i", "23", "-qp_p", "23")
-	case strings.Contains(encName, "qsv"):
-		args = append(args, "-preset", "fast", "-global_quality", "23")
-	case strings.Contains(encName, "vaapi"):
-		args = append(args, "-qp", "23")
-	case strings.Contains(encName, "libsvtav1"):
-		args = append(args, "-preset", "8", "-crf", "35")
-	default:
-		args = append(args, "-preset", "ultrafast", "-crf", "28")
-	}
+	// Keep encoder settings centralized with the runtime probe. The keyframe
+	// and segmentation options above are capture-specific and are not needed
+	// for the short probe encode.
+	args = append(args, encoderArgs(encName)...)
 
 	// Resolution scaling — downscale the captured frame to the user's
 	// configured resolution while preserving aspect ratio. Uses the generic

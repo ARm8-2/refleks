@@ -197,7 +197,18 @@ func (s *RuntimeService) OverwriteSettings(newS models.Settings) error {
 	if captureChanged && s.procWatcherStop != nil {
 		if newS.ScreenCaptureEnabled {
 			if s.encoder != nil && s.encoder.Available() {
-				screen.SetCaptureEncoder(s.screen, s.encoder.Info().EncoderName)
+				info := s.encoder.Info()
+				runtime.LogInfof(s.ctx, "screen: encoder=%s hardware=%v", info.EncoderName, info.IsHardware)
+				if !info.IsHardware {
+					if diag := s.encoder.ProbeDiagnostics(); diag != "" {
+						runtime.LogWarningf(s.ctx, "screen: hardware encoder probes failed; using software encoder:\n%s", diag)
+					}
+				}
+				screen.SetCaptureEncoder(s.screen, info.EncoderName)
+			} else if s.encoder != nil {
+				if diag := s.encoder.ProbeDiagnostics(); diag != "" {
+					runtime.LogWarningf(s.ctx, "screen: no encoder available; probe diagnostics:\n%s", diag)
+				}
 			}
 			screen.SetCaptureFPS(s.screen, newS.ScreenCaptureFPS)
 			screen.SetCaptureResolution(s.screen, newS.ScreenCaptureResolution)
@@ -335,7 +346,18 @@ func (s *RuntimeService) startProcessWatcher() {
 			if cur.ScreenCaptureEnabled {
 				runtime.LogInfo(s.ctx, "watcher: starting screen capture")
 				if s.encoder != nil && s.encoder.Available() {
-					screen.SetCaptureEncoder(s.screen, s.encoder.Info().EncoderName)
+					info := s.encoder.Info()
+					runtime.LogInfof(s.ctx, "screen: encoder=%s hardware=%v", info.EncoderName, info.IsHardware)
+					if !info.IsHardware {
+						if diag := s.encoder.ProbeDiagnostics(); diag != "" {
+							runtime.LogWarningf(s.ctx, "screen: hardware encoder probes failed; using software encoder:\n%s", diag)
+						}
+					}
+					screen.SetCaptureEncoder(s.screen, info.EncoderName)
+				} else if s.encoder != nil {
+					if diag := s.encoder.ProbeDiagnostics(); diag != "" {
+						runtime.LogWarningf(s.ctx, "screen: no encoder available; probe diagnostics:\n%s", diag)
+					}
 				}
 				screen.SetCaptureFPS(s.screen, cur.ScreenCaptureFPS)
 				screen.SetCaptureResolution(s.screen, cur.ScreenCaptureResolution)

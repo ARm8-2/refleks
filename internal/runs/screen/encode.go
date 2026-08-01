@@ -190,15 +190,24 @@ func (e *Encoder) probeEncoder() {
 		return
 	}
 
+	var diagnostics strings.Builder
+	defer func() {
+		e.probeDiagnostics = diagnostics.String()
+	}()
+
 	for _, enc := range encoders {
 		if !available[enc.name] {
 			continue
 		}
 		// ffmpeg -encoders only reports codecs this ffmpeg build was compiled
 		// with; it says nothing about whether the current GPU/driver can open
-		// the hardware path. A real trial encode is the only reliable check,
-		// so fall through to libx264 if a hardware encoder fails.
-		if !encoderWorks(e.ffmpegPath, enc.name) {
+		// the hardware path. Probe every candidate with the same encoder options
+		// used by the real capture command, then fall through consistently.
+		if ok, stderr := encoderWorks(e.ffmpegPath, enc.name); !ok {
+			diagnostics.WriteString(enc.name)
+			diagnostics.WriteString(": ")
+			diagnostics.WriteString(stderr)
+			diagnostics.WriteString("\n")
 			continue
 		}
 		e.encoderName = enc.name
@@ -207,38 +216,114 @@ func (e *Encoder) probeEncoder() {
 	}
 }
 
-// encoderWorks asks ffmpeg to actually encode a couple of synthetic frames
-// with the given encoder and reports whether it succeeded. This is
-// deliberately a real functional probe rather than a capability-list lookup:
-// hardware encoders can be compiled into an ffmpeg build without the current
-// GPU/driver actually being able to use them at runtime.
+// encoderWorks asks ffmpeg to encode two synthetic BGRA frames using the
+// same encoder-specific options as real capture. The raw BGRA input matters:
+// it exercises the same pixel-format conversion path used by Desktop
+// Duplication instead of only testing a lavfi source's native format.
 //
-// Note: vaapi encoders normally need an explicit device (-vaapi_device plus a
-// format/hwupload filter chain) to initialize; without one this probe may
-// under-report vaapi support on Linux. This doesn't affect Windows, which is
-// the only platform real screen capture runs on today.
-func encoderWorks(ffmpegPath, name string) bool {
+// Returns stderr plus the process error on failure so callers can explain why
+// a candidate was skipped.
+func encoderWorks(ffmpegPath, name string) (ok bool, stderr string) {
+	const (
+		// Some AMD drivers reject tiny probe surfaces with AMF_OUT_OF_RANGE even
+		// though normal replay resolutions are supported. Use a representative
+		// browser/replay size instead of probing an artificial 64x64 stream.
+		width      = 1280
+		height     = 720
+		frameBytes = width * height * 4
+		frameCount = 2
+	)
+
 	args := []string{
 		"-loglevel", "error",
-		"-f", "lavfi", "-i", "color=c=black:s=64x64:r=5",
-		"-frames:v", "2",
-		"-c:v", name,
+		"-f", "rawvideo",
+		"-pixel_format", "bgra",
+		"-video_size", "1280x720",
+		// Match the default capture rate; some hardware drivers reject unusual
+		// probe-only frame rates even though normal 30/60 FPS capture works.
+		"-framerate", "60",
+		"-i", "-",
+		"-frames:v", fmt.Sprintf("%d", frameCount),
 	}
-	switch {
-	case strings.Contains(name, "nvenc"):
-		args = append(args, "-preset", "p1")
-	case strings.Contains(name, "qsv"):
-		args = append(args, "-preset", "fast")
-	case strings.Contains(name, "amf"):
-		args = append(args, "-quality", "speed")
-	}
+	args = append(args, encoderArgs(name)...)
 	args = append(args, "-f", "null", "-")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, ffmpegPath, args...)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return false, fmt.Sprintf("create stdin pipe: %v", err)
+	}
+	var stderrBuf tailBuffer
+	cmd.Stderr = &stderrBuf
 	hideCmdWindow(cmd)
-	return cmd.Run() == nil
+	if err := cmd.Start(); err != nil {
+		_ = stdin.Close()
+		return false, fmt.Sprintf("start ffmpeg: %v", err)
+	}
+
+	frame := make([]byte, frameBytes)
+	var writeErr error
+	for i := 0; i < frameCount && writeErr == nil; i++ {
+		buf := frame
+		for len(buf) > 0 {
+			n, err := stdin.Write(buf)
+			if err != nil {
+				writeErr = err
+				break
+			}
+			if n == 0 {
+				writeErr = fmt.Errorf("stdin write made no progress")
+				break
+			}
+			buf = buf[n:]
+		}
+	}
+	closeErr := stdin.Close()
+	waitErr := cmd.Wait()
+	if ctx.Err() != nil {
+		return false, fmt.Sprintf("ffmpeg probe timed out: %v\nstderr: %s", ctx.Err(), stderrBuf.String())
+	}
+	if writeErr != nil {
+		return false, fmt.Sprintf("write synthetic frames: %v\nstderr: %s", writeErr, stderrBuf.String())
+	}
+	if closeErr != nil {
+		return false, fmt.Sprintf("close ffmpeg input: %v\nstderr: %s", closeErr, stderrBuf.String())
+	}
+	if waitErr != nil {
+		return false, fmt.Sprintf("ffmpeg: %v\nstderr: %s", waitErr, stderrBuf.String())
+	}
+	return true, ""
+}
+
+// encoderArgs is the single source of truth for encoder settings. Both the
+// runtime capture command and encoderWorks use it, so a candidate cannot pass
+// a probe with one configuration and fail later with another.
+func encoderArgs(name string) []string {
+	args := []string{
+		"-c:v", name,
+		"-pix_fmt", "yuv420p",
+		"-profile:v", "high",
+	}
+	switch {
+	case strings.Contains(name, "nvenc"):
+		args = append(args, "-preset", "p1", "-cq", "23", "-forced-idr", "1")
+	case strings.Contains(name, "amf"):
+		// Explicitly select a broadly supported usage and CQP mode. QP values
+		// are only valid for CQP in AMF; relying on automatic rate-control
+		// inference can make Init fail on some driver versions.
+		args = append(args, "-usage", "transcoding", "-quality", "balanced", "-rc", "cqp", "-qp_i", "23", "-qp_p", "23")
+	case strings.Contains(name, "qsv"):
+		args = append(args, "-preset", "fast", "-global_quality", "23")
+	case strings.Contains(name, "vaapi"):
+		args = append(args, "-qp", "23")
+	case strings.Contains(name, "libsvtav1"):
+		args = append(args, "-preset", "8", "-crf", "35")
+	default:
+		args = append(args, "-preset", "ultrafast", "-crf", "28")
+	}
+	return args
 }
 
 // findFFmpeg searches for ffmpeg in priority order:
@@ -298,4 +383,11 @@ func getAvailableEncoders(ffmpegPath string) map[string]bool {
 		}
 	}
 	return available
+}
+
+// ProbeDiagnostics returns diagnostics from failed encoder probes. Calling it
+// also ensures the lazy probe has completed, making it safe to call directly.
+func (e *Encoder) ProbeDiagnostics() string {
+	e.ensureProbed()
+	return e.probeDiagnostics
 }

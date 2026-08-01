@@ -48,10 +48,11 @@ type Provider interface {
 
 // Encoder compresses captured frames into a video file.
 type Encoder struct {
-	ffmpegPath  string
-	encoderName string
-	container   string // ".mp4" or ".webm"
-	probeOnce   sync.Once
+	ffmpegPath       string
+	encoderName      string
+	container        string // ".mp4" or ".webm"
+	probeOnce        sync.Once
+	probeDiagnostics string // diagnostics collected during encoder selection
 }
 
 // EncoderInfo describes the selected encoder.

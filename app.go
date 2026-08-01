@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"refleks/internal/autostart"
@@ -37,7 +38,7 @@ type App struct {
 	autostartSvc   *autostart.Service
 	processWatcher *process.Watcher
 	watcherCancel  context.CancelFunc
-	isQuitting     bool
+	isQuitting     atomic.Bool
 }
 
 // NewApp creates a new App application struct
@@ -381,7 +382,10 @@ func (a *App) DownloadAndInstallUpdate(version string) error {
 	if err := a.updaterSvc.DownloadAndInstallUpdate(a.ctx, version); err != nil {
 		return err
 	}
-	// Gracefully quit current app so installer can proceed
+	// Gracefully quit current app so installer can proceed. Mark this as an
+	// intentional exit so the close handler does not convert it into a hidden
+	// background instance when autostart is enabled.
+	a.isQuitting.Store(true)
 	go func() {
 		time.Sleep(1 * time.Second)
 		runtime.Quit(a.ctx)
@@ -462,7 +466,7 @@ func (a *App) stopProcessWatcher() {
 
 // QuitApp sets the quitting flag and exits.
 func (a *App) QuitApp() {
-	a.isQuitting = true
+	a.isQuitting.Store(true)
 	runtime.Quit(a.ctx)
 }
 
@@ -472,10 +476,20 @@ func (a *App) ShowWindow() {
 }
 
 func (a *App) shouldRunInBackground() bool {
-	if a.isQuitting {
+	if a.isQuitting.Load() {
 		return false
 	}
 	return a.settingsSvc.Get().AutostartEnabled
+}
+
+func (a *App) beforeClose() bool {
+	if a.shouldRunInBackground() {
+		runtime.LogInfo(a.ctx, "window close requested; hiding app and keeping background monitoring active")
+		a.hideWindow()
+		return true
+	}
+	runtime.LogInfo(a.ctx, "window close requested; exiting app")
+	return false
 }
 
 func (a *App) hideWindow() {

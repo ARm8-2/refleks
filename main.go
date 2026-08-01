@@ -47,12 +47,8 @@ func main() {
 				app.ShowWindow()
 			},
 		},
-		OnBeforeClose: func(ctx context.Context) (prevent bool) {
-			if app.shouldRunInBackground() {
-				app.hideWindow()
-				return true
-			}
-			return false
+		OnBeforeClose: func(context.Context) (prevent bool) {
+			return app.beforeClose()
 		},
 		Windows: &windows.Options{
 			WebviewIsTransparent: false,
