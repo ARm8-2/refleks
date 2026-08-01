@@ -1,17 +1,21 @@
-import { useEffect, useRef, useState } from 'react'
-import type { WelcomePresentation } from '../lib/presentation'
-import { WelcomeModal } from './WelcomeModal'
+import { useEffect, useRef, useState } from "react";
+import type { WelcomePresentation } from "../lib/presentation";
+import { WelcomeModal } from "./WelcomeModal";
 
-const WELCOME_MODAL_CLOSE_DURATION_MS = 220
+const WELCOME_MODAL_CLOSE_DURATION_MS = 220;
 
 type WelcomeModalSessionProps = {
-  presentation: WelcomePresentation | null
-  onConfirm: (choices: { anonymousEnabled: boolean, mouseTrackingEnabled: boolean | null }) => Promise<void> | void
-  onDismissed: (reason: 'confirm' | 'dismiss') => void
-  closeOnOutsideClick?: boolean
-  closeOnEscapeKey?: boolean
-  showCloseButton?: boolean
-}
+  presentation: WelcomePresentation | null;
+  onConfirm: (choices: {
+    anonymousEnabled: boolean;
+    mouseTrackingEnabled: boolean | null;
+    screenCaptureEnabled: boolean | null;
+  }) => Promise<void> | void;
+  onDismissed: (reason: "confirm" | "dismiss") => void;
+  closeOnOutsideClick?: boolean;
+  closeOnEscapeKey?: boolean;
+  showCloseButton?: boolean;
+};
 
 export function WelcomeModalSession({
   presentation,
@@ -21,38 +25,38 @@ export function WelcomeModalSession({
   closeOnEscapeKey,
   showCloseButton,
 }: WelcomeModalSessionProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const closeTimerRef = useRef<number | null>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const closeTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (presentation) {
-      setIsOpen(true)
+      setIsOpen(true);
     }
-  }, [presentation])
+  }, [presentation]);
 
   useEffect(() => {
     return () => {
       if (closeTimerRef.current !== null) {
-        window.clearTimeout(closeTimerRef.current)
+        window.clearTimeout(closeTimerRef.current);
       }
-    }
-  }, [])
+    };
+  }, []);
 
-  const completeClose = (reason: 'confirm' | 'dismiss') => {
-    setIsOpen(false)
+  const completeClose = (reason: "confirm" | "dismiss") => {
+    setIsOpen(false);
 
     if (closeTimerRef.current !== null) {
-      window.clearTimeout(closeTimerRef.current)
+      window.clearTimeout(closeTimerRef.current);
     }
 
     closeTimerRef.current = window.setTimeout(() => {
-      closeTimerRef.current = null
-      onDismissed(reason)
-    }, WELCOME_MODAL_CLOSE_DURATION_MS)
-  }
+      closeTimerRef.current = null;
+      onDismissed(reason);
+    }, WELCOME_MODAL_CLOSE_DURATION_MS);
+  };
 
   if (!presentation) {
-    return null
+    return null;
   }
 
   return (
@@ -61,16 +65,19 @@ export function WelcomeModalSession({
       content={presentation.content}
       initialAnonymousEnabled={presentation.initialAnonymousEnabled}
       initialMouseTrackingEnabled={presentation.initialMouseTrackingEnabled}
+      initialScreenCaptureEnabled={presentation.initialScreenCaptureEnabled}
       showMouseTraceChoice={presentation.showMouseTraceChoice}
+      showScreenCaptureChoice={presentation.showScreenCaptureChoice}
+      showAnonymousChoice={presentation.showAnonymousChoice}
       runSyncEnabled={presentation.runSyncEnabled}
       closeOnOutsideClick={closeOnOutsideClick}
       closeOnEscapeKey={closeOnEscapeKey}
       showCloseButton={showCloseButton}
-      onConfirm={async choices => {
-        await onConfirm(choices)
-        completeClose('confirm')
+      onConfirm={async (choices) => {
+        await onConfirm(choices);
+        completeClose("confirm");
       }}
-      onClose={() => completeClose('dismiss')}
+      onClose={() => completeClose("dismiss")}
     />
-  )
+  );
 }

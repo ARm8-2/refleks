@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"refleks/internal/constants"
+	"refleks/internal/models"
 )
 
 // cm360 converts horizontal sensitivity data into centimeters per 360-degree turn.
@@ -36,21 +37,54 @@ func cm360(scale string, horizSens, dpi float64) (cm float64, ok bool) {
 	}
 }
 
-// cm360FromStats extracts the needed values from a stats map and computes cm/360.
-func cm360FromStats(stats map[string]any) (float64, bool) {
-	if stats == nil {
-		return 0, false
-	}
-	scale, _ := stats["Sens Scale"].(string)
-	s := toFloat(stats["Horiz Sens"])
-	dpi := toFloat(stats["DPI"])
-	return cm360(scale, s, dpi)
+// cm360FromStats extracts the needed values from a stats summary and computes cm/360.
+func cm360FromStats(stats models.RunStatsSummary) (float64, bool) {
+	return cm360(stats.SensScale, stats.HorizSens, stats.DPI)
 }
 
+// yawByScale maps Kovaak's "Sens Scale" string to the corresponding yaw
+// constant from internal/constants (degrees of rotation per mouse count at
+// sensitivity 1.0).
+//
+// Values are sourced from Kovaak's official FovSensConfig.json. Only scales
+// using a linear IncrementFormula of the form "Sens * yaw" are listed here.
+// Non-linear scales (Splitgate, Paladins, PUBG, Battlefield V/1/6, GTA 5)
+// depend on FOV or use affine formulas and are intentionally omitted.
 var yawByScale = map[string]float64{
-	"Apex Legends":   constants.YawDegPerCountSource,
-	"CSGO":           constants.YawDegPerCountSource,
-	"Counter-Strike": constants.YawDegPerCountSource,
+	// Source family (yaw 0.022)
+	"Quake/Source":    constants.YawDegPerCountSource,
+	"Quake Champions": constants.YawDegPerCountSource,
+	"Apex Legends":    constants.YawDegPerCountSource,
+	"Counter-Strike":  constants.YawDegPerCountSource,
+	"CSGO":            constants.YawDegPerCountSource,
+
+	// Overwatch family (yaw 0.0066)
+	"Overwatch":    constants.YawDegPerCountOverwatch,
+	"Call of Duty": constants.YawDegPerCountOverwatch,
+	"Destiny 2":    constants.YawDegPerCountOverwatch,
+
+	// Single-game scales
+	"Valorant":         constants.YawDegPerCountValorant,
+	"Halo":             constants.YawDegPerCountHalo,
+	"Fortnite":         constants.YawDegPerCountFortnite,
+	"Diabotical":       constants.YawDegPerCountDiabotical,
+	"Rust":             constants.YawDegPerCountRust,
+	"UE4":              constants.YawDegPerCountUE4,
+	"Hunt: Showdown":   constants.YawDegPerCountHuntShowdown,
+	"Gundam Evolution": constants.YawDegPerCountGundamEvolution,
+	"The FINALS":       constants.YawDegPerCountTheFinals,
+	"Roblox":           constants.YawDegPerCountRoblox,
+	"Roblox Arsenal":   constants.YawDegPerCountRobloxArsenal,
+	"Marvel Rivals":    constants.YawDegPerCountMarvelRivals,
+	"Deadlock":         constants.YawDegPerCountDeadlock,
+	"Fragpunk":         constants.YawDegPerCountFragpunk,
+	"Strinova":         constants.YawDegPerCountStrinova,
+	"Delta Force":      constants.YawDegPerCountDeltaForce,
+	"Batallion":        constants.YawDegPerCountBatallion,
+
+	// Shared yaw (0.018 / pi)
+	"Rainbow 6: Siege": constants.YawDegPerCountSiege,
+	"Reflex Arena":     constants.YawDegPerCountSiege,
 }
 
 func toFloat(v any) float64 {

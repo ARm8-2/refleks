@@ -1,5 +1,11 @@
-export { VersionWelcomeGate } from './components/VersionWelcomeGate'
-export { WelcomeModal } from './components/WelcomeModal'
-export { WelcomeModalSession } from './components/WelcomeModalSession'
-export { resolveWelcomeContent, type WelcomeContent } from './lib/content'
-export { buildManualWelcomePresentation, buildVersionWelcomePresentation, buildWelcomeSeenSettingsUpdate, buildWelcomeSettingsUpdate, type WelcomePresentation } from './lib/presentation'
+export { VersionWelcomeGate } from "./components/VersionWelcomeGate";
+export { WelcomeModal } from "./components/WelcomeModal";
+export { WelcomeModalSession } from "./components/WelcomeModalSession";
+export { resolveWelcomeContent, type WelcomeContent } from "./lib/content";
+export {
+  buildManualWelcomePresentation,
+  buildVersionWelcomePresentation,
+  buildWelcomeSeenSettingsUpdate,
+  buildWelcomeSettingsUpdate,
+  type WelcomePresentation,
+} from "./lib/presentation";

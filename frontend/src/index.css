@@ -78,9 +78,15 @@
     --ink-inverse: #f8fafc;
 
     /* Fonts */
-    --font-stack-montserrat: "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --font-stack-inter: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
-    --font-stack-jetbrains-mono: "JetBrains Mono", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, monospace;
+    --font-stack-montserrat:
+      "Montserrat", "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+    --font-stack-inter:
+      "Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue",
+      Arial, sans-serif;
+    --font-stack-jetbrains-mono:
+      "JetBrains Mono", "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+      monospace;
     --font-body: var(--font-stack-montserrat);
     --font-mono: var(--font-stack-jetbrains-mono);
 
@@ -341,7 +347,7 @@
     border-radius: 9999px;
     border: 2px solid transparent;
     background-clip: padding-box;
-    transition: background-color .15s ease;
+    transition: background-color 0.15s ease;
   }
 
   *::-webkit-scrollbar-thumb:hover {
@@ -384,7 +390,7 @@
 
 @layer utilities {
   .route-content-enter {
-    animation: route-content-fade-in .16s ease-out backwards;
+    animation: route-content-fade-in 0.16s ease-out backwards;
   }
 }
 
@@ -395,7 +401,8 @@
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: local("") url("./assets/fonts/Montserrat-VariableFont_wght.ttf") format("truetype-variations");
+  src: local("") url("./assets/fonts/Montserrat-VariableFont_wght.ttf")
+    format("truetype-variations");
 }
 
 @font-face {
@@ -403,5 +410,6 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: local("") url("./assets/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  src: local("") url("./assets/fonts/JetBrainsMono-Regular.woff2")
+    format("woff2");
 }

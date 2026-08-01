@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"refleks/internal/constants"
@@ -21,15 +22,16 @@ import (
 
 // Watcher monitors a directory for new stats files and emits events.
 type Watcher struct {
-	ctx     context.Context
-	cfg     models.WatcherConfig
-	mu      sync.RWMutex
-	running bool
-	gen     uint64
-	stopCh  chan struct{}
-	seen    map[string]struct{} // full file path set
-	mouse   models.MouseTraceProvider
-	runSvc  RunStore
+	ctx      context.Context
+	cfg      models.WatcherConfig
+	mu       sync.RWMutex
+	running  bool
+	gen      uint64
+	stopCh   chan struct{}
+	seen     map[string]struct{}
+	inFlight map[string]struct{}
+	mouse    models.MouseTraceProvider
+	runSvc   RunStore
 
 	OnRunParsed func(models.RunRecord)
 }
@@ -49,11 +51,12 @@ type RunStore interface {
 // New returns a new Watcher with the given config.
 func New(ctx context.Context, cfg models.WatcherConfig, runSvc RunStore) *Watcher {
 	return &Watcher{
-		ctx:    ctx,
-		cfg:    cfg,
-		stopCh: make(chan struct{}),
-		seen:   make(map[string]struct{}),
-		runSvc: runSvc,
+		ctx:      ctx,
+		cfg:      cfg,
+		stopCh:   make(chan struct{}),
+		seen:     make(map[string]struct{}),
+		inFlight: make(map[string]struct{}),
+		runSvc:   runSvc,
 	}
 }
 
@@ -64,7 +67,7 @@ func (w *Watcher) SetMouseProvider(p models.MouseTraceProvider) {
 	w.mouse = p
 }
 
-// Start begins polling loop. It is safe to call once; subsequent calls return an error.
+// Start begins the watch loop. It is safe to call once; subsequent calls are a no-op.
 func (w *Watcher) Start() error {
 	w.mu.Lock()
 	if w.running {
@@ -85,15 +88,14 @@ func (w *Watcher) Start() error {
 		}
 	}
 
+	// Everything already present when the watcher starts is treated as existing.
+	// Only the filtered catch-up subset is converted on startup; the live
+	// detection paths (fsnotify or polling) are reserved for files that appear
+	// after startup.
 	allExisting := w.snapshotExistingStats()
 	catchUpFiles := w.filterStatsWithinDays(allExisting)
-
-	// Everything already present when the watcher starts is treated as existing.
-	// Only the filtered catch-up subset is converted on startup; the live polling
-	// path is reserved for files that appear after startup.
 	w.markExistingStatsSeen(allExisting)
-	payload := map[string]string{"path": w.cfg.Path}
-	runtime.EventsEmit(w.ctx, constants.EventRunsWatcherStarted, payload)
+	runtime.EventsEmit(w.ctx, constants.EventRunsWatcherStarted, map[string]string{"path": w.cfg.Path})
 
 	if len(catchUpFiles) > 0 {
 		go w.catchUpExisting(catchUpFiles, currentGen)
@@ -117,7 +119,7 @@ func (w *Watcher) Stop() error {
 	return nil
 }
 
-// SetOnRunParsed sets the callback for when a run is ingested.
+// SetOnRunParsed sets the callback invoked when a run is ingested.
 func (w *Watcher) SetOnRunParsed(fn func(models.RunRecord)) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -127,10 +129,52 @@ func (w *Watcher) SetOnRunParsed(fn func(models.RunRecord)) {
 func (w *Watcher) Clear() {
 	w.mu.Lock()
 	w.seen = make(map[string]struct{})
+	w.inFlight = make(map[string]struct{})
 	w.mu.Unlock()
 }
 
+// loop uses fsnotify for instant file detection when available, falling back
+// to the configured poll interval.  The two are mutually exclusive — either
+// fsnotify works (instant, zero polling) or we poll periodically.
 func (w *Watcher) loop() {
+	fsw, err := fsnotify.NewWatcher()
+	if err == nil {
+		if addErr := fsw.Add(w.cfg.Path); addErr == nil {
+			runtime.LogInfof(w.ctx, "fsnotify watching: %s", w.cfg.Path)
+			defer fsw.Close()
+			for {
+				select {
+				case <-w.stopCh:
+					return
+				case ev, ok := <-fsw.Events:
+					if !ok {
+						return
+					}
+					if ev.Op&(fsnotify.Create|fsnotify.Write) == 0 {
+						continue
+					}
+					name := filepath.Base(ev.Name)
+					if !isKovaaksStatsFile(name) {
+						continue
+					}
+					w.ingestStatsFile(ev.Name, name, ingestOptions{notifyParsed: true, emitEvent: true})
+				case fswErr, ok := <-fsw.Errors:
+					if !ok {
+						return
+					}
+					runtime.LogWarningf(w.ctx, "fsnotify error: %v", fswErr)
+				}
+			}
+		} else {
+			runtime.LogWarningf(w.ctx, "fsnotify unavailable for %s: %v; falling back to polling", w.cfg.Path, addErr)
+			_ = fsw.Close()
+		}
+	} else {
+		runtime.LogWarningf(w.ctx, "fsnotify initialization failed: %v; falling back to polling", err)
+	}
+
+	// Fallback: poll at configured interval
+	runtime.LogInfof(w.ctx, "fsnotify unavailable, falling back to %s polling", w.cfg.PollInterval)
 	ticker := time.NewTicker(w.cfg.PollInterval)
 	defer ticker.Stop()
 	for {
@@ -138,17 +182,64 @@ func (w *Watcher) loop() {
 		case <-w.stopCh:
 			return
 		case <-ticker.C:
-			_ = w.scanOnce()
+			if err := w.scanOnce(); err != nil {
+				runtime.LogWarningf(w.ctx, "watcher poll scan failed for %s: %v", w.cfg.Path, err)
+			}
 		}
 	}
 }
 
-// scanOnce lists directory and emits events for newly discovered files.
+// IsRunning indicates if the watcher loop is active.
+func (w *Watcher) IsRunning() bool {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.running
+}
+
+// ScanNow triggers an immediate directory scan outside the normal
+// fsnotify/poll cadence, without waiting for the next event or tick. Used to
+// pick up files written right before the watched process exits (e.g. so a
+// run's screen recording can be scheduled for trimming as soon as possible
+// after KovaaK's closes, rather than waiting for the next poll interval).
+func (w *Watcher) ScanNow() {
+	w.mu.RLock()
+	running := w.running
+	w.mu.RUnlock()
+	if !running {
+		return
+	}
+	if err := w.scanOnce(); err != nil {
+		runtime.LogWarningf(w.ctx, "watcher immediate scan failed for %s: %v", w.cfg.Path, err)
+	}
+}
+
+// WaitForIdle waits until any live file ingestions have registered their run
+// work. It is used before releasing a stopped screen-capture session so an
+// fsnotify handler already parsing a final stats file cannot lose its segments.
+// The supplied context bounds shutdown rather than blocking it indefinitely.
+func (w *Watcher) WaitForIdle(ctx context.Context) bool {
+	ticker := time.NewTicker(10 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		w.mu.RLock()
+		idle := len(w.inFlight) == 0
+		w.mu.RUnlock()
+		if idle {
+			return true
+		}
+		select {
+		case <-ctx.Done():
+			return false
+		case <-ticker.C:
+		}
+	}
+}
+
+// scanOnce lists the directory and ingests any newly discovered stats files.
 func (w *Watcher) scanOnce() error {
 	if strings.TrimSpace(w.cfg.Path) == "" {
 		return nil
 	}
-
 	entries, err := os.ReadDir(w.cfg.Path)
 	if err != nil {
 		return err
@@ -162,14 +253,12 @@ func (w *Watcher) scanOnce() error {
 			continue
 		}
 		full := filepath.Join(w.cfg.Path, name)
-
 		w.mu.RLock()
 		_, known := w.seen[full]
 		w.mu.RUnlock()
 		if known {
 			continue
 		}
-
 		w.ingestStatsFile(full, name, ingestOptions{notifyParsed: true, emitEvent: true})
 	}
 	return nil
@@ -179,13 +268,11 @@ func (w *Watcher) snapshotExistingStats() []string {
 	if strings.TrimSpace(w.cfg.Path) == "" {
 		return nil
 	}
-
 	entries, err := os.ReadDir(w.cfg.Path)
 	if err != nil {
 		runtime.LogWarningf(w.ctx, "failed to read watch path for catch-up: %v", err)
 		return nil
 	}
-
 	files := make([]string, 0, len(entries))
 	for _, e := range entries {
 		if e.IsDir() || !isKovaaksStatsFile(e.Name()) {
@@ -214,7 +301,6 @@ func (w *Watcher) filterStatsWithinDays(files []string) []string {
 		}
 		return files
 	}
-
 	cutoff := time.Now().AddDate(0, 0, -days).UnixMilli()
 	out := make([]string, 0, len(files))
 	for _, full := range files {
@@ -222,7 +308,6 @@ func (w *Watcher) filterStatsWithinDays(files []string) []string {
 			out = append(out, full)
 		}
 	}
-
 	if minCount > 0 && len(out) < minCount {
 		want := minCount
 		if want > len(files) {
@@ -256,11 +341,8 @@ func (w *Watcher) catchUpExisting(files []string, gen uint64) {
 			ingested = true
 		}
 	}
-
-	// Release memory accumulated during bulk conversion.
 	goruntime.GC()
 	debug.FreeOSMemory()
-
 	if ingested && w.isGenerationCurrent(gen) {
 		runtime.EventsEmit(w.ctx, constants.EventRunsAdded, nil)
 	}
@@ -269,14 +351,25 @@ func (w *Watcher) catchUpExisting(files []string, gen uint64) {
 // ingestStatsFile ingests a stats file with behavior controlled by options.
 // Catch-up uses ignoreSeen without callbacks/events; live ingestion enables both.
 func (w *Watcher) ingestStatsFile(fullPath, name string, options ingestOptions) bool {
-	w.mu.RLock()
+	// fsnotify, polling, and ScanNow may all discover the same file. Reserve it
+	// before parsing so only one path can create a run/replay trim; unlike seen,
+	// a failed parse releases the reservation and remains retryable.
+	w.mu.Lock()
 	_, known := w.seen[fullPath]
-	mouse := w.mouse
-	onParsed := w.OnRunParsed
-	w.mu.RUnlock()
-	if known && !options.ignoreSeen {
+	_, processing := w.inFlight[fullPath]
+	if processing || (known && !options.ignoreSeen) {
+		w.mu.Unlock()
 		return false
 	}
+	w.inFlight[fullPath] = struct{}{}
+	mouse := w.mouse
+	onParsed := w.OnRunParsed
+	w.mu.Unlock()
+	defer func() {
+		w.mu.Lock()
+		delete(w.inFlight, fullPath)
+		w.mu.Unlock()
+	}()
 
 	if w.runSvc.Exists(name) {
 		w.mu.Lock()
@@ -284,25 +377,20 @@ func (w *Watcher) ingestStatsFile(fullPath, name string, options ingestOptions) 
 		w.mu.Unlock()
 		return false
 	}
-
 	rec, err := w.runSvc.IngestRun(fullPath, mouse)
 	if err != nil {
 		runtime.LogErrorf(w.ctx, "parse error for %s: %v", fullPath, err)
 		return false
 	}
-
 	w.mu.Lock()
 	w.seen[fullPath] = struct{}{}
 	w.mu.Unlock()
-
 	if options.notifyParsed && onParsed != nil {
 		onParsed(rec)
 	}
-
 	if options.emitEvent {
 		runtime.EventsEmit(w.ctx, constants.EventRunsAdded, nil)
 	}
-
 	return true
 }
 
@@ -310,13 +398,6 @@ func (w *Watcher) isGenerationCurrent(gen uint64) bool {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	return w.gen == gen && w.running
-}
-
-// IsRunning indicates if the watcher loop is active.
-func (w *Watcher) IsRunning() bool {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	return w.running
 }
 
 // UpdateConfig safely updates the watcher configuration while stopped.

@@ -10,6 +10,10 @@ export function ClearCache() {
   return window['go']['main']['App']['ClearCache']();
 }
 
+export function DeleteRunReplay(arg1) {
+  return window['go']['main']['App']['DeleteRunReplay'](arg1);
+}
+
 export function DownloadAndInstallUpdate(arg1) {
   return window['go']['main']['App']['DownloadAndInstallUpdate'](arg1);
 }
@@ -42,12 +46,28 @@ export function GetRecentRuns(arg1) {
   return window['go']['main']['App']['GetRecentRuns'](arg1);
 }
 
-export function GetRunEvents(arg1) {
-  return window['go']['main']['App']['GetRunEvents'](arg1);
+export function GetRunPerformanceEvents(arg1) {
+  return window['go']['main']['App']['GetRunPerformanceEvents'](arg1);
+}
+
+export function GetRunReplay(arg1) {
+  return window['go']['main']['App']['GetRunReplay'](arg1);
+}
+
+export function GetRunReplayInfo(arg1) {
+  return window['go']['main']['App']['GetRunReplayInfo'](arg1);
+}
+
+export function GetRunStatsEvents(arg1) {
+  return window['go']['main']['App']['GetRunStatsEvents'](arg1);
 }
 
 export function GetRunTrace(arg1) {
   return window['go']['main']['App']['GetRunTrace'](arg1);
+}
+
+export function GetScreenCaptureInfo() {
+  return window['go']['main']['App']['GetScreenCaptureInfo']();
 }
 
 export function GetSettings() {

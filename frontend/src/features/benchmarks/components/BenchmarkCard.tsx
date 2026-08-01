@@ -1,28 +1,33 @@
-import type { Benchmark } from '@/shared/types'
-import { ChevronRight, Star } from 'lucide-react'
-import type { MouseEvent } from 'react'
+import type { Benchmark } from "@/shared/types";
+import { ChevronRight, Star } from "lucide-react";
+import type { MouseEvent } from "react";
 
 interface BenchmarkCardProps {
-  benchmark: Benchmark
-  isFavorite: boolean
-  onToggleFavorite: () => void
-  onSelect?: () => void
+  benchmark: Benchmark;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
+  onSelect?: () => void;
 }
 
-export function BenchmarkCard({ benchmark, isFavorite, onToggleFavorite, onSelect }: BenchmarkCardProps) {
+export function BenchmarkCard({
+  benchmark,
+  isFavorite,
+  onToggleFavorite,
+  onSelect,
+}: BenchmarkCardProps) {
   const handleToggle = (e: MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation()
-    onToggleFavorite()
-  }
+    e.stopPropagation();
+    onToggleFavorite();
+  };
 
   return (
     <div
       onClick={onSelect}
       className="relative group cursor-pointer rounded-xl bg-surface pl-2 pr-10 py-2 transition-[transform,background-color,box-shadow] duration-200 ease-emphasized origin-center will-change-transform hover:z-10 hover:scale-[1.02] hover:bg-surface-muted hover:shadow-sm active:scale-[0.995]"
-      onKeyDown={e => {
-        if ((e.key === 'Enter' || e.key === ' ') && onSelect) {
-          e.preventDefault()
-          onSelect()
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && onSelect) {
+          e.preventDefault();
+          onSelect();
         }
       }}
       tabIndex={0}
@@ -32,13 +37,18 @@ export function BenchmarkCard({ benchmark, isFavorite, onToggleFavorite, onSelec
         <button
           type="button"
           aria-pressed={isFavorite}
-          aria-label={isFavorite ? 'Unfavorite' : 'Favorite'}
-          title={isFavorite ? 'Unfavorite' : 'Favorite'}
+          aria-label={isFavorite ? "Unfavorite" : "Favorite"}
+          title={isFavorite ? "Unfavorite" : "Favorite"}
           onClick={handleToggle}
-          className={`inline-flex h-8 w-8 items-center justify-center rounded-xl focus:outline-none transition-[transform,background-color,color] duration-200 ease-emphasized hover:bg-surface-emphasis hover:scale-[1.05] active:scale-[0.96] ${isFavorite ? 'text-primary' : 'text-foreground hover:text-primary'
-            }`}
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-xl focus:outline-none transition-[transform,background-color,color] duration-200 ease-emphasized hover:bg-surface-emphasis hover:scale-[1.05] active:scale-[0.96] ${
+            isFavorite ? "text-primary" : "text-foreground hover:text-primary"
+          }`}
         >
-          <Star size={20} strokeWidth={1.5} fill={isFavorite ? 'currentColor' : 'none'} />
+          <Star
+            size={20}
+            strokeWidth={1.5}
+            fill={isFavorite ? "currentColor" : "none"}
+          />
         </button>
 
         <div className="font-medium text-foreground truncate flex-1">
@@ -47,7 +57,11 @@ export function BenchmarkCard({ benchmark, isFavorite, onToggleFavorite, onSelec
 
         <span
           className="px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 border-border text-surface-muted-foreground"
-          style={benchmark.color ? { borderColor: benchmark.color, color: benchmark.color } : undefined}
+          style={
+            benchmark.color
+              ? { borderColor: benchmark.color, color: benchmark.color }
+              : undefined
+          }
           title={benchmark.abbreviation}
         >
           {benchmark.abbreviation}
@@ -59,5 +73,5 @@ export function BenchmarkCard({ benchmark, isFavorite, onToggleFavorite, onSelec
         </div>
       </div>
     </div>
-  )
+  );
 }

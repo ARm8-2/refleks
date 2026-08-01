@@ -4,54 +4,56 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"path/filepath"
-	"sort"
 	"sync"
 
 	"github.com/klauspost/compress/zstd"
 	"github.com/zeebo/xxh3"
 
 	"refleks/internal/models"
+	"refleks/internal/runs/kovaaks"
 )
 
 const (
-	runMagic   = "RFLK"
-	runVersion = 1
+	runMagic          = "RFLK"
+	runVersionV1      = 1
+	runVersionV2      = 2
+	runVersionCurrent = runVersionV2
 
 	runCompressionNone uint8 = 0
 	runCompressionZstd uint8 = 1
 	runHeaderSize            = int64(4 + 1 + 1 + 8)
 	runChecksumSize          = int64(8)
 
+	// v1 stat type tags — used only by readStatsSummaryMap for v1 compatibility.
 	statTypeString = 1
 	statTypeInt    = 2
 	statTypeFloat  = 3
 	statTypeBool   = 4
 )
 
-// RunRecord contains a parsed run persisted in a .refleks file.
-type RunRecord struct {
-	FilePath   string
-	FileName   string
-	EpochMilli int64
-	Stats      map[string]any
-	Events     [][]string
-	MouseTrace []models.MousePoint
-	Env        models.RunEnvironment
-}
-
 type readRecordOptions struct {
-	skipEvents     bool
-	skipMouseTrace bool
+	skipStatsEvents       bool
+	skipPerformanceEvents bool
+	skipMouseTrace        bool
 }
 
-func writeRecord(w io.Writer, rec RunRecord) error {
+type storedRunRecord struct {
+	FileVersion  uint8
+	FileName     string
+	EpochMilli   int64
+	Stats        models.RunStatsData
+	Performances *models.RunPerformanceData
+	MouseTrace   []models.MousePoint
+	Env          models.RunEnvironment
+}
+
+func writeRecord(w io.Writer, rec storedRunRecord) error {
 	if _, err := w.Write([]byte(runMagic)); err != nil {
 		return err
 	}
-	if err := binary.Write(w, binary.LittleEndian, uint8(runVersion)); err != nil {
+	if err := binary.Write(w, binary.LittleEndian, uint8(runVersionCurrent)); err != nil {
 		return err
 	}
 
@@ -75,19 +77,19 @@ func writeRecord(w io.Writer, rec RunRecord) error {
 		_ = closePayload()
 		return err
 	}
-	if err := writeStats(payloadWriter, rec.Stats); err != nil {
+	if err := writeStatsSection(payloadWriter, rec.Stats); err != nil {
 		_ = closePayload()
 		return err
 	}
-	if err := writeEvents(payloadWriter, rec.Events); err != nil {
+	if err := writePerformancesSection(payloadWriter, rec.Performances); err != nil {
 		_ = closePayload()
 		return err
 	}
-	if err := writeMouseTrace(payloadWriter, rec.MouseTrace); err != nil {
+	if err := writeMouseTraceSection(payloadWriter, rec.MouseTrace); err != nil {
 		_ = closePayload()
 		return err
 	}
-	if err := writeRunEnvironment(payloadWriter, rec.Env); err != nil {
+	if err := writeEnvironmentSection(payloadWriter, rec.Env); err != nil {
 		_ = closePayload()
 		return err
 	}
@@ -100,50 +102,50 @@ func writeRecord(w io.Writer, rec RunRecord) error {
 	return binary.Write(w, binary.LittleEndian, checksum)
 }
 
-func readRecordFile(path string, options readRecordOptions) (RunRecord, error) {
+func readRecordFile(path string, options readRecordOptions) (storedRunRecord, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 	defer f.Close()
 
 	fi, err := f.Stat()
 	if err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 	if fi.Size() < runHeaderSize+runChecksumSize {
-		return RunRecord{}, fmt.Errorf("invalid run file: too small")
+		return storedRunRecord{}, fmt.Errorf("invalid run file: too small")
 	}
 
 	var magic [4]byte
 	if _, err := io.ReadFull(f, magic[:]); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 	if string(magic[:]) != runMagic {
-		return RunRecord{}, fmt.Errorf("invalid run file: bad magic")
+		return storedRunRecord{}, fmt.Errorf("invalid run file: bad magic")
 	}
 
 	var version uint8
 	if err := binary.Read(f, binary.LittleEndian, &version); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
-	if version != runVersion {
-		return RunRecord{}, fmt.Errorf("unsupported run version: %d", version)
+	if version != runVersionV1 && version != runVersionV2 {
+		return storedRunRecord{}, fmt.Errorf("unsupported run version: %d", version)
 	}
 
 	var compression uint8
 	if err := binary.Read(f, binary.LittleEndian, &compression); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 
 	var epochMilli int64
 	if err := binary.Read(f, binary.LittleEndian, &epochMilli); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 
 	encodedLen := fi.Size() - runHeaderSize - runChecksumSize
 	if encodedLen < 0 {
-		return RunRecord{}, fmt.Errorf("invalid run file: negative payload size")
+		return storedRunRecord{}, fmt.Errorf("invalid run file: negative payload size")
 	}
 
 	hasher := xxh3.New()
@@ -151,382 +153,164 @@ func readRecordFile(path string, options readRecordOptions) (RunRecord, error) {
 	teedPayload := io.TeeReader(encodedReader, hasher)
 	payloadReader, closePayload, err := newRunPayloadReader(teedPayload, compression)
 	if err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 
-	fileName, err := readString(payloadReader)
+	var record storedRunRecord
+	switch version {
+	case runVersionV1:
+		record, err = readRecordV1Payload(payloadReader, epochMilli, options)
+	case runVersionV2:
+		record, err = readRecordV2Payload(payloadReader, epochMilli, options)
+	}
 	if err != nil {
 		_ = closePayload()
-		return RunRecord{}, err
-	}
-
-	stats, err := readStats(payloadReader)
-	if err != nil {
-		_ = closePayload()
-		return RunRecord{}, err
-	}
-
-	var events [][]string
-	if options.skipEvents {
-		if err := skipEvents(payloadReader); err != nil {
-			_ = closePayload()
-			return RunRecord{}, err
-		}
-	} else {
-		events, err = readEvents(payloadReader)
-		if err != nil {
-			_ = closePayload()
-			return RunRecord{}, err
-		}
-	}
-
-	trace := []models.MousePoint(nil)
-	if options.skipMouseTrace {
-		if err := skipMouseTrace(payloadReader); err != nil {
-			_ = closePayload()
-			return RunRecord{}, err
-		}
-	} else {
-		trace, err = readMouseTrace(payloadReader)
-		if err != nil {
-			_ = closePayload()
-			return RunRecord{}, err
-		}
-	}
-
-	env, err := readRunEnvironment(payloadReader)
-	if err != nil {
-		_ = closePayload()
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 
 	var trailing [1]byte
 	if _, err := payloadReader.Read(trailing[:]); err != io.EOF {
 		_ = closePayload()
 		if err == nil {
-			return RunRecord{}, fmt.Errorf("invalid run file: trailing payload data")
+			return storedRunRecord{}, fmt.Errorf("invalid run file: trailing payload data")
 		}
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 	if err := closePayload(); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 
 	var wantChecksum uint64
 	if err := binary.Read(f, binary.LittleEndian, &wantChecksum); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	}
 	if gotChecksum := hasher.Sum64(); gotChecksum != wantChecksum {
-		return RunRecord{}, fmt.Errorf("invalid run file: checksum mismatch")
+		return storedRunRecord{}, fmt.Errorf("invalid run file: checksum mismatch")
 	}
 
 	if extra, err := io.ReadAll(f); err != nil {
-		return RunRecord{}, err
+		return storedRunRecord{}, err
 	} else if len(extra) > 0 {
-		return RunRecord{}, fmt.Errorf("invalid run file: trailing bytes after checksum")
+		return storedRunRecord{}, fmt.Errorf("invalid run file: trailing bytes after checksum")
 	}
 
-	return RunRecord{
+	record.FileVersion = version
+
+	return record, nil
+}
+
+// ---- v1 payload reader (unchanged from original format) ----
+
+func readRecordV1Payload(payloadReader io.Reader, epochMilli int64, options readRecordOptions) (storedRunRecord, error) {
+	fileName, err := readString(payloadReader)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+	summary, err := readStatsSummarySection(payloadReader)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+	stats := models.RunStatsData{Summary: summary}
+
+	if options.skipStatsEvents {
+		if err := skipStatsEventsSection(payloadReader); err != nil {
+			return storedRunRecord{}, err
+		}
+	} else {
+		statsEvents, err := readStatsEventsSection(payloadReader)
+		if err != nil {
+			return storedRunRecord{}, err
+		}
+		stats = withStatsEvents(stats, statsEvents)
+	}
+
+	trace := []models.MousePoint(nil)
+	if options.skipMouseTrace {
+		if err := skipMouseTrace(payloadReader); err != nil {
+			return storedRunRecord{}, err
+		}
+	} else {
+		trace, err = readMouseTrace(payloadReader)
+		if err != nil {
+			return storedRunRecord{}, err
+		}
+	}
+
+	env, err := readRunEnvironment(payloadReader)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+
+	return storedRunRecord{
 		FileName:   fileName,
 		EpochMilli: epochMilli,
 		Stats:      stats,
-		Events:     events,
 		MouseTrace: trace,
 		Env:        env,
 	}, nil
 }
 
-// Pooled zstd encoders/decoders to avoid per-file allocations.
-var (
-	zstdEncoderPool sync.Pool
-	zstdDecoderPool sync.Pool
-)
+// ---- v2 payload reader (protowire-based) ----
 
-func newRunPayloadWriter(w io.Writer, compression uint8) (io.Writer, func() error, error) {
-	switch compression {
-	case runCompressionNone:
-		return w, func() error { return nil }, nil
-	case runCompressionZstd:
-		var enc *zstd.Encoder
-		if v := zstdEncoderPool.Get(); v != nil {
-			enc = v.(*zstd.Encoder)
-			enc.Reset(w)
-		} else {
-			var err error
-			enc, err = zstd.NewWriter(w)
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-		return enc, func() error {
-			err := enc.Close()
-			zstdEncoderPool.Put(enc)
-			return err
-		}, nil
-	default:
-		return nil, nil, fmt.Errorf("unsupported run compression: %d", compression)
+func readRecordV2Payload(payloadReader io.Reader, epochMilli int64, options readRecordOptions) (storedRunRecord, error) {
+	fileName, err := readString(payloadReader)
+	if err != nil {
+		return storedRunRecord{}, err
 	}
+	stats, err := readStatsSection(payloadReader, !options.skipStatsEvents)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+	performances, err := readPerformancesSection(payloadReader, !options.skipPerformanceEvents)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+	trace, err := readMouseTraceSection(payloadReader, !options.skipMouseTrace)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+	env, err := readEnvironmentSection(payloadReader)
+	if err != nil {
+		return storedRunRecord{}, err
+	}
+
+	return storedRunRecord{
+		FileName:     fileName,
+		EpochMilli:   epochMilli,
+		Stats:        stats,
+		Performances: performances,
+		MouseTrace:   trace,
+		Env:          env,
+	}, nil
 }
 
-func newRunPayloadReader(r io.Reader, compression uint8) (io.Reader, func() error, error) {
-	switch compression {
-	case runCompressionNone:
-		return r, func() error { return nil }, nil
-	case runCompressionZstd:
-		var dec *zstd.Decoder
-		if v := zstdDecoderPool.Get(); v != nil {
-			dec = v.(*zstd.Decoder)
-			if err := dec.Reset(r); err != nil {
-				dec.Close()
-				return nil, nil, err
-			}
-		} else {
-			var err error
-			dec, err = zstd.NewReader(r)
-			if err != nil {
-				return nil, nil, err
-			}
-		}
-		return dec, func() error {
-			zstdDecoderPool.Put(dec)
-			return nil
-		}, nil
-	default:
-		return nil, nil, fmt.Errorf("unsupported run compression: %d", compression)
+// ---- v1-only helpers (keep for backward compatibility) ----
+
+func withStatsEvents(stats models.RunStatsData, events []models.RunStatsEvent) models.RunStatsData {
+	if events == nil {
+		return models.RunStatsData{Summary: stats.Summary}
 	}
+	return models.RunStatsData{Summary: stats.Summary, Events: events}
 }
 
-func writeString(w io.Writer, s string) error {
-	b := []byte(s)
-	if err := binary.Write(w, binary.LittleEndian, uint32(len(b))); err != nil {
-		return err
+func readStatsSummarySection(r io.Reader) (models.RunStatsSummary, error) {
+	rawStats, err := readStatsSummaryMap(r)
+	if err != nil {
+		return models.RunStatsSummary{}, err
 	}
-	if len(b) == 0 {
-		return nil
-	}
-	_, err := w.Write(b)
-	return err
+	return kovaaks.DecodeStatsSummary(rawStats), nil
 }
 
-func readString(r io.Reader) (string, error) {
-	var n uint32
-	if err := binary.Read(r, binary.LittleEndian, &n); err != nil {
-		return "", err
-	}
-	if n == 0 {
-		return "", nil
-	}
-	b := make([]byte, n)
-	if _, err := io.ReadFull(r, b); err != nil {
-		return "", err
-	}
-	return string(b), nil
-}
-
-func writeStats(w io.Writer, stats map[string]any) error {
-	if stats == nil {
-		stats = map[string]any{}
-	}
-	keys := make([]string, 0, len(stats))
-	for k := range stats {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	if err := binary.Write(w, binary.LittleEndian, uint32(len(keys))); err != nil {
-		return err
-	}
-
-	for _, k := range keys {
-		if err := writeString(w, k); err != nil {
-			return err
-		}
-		typ, sval, ival, fval, bval := coerceStat(stats[k])
-		if err := binary.Write(w, binary.LittleEndian, typ); err != nil {
-			return err
-		}
-		switch typ {
-		case statTypeString:
-			if err := writeString(w, sval); err != nil {
-				return err
-			}
-		case statTypeInt:
-			if err := binary.Write(w, binary.LittleEndian, ival); err != nil {
-				return err
-			}
-		case statTypeFloat:
-			if err := binary.Write(w, binary.LittleEndian, fval); err != nil {
-				return err
-			}
-		case statTypeBool:
-			var v uint8
-			if bval {
-				v = 1
-			}
-			if err := binary.Write(w, binary.LittleEndian, v); err != nil {
-				return err
-			}
-		default:
-			return fmt.Errorf("unsupported stat type tag: %d", typ)
-		}
-	}
-
-	return nil
-}
-
-func readStats(r io.Reader) (map[string]any, error) {
-	var count uint32
-	if err := binary.Read(r, binary.LittleEndian, &count); err != nil {
+func readStatsEventsSection(r io.Reader) ([]models.RunStatsEvent, error) {
+	rows, err := readStatsEventRows(r)
+	if err != nil {
 		return nil, err
 	}
-
-	stats := make(map[string]any, count)
-	for i := uint32(0); i < count; i++ {
-		key, err := readString(r)
-		if err != nil {
-			return nil, err
-		}
-
-		var typ uint8
-		if err := binary.Read(r, binary.LittleEndian, &typ); err != nil {
-			return nil, err
-		}
-
-		switch typ {
-		case statTypeString:
-			v, err := readString(r)
-			if err != nil {
-				return nil, err
-			}
-			stats[key] = v
-		case statTypeInt:
-			var v int64
-			if err := binary.Read(r, binary.LittleEndian, &v); err != nil {
-				return nil, err
-			}
-			stats[key] = v
-		case statTypeFloat:
-			var v float64
-			if err := binary.Read(r, binary.LittleEndian, &v); err != nil {
-				return nil, err
-			}
-			stats[key] = v
-		case statTypeBool:
-			var v uint8
-			if err := binary.Read(r, binary.LittleEndian, &v); err != nil {
-				return nil, err
-			}
-			stats[key] = (v == 1)
-		default:
-			return nil, fmt.Errorf("unsupported stat value type: %d", typ)
-		}
-	}
-
-	return stats, nil
+	return kovaaks.DecodeStatsEventRows(rows), nil
 }
 
-func coerceStat(v any) (typ uint8, sval string, ival int64, fval float64, bval bool) {
-	switch t := v.(type) {
-	case string:
-		return statTypeString, t, 0, 0, false
-	case bool:
-		return statTypeBool, "", 0, 0, t
-	case float32:
-		return statTypeFloat, "", 0, float64(t), false
-	case float64:
-		return statTypeFloat, "", 0, t, false
-	case int:
-		return statTypeInt, "", int64(t), 0, false
-	case int8:
-		return statTypeInt, "", int64(t), 0, false
-	case int16:
-		return statTypeInt, "", int64(t), 0, false
-	case int32:
-		return statTypeInt, "", int64(t), 0, false
-	case int64:
-		return statTypeInt, "", t, 0, false
-	case uint:
-		if uint64(t) > math.MaxInt64 {
-			return statTypeInt, "", math.MaxInt64, 0, false
-		}
-		return statTypeInt, "", int64(t), 0, false
-	case uint8:
-		return statTypeInt, "", int64(t), 0, false
-	case uint16:
-		return statTypeInt, "", int64(t), 0, false
-	case uint32:
-		return statTypeInt, "", int64(t), 0, false
-	case uint64:
-		if t > math.MaxInt64 {
-			return statTypeInt, "", math.MaxInt64, 0, false
-		}
-		return statTypeInt, "", int64(t), 0, false
-	default:
-		return statTypeString, fmt.Sprintf("%v", t), 0, 0, false
-	}
-}
-
-func writeEvents(w io.Writer, events [][]string) error {
-	if err := binary.Write(w, binary.LittleEndian, uint32(len(events))); err != nil {
-		return err
-	}
-	for _, row := range events {
-		if err := binary.Write(w, binary.LittleEndian, uint32(len(row))); err != nil {
-			return err
-		}
-		for _, col := range row {
-			if err := writeString(w, col); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func readEvents(r io.Reader) ([][]string, error) {
-	var rows uint32
-	if err := binary.Read(r, binary.LittleEndian, &rows); err != nil {
-		return nil, err
-	}
-
-	events := make([][]string, rows)
-	for i := uint32(0); i < rows; i++ {
-		var cols uint32
-		if err := binary.Read(r, binary.LittleEndian, &cols); err != nil {
-			return nil, err
-		}
-		row := make([]string, cols)
-		for j := uint32(0); j < cols; j++ {
-			v, err := readString(r)
-			if err != nil {
-				return nil, err
-			}
-			row[j] = v
-		}
-		events[i] = row
-	}
-	return events, nil
-}
-
-func writeMouseTrace(w io.Writer, points []models.MousePoint) error {
-	if err := binary.Write(w, binary.LittleEndian, uint32(len(points))); err != nil {
-		return err
-	}
-	for _, p := range points {
-		if err := binary.Write(w, binary.LittleEndian, p.TS); err != nil {
-			return err
-		}
-		if err := binary.Write(w, binary.LittleEndian, p.X); err != nil {
-			return err
-		}
-		if err := binary.Write(w, binary.LittleEndian, p.Y); err != nil {
-			return err
-		}
-		if err := binary.Write(w, binary.LittleEndian, p.Buttons); err != nil {
-			return err
-		}
-	}
-	return nil
+func skipStatsEventsSection(r io.Reader) error {
+	return skipStatsEventRows(r)
 }
 
 func readMouseTrace(r io.Reader) ([]models.MousePoint, error) {
@@ -552,84 +336,6 @@ func readMouseTrace(r io.Reader) ([]models.MousePoint, error) {
 		trace[i] = p
 	}
 	return trace, nil
-}
-
-func writeRunEnvironment(w io.Writer, env models.RunEnvironment) error {
-	if err := writeString(w, env.AppVersion); err != nil {
-		return err
-	}
-	if err := writeString(w, env.OS); err != nil {
-		return err
-	}
-	if err := writeString(w, env.Arch); err != nil {
-		return err
-	}
-	if err := writeString(w, env.OSVersion); err != nil {
-		return err
-	}
-	if err := writeString(w, env.SteamID); err != nil {
-		return err
-	}
-	if err := writeString(w, env.PersonaName); err != nil {
-		return err
-	}
-
-	if err := writeString(w, env.CPUName); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, env.CPUCores); err != nil {
-		return err
-	}
-	if err := writeString(w, env.GPUName); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, env.RAMTotalMB); err != nil {
-		return err
-	}
-
-	if err := binary.Write(w, binary.LittleEndian, env.DisplayHz); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, env.ScreenWidth); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, env.ScreenHeight); err != nil {
-		return err
-	}
-	var isWindowed uint8
-	if env.IsWindowed {
-		isWindowed = 1
-	}
-	if err := binary.Write(w, binary.LittleEndian, isWindowed); err != nil {
-		return err
-	}
-
-	if err := writeString(w, env.MouseName); err != nil {
-		return err
-	}
-	if err := writeString(w, env.MouseVID); err != nil {
-		return err
-	}
-	if err := writeString(w, env.MousePID); err != nil {
-		return err
-	}
-	if err := writeString(w, env.MouseMI); err != nil {
-		return err
-	}
-	if err := writeString(w, env.MouseBackend); err != nil {
-		return err
-	}
-
-	if err := binary.Write(w, binary.LittleEndian, env.TracePoints); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, env.TraceDuration); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, env.SampleRate); err != nil {
-		return err
-	}
-	return nil
 }
 
 func readRunEnvironment(r io.Reader) (models.RunEnvironment, error) {
@@ -752,9 +458,170 @@ func readRunEnvironment(r io.Reader) (models.RunEnvironment, error) {
 	}, nil
 }
 
+// ---- Shared binary helpers ----
+
+func newRunPayloadWriter(w io.Writer, compression uint8) (io.Writer, func() error, error) {
+	switch compression {
+	case runCompressionNone:
+		return w, func() error { return nil }, nil
+	case runCompressionZstd:
+		var enc *zstd.Encoder
+		if v := zstdEncoderPool.Get(); v != nil {
+			enc = v.(*zstd.Encoder)
+			enc.Reset(w)
+		} else {
+			var err error
+			enc, err = zstd.NewWriter(w)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+		return enc, func() error {
+			err := enc.Close()
+			zstdEncoderPool.Put(enc)
+			return err
+		}, nil
+	default:
+		return nil, nil, fmt.Errorf("unsupported run compression: %d", compression)
+	}
+}
+
+func newRunPayloadReader(r io.Reader, compression uint8) (io.Reader, func() error, error) {
+	switch compression {
+	case runCompressionNone:
+		return r, func() error { return nil }, nil
+	case runCompressionZstd:
+		var dec *zstd.Decoder
+		if v := zstdDecoderPool.Get(); v != nil {
+			dec = v.(*zstd.Decoder)
+			if err := dec.Reset(r); err != nil {
+				dec.Close()
+				return nil, nil, err
+			}
+		} else {
+			var err error
+			dec, err = zstd.NewReader(r)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+		return dec, func() error {
+			zstdDecoderPool.Put(dec)
+			return nil
+		}, nil
+	default:
+		return nil, nil, fmt.Errorf("unsupported run compression: %d", compression)
+	}
+}
+
+func writeString(w io.Writer, s string) error {
+	b := []byte(s)
+	if err := binary.Write(w, binary.LittleEndian, uint32(len(b))); err != nil {
+		return err
+	}
+	if len(b) == 0 {
+		return nil
+	}
+	_, err := w.Write(b)
+	return err
+}
+
+func readString(r io.Reader) (string, error) {
+	var n uint32
+	if err := binary.Read(r, binary.LittleEndian, &n); err != nil {
+		return "", err
+	}
+	if n == 0 {
+		return "", nil
+	}
+	b := make([]byte, n)
+	if _, err := io.ReadFull(r, b); err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+// ---- v1 stat map helpers (used only by v1 read path) ----
+
+func readStatsSummaryMap(r io.Reader) (map[string]any, error) {
+	var count uint32
+	if err := binary.Read(r, binary.LittleEndian, &count); err != nil {
+		return nil, err
+	}
+
+	stats := make(map[string]any, count)
+	for i := uint32(0); i < count; i++ {
+		key, err := readString(r)
+		if err != nil {
+			return nil, err
+		}
+
+		var typ uint8
+		if err := binary.Read(r, binary.LittleEndian, &typ); err != nil {
+			return nil, err
+		}
+
+		switch typ {
+		case statTypeString:
+			v, err := readString(r)
+			if err != nil {
+				return nil, err
+			}
+			stats[key] = v
+		case statTypeInt:
+			var v int64
+			if err := binary.Read(r, binary.LittleEndian, &v); err != nil {
+				return nil, err
+			}
+			stats[key] = v
+		case statTypeFloat:
+			var v float64
+			if err := binary.Read(r, binary.LittleEndian, &v); err != nil {
+				return nil, err
+			}
+			stats[key] = v
+		case statTypeBool:
+			var v uint8
+			if err := binary.Read(r, binary.LittleEndian, &v); err != nil {
+				return nil, err
+			}
+			stats[key] = (v == 1)
+		default:
+			return nil, fmt.Errorf("unsupported stat value type: %d", typ)
+		}
+	}
+
+	return stats, nil
+}
+
+func readStatsEventRows(r io.Reader) ([][]string, error) {
+	var rows uint32
+	if err := binary.Read(r, binary.LittleEndian, &rows); err != nil {
+		return nil, err
+	}
+
+	statsEvents := make([][]string, rows)
+	for i := uint32(0); i < rows; i++ {
+		var cols uint32
+		if err := binary.Read(r, binary.LittleEndian, &cols); err != nil {
+			return nil, err
+		}
+		row := make([]string, cols)
+		for j := uint32(0); j < cols; j++ {
+			v, err := readString(r)
+			if err != nil {
+				return nil, err
+			}
+			row[j] = v
+		}
+		statsEvents[i] = row
+	}
+	return statsEvents, nil
+}
+
 // ---- Skip helpers for selective reads ----
 
-const mousePointByteSize = 8 + 4 + 4 + 4 // TS(int64) + X(int32) + Y(int32) + Buttons(int32)
+const mousePointByteSize = 8 + 4 + 4 + 4
 
 func skipString(r io.Reader) error {
 	var n uint32
@@ -769,7 +636,7 @@ func skipString(r io.Reader) error {
 	return nil
 }
 
-func skipEvents(r io.Reader) error {
+func skipStatsEventRows(r io.Reader) error {
 	var rows uint32
 	if err := binary.Read(r, binary.LittleEndian, &rows); err != nil {
 		return err
@@ -788,7 +655,6 @@ func skipEvents(r io.Reader) error {
 	return nil
 }
 
-// skipMouseTrace skips the mouse trace section.
 func skipMouseTrace(r io.Reader) error {
 	var count uint32
 	if err := binary.Read(r, binary.LittleEndian, &count); err != nil {
@@ -801,3 +667,8 @@ func skipMouseTrace(r io.Reader) error {
 	}
 	return nil
 }
+
+var (
+	zstdEncoderPool sync.Pool
+	zstdDecoderPool sync.Pool
+)

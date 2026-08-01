@@ -2,6 +2,6 @@
 
 package process
 
-func isRunning(_ string) bool {
+func processIsRunning(_ string) bool {
 	return false
 }

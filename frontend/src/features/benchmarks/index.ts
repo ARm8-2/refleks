@@ -1,2 +1,2 @@
-export { BenchmarkDetailPage } from './pages/BenchmarkDetailPage'
-export { BenchmarksExplorePage } from './pages/BenchmarksExplorePage'
+export { BenchmarkDetailPage } from "./pages/BenchmarkDetailPage";
+export { BenchmarksExplorePage } from "./pages/BenchmarksExplorePage";

@@ -32,6 +32,7 @@ Unicode true
 ####
 ## Include the wails tools
 ####
+!define PRODUCT_EXECUTABLE "refleks.exe"
 !include "wails_tools.nsh"
 
 # The version information for this two must consist of 4 parts
@@ -90,7 +91,10 @@ Section
 
     !insertmacro wails.files
 
-    CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
+  	; FFmpeg for screen recording
+  	File "..\..\bin\ffmpeg.exe"
+  
+  	CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
     CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
 
     !insertmacro wails.associateFiles

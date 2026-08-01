@@ -69,6 +69,7 @@ func steamLoginUsersPath(s models.Settings) string {
 
 // parseMostRecentUser parses the Valve KeyValues (VDF) loginusers file and returns
 // the SteamID64 and PersonaName for the entry marked with MostRecent = 1.
+// If no entry has MostRecent = 1, the first user entry is returned as a fallback.
 func parseMostRecentUser(path string) (string, string, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -163,6 +164,7 @@ func parseMostRecentUser(path string) (string, string, error) {
 	}
 
 	// iterate over entries: "<steamid>" { kv }
+	var fallbackID, fallbackName string
 	for {
 		key, ok := next()
 		if !ok {
@@ -182,6 +184,10 @@ func parseMostRecentUser(path string) (string, string, error) {
 		if !ok || t.kind != "brace" || t.val != "{" {
 			// malformed; attempt to continue
 			continue
+		}
+		// Remember the first user as a fallback in case no MostRecent entry is found.
+		if fallbackID == "" {
+			fallbackID = steamID
 		}
 		// parse block until matching '}'
 		foundMostRecent := false
@@ -224,6 +230,9 @@ func parseMostRecentUser(path string) (string, string, error) {
 			}
 			if equalFoldTrim(keyName, "PersonaName") {
 				personaName = trimWS(vtok.val)
+				if fallbackName == "" {
+					fallbackName = personaName
+				}
 			}
 		}
 		if foundMostRecent && (mostRecentVal == "1" || mostRecentVal == "true") {
@@ -232,7 +241,12 @@ func parseMostRecentUser(path string) (string, string, error) {
 		// else continue to next entry
 	}
 
-	return "", "", fmt.Errorf("no user with MostRecent = 1 found")
+	// No user with MostRecent = 1 was found. Fall back to the first user
+	// encountered, which covers loginusers.vdf files that omit MostRecent.
+	if fallbackID != "" {
+		return fallbackID, fallbackName, nil
+	}
+	return "", "", fmt.Errorf("no users found in loginusers.vdf")
 }
 
 func stripVDFComments(s string) string {

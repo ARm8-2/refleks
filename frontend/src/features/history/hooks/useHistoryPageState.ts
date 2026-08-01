@@ -1,189 +1,270 @@
-import { usePersistedState, useStore } from '@/shared/hooks'
-import { STORAGE_KEYS } from '@/shared/lib'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { buildHistoryRuns, matchRunSearch, matchSessionSearch, readSessionDurationMs } from '../lib/historyModels'
-import type { InspectorTab } from '../lib/inspectorTabs'
+import { usePersistedState, useStore } from "@/shared/hooks";
+import { STORAGE_KEYS } from "@/shared/lib";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  buildHistoryRuns,
+  matchRunSearch,
+  matchSessionSearch,
+  readSessionDurationMs,
+} from "../lib/historyModels";
+import type { InspectorTab } from "../lib/inspectorTabs";
 
-export type RunSortKey = 'default' | 'score-desc' | 'score-asc' | 'accuracy-desc' | 'scenario'
-export type SessionSortKey = 'newest' | 'oldest' | 'most-runs' | 'longest'
+export type RunSortKey =
+  "default" | "score-desc" | "score-asc" | "accuracy-desc" | "scenario";
+export type SessionSortKey = "newest" | "oldest" | "most-runs" | "longest";
 
 export function useHistoryPageState() {
-  const sessions = useStore(state => state.sessions)
+  const sessions = useStore((state) => state.sessions);
 
-  const [selectedSessionId, setSelectedSessionId] = usePersistedState<string | null>(STORAGE_KEYS.historySelectedSessionId, null)
-  const [sessionQuery, setSessionQuery] = usePersistedState(STORAGE_KEYS.historySessionQuery, '')
-  const [sessionListCollapsed, setSessionListCollapsed] = usePersistedState(STORAGE_KEYS.historySessionListCollapsed, false)
-  const [runQuery, setRunQuery] = usePersistedState(STORAGE_KEYS.historyRunQuery, '')
-  const [runInspectorOpen, setRunInspectorOpen] = usePersistedState(STORAGE_KEYS.historyRunInspectorOpen, false)
-  const [runListCollapsed, setRunListCollapsed] = usePersistedState(STORAGE_KEYS.historyRunListCollapsed, false)
-  const [inspectorTab, setInspectorTab] = usePersistedState<InspectorTab>(STORAGE_KEYS.historyInspectorTab, 'stats')
-  const [selectedScenario, setSelectedScenario] = usePersistedState<string | null>(STORAGE_KEYS.historySelectedScenario, null)
-  const [primaryRunId, setPrimaryRunId] = usePersistedState<string | null>(STORAGE_KEYS.historyPrimaryRunId, null)
-  const [compareRunId, setCompareRunId] = usePersistedState<string | null>(STORAGE_KEYS.historyCompareRunId, null)
-  const [runSort, setRunSort] = usePersistedState<RunSortKey>(STORAGE_KEYS.historyRunSort, 'default')
-  const [runFilterPb, setRunFilterPb] = usePersistedState(STORAGE_KEYS.historyRunFilterPb, false)
-  const [sessionSort, setSessionSort] = usePersistedState<SessionSortKey>(STORAGE_KEYS.historySessionSort, 'newest')
-  const [sessionFilterPb, setSessionFilterPb] = usePersistedState(STORAGE_KEYS.historySessionFilterPb, false)
+  const [selectedSessionId, setSelectedSessionId] = usePersistedState<
+    string | null
+  >(STORAGE_KEYS.historySelectedSessionId, null);
+  const [sessionQuery, setSessionQuery] = usePersistedState(
+    STORAGE_KEYS.historySessionQuery,
+    "",
+  );
+  const [sessionListCollapsed, setSessionListCollapsed] = usePersistedState(
+    STORAGE_KEYS.historySessionListCollapsed,
+    false,
+  );
+  const [runQuery, setRunQuery] = usePersistedState(
+    STORAGE_KEYS.historyRunQuery,
+    "",
+  );
+  const [runInspectorOpen, setRunInspectorOpen] = usePersistedState(
+    STORAGE_KEYS.historyRunInspectorOpen,
+    false,
+  );
+  const [runListCollapsed, setRunListCollapsed] = usePersistedState(
+    STORAGE_KEYS.historyRunListCollapsed,
+    false,
+  );
+  const [inspectorTab, setInspectorTab] = usePersistedState<InspectorTab>(
+    STORAGE_KEYS.historyInspectorTab,
+    "stats",
+  );
+  const [selectedScenario, setSelectedScenario] = usePersistedState<
+    string | null
+  >(STORAGE_KEYS.historySelectedScenario, null);
+  const [primaryRunId, setPrimaryRunId] = usePersistedState<string | null>(
+    STORAGE_KEYS.historyPrimaryRunId,
+    null,
+  );
+  const [compareRunId, setCompareRunId] = usePersistedState<string | null>(
+    STORAGE_KEYS.historyCompareRunId,
+    null,
+  );
+  const [runSort, setRunSort] = usePersistedState<RunSortKey>(
+    STORAGE_KEYS.historyRunSort,
+    "default",
+  );
+  const [runFilterPb, setRunFilterPb] = usePersistedState(
+    STORAGE_KEYS.historyRunFilterPb,
+    false,
+  );
+  const [sessionSort, setSessionSort] = usePersistedState<SessionSortKey>(
+    STORAGE_KEYS.historySessionSort,
+    "newest",
+  );
+  const [sessionFilterPb, setSessionFilterPb] = usePersistedState(
+    STORAGE_KEYS.historySessionFilterPb,
+    false,
+  );
 
-  const allRuns = useMemo(() => buildHistoryRuns(sessions), [sessions])
-  const runsById = useMemo(() => new Map(allRuns.map(run => [run.id, run])), [allRuns])
+  const allRuns = useMemo(() => buildHistoryRuns(sessions), [sessions]);
+  const runsById = useMemo(
+    () => new Map(allRuns.map((run) => [run.id, run])),
+    [allRuns],
+  );
 
   const globalPbByScenario = useMemo(() => {
-    const map = new Map<string, typeof allRuns[0]>()
+    const map = new Map<string, (typeof allRuns)[0]>();
     for (const run of allRuns) {
-      const current = map.get(run.scenarioName)
+      const current = map.get(run.scenarioName);
       if (!current || run.score > current.score) {
-        map.set(run.scenarioName, run)
+        map.set(run.scenarioName, run);
       }
     }
-    return map
-  }, [allRuns])
+    return map;
+  }, [allRuns]);
 
   const selectedSession = useMemo(
-    () => sessions.find(session => session.id === selectedSessionId) ?? sessions[0] ?? null,
+    () =>
+      sessions.find((session) => session.id === selectedSessionId) ??
+      sessions[0] ??
+      null,
     [sessions, selectedSessionId],
-  )
+  );
 
   useEffect(() => {
-    const fallback = sessions[0]?.id ?? null
-    const next = selectedSessionId && sessions.some(session => session.id === selectedSessionId)
-      ? selectedSessionId
-      : fallback
+    const fallback = sessions[0]?.id ?? null;
+    const next =
+      selectedSessionId &&
+      sessions.some((session) => session.id === selectedSessionId)
+        ? selectedSessionId
+        : fallback;
 
     if (next !== selectedSessionId) {
-      setSelectedSessionId(next)
+      setSelectedSessionId(next);
     }
-  }, [selectedSessionId, sessions, setSelectedSessionId])
+  }, [selectedSessionId, sessions, setSelectedSessionId]);
 
   useEffect(() => {
     if (primaryRunId && !runsById.has(primaryRunId)) {
-      setPrimaryRunId(null)
-      setCompareRunId(null)
+      setPrimaryRunId(null);
+      setCompareRunId(null);
     }
-  }, [primaryRunId, runsById, setCompareRunId, setPrimaryRunId])
+  }, [primaryRunId, runsById, setCompareRunId, setPrimaryRunId]);
 
   useEffect(() => {
-    if (!compareRunId) return
+    if (!compareRunId) return;
 
     if (!runsById.has(compareRunId) || compareRunId === primaryRunId) {
-      setCompareRunId(null)
+      setCompareRunId(null);
     }
-  }, [compareRunId, primaryRunId, runsById, setCompareRunId])
+  }, [compareRunId, primaryRunId, runsById, setCompareRunId]);
 
   // Start from closed so persisted open state also runs the same collapse behavior on first mount.
-  const wasInspectorOpen = useRef(false)
+  const wasInspectorOpen = useRef(false);
   useEffect(() => {
     if (runInspectorOpen && !wasInspectorOpen.current) {
-      setSessionListCollapsed(true)
+      setSessionListCollapsed(true);
     }
     if (!runInspectorOpen && wasInspectorOpen.current) {
-      setSessionListCollapsed(false)
+      setSessionListCollapsed(false);
     }
 
-    wasInspectorOpen.current = runInspectorOpen
-  }, [runInspectorOpen, setSessionListCollapsed])
+    wasInspectorOpen.current = runInspectorOpen;
+  }, [runInspectorOpen, setSessionListCollapsed]);
 
   const filteredSessions = useMemo(
-    () => sessions.filter(session => matchSessionSearch(session, sessionQuery)),
+    () =>
+      sessions.filter((session) => matchSessionSearch(session, sessionQuery)),
     [sessionQuery, sessions],
-  )
+  );
 
   const sessionRuns = useMemo(
-    () => allRuns.filter(run => run.sessionId === selectedSession?.id),
+    () => allRuns.filter((run) => run.sessionId === selectedSession?.id),
     [allRuns, selectedSession],
-  )
+  );
 
   const filteredSessionRuns = useMemo(
-    () => sessionRuns.filter(run => matchRunSearch(run, runQuery)),
+    () => sessionRuns.filter((run) => matchRunSearch(run, runQuery)),
     [runQuery, sessionRuns],
-  )
+  );
 
   const sortedFilteredRuns = useMemo(() => {
-    let runs = filteredSessionRuns
+    let runs = filteredSessionRuns;
 
     if (runFilterPb) {
-      runs = runs.filter(r => globalPbByScenario.get(r.scenarioName)?.id === r.id)
+      runs = runs.filter(
+        (r) => globalPbByScenario.get(r.scenarioName)?.id === r.id,
+      );
     }
 
-    if (runSort === 'default') return runs
+    if (runSort === "default") return runs;
 
-    const sorted = [...runs]
+    const sorted = [...runs];
     switch (runSort) {
-      case 'score-desc': sorted.sort((a, b) => b.score - a.score); break
-      case 'score-asc': sorted.sort((a, b) => a.score - b.score); break
-      case 'accuracy-desc': sorted.sort((a, b) => (b.accuracy ?? -1) - (a.accuracy ?? -1)); break
-      case 'scenario': sorted.sort((a, b) => a.scenarioName.localeCompare(b.scenarioName) || b.score - a.score); break
+      case "score-desc":
+        sorted.sort((a, b) => b.score - a.score);
+        break;
+      case "score-asc":
+        sorted.sort((a, b) => a.score - b.score);
+        break;
+      case "accuracy-desc":
+        sorted.sort((a, b) => (b.accuracy ?? -1) - (a.accuracy ?? -1));
+        break;
+      case "scenario":
+        sorted.sort(
+          (a, b) =>
+            a.scenarioName.localeCompare(b.scenarioName) || b.score - a.score,
+        );
+        break;
     }
-    return sorted
-  }, [filteredSessionRuns, runSort, runFilterPb, globalPbByScenario])
+    return sorted;
+  }, [filteredSessionRuns, runSort, runFilterPb, globalPbByScenario]);
 
   const pbSessionIds = useMemo(() => {
-    const ids = new Set<string>()
-    for (const run of globalPbByScenario.values()) ids.add(run.sessionId)
-    return ids
-  }, [globalPbByScenario])
+    const ids = new Set<string>();
+    for (const run of globalPbByScenario.values()) ids.add(run.sessionId);
+    return ids;
+  }, [globalPbByScenario]);
 
   const sortedFilteredSessions = useMemo(() => {
-    let list = filteredSessions
+    let list = filteredSessions;
 
     if (sessionFilterPb) {
-      list = list.filter(s => pbSessionIds.has(s.id))
+      list = list.filter((s) => pbSessionIds.has(s.id));
     }
 
-    if (sessionSort === 'newest') return list
+    if (sessionSort === "newest") return list;
 
-    const sorted = [...list]
+    const sorted = [...list];
     switch (sessionSort) {
-      case 'oldest': sorted.reverse(); break
-      case 'most-runs': sorted.sort((a, b) => b.items.length - a.items.length); break
-      case 'longest': sorted.sort((a, b) => readSessionDurationMs(b) - readSessionDurationMs(a)); break
+      case "oldest":
+        sorted.reverse();
+        break;
+      case "most-runs":
+        sorted.sort((a, b) => b.items.length - a.items.length);
+        break;
+      case "longest":
+        sorted.sort(
+          (a, b) => readSessionDurationMs(b) - readSessionDurationMs(a),
+        );
+        break;
     }
-    return sorted
-  }, [filteredSessions, sessionSort, sessionFilterPb, pbSessionIds])
+    return sorted;
+  }, [filteredSessions, sessionSort, sessionFilterPb, pbSessionIds]);
 
-  const primaryRun = primaryRunId ? runsById.get(primaryRunId) ?? null : null
-  const compareRun = compareRunId ? runsById.get(compareRunId) ?? null : null
+  const primaryRun = primaryRunId ? (runsById.get(primaryRunId) ?? null) : null;
+  const compareRun = compareRunId ? (runsById.get(compareRunId) ?? null) : null;
 
   const pbRunForPrimary = useMemo(() => {
-    if (!primaryRun) return null
-    return globalPbByScenario.get(primaryRun.scenarioName) ?? null
-  }, [globalPbByScenario, primaryRun])
+    if (!primaryRun) return null;
+    return globalPbByScenario.get(primaryRun.scenarioName) ?? null;
+  }, [globalPbByScenario, primaryRun]);
 
   const comparePb = useCallback(() => {
-    if (!pbRunForPrimary || !primaryRunId || pbRunForPrimary.id === primaryRunId) return
-    setRunInspectorOpen(true)
-    setCompareRunId(pbRunForPrimary.id)
-  }, [pbRunForPrimary, primaryRunId, setCompareRunId, setRunInspectorOpen])
+    if (
+      !pbRunForPrimary ||
+      !primaryRunId ||
+      pbRunForPrimary.id === primaryRunId
+    )
+      return;
+    setRunInspectorOpen(true);
+    setCompareRunId(pbRunForPrimary.id);
+  }, [pbRunForPrimary, primaryRunId, setCompareRunId, setRunInspectorOpen]);
 
   const selectRun = (runId: string) => {
-    setRunInspectorOpen(true)
+    setRunInspectorOpen(true);
 
-    if (runId === primaryRunId) return
+    if (runId === primaryRunId) return;
 
     if (runId === compareRunId) {
-      setPrimaryRunId(runId)
-      setCompareRunId(null)
-      return
+      setPrimaryRunId(runId);
+      setCompareRunId(null);
+      return;
     }
 
-    setPrimaryRunId(runId)
-    setCompareRunId(null)
-  }
+    setPrimaryRunId(runId);
+    setCompareRunId(null);
+  };
 
   const compareRunWithPrimary = (runId: string) => {
-    if (!primaryRunId || primaryRunId === runId) return
+    if (!primaryRunId || primaryRunId === runId) return;
     if (runId === compareRunId) {
-      setCompareRunId(null)
-      return
+      setCompareRunId(null);
+      return;
     }
-    setRunInspectorOpen(true)
-    setCompareRunId(runId)
-  }
+    setRunInspectorOpen(true);
+    setCompareRunId(runId);
+  };
 
   const clearPrimaryRun = () => {
-    setPrimaryRunId(null)
-    setCompareRunId(null)
-  }
+    setPrimaryRunId(null);
+    setCompareRunId(null);
+  };
 
   return {
     sessions,
@@ -224,5 +305,5 @@ export function useHistoryPageState() {
     comparePb,
     clearPrimaryRun,
     clearComparison: () => setCompareRunId(null),
-  }
+  };
 }

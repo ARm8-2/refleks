@@ -1,32 +1,46 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from "react";
 
 type SettingsFieldProps = {
-  label: string
-  description?: string
-  children: ReactNode
+  label: ReactNode;
+  description?: string;
+  children: ReactNode;
   /** When true, children (checkbox) appear to the left of the label. */
-  checkbox?: boolean
-  className?: string
-}
+  checkbox?: boolean;
+  className?: string;
+};
 
-export function SettingsField({ label, description, children, checkbox = false, className = '' }: SettingsFieldProps) {
+export function SettingsField({
+  label,
+  description,
+  children,
+  checkbox = false,
+  className = "",
+}: SettingsFieldProps) {
   if (checkbox) {
     return (
       <div className={`flex flex-col gap-1 ${className}`}>
         <span className="text-foreground text-sm">{label}</span>
         <div className="flex items-center gap-2">
           {children}
-          {description && <span className="text-surface-muted-foreground text-xs">{description}</span>}
+          {description && (
+            <span className="text-surface-muted-foreground text-xs">
+              {description}
+            </span>
+          )}
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
       <span className="text-foreground text-sm">{label}</span>
-      {description && <span className="text-surface-muted-foreground text-xs">{description}</span>}
+      {description && (
+        <span className="text-surface-muted-foreground text-xs">
+          {description}
+        </span>
+      )}
       {children}
     </div>
-  )
+  );
 }
