@@ -34,6 +34,7 @@ Unicode true
 ####
 !define PRODUCT_EXECUTABLE "refleks.exe"
 !include "wails_tools.nsh"
+!include "LogicLib.nsh"
 
 # The version information for this two must consist of 4 parts
 VIProductVersion "${INFO_PRODUCTVERSION}.0"
@@ -87,13 +88,39 @@ Section
 
     !insertmacro wails.webview2runtime
 
+    ; --- Clean install ---
+    ; Fully replace the previous installation so files from older versions can't
+    ; linger. Older releases shipped the app as "RefleK's.exe"; the rename to
+    ; "refleks.exe" meant a plain overwrite left the legacy binary behind, and
+    ; any "Start with Kovaak's" autostart entry kept launching it.
+    ;
+    ; In-app updates quit the app right after starting this installer, so the
+    ; folder is usually already unlocked. taskkill also covers manual reinstalls
+    ; over a running instance (both the current and the legacy executable name),
+    ; and the retry loop gives the process a moment to release its files before
+    ; we wipe the directory.
+    ClearErrors
+    nsExec::Exec `taskkill /F /IM "refleks.exe" /T`
+    ClearErrors
+    nsExec::Exec `taskkill /F /IM "RefleK's.exe" /T`
+    ${If} ${FileExists} "$INSTDIR\*.*"
+        ${For} $0 0 5
+            ClearErrors
+            RMDir /r "$INSTDIR"
+            ${IfNot} ${Errors}
+                ${Break}
+            ${EndIf}
+            Sleep 500
+        ${Next}
+    ${EndIf}
+
     SetOutPath $INSTDIR
 
     !insertmacro wails.files
 
   	; FFmpeg for screen recording
   	File "..\..\bin\ffmpeg.exe"
-  
+
   	CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
     CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
 
@@ -107,6 +134,7 @@ Section "uninstall"
     !insertmacro wails.setShellContext
 
     RMDir /r "$AppData\${PRODUCT_EXECUTABLE}" # Remove the WebView2 DataPath
+    RMDir /r "$AppData\RefleK's.exe"          # Legacy WebView2 DataPath (pre-rename)
 
     RMDir /r $INSTDIR
 

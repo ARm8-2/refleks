@@ -80,8 +80,21 @@ func (a *App) startup(ctx context.Context) {
 	// Initialize Autostart Service
 	a.autostartSvc = autostart.NewService()
 
-	// Initialize Process Watcher if enabled
+	// Remove the legacy "RefleK's.exe" binary if it survived an update. The
+	// installer now clears the install folder, but the old executable could not
+	// be deleted while it was still running (e.g. a manual reinstall), and a
+	// stale autostart entry would otherwise keep launching it.
+	a.removeLegacyExecutable()
+
+	// Re-sync the autostart registry entry to the running executable. The app
+	// was renamed from "RefleK's.exe" to "refleks.exe", so entries written by
+	// older versions point at a binary that no longer exists after an update.
+	// Re-pointing at os.Executable() keeps "Start with Kovaak's" working across
+	// updates.
 	if settings.AutostartEnabled {
+		if err := a.autostartSvc.Enable("--monitor"); err != nil {
+			runtime.LogWarningf(a.ctx, "autostart re-sync failed: %v", err)
+		}
 		a.startProcessWatcher()
 	}
 
@@ -113,6 +126,26 @@ func (a *App) startup(ctx context.Context) {
 			runtime.EventsEmit(a.ctx, constants.EventUpdateAvailable, info)
 		}
 	}()
+}
+
+// removeLegacyExecutable deletes the pre-rename "RefleK's.exe" from the install
+// directory. The NSIS installer clears the folder on update, but if the legacy
+// process was still running during install it can survive; remove it here so it
+// can never be launched again by a stale autostart entry.
+func (a *App) removeLegacyExecutable() {
+	exe, err := os.Executable()
+	if err != nil {
+		return
+	}
+	legacy := filepath.Join(filepath.Dir(exe), "RefleK's.exe")
+	if _, err := os.Stat(legacy); err != nil {
+		return // not present (or not statable) — nothing to clean up
+	}
+	if err := os.Remove(legacy); err != nil {
+		runtime.LogWarningf(a.ctx, "remove legacy executable %s: %v", legacy, err)
+		return
+	}
+	runtime.LogInfof(a.ctx, "removed legacy executable %s", legacy)
 }
 
 // StartWatcher begins monitoring the configured Kovaak's install directory.
