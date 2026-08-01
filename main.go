@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"refleks/internal/constants"
+	"refleks/internal/elevation"
 	"strings"
 
 	"github.com/wailsapp/wails/v2"
@@ -25,7 +26,23 @@ func main() {
 	monitor := flag.Bool("monitor", false, "Start in monitor mode (hidden)")
 	flag.Parse()
 
-	app := NewApp()
+	app := NewApp(*monitor)
+
+	// The app itself never needs elevation — the installer does. If an
+	// elevated instance was launched (e.g. by the installer's "Run RefleK's"
+	// step), restart with the user's normal token before doing anything else.
+	// Keeping every instance at the same integrity level matters because the
+	// single-instance lock below wakes a running copy with a window message,
+	// and Windows (UIPI) silently drops window messages across integrity
+	// levels. If the restart cannot be arranged, run elevated rather than fail
+	// to start.
+	if elevation.IsElevated() {
+		if err := elevation.RelaunchUnelevated(); err != nil {
+			fmt.Fprintln(os.Stderr, "elevation: failed to relaunch unelevated, continuing elevated:", err)
+		} else {
+			return
+		}
+	}
 
 	err := wails.Run(&options.App{
 		Title:  "RefleK's",
