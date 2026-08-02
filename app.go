@@ -39,10 +39,12 @@ type App struct {
 	processWatcher *process.Watcher
 	watcherCancel  context.CancelFunc
 	isQuitting     atomic.Bool
+	startedHidden  bool
 }
 
-// NewApp creates a new App application struct
-func NewApp() *App { return &App{} }
+// NewApp creates a new App application struct. startedHidden reports whether
+// the process was launched with --monitor (autostart/background mode).
+func NewApp(startedHidden bool) *App { return &App{startedHidden: startedHidden} }
 
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
@@ -80,21 +82,24 @@ func (a *App) startup(ctx context.Context) {
 	// Initialize Autostart Service
 	a.autostartSvc = autostart.NewService()
 
-	// Remove the legacy "RefleK's.exe" binary if it survived an update. The
-	// installer now clears the install folder, but the old executable could not
-	// be deleted while it was still running (e.g. a manual reinstall), and a
-	// stale autostart entry would otherwise keep launching it.
-	a.removeLegacyExecutable()
+	// Reconcile the autostart registry entry with the running executable and
+	// the saved setting. Re-pointing at os.Executable() keeps "Start with
+	// Kovaak's" working across the rename from "RefleK's.exe" to "refleks.exe"
+	// and across install-directory moves; removing an entry that is no longer
+	// wanted prevents a stale --monitor registration from launching a hidden
+	// instance.
+	if err := a.autostartSvc.Sync(settings.AutostartEnabled, "--monitor"); err != nil {
+		runtime.LogWarningf(a.ctx, "autostart sync failed: %v", err)
+	}
 
-	// Re-sync the autostart registry entry to the running executable. The app
-	// was renamed from "RefleK's.exe" to "refleks.exe", so entries written by
-	// older versions point at a binary that no longer exists after an update.
-	// Re-pointing at os.Executable() keeps "Start with Kovaak's" working across
-	// updates.
+	// A hidden launch is only legitimate when autostart is enabled. If a stale
+	// entry started us with --monitor but autostart is now off, show the window
+	// so the user isn't left with an invisible background process.
+	if a.startedHidden && !settings.AutostartEnabled {
+		runtime.WindowShow(a.ctx)
+	}
+
 	if settings.AutostartEnabled {
-		if err := a.autostartSvc.Enable("--monitor"); err != nil {
-			runtime.LogWarningf(a.ctx, "autostart re-sync failed: %v", err)
-		}
 		a.startProcessWatcher()
 	}
 
@@ -126,26 +131,6 @@ func (a *App) startup(ctx context.Context) {
 			runtime.EventsEmit(a.ctx, constants.EventUpdateAvailable, info)
 		}
 	}()
-}
-
-// removeLegacyExecutable deletes the pre-rename "RefleK's.exe" from the install
-// directory. The NSIS installer clears the folder on update, but if the legacy
-// process was still running during install it can survive; remove it here so it
-// can never be launched again by a stale autostart entry.
-func (a *App) removeLegacyExecutable() {
-	exe, err := os.Executable()
-	if err != nil {
-		return
-	}
-	legacy := filepath.Join(filepath.Dir(exe), "RefleK's.exe")
-	if _, err := os.Stat(legacy); err != nil {
-		return // not present (or not statable) — nothing to clean up
-	}
-	if err := os.Remove(legacy); err != nil {
-		runtime.LogWarningf(a.ctx, "remove legacy executable %s: %v", legacy, err)
-		return
-	}
-	runtime.LogInfof(a.ctx, "removed legacy executable %s", legacy)
 }
 
 // StartWatcher begins monitoring the configured Kovaak's install directory.
@@ -341,11 +326,10 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		newSettings.LastSeenVersion = defaults.LastSeenVersion
 
 		// Sync autostart state
+		_ = a.autostartSvc.Sync(newSettings.AutostartEnabled, "--monitor")
 		if newSettings.AutostartEnabled {
-			_ = a.autostartSvc.Enable("--monitor")
 			a.startProcessWatcher()
 		} else {
-			_ = a.autostartSvc.Disable()
 			a.stopProcessWatcher()
 		}
 	}
@@ -448,21 +432,22 @@ func (a *App) ClearCache() error {
 // --- Autostart & Monitoring ---
 
 func (a *App) SetAutostart(enabled bool) error {
+	// Apply the OS entry first so a failure leaves the saved setting untouched;
+	// roll the entry back if persisting the setting fails, keeping the two in
+	// sync either way.
+	if err := a.autostartSvc.Sync(enabled, "--monitor"); err != nil {
+		return fmt.Errorf("failed to update autostart: %w", err)
+	}
 	settings := a.settingsSvc.Get()
 	settings.AutostartEnabled = enabled
 	if err := a.settingsSvc.Update(settings); err != nil {
+		_ = a.autostartSvc.Sync(!enabled, "--monitor")
 		return err
 	}
 
 	if enabled {
-		if err := a.autostartSvc.Enable("--monitor"); err != nil {
-			return fmt.Errorf("failed to enable autostart: %w", err)
-		}
 		a.startProcessWatcher()
 	} else {
-		if err := a.autostartSvc.Disable(); err != nil {
-			return fmt.Errorf("failed to disable autostart: %w", err)
-		}
 		a.stopProcessWatcher()
 	}
 	return nil
@@ -476,15 +461,7 @@ func (a *App) startProcessWatcher() {
 	a.watcherCancel = cancel
 
 	a.processWatcher = process.NewWatcher(constants.KovaaksProcessName, func() {
-		runtime.WindowShow(a.ctx)
-		if runtime.Environment(a.ctx).Platform == "windows" {
-			// Briefly set always on top to grab focus, then disable
-			runtime.WindowSetAlwaysOnTop(a.ctx, true)
-			go func() {
-				time.Sleep(500 * time.Millisecond)
-				runtime.WindowSetAlwaysOnTop(a.ctx, false)
-			}()
-		}
+		a.ShowWindow()
 	}, nil)
 	go a.processWatcher.Start(ctx)
 }
@@ -503,7 +480,9 @@ func (a *App) QuitApp() {
 	runtime.Quit(a.ctx)
 }
 
-// ShowWindow brings the window to front.
+// ShowWindow makes the app visible without forcing it to the foreground.
+// This is intentional: when KovaaK's starts, RefleK's should not interrupt
+// the game or steal focus from it.
 func (a *App) ShowWindow() {
 	runtime.WindowShow(a.ctx)
 }

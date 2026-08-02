@@ -118,6 +118,21 @@ Section
 
     !insertmacro wails.files
 
+    ; Keep the autostart registration working across updates. The app was
+    ; renamed from "RefleK's.exe" to "refleks.exe", and a stale entry can point
+    ; at a binary that no longer exists (or at an old install directory), which
+    ; would silently fail at login. Preserve the user's choice by re-registering
+    ; the new executable under a single canonical value name.
+    ReadRegStr $0 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "refleks"
+    ReadRegStr $1 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "RefleK's"
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "refleks"
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "RefleK's"
+    ${If} $0 != ""
+        WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "refleks" '"$INSTDIR\${PRODUCT_EXECUTABLE}" --monitor'
+    ${ElseIf} $1 != ""
+        WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "refleks" '"$INSTDIR\${PRODUCT_EXECUTABLE}" --monitor'
+    ${EndIf}
+
   	; FFmpeg for screen recording
   	File "..\..\bin\ffmpeg.exe"
 
@@ -137,6 +152,10 @@ Section "uninstall"
     RMDir /r "$AppData\RefleK's.exe"          # Legacy WebView2 DataPath (pre-rename)
 
     RMDir /r $INSTDIR
+
+    ; Remove the autostart entry so the app is not launched after uninstall.
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "refleks"
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "RefleK's"
 
     Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
     Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
