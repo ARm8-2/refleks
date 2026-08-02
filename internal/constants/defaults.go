@@ -23,8 +23,10 @@ const (
 	PerformancesFileRetryIntervalMs = 10
 	PerformancesFileMaxRetries      = 30
 
-	// Screen capture defaults
+	// Screen capture defaults and UI-supported limits.
 	DefaultScreenCaptureFPS        = 30
+	MinScreenCaptureFPS            = 5
+	MaxScreenCaptureFPS            = 60
 	DefaultScreenCaptureResolution = "720"
 
 	// Screen capture rolling-segment buffer. Recording is split into short,

@@ -529,7 +529,7 @@ export function SettingsPage() {
                   <div className="space-y-3 pl-6">
                     <SettingsField
                       label="Resolution"
-                      description="Recording resolution (scaled by the GPU encoder, zero CPU cost)"
+                      description="Resolution used for new capture sessions; changing it while the game is running rotates the capture session immediately"
                     >
                       <Select
                         value={settings.screenCaptureResolution || "720"}
@@ -555,7 +555,7 @@ export function SettingsPage() {
 
                     <SettingsField
                       label="Capture FPS"
-                      description="Frames per second to capture"
+                      description="Frames per second for new capture sessions; changing it while the game is running rotates the capture session immediately"
                     >
                       <Input
                         type="number"
@@ -567,6 +567,7 @@ export function SettingsPage() {
                           )
                         }
                         onKeyDown={handleInputKeyDown}
+                        onBlur={() => void queueSettingsSave(settings)}
                         min={5}
                         max={60}
                         className="w-20 text-center"

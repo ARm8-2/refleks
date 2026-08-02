@@ -13,6 +13,7 @@ type noopProvider struct{}
 // New creates a no-op screen capture provider on non-Windows platforms.
 func New(context.Context) Provider { return &noopProvider{} }
 
+func (p *noopProvider) Configure(CaptureConfig)      {}
 func (p *noopProvider) Start() error                 { return nil }
 func (p *noopProvider) Stop()                        {}
 func (p *noopProvider) Enabled() bool                { return false }

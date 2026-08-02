@@ -7,7 +7,19 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"refleks/internal/constants"
 )
+
+// CaptureConfig contains all settings that affect a capture session. A
+// provider reads this configuration when Start is called; changing it while a
+// session is active is intentionally handled by the runtime as a session
+// rotation so the encoded stream cannot mix formats.
+type CaptureConfig struct {
+	FPS        int
+	Resolution string
+	Encoder    string
+}
 
 // Provider captures screen frames into a rolling buffer of short segments
 // with minimal performance impact. Frames are piped to an ffmpeg subprocess
@@ -17,6 +29,9 @@ import (
 // and so a long play session never grows a single unbounded recording file.
 // On non-Windows platforms this is a no-op stub.
 type Provider interface {
+	// Configure stores the settings for the next capture session. The runtime
+	// must stop and start the provider to apply changes to an active session.
+	Configure(CaptureConfig)
 	// Start begins frame capture. No-op if already running or unsupported.
 	Start() error
 	// Stop ends frame capture. No-op if not running. The most recently
@@ -78,7 +93,7 @@ func cleanupAbandonedSessions(tempDir string) error {
 
 	var errs []error
 	for _, entry := range entries {
-		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), "refleks-capture-") {
+		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), constants.ScreenCaptureTempDirPrefix) {
 			continue
 		}
 		if err := os.RemoveAll(filepath.Join(tempDir, entry.Name())); err != nil {
@@ -86,26 +101,4 @@ func cleanupAbandonedSessions(tempDir string) error {
 		}
 	}
 	return errors.Join(errs...)
-}
-
-// SetCaptureEncoder configures the encoder name that the capture subprocess
-// will use for real-time encoding.  If never called, defaults to libx264.
-func SetCaptureEncoder(p Provider, encName string) {
-	if c, ok := p.(interface{ SetEncoder(string) }); ok {
-		c.SetEncoder(encName)
-	}
-}
-
-// SetCaptureFPS configures the recording frame rate.
-func SetCaptureFPS(p Provider, fps int) {
-	if c, ok := p.(interface{ SetFPS(int) }); ok {
-		c.SetFPS(fps)
-	}
-}
-
-// SetCaptureResolution configures the recording resolution (e.g. "native", "1080", "900", "720").
-func SetCaptureResolution(p Provider, res string) {
-	if c, ok := p.(interface{ SetResolution(string) }); ok {
-		c.SetResolution(res)
-	}
 }

@@ -88,13 +88,9 @@ func Sanitize(s models.Settings) models.Settings {
 	if s.MouseBufferMinutes <= 0 {
 		s.MouseBufferMinutes = constants.DefaultMouseBufferMinutes
 	}
-	if s.ScreenCaptureFPS <= 0 {
-		s.ScreenCaptureFPS = constants.DefaultScreenCaptureFPS
-	}
-	if s.ScreenCaptureResolution == "" {
-		s.ScreenCaptureResolution = constants.DefaultScreenCaptureResolution
-	}
-	
+	s.ScreenCaptureFPS = sanitizeScreenCaptureFPS(s.ScreenCaptureFPS)
+	s.ScreenCaptureResolution = sanitizeScreenCaptureResolution(s.ScreenCaptureResolution)
+
 	if s.ScenarioNotes == nil {
 		s.ScenarioNotes = make(map[string]models.ScenarioNote)
 	}
@@ -102,6 +98,23 @@ func Sanitize(s models.Settings) models.Settings {
 		s.SessionNotes = make(map[string]models.SessionNote)
 	}
 	return s
+}
+
+func sanitizeScreenCaptureFPS(fps int) int {
+	if fps < constants.MinScreenCaptureFPS || fps > constants.MaxScreenCaptureFPS {
+		return constants.DefaultScreenCaptureFPS
+	}
+	return fps
+}
+
+func sanitizeScreenCaptureResolution(resolution string) string {
+	resolution = strings.ToLower(strings.TrimSpace(resolution))
+	switch resolution {
+	case "native", "1080", "900", "720":
+		return resolution
+	default:
+		return constants.DefaultScreenCaptureResolution
+	}
 }
 
 // GetConfigDir returns the application config directory under the user's home dir: $HOME/.refleks

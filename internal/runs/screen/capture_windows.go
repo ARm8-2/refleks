@@ -113,27 +113,19 @@ func (c *captureWin) warnCapturef(format string, args ...any) {
 	runtime.LogWarningf(c.ctx, format, args...)
 }
 
-func (c *captureWin) SetFPS(fps int) {
-	// Keep ticker construction safe even if settings were edited outside the
-	// UI. Higher values provide little capture value here and can overflow the
-	// integer duration division used by the capture loop.
+func (c *captureWin) Configure(config CaptureConfig) {
+	// The settings service validates user input before it reaches the
+	// provider. Keep a defensive FPS fallback here as well because the
+	// provider is also used by platform-specific runtime code.
+	fps := config.FPS
 	if fps < 1 || fps > 240 {
 		fps = constants.DefaultScreenCaptureFPS
 	}
+
 	c.mu.Lock()
 	c.fps = fps
-	c.mu.Unlock()
-}
-
-func (c *captureWin) SetEncoder(encName string) {
-	c.mu.Lock()
-	c.encName = encName
-	c.mu.Unlock()
-}
-
-func (c *captureWin) SetResolution(res string) {
-	c.mu.Lock()
-	c.resolution = res
+	c.encName = config.Encoder
+	c.resolution = config.Resolution
 	c.mu.Unlock()
 }
 
@@ -207,7 +199,7 @@ func (c *captureWin) Start() error {
 
 	// ext
 	ext := recordingExtension(encName)
-	segDir := filepath.Join(tempDir, fmt.Sprintf("refleks-capture-%d", time.Now().UnixMilli()))
+	segDir := filepath.Join(tempDir, fmt.Sprintf("%s%d", constants.ScreenCaptureTempDirPrefix, time.Now().UnixMilli()))
 	if err := os.MkdirAll(segDir, 0o755); err != nil {
 		releaseD3D(staging, dup, d3dCtx, dev)
 		procTimeEndPeriod.Call(1)
