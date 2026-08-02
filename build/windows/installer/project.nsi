@@ -81,6 +81,19 @@ ShowInstDetails show # This will always show the installation details.
 
 Function .onInit
    !insertmacro wails.checkArchitecture
+
+   ; In-app updates from older releases do not pass an install directory to
+   ; this installer. Recover it from the existing uninstall metadata so an
+   ; upgrade from 0.8.3 (whose updater has no knowledge of the new path
+   ; handoff) still replaces the installation that launched the update.
+   SetRegView 64
+   ReadRegStr $0 HKLM "${UNINST_KEY}" "DisplayIcon"
+   ${If} $0 != ""
+       ${GetParent} "$0" $1
+       ${If} $1 != ""
+           StrCpy $INSTDIR $1
+       ${EndIf}
+   ${EndIf}
 FunctionEnd
 
 Section
@@ -88,31 +101,28 @@ Section
 
     !insertmacro wails.webview2runtime
 
-    ; --- Clean install ---
-    ; Fully replace the previous installation so files from older versions can't
-    ; linger. Older releases shipped the app as "RefleK's.exe"; the rename to
-    ; "refleks.exe" meant a plain overwrite left the legacy binary behind, and
-    ; any "Start with Kovaak's" autostart entry kept launching it.
+    ; Stop either executable name before replacing the application. Do not
+    ; use taskkill's /T flag: when the installer is launched by the old app,
+    ; it can be in that app's process tree, and /T would kill the installer
+    ; along with the monitor process. Manual launches from Explorer do not
+    ; have that process-tree relationship, which explains the different
+    ; behavior between manual and automatic updates.
     ;
-    ; In-app updates quit the app right after starting this installer, so the
-    ; folder is usually already unlocked. taskkill also covers manual reinstalls
-    ; over a running instance (both the current and the legacy executable name),
-    ; and the retry loop gives the process a moment to release its files before
-    ; we wipe the directory.
+    ; Do not recursively remove $INSTDIR here. The in-app updater launches this
+    ; installer while the old process is still shutting down, and deleting the
+    ; live install directory can fail or make NSIS abort during the file page.
     ClearErrors
-    nsExec::Exec `taskkill /F /IM "refleks.exe" /T`
+    nsExec::Exec `taskkill /F /IM "refleks.exe"`
     ClearErrors
-    nsExec::Exec `taskkill /F /IM "RefleK's.exe" /T`
-    ${If} ${FileExists} "$INSTDIR\*.*"
-        ${For} $0 0 5
-            ClearErrors
-            RMDir /r "$INSTDIR"
-            ${IfNot} ${Errors}
-                ${Break}
-            ${EndIf}
-            Sleep 500
-        ${Next}
-    ${EndIf}
+    nsExec::Exec `taskkill /F /IM "RefleK's.exe"`
+    Sleep 1000
+
+    ; Remove the old executable name left by 0.8.3. The current executable is
+    ; replaced by wails.files below; the remaining application files are
+    ; intentionally preserved so an update does not depend on deleting a live
+    ; directory.
+    Delete "$INSTDIR\RefleK's.exe"
+    Delete "$INSTDIR\uninstall.exe"
 
     SetOutPath $INSTDIR
 
