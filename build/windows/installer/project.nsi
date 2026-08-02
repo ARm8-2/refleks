@@ -102,13 +102,19 @@ Section
     !insertmacro wails.webview2runtime
 
     ; Stop either executable name before replacing the application. Do not
-    ; recursively remove $INSTDIR here: the in-app updater launches this
+    ; use taskkill's /T flag: when the installer is launched by the old app,
+    ; it can be in that app's process tree, and /T would kill the installer
+    ; along with the monitor process. Manual launches from Explorer do not
+    ; have that process-tree relationship, which explains the different
+    ; behavior between manual and automatic updates.
+    ;
+    ; Do not recursively remove $INSTDIR here. The in-app updater launches this
     ; installer while the old process is still shutting down, and deleting the
     ; live install directory can fail or make NSIS abort during the file page.
     ClearErrors
-    nsExec::Exec `taskkill /F /IM "refleks.exe" /T`
+    nsExec::Exec `taskkill /F /IM "refleks.exe"`
     ClearErrors
-    nsExec::Exec `taskkill /F /IM "RefleK's.exe" /T`
+    nsExec::Exec `taskkill /F /IM "RefleK's.exe"`
     Sleep 1000
 
     ; Remove the old executable name left by 0.8.3. The current executable is
