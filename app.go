@@ -54,6 +54,9 @@ func (a *App) startup(ctx context.Context) {
 	if err := screen.CleanupAbandonedSessions(); err != nil {
 		runtime.LogWarningf(a.ctx, "screen: clean abandoned capture sessions: %v", err)
 	}
+	if err := updater.CleanupAbandonedDownloads(); err != nil {
+		runtime.LogWarningf(a.ctx, "updater: clean abandoned downloads: %v", err)
+	}
 
 	// Initialize Settings Service
 	a.settingsSvc = appsettings.NewService()
