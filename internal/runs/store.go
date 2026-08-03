@@ -30,6 +30,7 @@ type Store struct {
 	screenTrimCounts     map[string]int  // in-flight trims keyed by capture session directory
 	screenFinalizing     map[string]bool // sessions awaiting release once their trims finish
 	screenReleasePending map[string]bool // grace timer scheduled for a stopped session
+	screenSessions       map[string]time.Time
 
 	// replayMu serializes replay publication/deletion. A deletion tombstone is
 	// retained only while a trim for that run is active, preventing resurrection
@@ -37,6 +38,7 @@ type Store struct {
 	replayMu          sync.Mutex
 	activeReplayTrims map[string]int
 	deletedReplays    map[string]struct{}
+	replayStatuses    map[string]models.ReplayStatus
 }
 
 // NewStore constructs a run store.
@@ -45,9 +47,49 @@ func NewStore(settingsSvc *appsettings.Service) *Store {
 		settingsSvc:          settingsSvc,
 		screenTrimCounts:     make(map[string]int),
 		screenFinalizing:     map[string]bool{},
-		screenReleasePending: map[string]bool{},
+		screenReleasePending: make(map[string]bool),
+		screenSessions:       make(map[string]time.Time),
 		activeReplayTrims:    make(map[string]int),
 		deletedReplays:       make(map[string]struct{}),
+		replayStatuses:       make(map[string]models.ReplayStatus),
+	}
+}
+
+// setReplayStatus updates the in-memory status exposed to the history UI.
+func (s *Store) setReplayStatus(runPath, state, message string) {
+	s.replayMu.Lock()
+	if state == models.ReplayStateReady {
+		delete(s.replayStatuses, runPath)
+	} else {
+		s.replayStatuses[runPath] = models.ReplayStatus{
+			State:   state,
+			Message: message,
+		}
+	}
+	s.replayMu.Unlock()
+}
+
+// GetReplayStatus returns the current processing state for a run. A published
+// file always wins over an in-memory status so a completed export cannot be
+// hidden by a stale processing marker.
+func (s *Store) GetReplayStatus(runPath string) models.ReplayStatus {
+	for _, ext := range []string{".mp4", ".webm"} {
+		if path, err := s.ReplayPath(runPath, ext); err == nil {
+			if _, err := os.Stat(path); err == nil {
+				return models.ReplayStatus{State: models.ReplayStateReady, Message: "Replay is ready."}
+			}
+		}
+	}
+
+	s.replayMu.Lock()
+	status, ok := s.replayStatuses[runPath]
+	s.replayMu.Unlock()
+	if ok {
+		return status
+	}
+	return models.ReplayStatus{
+		State:   models.ReplayStateUnavailable,
+		Message: "No replay was recorded for this run.",
 	}
 }
 
@@ -59,6 +101,58 @@ func (s *Store) SetScreenCapture(ctx context.Context, prov screen.Provider, enc 
 	s.ctx = ctx
 	s.screenProvider = prov
 	s.encoder = enc
+}
+
+// captureSessionForRun chooses the newest retained capture session that began
+// before the run. This lets a late stats event still use the session that
+// actually contains the run, even if a newer session has already started.
+func (s *Store) captureSessionForRun(provider screen.Provider, runStart, runEnd time.Time) (string, time.Time) {
+	if provider == nil || runStart.IsZero() || !runEnd.After(runStart) {
+		return "", time.Time{}
+	}
+	currentDir, currentStart := provider.Session()
+
+	s.screenMu.Lock()
+	if currentDir != "" && !currentStart.IsZero() {
+		s.screenSessions[currentDir] = currentStart
+	}
+	bestDir := ""
+	bestStart := time.Time{}
+	for dir, sessionStart := range s.screenSessions {
+		if sessionStart.After(runStart) || !runEnd.After(sessionStart) {
+			continue
+		}
+		if bestStart.IsZero() || sessionStart.After(bestStart) {
+			bestDir = dir
+			bestStart = sessionStart
+		}
+	}
+	s.screenMu.Unlock()
+	return bestDir, bestStart
+}
+
+// WaitForScreenTrims waits for active replay exports to finish. It is used
+// during normal shutdown so cleanup cannot delete segment files underneath an
+// FFmpeg trim that is about to publish a replay.
+func (s *Store) WaitForScreenTrims(ctx context.Context) bool {
+	ticker := time.NewTicker(25 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		s.screenMu.Lock()
+		pending := 0
+		for _, count := range s.screenTrimCounts {
+			pending += count
+		}
+		s.screenMu.Unlock()
+		if pending == 0 {
+			return true
+		}
+		select {
+		case <-ctx.Done():
+			return false
+		case <-ticker.C:
+		}
+	}
 }
 
 func (s *Store) runsDir() (string, error) {

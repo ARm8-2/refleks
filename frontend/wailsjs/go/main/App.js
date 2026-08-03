@@ -58,6 +58,10 @@ export function GetRunReplayInfo(arg1) {
   return window['go']['main']['App']['GetRunReplayInfo'](arg1);
 }
 
+export function GetRunReplayStatus(arg1) {
+  return window['go']['main']['App']['GetRunReplayStatus'](arg1);
+}
+
 export function GetRunStatsEvents(arg1) {
   return window['go']['main']['App']['GetRunStatsEvents'](arg1);
 }

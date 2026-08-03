@@ -252,6 +252,18 @@ export interface ScreenCaptureInfo {
   encoderName: string;
   container: string;
   isHardware: boolean;
+  available: boolean;
+  active: boolean;
+  healthy: boolean;
+  state: string;
+  message: string;
+  lastError?: string;
+  lastFrameUnixMilli?: number;
+}
+
+export interface ReplayStatus {
+  state: "processing" | "ready" | "unavailable" | "failed";
+  message: string;
 }
 
 export interface ReplayFileInfo {

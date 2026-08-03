@@ -395,6 +395,20 @@ export namespace models {
 	
 	
 	
+	export class ReplayStatus {
+	    state: string;
+	    message: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ReplayStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.state = source["state"];
+	        this.message = source["message"];
+	    }
+	}
 	export class RunEnvironment {
 	    appVersion: string;
 	    os: string;
@@ -886,13 +900,20 @@ export namespace models {
 
 export namespace screen {
 	
-	export class EncoderInfo {
+	export class CaptureStatus {
 	    encoderName: string;
 	    container: string;
 	    isHardware: boolean;
+	    available: boolean;
+	    active: boolean;
+	    healthy: boolean;
+	    state: string;
+	    message: string;
+	    lastError?: string;
+	    lastFrameUnixMilli?: number;
 	
 	    static createFrom(source: any = {}) {
-	        return new EncoderInfo(source);
+	        return new CaptureStatus(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -900,6 +921,13 @@ export namespace screen {
 	        this.encoderName = source["encoderName"];
 	        this.container = source["container"];
 	        this.isHardware = source["isHardware"];
+	        this.available = source["available"];
+	        this.active = source["active"];
+	        this.healthy = source["healthy"];
+	        this.state = source["state"];
+	        this.message = source["message"];
+	        this.lastError = source["lastError"];
+	        this.lastFrameUnixMilli = source["lastFrameUnixMilli"];
 	    }
 	}
 	export class ReplayFileInfo {

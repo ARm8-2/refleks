@@ -13,6 +13,7 @@ import {
   GetRunPerformanceEvents as _GetRunPerformanceEvents,
   GetRunReplay as _GetRunReplay,
   GetRunReplayInfo as _GetRunReplayInfo,
+  GetRunReplayStatus as _GetRunReplayStatus,
   GetRunStatsEvents as _GetRunStatsEvents,
   GetRunTrace as _GetRunTrace,
   GetScreenCaptureInfo as _GetScreenCaptureInfo,
@@ -36,6 +37,7 @@ import type {
   BenchmarkProgress,
   KovaaksLastScore,
   ReplayFileInfo,
+  ReplayStatus,
   RunPerformanceEvent,
   RunRecord,
   RunStatsEvent,
@@ -212,12 +214,19 @@ export async function getRunReplayInfo(
   return (await _GetRunReplayInfo(filePath)) || null;
 }
 
+export async function getRunReplayStatus(
+  filePath: string,
+): Promise<ReplayStatus> {
+  const res = await _GetRunReplayStatus(filePath);
+  return res as unknown as ReplayStatus;
+}
+
 export async function deleteRunReplay(filePath: string): Promise<void> {
   await _DeleteRunReplay(filePath);
 }
 
-export async function getScreenCaptureInfo(): Promise<ScreenCaptureInfo | null> {
-  return (await _GetScreenCaptureInfo()) || null;
+export async function getScreenCaptureInfo(): Promise<ScreenCaptureInfo> {
+  return (await _GetScreenCaptureInfo()) as unknown as ScreenCaptureInfo;
 }
 
 // Runtime helpers

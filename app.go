@@ -203,6 +203,16 @@ func (a *App) GetRunReplay(filePath string) string {
 	return urlPath
 }
 
+// GetRunReplayStatus reports whether a replay is still being processed, is
+// ready, or failed/unavailable, without making the frontend infer state from a
+// missing file.
+func (a *App) GetRunReplayStatus(filePath string) models.ReplayStatus {
+	if a.runStore == nil {
+		return models.ReplayStatus{State: models.ReplayStateUnavailable, Message: "run storage is not initialized"}
+	}
+	return a.runStore.GetReplayStatus(filePath)
+}
+
 // GetRunReplayInfo returns technical metadata (resolution, frame rate, codec,
 // duration, file size) about a run's saved replay, probed directly from the
 // file, or nil if no recording exists.
@@ -231,15 +241,14 @@ func (a *App) DeleteRunReplay(filePath string) error {
 	return a.runStore.DeleteReplay(filePath)
 }
 
-// GetScreenCaptureInfo returns info about the configured screen capture encoder,
-// or nil if screen capture is not available.
-func (a *App) GetScreenCaptureInfo() *screen.EncoderInfo {
-	enc := a.runsRuntimeSvc.Encoder()
-	if enc == nil || !enc.Available() {
-		return nil
+// GetScreenCaptureInfo returns encoder availability and the health of the
+// current capture session. Encoder probing alone is not treated as capture
+// success because the D3D/FFmpeg session starts later.
+func (a *App) GetScreenCaptureInfo() screen.CaptureStatus {
+	if a.runsRuntimeSvc == nil {
+		return screen.CaptureStatus{State: "unavailable", Message: "screen capture runtime is not initialized"}
 	}
-	info := enc.Info()
-	return &info
+	return a.runsRuntimeSvc.ScreenCaptureStatus()
 }
 
 // GetLastScenarioScores fetches the last 10 scores for a given scenario from KovaaK's API.

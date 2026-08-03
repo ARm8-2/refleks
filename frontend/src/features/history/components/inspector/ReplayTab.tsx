@@ -1,8 +1,13 @@
 import { Button, InfoTooltip, Modal } from "@/shared/components";
 import { Slider } from "@/shared/components/ui/slider";
-import { deleteRunReplay, getRunReplay, getRunReplayInfo } from "@/shared/lib";
+import {
+  deleteRunReplay,
+  getRunReplay,
+  getRunReplayInfo,
+  getRunReplayStatus,
+} from "@/shared/lib";
 import { cn } from "@/shared/lib/utils";
-import type { ReplayFileInfo } from "@/shared/types/ipc";
+import type { ReplayFileInfo, ReplayStatus } from "@/shared/types/ipc";
 import {
   Maximize2,
   Pause,
@@ -34,7 +39,7 @@ type ReplaySource = {
 // already old, so runs that never had (or never will have) a recording don't
 // sit on a loading state.
 const REPLAY_POLL_INTERVAL_MS = 2_000;
-const REPLAY_READY_WINDOW_MS = 90_000;
+const REPLAY_READY_WINDOW_MS = 180_000;
 // Debounce the actual replay lookup/load after the selected run changes.
 // Clicking through several runs quickly would otherwise mount (fetch +
 // decode) and immediately tear down a video for every run passed through
@@ -49,9 +54,50 @@ function stillWithinReadyWindow(playedAt: number): boolean {
   return playedAt > 0 && age >= 0 && age < REPLAY_READY_WINDOW_MS;
 }
 
+const fallbackReplayStatus = (): ReplayStatus => ({
+  state: "processing",
+  message: "Waiting for replay status…",
+});
+
+async function lookupReplay(filePath: string): Promise<{
+  path: string | null;
+  status: ReplayStatus;
+}> {
+  const [pathResult, statusResult] = await Promise.allSettled([
+    getRunReplay(filePath),
+    getRunReplayStatus(filePath),
+  ]);
+  let path = pathResult.status === "fulfilled" ? pathResult.value : null;
+  let status =
+    statusResult.status === "fulfilled"
+      ? statusResult.value
+      : fallbackReplayStatus();
+
+  // The status and path are separate IPC calls. If publication happens
+  // between them, recheck once instead of displaying a terminal "ready"
+  // state with no playable URL.
+  if (path === null && status.state === "ready") {
+    try {
+      path = await getRunReplay(filePath);
+    } catch {
+      path = null;
+    }
+    if (path === null) {
+      status = {
+        state: "processing",
+        message: "Replay was published and is becoming available…",
+      };
+    }
+  }
+
+  return { path, status };
+}
+
 export function ReplayTab({ primaryRun, compareRun }: Props) {
   const [primaryReplay, setPrimaryReplay] = useState<ReplaySource | null>(null);
   const [compareReplay, setCompareReplay] = useState<ReplaySource | null>(null);
+  const [primaryStatus, setPrimaryStatus] = useState<ReplayStatus | null>(null);
+  const [compareStatus, setCompareStatus] = useState<ReplayStatus | null>(null);
   const [primaryWaiting, setPrimaryWaiting] = useState(true);
   const [compareWaiting, setCompareWaiting] = useState(false);
 
@@ -65,6 +111,8 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
 
     setPrimaryReplay(null);
     setCompareReplay(null);
+    setPrimaryStatus(null);
+    setCompareStatus(null);
     setPrimaryWaiting(true);
     setCompareWaiting(!!compareRun);
 
@@ -72,31 +120,36 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
       // Once a slot has resolved, keep its URL and only poll the slot that is
       // still processing. This avoids repeated IPC/filesystem work and React
       // updates while the other replay catches up.
-      const lookups: PromiseSettledResult<string | null>[] =
-        await Promise.allSettled([
-          primaryResolved
-            ? Promise.resolve(primaryPath)
-            : getRunReplay(primaryRun.item.filePath),
-          compareResolved || !compareRun
-            ? Promise.resolve(comparePath)
-            : getRunReplay(compareRun.item.filePath),
-        ]);
+      const [primaryLookup, compareLookup] = await Promise.all([
+        primaryResolved
+          ? Promise.resolve({
+              path: primaryPath,
+              status: {
+                state: "ready",
+                message: "Replay is ready.",
+              } satisfies ReplayStatus,
+            })
+          : lookupReplay(primaryRun.item.filePath),
+        compareResolved || !compareRun
+          ? Promise.resolve(null)
+          : lookupReplay(compareRun.item.filePath),
+      ]);
       if (!active) return;
 
-      const [primaryResult, compareResult] = lookups;
-      if (primaryResult.status === "fulfilled") {
-        primaryPath = primaryResult.value;
-        primaryResolved = primaryPath !== null;
-        if (primaryPath !== null) {
-          setPrimaryReplay({
-            filePath: primaryRun.item.filePath,
-            path: primaryPath,
-          });
-        }
+      primaryPath = primaryLookup.path;
+      primaryResolved = primaryPath !== null;
+      setPrimaryStatus(primaryLookup.status);
+      if (primaryPath !== null) {
+        setPrimaryReplay({
+          filePath: primaryRun.item.filePath,
+          path: primaryPath,
+        });
       }
-      if (compareRun && compareResult.status === "fulfilled") {
-        comparePath = compareResult.value;
+
+      if (compareRun && compareLookup) {
+        comparePath = compareLookup.path;
         compareResolved = comparePath !== null;
+        setCompareStatus(compareLookup.status);
         if (comparePath !== null) {
           setCompareReplay({
             filePath: compareRun.item.filePath,
@@ -106,10 +159,14 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
       }
 
       const keepPrimaryWaiting =
-        !primaryResolved && stillWithinReadyWindow(primaryRun.playedAt);
+        !primaryResolved &&
+        primaryLookup.status.state === "processing" &&
+        stillWithinReadyWindow(primaryRun.playedAt);
       const keepCompareWaiting =
         !!compareRun &&
+        !!compareLookup &&
         !compareResolved &&
+        compareLookup.status.state === "processing" &&
         stillWithinReadyWindow(compareRun.playedAt);
       setPrimaryWaiting(keepPrimaryWaiting);
       setCompareWaiting(keepCompareWaiting);
@@ -145,6 +202,7 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
                 : null
             }
             waiting={primaryWaiting}
+            status={primaryStatus}
             label="Primary"
             onDeleted={() => setPrimaryReplay(null)}
           />
@@ -156,6 +214,7 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
                 : null
             }
             waiting={compareWaiting}
+            status={compareStatus}
             label="Compare"
             onDeleted={() => setCompareReplay(null)}
           />
@@ -169,6 +228,7 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
               : null
           }
           waiting={primaryWaiting}
+          status={primaryStatus}
           onDeleted={() => setPrimaryReplay(null)}
         />
       )}
@@ -182,12 +242,14 @@ function ReplaySlot({
   filePath,
   path,
   waiting,
+  status,
   label,
   onDeleted,
 }: {
   filePath: string;
   path: string | null;
   waiting: boolean;
+  status: ReplayStatus | null;
   label?: string;
   onDeleted: () => void;
 }) {
@@ -246,8 +308,8 @@ function ReplaySlot({
     >
       <p className="text-sm text-surface-muted-foreground" aria-live="polite">
         {waiting
-          ? "Waiting for replay to finish processing…"
-          : "No screen recording for this run. Enable screen capture in settings to record replays."}
+          ? status?.message || "Waiting for replay to finish processing…"
+          : status?.message || "No replay is available for this run."}
       </p>
     </div>
   );

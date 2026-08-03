@@ -38,6 +38,10 @@ type RuntimeService struct {
 	// new one, otherwise pending trims can be associated with the wrong
 	// session directory.
 	screenLifecycleMu sync.Mutex
+
+	screenRecoveryMu       sync.Mutex
+	screenRecoveryWindow   time.Time
+	screenRecoveryAttempts int
 }
 
 // NewRuntimeService constructs the runtime orchestration service for runs.
@@ -56,6 +60,7 @@ func NewRuntimeService(ctx context.Context, settingsSvc *appsettings.Service, be
 	svc.mouse.SetBufferDuration(time.Duration(settings.MouseBufferMinutes) * time.Minute)
 
 	svc.screen = screen.New(ctx)
+	svc.screen.SetFailureHandler(svc.handleScreenCaptureFailure)
 	svc.encoder = screen.NewEncoder()
 	svc.runStore.SetScreenCapture(ctx, svc.screen, svc.encoder)
 
@@ -304,6 +309,7 @@ func (s *RuntimeService) reconfigureScreenCapture(settings models.Settings, rota
 	}
 	if err := s.screen.Start(); err != nil {
 		runtime.LogWarningf(s.ctx, "screen capture start failed after settings change: %v", err)
+		s.handleScreenCaptureFailure(err)
 		return
 	}
 	runtime.LogInfo(s.ctx, "screen capture started with updated settings")
@@ -329,9 +335,127 @@ func (s *RuntimeService) startConfiguredScreenCapture(settings models.Settings) 
 	s.configureScreenCaptureLocked(settings)
 	if err := s.screen.Start(); err != nil {
 		runtime.LogWarningf(s.ctx, "screen capture start failed: %v", err)
+		s.handleScreenCaptureFailure(err)
 		return
 	}
 	runtime.LogInfo(s.ctx, "screen capture started (process detected)")
+}
+
+// ScreenCaptureStatus is the authoritative status used by the settings UI.
+// Encoder availability is reported separately from active capture health.
+func (s *RuntimeService) ScreenCaptureStatus() screen.CaptureStatus {
+	settings := s.settingsSvc.Get()
+	providerStatus := screen.ProviderStatus{State: screen.CaptureStateIdle}
+	if s.screen != nil {
+		providerStatus = s.screen.Status()
+	}
+
+	status := screen.CaptureStatus{
+		Active:             providerStatus.Active,
+		Healthy:            providerStatus.Healthy,
+		State:              providerStatus.State,
+		Message:            providerStatus.Message,
+		LastError:          providerStatus.LastError,
+		LastFrameUnixMilli: providerStatus.LastFrameUnixMilli,
+	}
+	if s.encoder != nil && s.encoder.Available() {
+		info := s.encoder.Info()
+		status.EncoderName = info.EncoderName
+		status.Container = info.Container
+		status.IsHardware = info.IsHardware
+		status.Available = true
+	}
+
+	if providerStatus.State == screen.CaptureStateUnsupported {
+		status.Active = false
+		status.Healthy = false
+		status.State = "unavailable"
+		status.Message = providerStatus.Message
+		return status
+	}
+	if !settings.ScreenCaptureEnabled {
+		status.Active = false
+		status.Healthy = false
+		status.State = "disabled"
+		status.Message = "Screen capture is disabled."
+		return status
+	}
+	if !status.Available {
+		status.Active = false
+		status.Healthy = false
+		status.State = "unavailable"
+		status.Message = "FFmpeg or a compatible encoder is not available."
+		return status
+	}
+	if status.State == screen.CaptureStateError {
+		status.Message = "Screen capture encountered an error."
+		return status
+	}
+	if !process.IsRunning(constants.KovaaksProcessName) {
+		status.Active = false
+		status.Healthy = false
+		status.State = "ready"
+		status.Message = "Waiting for KovaaK's to start."
+		return status
+	}
+	if !status.Active {
+		status.State = "starting"
+		status.Message = "Capture is starting."
+	}
+	return status
+}
+
+func (s *RuntimeService) resetScreenRecovery() {
+	s.screenRecoveryMu.Lock()
+	s.screenRecoveryWindow = time.Time{}
+	s.screenRecoveryAttempts = 0
+	s.screenRecoveryMu.Unlock()
+}
+
+func (s *RuntimeService) handleScreenCaptureFailure(err error) {
+	if err == nil {
+		return
+	}
+	runtime.LogErrorf(s.ctx, "screen capture runtime failure: %v", err)
+
+	s.screenRecoveryMu.Lock()
+	now := time.Now()
+	if s.screenRecoveryWindow.IsZero() || now.Sub(s.screenRecoveryWindow) > 2*time.Minute {
+		s.screenRecoveryWindow = now
+		s.screenRecoveryAttempts = 0
+	}
+	if s.screenRecoveryAttempts >= 3 {
+		s.screenRecoveryMu.Unlock()
+		runtime.LogWarning(s.ctx, "screen capture recovery limit reached; leaving capture disabled until the next KovaaK's session")
+		return
+	}
+	s.screenRecoveryAttempts++
+	attempt := s.screenRecoveryAttempts
+	s.screenRecoveryMu.Unlock()
+
+	go func() {
+		timer := time.NewTimer(time.Duration(attempt) * time.Second)
+		defer timer.Stop()
+		select {
+		case <-timer.C:
+		case <-s.ctx.Done():
+			return
+		}
+
+		s.screenLifecycleMu.Lock()
+		defer s.screenLifecycleMu.Unlock()
+		settings := s.settingsSvc.Get()
+		if !settings.ScreenCaptureEnabled || !process.IsRunning(constants.KovaaksProcessName) {
+			return
+		}
+		s.stopAndFinalizeScreenCaptureLocked()
+		s.configureScreenCaptureLocked(settings)
+		if err := s.screen.Start(); err != nil {
+			runtime.LogWarningf(s.ctx, "screen capture recovery attempt %d failed: %v", attempt, err)
+			return
+		}
+		runtime.LogInfof(s.ctx, "screen capture recovered on attempt %d", attempt)
+	}()
 }
 
 func (s *RuntimeService) updateWatcher(newS models.Settings, needsRestart bool) error {
@@ -435,6 +559,7 @@ func (s *RuntimeService) startProcessWatcher() {
 					runtime.LogInfo(s.ctx, "mouse tracker started (process detected)")
 				}
 			}
+			s.resetScreenRecovery()
 			if cur.ScreenCaptureEnabled {
 				runtime.LogInfo(s.ctx, "watcher: starting screen capture")
 				s.startConfiguredScreenCapture(cur)
@@ -462,13 +587,22 @@ func (s *RuntimeService) startProcessWatcher() {
 	go s.procWatcher.Start(ctx)
 }
 
-// Shutdown stops capture on a real app exit and then removes its temporary
-// segment directories. Any trim that has not already published is intentionally
-// abandoned: the process is exiting and cannot reliably finish publishing it.
-// Startup cleanup remains the fallback for files locked by a child process or
-// an externally terminated RefleK's process.
+// Shutdown stops capture on a real app exit, gives active replay exports a
+// bounded opportunity to publish, and then removes temporary segment
+// directories. Startup cleanup remains the fallback for a trim that outlives
+// the shutdown window or an externally terminated RefleK's process.
 func (s *RuntimeService) Shutdown() {
 	s.stopProcessWatcher()
+	if s.runStore != nil {
+		waitCtx, cancel := context.WithTimeout(
+			context.Background(),
+			time.Duration(constants.ScreenCaptureShutdownWaitSeconds)*time.Second,
+		)
+		if !s.runStore.WaitForScreenTrims(waitCtx) {
+			runtime.LogWarning(s.ctx, "screen: timed out waiting for replay exports during shutdown")
+		}
+		cancel()
+	}
 	if err := screen.CleanupAbandonedSessions(); err != nil {
 		runtime.LogWarningf(s.ctx, "screen: clean capture sessions on shutdown: %v", err)
 	}
