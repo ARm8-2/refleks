@@ -16,6 +16,8 @@ import (
 	"refleks/internal/runs/kovaaks"
 	"refleks/internal/runs/screen"
 	appsettings "refleks/internal/settings"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // Store manages the .refleks run directory.
@@ -79,6 +81,23 @@ func (s *Store) setReplayStatus(runPath, state, message string) {
 		}
 	}
 	s.replayMu.Unlock()
+}
+
+// publishReplayStatus updates the in-memory status and pushes it to the UI so
+// the replay tab resolves the moment a trim reaches a terminal state instead
+// of waiting for its next poll tick. The processing state is never pushed: it
+// is set at ingest time, usually before the tab mounts, and only terminal
+// transitions are worth an event.
+func (s *Store) publishReplayStatus(runPath, state, message string) {
+	s.setReplayStatus(runPath, state, message)
+	if s.ctx == nil {
+		return
+	}
+	runtime.EventsEmit(s.ctx, constants.EventReplayStatus, map[string]any{
+		"path":    runPath,
+		"state":   state,
+		"message": message,
+	})
 }
 
 // GetReplayStatus returns the current processing state for a run. A published
