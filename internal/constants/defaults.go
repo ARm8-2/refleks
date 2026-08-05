@@ -8,8 +8,8 @@ const (
 	DefaultTheme              = "dark"
 	DefaultFont               = "montserrat"
 	DefaultMouseBufferMinutes = 5
-	DefaultRecentRunsDays     = 90
-	DefaultRecentRunsMinCount = 1500
+	DefaultRecentRunsDays     = 180
+	DefaultRecentRunsMinCount = 2500
 
 	// Watcher defaults
 	DefaultPollIntervalSeconds = 5
