@@ -18,6 +18,10 @@ export function DownloadAndInstallUpdate(arg1) {
   return window['go']['main']['App']['DownloadAndInstallUpdate'](arg1);
 }
 
+export function ExportRunReplay(arg1) {
+  return window['go']['main']['App']['ExportRunReplay'](arg1);
+}
+
 export function GetAllBenchmarkProgresses() {
   return window['go']['main']['App']['GetAllBenchmarkProgresses']();
 }

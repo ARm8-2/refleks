@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -239,6 +240,59 @@ func (a *App) DeleteRunReplay(filePath string) error {
 		return nil
 	}
 	return a.runStore.DeleteReplay(filePath)
+}
+
+// ExportRunReplay copies a run's saved screen recording replay to a location
+// chosen by the user via a native save dialog. Returns the destination path,
+// or an empty string if the dialog was cancelled.
+func (a *App) ExportRunReplay(filePath string) (string, error) {
+	diskPath, _, ok := a.resolveReplayPath(filePath)
+	if !ok {
+		return "", fmt.Errorf("no replay exists for this run")
+	}
+
+	savePath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Export replay",
+		DefaultFilename: filepath.Base(diskPath),
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Video files", Pattern: "*" + filepath.Ext(diskPath)},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	if savePath == "" {
+		return "", nil // dialog cancelled
+	}
+
+	if err := copyFile(diskPath, savePath); err != nil {
+		return "", fmt.Errorf("export replay: %w", err)
+	}
+	return savePath, nil
+}
+
+// copyFile streams src to dst, removing a partial destination on failure.
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		_ = out.Close()
+		_ = os.Remove(dst)
+		return err
+	}
+	if err := out.Close(); err != nil {
+		_ = os.Remove(dst)
+		return err
+	}
+	return nil
 }
 
 // GetScreenCaptureInfo returns encoder availability and the health of the

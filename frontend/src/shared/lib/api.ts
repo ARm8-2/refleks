@@ -3,6 +3,7 @@ import {
   ClearCache as _ClearCache,
   DeleteRunReplay as _DeleteRunReplay,
   DownloadAndInstallUpdate as _DownloadAndInstallUpdate,
+  ExportRunReplay as _ExportRunReplay,
   GetAllBenchmarkProgresses as _GetAllBenchmarkProgresses,
   GetBenchmarkProgress as _GetBenchmarkProgress,
   GetBenchmarks as _GetBenchmarks,
@@ -223,6 +224,13 @@ export async function getRunReplayStatus(
 
 export async function deleteRunReplay(filePath: string): Promise<void> {
   await _DeleteRunReplay(filePath);
+}
+
+export async function exportRunReplay(
+  filePath: string,
+): Promise<string | null> {
+  const res = await _ExportRunReplay(filePath);
+  return res || null;
 }
 
 export async function getScreenCaptureInfo(): Promise<ScreenCaptureInfo> {

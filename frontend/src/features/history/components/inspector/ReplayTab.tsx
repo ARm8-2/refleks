@@ -3,6 +3,7 @@ import { Slider } from "@/shared/components/ui/slider";
 import { EventsOn } from "@wails/runtime";
 import {
   deleteRunReplay,
+  exportRunReplay,
   getRunReplay,
   getRunReplayInfo,
   getRunReplayStatus,
@@ -10,6 +11,7 @@ import {
 import { cn } from "@/shared/lib/utils";
 import type { ReplayFileInfo, ReplayStatus } from "@/shared/types/ipc";
 import {
+  Download,
   Maximize2,
   Pause,
   Play,
@@ -399,11 +401,21 @@ function VideoPlayer({
   const [deleting, setDeleting] = useState(false);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportFeedback, setExportFeedback] = useState<{
+    text: string;
+    error?: boolean;
+  } | null>(null);
+  const exportTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      if (exportTimerRef.current) {
+        clearTimeout(exportTimerRef.current);
+        exportTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -539,6 +551,37 @@ function VideoPlayer({
   const isDefaultSpeed = Math.abs(speed - SPEED_DEFAULT) < 0.05;
   const closeDeleteModal = () => {
     if (!deleting) setConfirmOpen(false);
+  };
+
+  const handleExport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    setExportFeedback(null);
+    if (exportTimerRef.current) {
+      clearTimeout(exportTimerRef.current);
+      exportTimerRef.current = null;
+    }
+    try {
+      const savedTo = await exportRunReplay(filePath);
+      // An empty result means the user cancelled the save dialog.
+      if (savedTo) {
+        setExportFeedback({ text: `Saved to ${savedTo}` });
+        exportTimerRef.current = setTimeout(() => {
+          setExportFeedback(null);
+          exportTimerRef.current = null;
+        }, 6000);
+      }
+    } catch (err) {
+      setExportFeedback({
+        text:
+          err instanceof Error
+            ? `Export failed: ${err.message}`
+            : "Export failed.",
+        error: true,
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -762,12 +805,31 @@ function VideoPlayer({
               />
             )}
             <ControlBtn
+              icon={<Download className="h-3.5 w-3.5" />}
+              title="Export replay"
+              onClick={handleExport}
+              disabled={exporting}
+            />
+            <ControlBtn
               icon={<Trash2 className="h-3.5 w-3.5" />}
               title="Delete replay"
               onClick={() => setConfirmOpen(true)}
             />
           </div>
         </div>
+
+        {exportFeedback && (
+          <p
+            className={cn(
+              "text-[11px] leading-snug",
+              exportFeedback.error
+                ? "text-destructive"
+                : "text-surface-muted-foreground",
+            )}
+          >
+            {exportFeedback.text}
+          </p>
+        )}
       </div>
 
       <Modal

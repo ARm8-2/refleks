@@ -11,6 +11,8 @@ export function DeleteRunReplay(arg1:string):Promise<void>;
 
 export function DownloadAndInstallUpdate(arg1:string):Promise<void>;
 
+export function ExportRunReplay(arg1:string):Promise<string>;
+
 export function GetAllBenchmarkProgresses():Promise<Record<number, models.BenchmarkProgress>>;
 
 export function GetBenchmarkProgress(arg1:number):Promise<models.BenchmarkProgress>;
