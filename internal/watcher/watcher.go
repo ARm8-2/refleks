@@ -328,22 +328,32 @@ func (w *Watcher) markExistingStatsSeen(files []string) {
 	}
 }
 
+// catchUpNotifyInterval is the number of runs ingested during startup
+// catch-up between runs:added events. Emitting periodically instead of only at
+// the end lets the history UI populate progressively while a large backlog of
+// stats files is converted.
+const catchUpNotifyInterval = 25
+
 func (w *Watcher) catchUpExisting(files []string, gen uint64) {
 	if len(files) == 0 {
 		return
 	}
-	ingested := false
+	ingested := 0
 	for _, full := range files {
 		if !w.isGenerationCurrent(gen) {
 			return
 		}
 		if w.ingestStatsFile(full, filepath.Base(full), ingestOptions{ignoreSeen: true}) {
-			ingested = true
+			ingested++
+			if ingested%catchUpNotifyInterval == 0 {
+				runtime.EventsEmit(w.ctx, constants.EventRunsAdded, nil)
+			}
 		}
 	}
 	goruntime.GC()
 	debug.FreeOSMemory()
-	if ingested && w.isGenerationCurrent(gen) {
+	// Final event picks up any remainder beyond the last chunk.
+	if ingested > 0 && w.isGenerationCurrent(gen) {
 		runtime.EventsEmit(w.ctx, constants.EventRunsAdded, nil)
 	}
 }

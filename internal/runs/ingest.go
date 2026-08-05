@@ -1,12 +1,14 @@
 package runs
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"refleks/internal/constants"
 	"refleks/internal/models"
 	"refleks/internal/runs/environment"
 	"refleks/internal/runs/kovaaks"
+	"refleks/internal/runs/screen"
 	"refleks/internal/steam"
 	"strings"
 	"time"
@@ -121,6 +123,7 @@ func (s *Store) IngestRun(fullPath string, mouse models.MouseTraceProvider) (mod
 	rec.FilePath = runPath
 
 	// --- Screen capture: trim the session recording to the run window ---
+	s.setReplayStatus(runPath, models.ReplayStateProcessing, "Processing replay…")
 	s.scheduleScreenTrim(runPath, rec.FileName, start, end)
 
 	return rec, nil
@@ -139,12 +142,14 @@ func (s *Store) scheduleScreenTrim(runPath, runFileName string, start, end time.
 
 	if provider == nil || encoder == nil || !encoder.Available() {
 		runtime.LogDebugf(s.ctx, "screen/schedule: provider=%v encoder=%v available=%v", provider != nil, encoder != nil, encoder != nil && encoder.Available())
+		s.setReplayStatus(runPath, models.ReplayStateUnavailable, "Screen capture was not available for this run.")
 		return
 	}
 
-	dir, sessionStart := provider.Session()
+	dir, sessionStart := s.captureSessionForRun(provider, start, end)
 	runtime.LogDebugf(s.ctx, "screen/schedule: run=%s session=%q enabled=%v", runFileName, dir, provider.Enabled())
 	if dir == "" || sessionStart.IsZero() {
+		s.setReplayStatus(runPath, models.ReplayStateUnavailable, "No capture session covered this run.")
 		return
 	}
 	// The watcher may ingest historical files while a new capture session is
@@ -152,6 +157,7 @@ func (s *Store) scheduleScreenTrim(runPath, runFileName string, start, end time.
 	// plausible-looking but completely unrelated replay, so reject it instead.
 	if start.Before(sessionStart) || !end.After(sessionStart) {
 		runtime.LogDebugf(s.ctx, "screen/schedule: run=%s is outside capture session", runFileName)
+		s.setReplayStatus(runPath, models.ReplayStateUnavailable, "This run was outside the available capture session.")
 		return
 	}
 
@@ -181,9 +187,17 @@ func (s *Store) scheduleScreenTrim(runPath, runFileName string, start, end time.
 	}()
 }
 
+func captureSessionIsActive(provider screen.Provider, dir string) bool {
+	if provider == nil || !provider.Enabled() {
+		return false
+	}
+	currentDir, _ := provider.Session()
+	return currentDir == dir
+}
+
 // runScreenTrim polls for the run's segments to become available (i.e. the
-// segment covering the run's end has fully closed) and trims as soon as they
-// are, instead of waiting for the capture session itself to stop.
+// segment covering the run's end has fully closed) and trims as soon as
+// they are, instead of waiting for the capture session itself to stop.
 func (s *Store) runScreenTrim(trim pendingScreenTrim) {
 	deadline := time.Now().Add(time.Duration(constants.ScreenCaptureTrimMaxWaitSeconds) * time.Second)
 	for {
@@ -191,6 +205,7 @@ func (s *Store) runScreenTrim(trim pendingScreenTrim) {
 		provider := s.screenProvider
 		s.screenMu.Unlock()
 		if provider == nil {
+			s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "Capture stopped before replay processing completed.")
 			return
 		}
 
@@ -200,7 +215,11 @@ func (s *Store) runScreenTrim(trim pendingScreenTrim) {
 		if ready {
 			// Segments leases the selected files so the rolling-retention prune
 			// cannot remove one while ffmpeg is opening or copying it.
-			s.trimScreenRecording(trim, paths, firstSegmentStart)
+			if err := s.trimScreenRecording(trim, paths, firstSegmentStart); err != nil {
+				s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "Replay processing failed.")
+			} else {
+				s.publishReplayStatus(trim.runPath, models.ReplayStateReady, "Replay is ready.")
+			}
 			provider.ReleaseSegments(paths)
 			return
 		}
@@ -208,21 +227,30 @@ func (s *Store) runScreenTrim(trim pendingScreenTrim) {
 		// A capture session that has stopped cannot produce the requested tail.
 		// Export the complete scenario window instead of polling until timeout and
 		// losing the replay entirely.
-		if !provider.Enabled() && trim.replayEnd.After(trim.runEnd) {
+		if !captureSessionIsActive(provider, trim.dir) {
 			fallback := trim
 			fallback.replayEnd = trim.runEnd
 			paths, firstSegmentStart, ready = provider.Segments(
 				fallback.dir, fallback.sessionStart, fallback.runStart, fallback.replayEnd,
 			)
 			if ready {
-				s.trimScreenRecording(fallback, paths, firstSegmentStart)
+				if err := s.trimScreenRecording(fallback, paths, firstSegmentStart); err != nil {
+					s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "Replay processing failed.")
+				} else {
+					s.publishReplayStatus(trim.runPath, models.ReplayStateReady, "Replay is ready.")
+				}
 				provider.ReleaseSegments(paths)
 				return
 			}
+			// A stopped or replaced session cannot produce any more segments. Do
+			// not spend the full polling deadline waiting for an impossible tail.
+			s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "Capture segments did not cover the run window.")
+			return
 		}
 
 		if time.Now().After(deadline) {
 			runtime.LogWarningf(s.ctx, "screen/trim: gave up waiting for segments covering %s after %ds", trim.runFileName, constants.ScreenCaptureTrimMaxWaitSeconds)
+			s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "Timed out waiting for capture segments.")
 			return
 		}
 		time.Sleep(time.Duration(constants.ScreenCaptureTrimPollInterval) * time.Second)
@@ -243,12 +271,15 @@ func (s *Store) FinalizeScreenCapture() {
 
 	// Snapshot the stopped directory before another capture can start. Looking
 	// it up after waiting can instead pick the next session and leak this one.
-	dir, _ := provider.Session()
+	dir, sessionStart := provider.Session()
 	if dir == "" {
 		return
 	}
 
 	s.screenMu.Lock()
+	if !sessionStart.IsZero() {
+		s.screenSessions[dir] = sessionStart
+	}
 	s.screenFinalizing[dir] = true
 	pending := s.screenTrimCounts[dir]
 	scheduleRelease := pending == 0 && !s.screenReleasePending[dir]
@@ -277,6 +308,7 @@ func (s *Store) finishScreenTrim(dir string) {
 	if release {
 		delete(s.screenFinalizing, dir)
 		delete(s.screenReleasePending, dir)
+		delete(s.screenSessions, dir)
 	}
 	provider := s.screenProvider
 	s.screenMu.Unlock()
@@ -296,6 +328,7 @@ func (s *Store) releaseFinalizedScreenSession(dir string) {
 	delete(s.screenFinalizing, dir)
 	delete(s.screenReleasePending, dir)
 	delete(s.screenTrimCounts, dir)
+	delete(s.screenSessions, dir)
 	provider := s.screenProvider
 	s.screenMu.Unlock()
 
@@ -306,28 +339,28 @@ func (s *Store) releaseFinalizedScreenSession(dir string) {
 
 // trimScreenRecording trims the run's segments down to the run window and
 // atomically publishes the resulting replay only after ffmpeg succeeds.
-func (s *Store) trimScreenRecording(trim pendingScreenTrim, paths []string, firstSegmentStart time.Duration) {
+func (s *Store) trimScreenRecording(trim pendingScreenTrim, paths []string, firstSegmentStart time.Duration) error {
 	s.screenMu.Lock()
 	encoder := s.encoder
 	s.screenMu.Unlock()
 	if encoder == nil {
-		return
+		return fmt.Errorf("encoder is no longer available")
 	}
 	if len(paths) == 0 {
 		runtime.LogWarningf(s.ctx, "screen/trim: no segments for %s", trim.runFileName)
-		return
+		return fmt.Errorf("no capture segments were available")
 	}
 
 	outPath, err := s.ReplayPath(trim.runPath, encoder.Info().Container)
 	if err != nil {
 		runtime.LogWarningf(s.ctx, "screen/trim: replay path error: %v", err)
-		return
+		return fmt.Errorf("replay path: %w", err)
 	}
 	s.replayMu.Lock()
 	_, deleted := s.deletedReplays[trim.runPath]
 	s.replayMu.Unlock()
 	if deleted {
-		return
+		return fmt.Errorf("replay was deleted while processing")
 	}
 
 	sessionStartMs := trim.sessionStart.UnixMilli()
@@ -335,19 +368,19 @@ func (s *Store) trimScreenRecording(trim pendingScreenTrim, paths []string, firs
 	runEndMs := trim.replayEnd.UnixMilli()
 	if runEndMs <= runStartMs {
 		runtime.LogWarningf(s.ctx, "screen/trim: invalid run window for %s", trim.runFileName)
-		return
+		return fmt.Errorf("invalid replay time window")
 	}
 
 	tmp, err := os.CreateTemp(filepath.Dir(outPath), "."+filepath.Base(outPath)+"-*.partial"+filepath.Ext(outPath))
 	if err != nil {
 		runtime.LogWarningf(s.ctx, "screen/trim: create temporary replay for %s: %v", trim.runFileName, err)
-		return
+		return fmt.Errorf("create temporary replay: %w", err)
 	}
 	tmpPath := tmp.Name()
 	if err := tmp.Close(); err != nil {
 		_ = os.Remove(tmpPath)
 		runtime.LogWarningf(s.ctx, "screen/trim: close temporary replay for %s: %v", trim.runFileName, err)
-		return
+		return fmt.Errorf("close temporary replay: %w", err)
 	}
 	_ = os.Remove(tmpPath) // ffmpeg creates the file itself with -y.
 	defer os.Remove(tmpPath)
@@ -355,7 +388,7 @@ func (s *Store) trimScreenRecording(trim pendingScreenTrim, paths []string, firs
 	firstSegmentStartMs := sessionStartMs + firstSegmentStart.Milliseconds()
 	if err := encoder.TrimRecording(paths, tmpPath, sessionStartMs, firstSegmentStartMs, runStartMs, runEndMs); err != nil {
 		runtime.LogWarningf(s.ctx, "screen/trim: failed for %s: %v", trim.runFileName, err)
-		return
+		return fmt.Errorf("trim replay: %w", err)
 	}
 	// Coordinate publishing with user deletion. Windows cannot rename over an
 	// existing file, so move the old replay aside first and restore it if the
@@ -363,13 +396,13 @@ func (s *Store) trimScreenRecording(trim pendingScreenTrim, paths []string, firs
 	s.replayMu.Lock()
 	defer s.replayMu.Unlock()
 	if _, deleted := s.deletedReplays[trim.runPath]; deleted {
-		return
+		return fmt.Errorf("replay was deleted while processing")
 	}
 	backupPath := outPath + ".previous"
 	_ = os.Remove(backupPath)
 	if err := os.Rename(outPath, backupPath); err != nil && !os.IsNotExist(err) {
 		runtime.LogWarningf(s.ctx, "screen/trim: prepare replay replacement for %s: %v", trim.runFileName, err)
-		return
+		return fmt.Errorf("prepare replay replacement: %w", err)
 	}
 	if err := os.Rename(tmpPath, outPath); err != nil {
 		if restoreErr := os.Rename(backupPath, outPath); restoreErr != nil && !os.IsNotExist(restoreErr) {
@@ -377,11 +410,12 @@ func (s *Store) trimScreenRecording(trim pendingScreenTrim, paths []string, firs
 		} else {
 			runtime.LogWarningf(s.ctx, "screen/trim: publish replay for %s: %v; restored previous replay", trim.runFileName, err)
 		}
-		return
+		return fmt.Errorf("publish replay: %w", err)
 	}
 	_ = os.Remove(backupPath)
 
 	runtime.LogInfof(s.ctx, "screen/trim: saved replay for %s at %s", trim.runFileName, outPath)
+	return nil
 }
 
 func parseMatchingPerformancesFile(statsPath string) (*models.RunPerformanceData, error) {

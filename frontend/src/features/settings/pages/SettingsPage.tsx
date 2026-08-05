@@ -103,10 +103,28 @@ export function SettingsPage() {
     getVersion()
       .then((v) => setCurrentVersion(v))
       .catch(() => setCurrentVersion(""));
-    getScreenCaptureInfo()
-      .then((info) => setScreenCaptureInfo(info))
-      .catch(() => setScreenCaptureInfo(null))
-      .finally(() => setScreenCaptureLoading(false));
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = () =>
+      getScreenCaptureInfo()
+        .then((info) => {
+          if (active) setScreenCaptureInfo(info);
+        })
+        .catch(() => {
+          if (active) setScreenCaptureInfo(null);
+        })
+        .finally(() => {
+          if (active) setScreenCaptureLoading(false);
+        });
+
+    void refresh();
+    const timer = window.setInterval(refresh, 2_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -472,9 +490,12 @@ export function SettingsPage() {
                           icon={
                             <span
                               className={`inline-block h-2 w-2 rounded-full ${
-                                screenCaptureInfo
+                                screenCaptureInfo?.healthy
                                   ? "bg-emerald-500"
-                                  : "bg-amber-500"
+                                  : screenCaptureInfo?.state === "error" ||
+                                      screenCaptureInfo?.state === "unavailable"
+                                    ? "bg-red-500"
+                                    : "bg-amber-500"
                               }`}
                             />
                           }
@@ -483,14 +504,25 @@ export function SettingsPage() {
                           {screenCaptureInfo ? (
                             <div className="max-w-xs space-y-1 text-[11px]">
                               <p className="font-medium text-popover-foreground">
-                                FFmpeg ready
+                                {screenCaptureInfo.healthy
+                                  ? "Screen capture active"
+                                  : screenCaptureInfo.state === "error"
+                                    ? "Screen capture error"
+                                    : screenCaptureInfo.state === "unavailable"
+                                      ? "Screen capture unavailable"
+                                      : "Screen capture ready"}
                               </p>
                               <p className="text-popover-foreground/70">
-                                Using {screenCaptureInfo.encoderName}
-                                {screenCaptureInfo.isHardware
-                                  ? " (hardware accelerated)"
-                                  : " (software)"}
+                                {screenCaptureInfo.message}
                               </p>
+                              {screenCaptureInfo.encoderName && (
+                                <p className="text-popover-foreground/70">
+                                  Using {screenCaptureInfo.encoderName}
+                                  {screenCaptureInfo.isHardware
+                                    ? " (hardware accelerated)"
+                                    : " (software)"}
+                                </p>
+                              )}
                             </div>
                           ) : (
                             <div className="max-w-xs space-y-1 text-[11px]">
@@ -529,7 +561,7 @@ export function SettingsPage() {
                   <div className="space-y-3 pl-6">
                     <SettingsField
                       label="Resolution"
-                      description="Recording resolution (scaled by the GPU encoder, zero CPU cost)"
+                      description="Resolution used for new capture sessions; changing it while the game is running rotates the capture session immediately"
                     >
                       <Select
                         value={settings.screenCaptureResolution || "720"}
@@ -555,7 +587,7 @@ export function SettingsPage() {
 
                     <SettingsField
                       label="Capture FPS"
-                      description="Frames per second to capture"
+                      description="Frames per second for new capture sessions; changing it while the game is running rotates the capture session immediately"
                     >
                       <Input
                         type="number"
@@ -567,6 +599,7 @@ export function SettingsPage() {
                           )
                         }
                         onKeyDown={handleInputKeyDown}
+                        onBlur={() => void queueSettingsSave(settings)}
                         min={5}
                         max={60}
                         className="w-20 text-center"

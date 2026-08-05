@@ -11,6 +11,8 @@ export function DeleteRunReplay(arg1:string):Promise<void>;
 
 export function DownloadAndInstallUpdate(arg1:string):Promise<void>;
 
+export function ExportRunReplay(arg1:string):Promise<string>;
+
 export function GetAllBenchmarkProgresses():Promise<Record<number, models.BenchmarkProgress>>;
 
 export function GetBenchmarkProgress(arg1:number):Promise<models.BenchmarkProgress>;
@@ -31,11 +33,13 @@ export function GetRunReplay(arg1:string):Promise<string>;
 
 export function GetRunReplayInfo(arg1:string):Promise<screen.ReplayFileInfo>;
 
+export function GetRunReplayStatus(arg1:string):Promise<models.ReplayStatus>;
+
 export function GetRunStatsEvents(arg1:string):Promise<Array<models.RunStatsEvent>>;
 
 export function GetRunTrace(arg1:string):Promise<string>;
 
-export function GetScreenCaptureInfo():Promise<screen.EncoderInfo>;
+export function GetScreenCaptureInfo():Promise<screen.CaptureStatus>;
 
 export function GetSettings():Promise<models.Settings>;
 

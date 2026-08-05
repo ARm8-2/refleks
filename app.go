@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -53,6 +54,9 @@ func (a *App) startup(ctx context.Context) {
 	runtime.LogInfo(a.ctx, "RefleK's app starting up")
 	if err := screen.CleanupAbandonedSessions(); err != nil {
 		runtime.LogWarningf(a.ctx, "screen: clean abandoned capture sessions: %v", err)
+	}
+	if err := updater.CleanupAbandonedDownloads(); err != nil {
+		runtime.LogWarningf(a.ctx, "updater: clean abandoned downloads: %v", err)
 	}
 
 	// Initialize Settings Service
@@ -200,6 +204,16 @@ func (a *App) GetRunReplay(filePath string) string {
 	return urlPath
 }
 
+// GetRunReplayStatus reports whether a replay is still being processed, is
+// ready, or failed/unavailable, without making the frontend infer state from a
+// missing file.
+func (a *App) GetRunReplayStatus(filePath string) models.ReplayStatus {
+	if a.runStore == nil {
+		return models.ReplayStatus{State: models.ReplayStateUnavailable, Message: "run storage is not initialized"}
+	}
+	return a.runStore.GetReplayStatus(filePath)
+}
+
 // GetRunReplayInfo returns technical metadata (resolution, frame rate, codec,
 // duration, file size) about a run's saved replay, probed directly from the
 // file, or nil if no recording exists.
@@ -228,15 +242,67 @@ func (a *App) DeleteRunReplay(filePath string) error {
 	return a.runStore.DeleteReplay(filePath)
 }
 
-// GetScreenCaptureInfo returns info about the configured screen capture encoder,
-// or nil if screen capture is not available.
-func (a *App) GetScreenCaptureInfo() *screen.EncoderInfo {
-	enc := a.runsRuntimeSvc.Encoder()
-	if enc == nil || !enc.Available() {
-		return nil
+// ExportRunReplay copies a run's saved screen recording replay to a location
+// chosen by the user via a native save dialog. Returns the destination path,
+// or an empty string if the dialog was cancelled.
+func (a *App) ExportRunReplay(filePath string) (string, error) {
+	diskPath, _, ok := a.resolveReplayPath(filePath)
+	if !ok {
+		return "", fmt.Errorf("no replay exists for this run")
 	}
-	info := enc.Info()
-	return &info
+
+	savePath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Export replay",
+		DefaultFilename: filepath.Base(diskPath),
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Video files", Pattern: "*" + filepath.Ext(diskPath)},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	if savePath == "" {
+		return "", nil // dialog cancelled
+	}
+
+	if err := copyFile(diskPath, savePath); err != nil {
+		return "", fmt.Errorf("export replay: %w", err)
+	}
+	return savePath, nil
+}
+
+// copyFile streams src to dst, removing a partial destination on failure.
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		_ = out.Close()
+		_ = os.Remove(dst)
+		return err
+	}
+	if err := out.Close(); err != nil {
+		_ = os.Remove(dst)
+		return err
+	}
+	return nil
+}
+
+// GetScreenCaptureInfo returns encoder availability and the health of the
+// current capture session. Encoder probing alone is not treated as capture
+// success because the D3D/FFmpeg session starts later.
+func (a *App) GetScreenCaptureInfo() screen.CaptureStatus {
+	if a.runsRuntimeSvc == nil {
+		return screen.CaptureStatus{State: "unavailable", Message: "screen capture runtime is not initialized"}
+	}
+	return a.runsRuntimeSvc.ScreenCaptureStatus()
 }
 
 // GetLastScenarioScores fetches the last 10 scores for a given scenario from KovaaK's API.

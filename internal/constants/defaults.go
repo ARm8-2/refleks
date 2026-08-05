@@ -8,8 +8,8 @@ const (
 	DefaultTheme              = "dark"
 	DefaultFont               = "montserrat"
 	DefaultMouseBufferMinutes = 5
-	DefaultRecentRunsDays     = 90
-	DefaultRecentRunsMinCount = 1500
+	DefaultRecentRunsDays     = 180
+	DefaultRecentRunsMinCount = 2500
 
 	// Watcher defaults
 	DefaultPollIntervalSeconds = 5
@@ -23,8 +23,10 @@ const (
 	PerformancesFileRetryIntervalMs = 10
 	PerformancesFileMaxRetries      = 30
 
-	// Screen capture defaults
+	// Screen capture defaults and UI-supported limits.
 	DefaultScreenCaptureFPS        = 30
+	MinScreenCaptureFPS            = 5
+	MaxScreenCaptureFPS            = 60
 	DefaultScreenCaptureResolution = "720"
 
 	// Screen capture rolling-segment buffer. Recording is split into short,
@@ -43,7 +45,8 @@ const (
 	ScreenCaptureSegmentRetention     = 5 * 60 // seconds; segments older than this are pruned
 	ScreenCaptureTrimPollInterval     = 1      // seconds between readiness checks while waiting on a segment to close
 	ScreenCaptureTrimMaxWaitSeconds   = 45     // give up waiting on a run's segment after this long
-	ScreenCaptureFinalizeGraceSeconds = 5      // retain stopped segments for late final stats events
+	ScreenCaptureFinalizeGraceSeconds = 30     // retain stopped segments for late final stats events
+	ScreenCaptureShutdownWaitSeconds  = 30     // allow active trims to publish before app exit
 
 	// ScreenCaptureKeyframeIntervalSeconds controls how often a keyframe is
 	// forced in the encoded stream. This is intentionally much shorter than

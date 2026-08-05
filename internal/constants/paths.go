@@ -10,6 +10,11 @@ const (
 	StatsFileExt       = ".csv"
 	PerformanceFileExt = ".perf"
 
+	// Prefixes for temporary directories that may survive an interrupted
+	// process and are safe to remove during the next startup.
+	ScreenCaptureTempDirPrefix = "refleks-capture-"
+	UpdaterTempDirPrefix       = "refleks-update-"
+
 	KovaaksDataDirName         = "FPSAimTrainer"
 	KovaaksStatsDirName        = "stats"
 	KovaaksPerformancesDirName = "performances"

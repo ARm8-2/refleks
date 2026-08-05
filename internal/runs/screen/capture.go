@@ -7,16 +7,72 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"refleks/internal/constants"
 )
+
+// CaptureConfig contains all settings that affect a capture session. A
+// provider reads this configuration when Start is called; changing it while a
+// session is active is intentionally handled by the runtime as a session
+// rotation so the encoded stream cannot mix formats.
+type CaptureConfig struct {
+	FPS        int
+	Resolution string
+	Encoder    string
+}
+
+const (
+	CaptureStateIdle        = "idle"
+	CaptureStateStarting    = "starting"
+	CaptureStateCapturing   = "capturing"
+	CaptureStateError       = "error"
+	CaptureStateUnsupported = "unsupported"
+)
+
+// ProviderStatus reports the health of the active capture session independently
+// of whether FFmpeg is installed or an encoder is available.
+type ProviderStatus struct {
+	Active             bool
+	Healthy            bool
+	State              string
+	Message            string
+	LastError          string
+	LastFrameUnixMilli int64
+}
+
+// CaptureStatus combines encoder availability with the health of the actual
+// capture session. Encoder probing alone is not sufficient to claim capture is
+// working because D3D11 and the long-lived FFmpeg process start later.
+type CaptureStatus struct {
+	EncoderName        string `json:"encoderName"`
+	Container          string `json:"container"`
+	IsHardware         bool   `json:"isHardware"`
+	Available          bool   `json:"available"`
+	Active             bool   `json:"active"`
+	Healthy            bool   `json:"healthy"`
+	State              string `json:"state"`
+	Message            string `json:"message"`
+	LastError          string `json:"lastError,omitempty"`
+	LastFrameUnixMilli int64  `json:"lastFrameUnixMilli,omitempty"`
+}
 
 // Provider captures screen frames into a rolling buffer of short segments
 // with minimal performance impact. Frames are piped to an ffmpeg subprocess
-// during capture — no in-memory buffering. Segments are written to disk
+// during capture with a bounded frame pool and one latest-frame cache for
+// unchanged desktop frames. Segments are written to disk
 // independently (like a game-capture "instant replay" buffer) so that a run's
 // footage becomes available for trimming within seconds of the run ending,
 // and so a long play session never grows a single unbounded recording file.
 // On non-Windows platforms this is a no-op stub.
 type Provider interface {
+	// Configure stores the settings for the next capture session. The runtime
+	// must stop and start the provider to apply changes to an active session.
+	Configure(CaptureConfig)
+	// SetFailureHandler receives unrecoverable runtime failures, such as a lost
+	// desktop-duplication device or an FFmpeg process that exits unexpectedly.
+	SetFailureHandler(func(error))
+	// Status reports whether the current session is actively producing frames.
+	Status() ProviderStatus
 	// Start begins frame capture. No-op if already running or unsupported.
 	Start() error
 	// Stop ends frame capture. No-op if not running. The most recently
@@ -78,7 +134,7 @@ func cleanupAbandonedSessions(tempDir string) error {
 
 	var errs []error
 	for _, entry := range entries {
-		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), "refleks-capture-") {
+		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), constants.ScreenCaptureTempDirPrefix) {
 			continue
 		}
 		if err := os.RemoveAll(filepath.Join(tempDir, entry.Name())); err != nil {
@@ -86,26 +142,4 @@ func cleanupAbandonedSessions(tempDir string) error {
 		}
 	}
 	return errors.Join(errs...)
-}
-
-// SetCaptureEncoder configures the encoder name that the capture subprocess
-// will use for real-time encoding.  If never called, defaults to libx264.
-func SetCaptureEncoder(p Provider, encName string) {
-	if c, ok := p.(interface{ SetEncoder(string) }); ok {
-		c.SetEncoder(encName)
-	}
-}
-
-// SetCaptureFPS configures the recording frame rate.
-func SetCaptureFPS(p Provider, fps int) {
-	if c, ok := p.(interface{ SetFPS(int) }); ok {
-		c.SetFPS(fps)
-	}
-}
-
-// SetCaptureResolution configures the recording resolution (e.g. "native", "1080", "900", "720").
-func SetCaptureResolution(p Provider, res string) {
-	if c, ok := p.(interface{ SetResolution(string) }); ok {
-		c.SetResolution(res)
-	}
 }

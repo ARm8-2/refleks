@@ -54,6 +54,13 @@ type captureWin struct {
 	logMu       sync.Mutex
 	segmentsMu  sync.Mutex // serializes selecting/leasing segments and retention pruning
 	running     bool
+	state       string
+	lastError   string
+	lastFrameAt time.Time
+	ffmpegAlive bool
+
+	failureHandler  func(error)
+	failureNotified bool
 
 	fps        int
 	encName    string
@@ -61,6 +68,13 @@ type captureWin struct {
 
 	freeFrames chan []byte // buffers returned by the writer after ffmpeg has consumed them
 	pipeChan   chan []byte
+
+	// Desktop Duplication only signals changed desktop frames. Keep one latest
+	// frame so the FFmpeg input still receives a constant-FPS stream when the
+	// screen is static; otherwise video time would advance only on changes.
+	latestMu    sync.RWMutex
+	latestFrame []byte
+	latestReady bool
 
 	cmd      *exec.Cmd
 	rawStdin io.WriteCloser
@@ -97,7 +111,11 @@ var (
 )
 
 func New(ctx context.Context) Provider {
-	return &captureWin{ctx: ctx, fps: constants.DefaultScreenCaptureFPS}
+	return &captureWin{
+		ctx:   ctx,
+		fps:   constants.DefaultScreenCaptureFPS,
+		state: CaptureStateIdle,
+	}
 }
 
 // warnCapturef rate-limits recurring DXGI failures so a disconnected display
@@ -113,28 +131,86 @@ func (c *captureWin) warnCapturef(format string, args ...any) {
 	runtime.LogWarningf(c.ctx, format, args...)
 }
 
-func (c *captureWin) SetFPS(fps int) {
-	// Keep ticker construction safe even if settings were edited outside the
-	// UI. Higher values provide little capture value here and can overflow the
-	// integer duration division used by the capture loop.
+func (c *captureWin) Configure(config CaptureConfig) {
+	// The settings service validates user input before it reaches the
+	// provider. Keep a defensive FPS fallback here as well because the
+	// provider is also used by platform-specific runtime code.
+	fps := config.FPS
 	if fps < 1 || fps > 240 {
 		fps = constants.DefaultScreenCaptureFPS
 	}
+
 	c.mu.Lock()
 	c.fps = fps
+	c.encName = config.Encoder
+	c.resolution = config.Resolution
+	if !c.running {
+		c.state = CaptureStateIdle
+		c.lastError = ""
+		c.failureNotified = false
+	}
 	c.mu.Unlock()
 }
 
-func (c *captureWin) SetEncoder(encName string) {
+func (c *captureWin) SetFailureHandler(handler func(error)) {
 	c.mu.Lock()
-	c.encName = encName
+	c.failureHandler = handler
 	c.mu.Unlock()
 }
 
-func (c *captureWin) SetResolution(res string) {
+func (c *captureWin) Status() ProviderStatus {
 	c.mu.Lock()
-	c.resolution = res
+	defer c.mu.Unlock()
+
+	state := c.state
+	message := c.lastError
+	healthy := false
+	if c.running {
+		if c.ffmpegAlive && !c.lastFrameAt.IsZero() && time.Since(c.lastFrameAt) < 5*time.Second {
+			state = CaptureStateCapturing
+			message = "Capturing and receiving frames."
+			healthy = true
+		} else if state != CaptureStateError {
+			state = CaptureStateStarting
+			message = "Capture has not produced a frame yet."
+		}
+	} else if state == "" {
+		state = CaptureStateIdle
+	}
+	lastFrameUnixMilli := int64(0)
+	if !c.lastFrameAt.IsZero() {
+		lastFrameUnixMilli = c.lastFrameAt.UnixMilli()
+	}
+	return ProviderStatus{
+		Active:             c.running,
+		Healthy:            healthy,
+		State:              state,
+		Message:            message,
+		LastError:          c.lastError,
+		LastFrameUnixMilli: lastFrameUnixMilli,
+	}
+}
+
+// reportFailure records a runtime failure once per session and notifies the
+// runtime outside the capture mutex so recovery can safely stop this session.
+func (c *captureWin) reportFailure(err error) {
+	if err == nil {
+		return
+	}
+	var handler func(error)
+	c.mu.Lock()
+	if !c.running || c.failureNotified {
+		c.mu.Unlock()
+		return
+	}
+	c.state = CaptureStateError
+	c.lastError = err.Error()
+	c.failureNotified = true
+	handler = c.failureHandler
 	c.mu.Unlock()
+	if handler != nil {
+		go handler(err)
+	}
 }
 
 func (c *captureWin) Start() error {
@@ -148,6 +224,11 @@ func (c *captureWin) Start() error {
 		runtime.LogDebug(c.ctx, "screen: capture already running")
 		return nil
 	}
+	c.state = CaptureStateStarting
+	c.lastError = ""
+	c.lastFrameAt = time.Time{}
+	c.ffmpegAlive = false
+	c.failureNotified = false
 	procTimeBeginPeriod.Call(1)
 	// Keep the normal process-wide GC policy. Capture's hot path uses a fixed
 	// frame pool, so increasing GOGC only lets unrelated UI/ingest allocations
@@ -163,27 +244,36 @@ func (c *captureWin) Start() error {
 		&featureLevels[0], uint32(len(featureLevels)), d3d11SdkVersion,
 		&dev, &d3dCtx, &featureLevel)
 	if err != nil {
+		wrapped := fmt.Errorf("D3D11CreateDevice: %w", err)
+		c.state = CaptureStateError
+		c.lastError = wrapped.Error()
 		procTimeEndPeriod.Call(1)
 		c.mu.Unlock()
-		return fmt.Errorf("D3D11CreateDevice: %w", err)
+		return wrapped
 	}
 	runtime.LogDebugf(c.ctx, "screen: D3D11 device created (feature level 0x%x)", featureLevel)
 
 	dup, width, height, err := createDupOutput(dev)
 	if err != nil {
+		wrapped := fmt.Errorf("create duplicate output: %w", err)
 		releaseD3D(d3dCtx, dev)
+		c.state = CaptureStateError
+		c.lastError = wrapped.Error()
 		procTimeEndPeriod.Call(1)
 		c.mu.Unlock()
-		return fmt.Errorf("create duplicate output: %w", err)
+		return wrapped
 	}
 	runtime.LogDebugf(c.ctx, "screen: duplicate output created (%dx%d)", width, height)
 
 	staging, err := createStagingTexture(dev, width, height)
 	if err != nil {
+		wrapped := fmt.Errorf("create staging texture: %w", err)
 		releaseD3D(staging, dup, d3dCtx, dev)
+		c.state = CaptureStateError
+		c.lastError = wrapped.Error()
 		procTimeEndPeriod.Call(1)
 		c.mu.Unlock()
-		return fmt.Errorf("create staging texture: %w", err)
+		return wrapped
 	}
 
 	frameBytes := int(width) * int(height) * 4
@@ -194,6 +284,7 @@ func (c *captureWin) Start() error {
 	for i := range pool {
 		pool[i] = make([]byte, frameBytes)
 	}
+	latestFrame := make([]byte, frameBytes)
 
 	encName := c.encName
 	if encName == "" {
@@ -207,7 +298,7 @@ func (c *captureWin) Start() error {
 
 	// ext
 	ext := recordingExtension(encName)
-	segDir := filepath.Join(tempDir, fmt.Sprintf("refleks-capture-%d", time.Now().UnixMilli()))
+	segDir := filepath.Join(tempDir, fmt.Sprintf("%s%d", constants.ScreenCaptureTempDirPrefix, time.Now().UnixMilli()))
 	if err := os.MkdirAll(segDir, 0o755); err != nil {
 		releaseD3D(staging, dup, d3dCtx, dev)
 		procTimeEndPeriod.Call(1)
@@ -289,19 +380,25 @@ func (c *captureWin) Start() error {
 
 	rawStdin, err := cmd.StdinPipe()
 	if err != nil {
+		wrapped := fmt.Errorf("ffmpeg stdin pipe: %w", err)
 		releaseD3D(staging, dup, d3dCtx, dev)
 		_ = os.RemoveAll(segDir)
+		c.state = CaptureStateError
+		c.lastError = wrapped.Error()
 		procTimeEndPeriod.Call(1)
 		c.mu.Unlock()
-		return fmt.Errorf("ffmpeg stdin pipe: %w", err)
+		return wrapped
 	}
 	if err := cmd.Start(); err != nil {
+		wrapped := fmt.Errorf("ffmpeg start: %w", err)
 		_ = rawStdin.Close()
 		releaseD3D(staging, dup, d3dCtx, dev)
 		_ = os.RemoveAll(segDir)
+		c.state = CaptureStateError
+		c.lastError = wrapped.Error()
 		procTimeEndPeriod.Call(1)
 		c.mu.Unlock()
-		return fmt.Errorf("ffmpeg start: %w", err)
+		return wrapped
 	}
 
 	c.dev = dev
@@ -318,6 +415,10 @@ func (c *captureWin) Start() error {
 	pipeCh := make(chan []byte, 1)
 	c.freeFrames = freeFrames
 	c.pipeChan = pipeCh
+	c.latestMu.Lock()
+	c.latestFrame = latestFrame
+	c.latestReady = false
+	c.latestMu.Unlock()
 	c.cmd = cmd
 	c.rawStdin = rawStdin
 	c.segDir = segDir
@@ -331,6 +432,7 @@ func (c *captureWin) Start() error {
 	c.writerDone = writerDoneCh
 	c.ffmpegExited = ffmpegExitedCh
 	c.ffmpegWaitErr = nil
+	c.ffmpegAlive = true
 	c.segmentsMu.Lock()
 	c.segmentLeases = make(map[string]int)
 	c.segmentsMu.Unlock()
@@ -344,14 +446,28 @@ func (c *captureWin) Start() error {
 	// think we're running, this is our only chance to notice and log why.
 	go func() {
 		waitErr := cmd.Wait()
+		var handler func(error)
 		c.mu.Lock()
 		c.ffmpegWaitErr = waitErr
+		c.ffmpegAlive = false
 		wasRunning := c.running
 		stderr := c.ffmpegStderr.String()
+		if wasRunning {
+			err := fmt.Errorf("ffmpeg exited unexpectedly: %v; stderr: %s", waitErr, stderr)
+			c.state = CaptureStateError
+			c.lastError = err.Error()
+			if !c.failureNotified {
+				c.failureNotified = true
+				handler = c.failureHandler
+			}
+		}
 		c.mu.Unlock()
 		close(ffmpegExitedCh)
 		if wasRunning {
 			runtime.LogErrorf(c.ctx, "screen: ffmpeg exited unexpectedly: %v; stderr: %s", waitErr, stderr)
+			if handler != nil {
+				go handler(fmt.Errorf("ffmpeg exited unexpectedly: %v; stderr: %s", waitErr, stderr))
+			}
 			// Do not leave desktop duplication and the capture/writer goroutines
 			// running against a broken pipe for the rest of the game session.
 			// Stop is lifecycle-serialized and will see the already-closed
@@ -448,6 +564,14 @@ func (c *captureWin) Stop() {
 	c.pipeChan = nil
 	c.freeFrames = nil
 	c.rawStdin = nil
+	c.ffmpegAlive = false
+	c.latestMu.Lock()
+	c.latestFrame = nil
+	c.latestReady = false
+	c.latestMu.Unlock()
+	if c.lastError == "" {
+		c.state = CaptureStateIdle
+	}
 	c.mu.Unlock()
 
 	// Release D3D resources (captureLoop has exited by now)
@@ -709,6 +833,41 @@ func (c *captureWin) captureLoop() {
 	}
 }
 
+func (c *captureWin) repeatLatestFrame() {
+	c.mu.Lock()
+	freeFrames := c.freeFrames
+	pipeCh := c.pipeChan
+	done := c.doneCh
+	running := c.running
+	c.mu.Unlock()
+	if !running || freeFrames == nil || pipeCh == nil {
+		return
+	}
+
+	c.latestMu.RLock()
+	if !c.latestReady || len(c.latestFrame) == 0 {
+		c.latestMu.RUnlock()
+		return
+	}
+	var frame []byte
+	select {
+	case frame = <-freeFrames:
+	default:
+		c.latestMu.RUnlock()
+		return
+	}
+	copy(frame, c.latestFrame)
+	c.latestMu.RUnlock()
+
+	select {
+	case <-done:
+		freeFrames <- frame
+	case pipeCh <- frame:
+	default:
+		freeFrames <- frame
+	}
+}
+
 func (c *captureWin) captureFrame() {
 	c.mu.Lock()
 	dup := c.dup
@@ -729,9 +888,12 @@ func (c *captureWin) captureFrame() {
 	// GPU work — fast, must not block on the mutex.
 	dxgiResource, err := dxgiAcquireNextFrame(dup, 50)
 	if err != nil {
-		if err != errDxgiWaitTimeout {
-			c.warnCapturef("screen: AcquireNextFrame: %v", err)
+		if err == errDxgiWaitTimeout {
+			c.repeatLatestFrame()
+			return
 		}
+		c.warnCapturef("screen: AcquireNextFrame: %v", err)
+		c.reportFailure(err)
 		return
 	}
 
@@ -743,6 +905,7 @@ func (c *captureWin) captureFrame() {
 	iUnknownRelease(dxgiResource)
 	if d3dTex == 0 {
 		_ = dxgiReleaseFrame(dup)
+		c.reportFailure(fmt.Errorf("QueryInterface(ID3D11Texture2D) returned null"))
 		return
 	}
 	defer iUnknownRelease(d3dTex)
@@ -777,6 +940,7 @@ func (c *captureWin) captureFrame() {
 	if err != nil {
 		c.warnCapturef("screen: %v", err)
 		c.mu.Unlock()
+		c.reportFailure(err)
 		return
 	}
 
@@ -797,6 +961,11 @@ func (c *captureWin) captureFrame() {
 
 	d3d11Unmap(d3dCtx, staging, 0)
 	c.mu.Unlock()
+
+	c.latestMu.Lock()
+	copy(c.latestFrame, currentBuf)
+	c.latestReady = true
+	c.latestMu.Unlock()
 
 	select {
 	case <-done:
@@ -832,17 +1001,25 @@ func (c *captureWin) pipeWriter(pipeCh <-chan []byte, freeFrames chan<- []byte, 
 					runtime.LogWarningf(c.ctx, "screen: ffmpeg stdin write failed (pipe likely broken): %v", err)
 					logged = true
 				}
-				break
+				c.reportFailure(fmt.Errorf("ffmpeg stdin write failed: %w", err))
+				return
 			}
 			if n == 0 {
 				if !logged {
 					runtime.LogWarning(c.ctx, "screen: ffmpeg stdin write made no progress")
 					logged = true
 				}
-				break
+				c.reportFailure(fmt.Errorf("ffmpeg stdin write made no progress"))
+				return
 			}
 			buf = buf[n:]
 		}
+		c.mu.Lock()
+		if c.running {
+			c.lastFrameAt = time.Now()
+			c.state = CaptureStateCapturing
+		}
+		c.mu.Unlock()
 		freeFrames <- frame
 	}
 }
@@ -866,9 +1043,13 @@ const (
 	d3d11CPUAccessRead          = 0x20000
 	dxgiFormatB8G8R8A8_UNorm    = 87
 	dxgiErrorWaitTimeoutHresult = 0x887A0027
+	dxgiErrorAccessLostHresult  = 0x887A0026
 )
 
-var errDxgiWaitTimeout = fmt.Errorf("DXGI_ERROR_WAIT_TIMEOUT")
+var (
+	errDxgiWaitTimeout = fmt.Errorf("DXGI_ERROR_WAIT_TIMEOUT")
+	errDxgiAccessLost  = fmt.Errorf("DXGI_ERROR_ACCESS_LOST")
+)
 
 type mappedSubresource struct {
 	pData      uintptr
@@ -1092,6 +1273,9 @@ func dxgiAcquireNextFrame(dup uintptr, timeoutMs uint32) (resource uintptr, err 
 	if r != 0 {
 		if r == uint32(dxgiErrorWaitTimeoutHresult) {
 			return 0, errDxgiWaitTimeout
+		}
+		if r == uint32(dxgiErrorAccessLostHresult) {
+			return 0, errDxgiAccessLost
 		}
 		return 0, fmt.Errorf("AcquireNextFrame: 0x%x", r)
 	}

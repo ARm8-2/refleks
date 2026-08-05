@@ -1,9 +1,17 @@
 import { Button, InfoTooltip, Modal } from "@/shared/components";
 import { Slider } from "@/shared/components/ui/slider";
-import { deleteRunReplay, getRunReplay, getRunReplayInfo } from "@/shared/lib";
-import { cn } from "@/shared/lib/utils";
-import type { ReplayFileInfo } from "@/shared/types/ipc";
+import { EventsOn } from "@wails/runtime";
 import {
+  deleteRunReplay,
+  exportRunReplay,
+  getRunReplay,
+  getRunReplayInfo,
+  getRunReplayStatus,
+} from "@/shared/lib";
+import { cn } from "@/shared/lib/utils";
+import type { ReplayFileInfo, ReplayStatus } from "@/shared/types/ipc";
+import {
+  Download,
   Maximize2,
   Pause,
   Play,
@@ -28,13 +36,14 @@ type ReplaySource = {
 // Replays are trimmed out of a rolling capture buffer asynchronously after a
 // run finishes (see internal/runs/ingest.go: scheduleScreenTrim), which can
 // take up to ScreenCaptureTrimMaxWaitSeconds (45s) plus a few seconds of
-// encode time. Poll for a just-finished run's replay instead of checking
-// only once, so the tab picks it up on its own instead of requiring the user
-// to click away and back. Give up well before that window for runs that are
-// already old, so runs that never had (or never will have) a recording don't
-// sit on a loading state.
-const REPLAY_POLL_INTERVAL_MS = 2_000;
-const REPLAY_READY_WINDOW_MS = 90_000;
+// encode time. Slots resolve through exactly two mechanisms:
+//
+//  1. A debounced lookup on mount/selection resolves replays that already
+//     reached a terminal state before this tab existed.
+//  2. The store pushes replay:status the moment a trim finishes (or fails),
+//     which resolves a waiting slot immediately. Transitions are never
+//     polled; the event is the only live-update path.
+//
 // Debounce the actual replay lookup/load after the selected run changes.
 // Clicking through several runs quickly would otherwise mount (fetch +
 // decode) and immediately tear down a video for every run passed through
@@ -44,20 +53,55 @@ const REPLAY_READY_WINDOW_MS = 90_000;
 // stops on ever loads a video.
 const REPLAY_SELECT_DEBOUNCE_MS = 200;
 
-function stillWithinReadyWindow(playedAt: number): boolean {
-  const age = Date.now() - playedAt;
-  return playedAt > 0 && age >= 0 && age < REPLAY_READY_WINDOW_MS;
+const fallbackReplayStatus = (): ReplayStatus => ({
+  state: "processing",
+  message: "Waiting for replay status…",
+});
+
+async function lookupReplay(filePath: string): Promise<{
+  path: string | null;
+  status: ReplayStatus;
+}> {
+  const [pathResult, statusResult] = await Promise.allSettled([
+    getRunReplay(filePath),
+    getRunReplayStatus(filePath),
+  ]);
+  let path = pathResult.status === "fulfilled" ? pathResult.value : null;
+  let status =
+    statusResult.status === "fulfilled"
+      ? statusResult.value
+      : fallbackReplayStatus();
+
+  // The status and path are separate IPC calls. If publication happens
+  // between them, recheck once instead of displaying a terminal "ready"
+  // state with no playable URL.
+  if (path === null && status.state === "ready") {
+    try {
+      path = await getRunReplay(filePath);
+    } catch {
+      path = null;
+    }
+    if (path === null) {
+      status = {
+        state: "processing",
+        message: "Replay was published and is becoming available…",
+      };
+    }
+  }
+
+  return { path, status };
 }
 
 export function ReplayTab({ primaryRun, compareRun }: Props) {
   const [primaryReplay, setPrimaryReplay] = useState<ReplaySource | null>(null);
   const [compareReplay, setCompareReplay] = useState<ReplaySource | null>(null);
+  const [primaryStatus, setPrimaryStatus] = useState<ReplayStatus | null>(null);
+  const [compareStatus, setCompareStatus] = useState<ReplayStatus | null>(null);
   const [primaryWaiting, setPrimaryWaiting] = useState(true);
   const [compareWaiting, setCompareWaiting] = useState(false);
 
   useEffect(() => {
     let active = true;
-    let pollTimer: ReturnType<typeof setTimeout> | undefined;
     let primaryPath: string | null = null;
     let comparePath: string | null = null;
     let primaryResolved = false;
@@ -65,38 +109,48 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
 
     setPrimaryReplay(null);
     setCompareReplay(null);
+    setPrimaryStatus(null);
+    setCompareStatus(null);
     setPrimaryWaiting(true);
     setCompareWaiting(!!compareRun);
 
-    const poll = async () => {
-      // Once a slot has resolved, keep its URL and only poll the slot that is
-      // still processing. This avoids repeated IPC/filesystem work and React
-      // updates while the other replay catches up.
-      const lookups: PromiseSettledResult<string | null>[] =
-        await Promise.allSettled([
-          primaryResolved
-            ? Promise.resolve(primaryPath)
-            : getRunReplay(primaryRun.item.filePath),
-          compareResolved || !compareRun
-            ? Promise.resolve(comparePath)
-            : getRunReplay(compareRun.item.filePath),
-        ]);
+    // One-shot lookup: resolves slots whose replay already reached a terminal
+    // state before this tab mounted. Live transitions are pushed by the
+    // replay:status event below instead of being polled.
+    const lookup = async () => {
+      // Once a slot has resolved, keep its URL and only query the slot that
+      // is still processing. This avoids repeated IPC/filesystem work and
+      // React updates while the other replay catches up.
+      const [primaryLookup, compareLookup] = await Promise.all([
+        primaryResolved
+          ? Promise.resolve({
+              path: primaryPath,
+              status: {
+                state: "ready",
+                message: "Replay is ready.",
+              } satisfies ReplayStatus,
+            })
+          : lookupReplay(primaryRun.item.filePath),
+        compareResolved || !compareRun
+          ? Promise.resolve(null)
+          : lookupReplay(compareRun.item.filePath),
+      ]);
       if (!active) return;
 
-      const [primaryResult, compareResult] = lookups;
-      if (primaryResult.status === "fulfilled") {
-        primaryPath = primaryResult.value;
-        primaryResolved = primaryPath !== null;
-        if (primaryPath !== null) {
-          setPrimaryReplay({
-            filePath: primaryRun.item.filePath,
-            path: primaryPath,
-          });
-        }
+      primaryPath = primaryLookup.path;
+      primaryResolved = primaryPath !== null;
+      setPrimaryStatus(primaryLookup.status);
+      if (primaryPath !== null) {
+        setPrimaryReplay({
+          filePath: primaryRun.item.filePath,
+          path: primaryPath,
+        });
       }
-      if (compareRun && compareResult.status === "fulfilled") {
-        comparePath = compareResult.value;
+
+      if (compareRun && compareLookup) {
+        comparePath = compareLookup.path;
         compareResolved = comparePath !== null;
+        setCompareStatus(compareLookup.status);
         if (comparePath !== null) {
           setCompareReplay({
             filePath: compareRun.item.filePath,
@@ -105,33 +159,44 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
         }
       }
 
-      const keepPrimaryWaiting =
-        !primaryResolved && stillWithinReadyWindow(primaryRun.playedAt);
-      const keepCompareWaiting =
+      // A slot stays in the waiting state only while its trim is genuinely
+      // processing; the replay:status event flips it the moment the trim
+      // reaches a terminal state.
+      setPrimaryWaiting(
+        !primaryResolved && primaryLookup.status.state === "processing",
+      );
+      setCompareWaiting(
         !!compareRun &&
-        !compareResolved &&
-        stillWithinReadyWindow(compareRun.playedAt);
-      setPrimaryWaiting(keepPrimaryWaiting);
-      setCompareWaiting(keepCompareWaiting);
-
-      if (keepPrimaryWaiting || keepCompareWaiting) {
-        pollTimer = setTimeout(poll, REPLAY_POLL_INTERVAL_MS);
-      }
+          !!compareLookup &&
+          !compareResolved &&
+          compareLookup.status.state === "processing",
+      );
     };
 
-    const debounceTimer = setTimeout(poll, REPLAY_SELECT_DEBOUNCE_MS);
+    const debounceTimer = setTimeout(lookup, REPLAY_SELECT_DEBOUNCE_MS);
+
+    // The store pushes replay:status the moment a trim finishes (or fails),
+    // resolving the matching slot immediately. Events that fired before this
+    // tab mounted are covered by the debounced lookup above.
+    const offReplayStatus = EventsOn(
+      "replay:status",
+      (payload: { path?: string }) => {
+        if (!active || !payload?.path) return;
+        const p = payload.path;
+        const isPrimary = p === primaryRun.item.filePath && !primaryResolved;
+        const isCompare =
+          !!compareRun && p === compareRun.item.filePath && !compareResolved;
+        if (!isPrimary && !isCompare) return;
+        void lookup();
+      },
+    );
 
     return () => {
       active = false;
       clearTimeout(debounceTimer);
-      if (pollTimer) clearTimeout(pollTimer);
+      offReplayStatus();
     };
-  }, [
-    primaryRun.item.filePath,
-    primaryRun.playedAt,
-    compareRun?.item.filePath,
-    compareRun?.playedAt,
-  ]);
+  }, [primaryRun.item.filePath, compareRun?.item.filePath]);
 
   return (
     <div className="space-y-3">
@@ -145,6 +210,7 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
                 : null
             }
             waiting={primaryWaiting}
+            status={primaryStatus}
             label="Primary"
             onDeleted={() => setPrimaryReplay(null)}
           />
@@ -156,6 +222,7 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
                 : null
             }
             waiting={compareWaiting}
+            status={compareStatus}
             label="Compare"
             onDeleted={() => setCompareReplay(null)}
           />
@@ -169,6 +236,7 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
               : null
           }
           waiting={primaryWaiting}
+          status={primaryStatus}
           onDeleted={() => setPrimaryReplay(null)}
         />
       )}
@@ -182,12 +250,14 @@ function ReplaySlot({
   filePath,
   path,
   waiting,
+  status,
   label,
   onDeleted,
 }: {
   filePath: string;
   path: string | null;
   waiting: boolean;
+  status: ReplayStatus | null;
   label?: string;
   onDeleted: () => void;
 }) {
@@ -246,8 +316,8 @@ function ReplaySlot({
     >
       <p className="text-sm text-surface-muted-foreground" aria-live="polite">
         {waiting
-          ? "Waiting for replay to finish processing…"
-          : "No screen recording for this run. Enable screen capture in settings to record replays."}
+          ? status?.message || "Waiting for replay to finish processing…"
+          : status?.message || "No replay is available for this run."}
       </p>
     </div>
   );
@@ -331,11 +401,21 @@ function VideoPlayer({
   const [deleting, setDeleting] = useState(false);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportFeedback, setExportFeedback] = useState<{
+    text: string;
+    error?: boolean;
+  } | null>(null);
+  const exportTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      if (exportTimerRef.current) {
+        clearTimeout(exportTimerRef.current);
+        exportTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -471,6 +551,37 @@ function VideoPlayer({
   const isDefaultSpeed = Math.abs(speed - SPEED_DEFAULT) < 0.05;
   const closeDeleteModal = () => {
     if (!deleting) setConfirmOpen(false);
+  };
+
+  const handleExport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    setExportFeedback(null);
+    if (exportTimerRef.current) {
+      clearTimeout(exportTimerRef.current);
+      exportTimerRef.current = null;
+    }
+    try {
+      const savedTo = await exportRunReplay(filePath);
+      // An empty result means the user cancelled the save dialog.
+      if (savedTo) {
+        setExportFeedback({ text: `Saved to ${savedTo}` });
+        exportTimerRef.current = setTimeout(() => {
+          setExportFeedback(null);
+          exportTimerRef.current = null;
+        }, 6000);
+      }
+    } catch (err) {
+      setExportFeedback({
+        text:
+          err instanceof Error
+            ? `Export failed: ${err.message}`
+            : "Export failed.",
+        error: true,
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -694,12 +805,31 @@ function VideoPlayer({
               />
             )}
             <ControlBtn
+              icon={<Download className="h-3.5 w-3.5" />}
+              title="Export replay"
+              onClick={handleExport}
+              disabled={exporting}
+            />
+            <ControlBtn
               icon={<Trash2 className="h-3.5 w-3.5" />}
               title="Delete replay"
               onClick={() => setConfirmOpen(true)}
             />
           </div>
         </div>
+
+        {exportFeedback && (
+          <p
+            className={cn(
+              "text-[11px] leading-snug",
+              exportFeedback.error
+                ? "text-destructive"
+                : "text-surface-muted-foreground",
+            )}
+          >
+            {exportFeedback.text}
+          </p>
+        )}
       </div>
 
       <Modal

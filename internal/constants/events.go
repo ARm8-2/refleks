@@ -13,4 +13,7 @@ const (
 	// Runs events
 	EventRunsWatcherStarted = "runs:watcher:started"
 	EventRunsAdded          = "runs:added"
+
+	// Replay events
+	EventReplayStatus = "replay:status"
 )

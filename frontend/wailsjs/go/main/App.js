@@ -18,6 +18,10 @@ export function DownloadAndInstallUpdate(arg1) {
   return window['go']['main']['App']['DownloadAndInstallUpdate'](arg1);
 }
 
+export function ExportRunReplay(arg1) {
+  return window['go']['main']['App']['ExportRunReplay'](arg1);
+}
+
 export function GetAllBenchmarkProgresses() {
   return window['go']['main']['App']['GetAllBenchmarkProgresses']();
 }
@@ -56,6 +60,10 @@ export function GetRunReplay(arg1) {
 
 export function GetRunReplayInfo(arg1) {
   return window['go']['main']['App']['GetRunReplayInfo'](arg1);
+}
+
+export function GetRunReplayStatus(arg1) {
+  return window['go']['main']['App']['GetRunReplayStatus'](arg1);
 }
 
 export function GetRunStatsEvents(arg1) {
