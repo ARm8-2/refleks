@@ -12,12 +12,14 @@ import { launchPlaylist } from "@/shared/lib";
 import { ArrowLeft, Check, Play, Share2, Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { BenchmarkProgressTable } from "../components/detail/BenchmarkProgressTable";
 import { RankDistributionWidget } from "../components/detail/RankDistributionWidget";
 import { StrengthWidget } from "../components/detail/StrengthWidget";
 import { useBenchmarkDetailProgress } from "../hooks/useBenchmarkDetailProgress";
 
 export function BenchmarkDetailPage() {
+  const { t } = useTranslation(["benchmarks", "errors"]);
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const {
@@ -64,7 +66,7 @@ export function BenchmarkDetailPage() {
       setShareCopied(false);
 
       if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") {
-        alert("Image clipboard is not supported in this environment.");
+        alert(t("errors:benchmarks.copyScreenshotUnsupported"));
         return;
       }
 
@@ -85,7 +87,7 @@ export function BenchmarkDetailPage() {
       window.setTimeout(() => setShareCopied(false), 1800);
     } catch (error) {
       console.error("Failed to copy benchmark screenshot:", error);
-      alert("Failed to copy screenshot.");
+      alert(t("errors:benchmarks.copyScreenshotFailed"));
     } finally {
       setIsCopyingShare(false);
     }
@@ -97,7 +99,7 @@ export function BenchmarkDetailPage() {
         <div className="flex flex-wrap items-center gap-2.5 min-w-0">
           <Button variant="ghost" size="sm" onClick={handleBack}>
             <ArrowLeft className="w-4 h-4 mr-1.5" />
-            Back
+            {t("benchmarks:page.back")}
           </Button>
 
           <h1 className="min-w-0 truncate text-lg font-semibold text-foreground">
@@ -112,7 +114,7 @@ export function BenchmarkDetailPage() {
               onValueChange={(value) => setDifficultyIndex(Number(value) || 0)}
             >
               <SelectTrigger className="h-8 w-auto min-w-0 max-w-[240px] px-2.5 text-xs sm:text-sm">
-                <SelectValue placeholder="Difficulty" />
+                <SelectValue placeholder={t("benchmarks:page.difficulty")} />
               </SelectTrigger>
               <SelectContent>
                 {benchmark.difficulties.map((item, index) => (
@@ -134,7 +136,7 @@ export function BenchmarkDetailPage() {
               difficulty?.sharecode && launchPlaylist(difficulty.sharecode)
             }
             disabled={!difficulty?.sharecode}
-            title="Play benchmark playlist in Kovaak's"
+            title={t("benchmarks:page.playPlaylist")}
           >
             <Play className="h-4 w-4" />
           </Button>
@@ -147,7 +149,7 @@ export function BenchmarkDetailPage() {
               disabled={
                 isCopyingShare || !progress || !!error || progressLoading
               }
-              title={shareCopied ? "Copied!" : "Copy progress table screenshot"}
+              title={shareCopied ? t("benchmarks:page.copied") : t("benchmarks:page.copyScreenshot")}
             >
               {shareCopied ? (
                 <Check className="h-4 w-4" />
@@ -162,7 +164,7 @@ export function BenchmarkDetailPage() {
               variant="ghost"
               size="icon"
               onClick={() => toggleFavorite(benchmark.benchmarkName)}
-              title={favorite ? "Unfavorite benchmark" : "Favorite benchmark"}
+              title={favorite ? t("benchmarks:page.unfavorite") : t("benchmarks:page.favorite")}
             >
               <Star
                 className="h-4 w-4"
@@ -183,7 +185,7 @@ export function BenchmarkDetailPage() {
 
         {!showInitialSkeleton && !benchmark && (
           <div className="rounded-xl bg-surface p-6 text-sm text-surface-muted-foreground shadow-sm">
-            Benchmark not found.
+            {t("benchmarks:page.notFound")}
           </div>
         )}
 
@@ -204,7 +206,7 @@ export function BenchmarkDetailPage() {
               <BenchmarkProgressTable
                 benchmark={benchmark}
                 difficultyName={
-                  difficulty?.difficultyName || "Unknown difficulty"
+                  difficulty?.difficultyName || t("benchmarks:detail.unknownDifficulty")
                 }
                 progress={progress}
               />
@@ -214,7 +216,7 @@ export function BenchmarkDetailPage() {
                   <BenchmarkProgressTable
                     benchmark={benchmark}
                     difficultyName={
-                      difficulty?.difficultyName || "Unknown difficulty"
+                      difficulty?.difficultyName || t("benchmarks:detail.unknownDifficulty")
                     }
                     progress={progress}
                     shareMode
@@ -235,7 +237,7 @@ export function BenchmarkDetailPage() {
           !error &&
           !progress && (
             <div className="route-content-enter rounded-xl bg-surface p-6 text-sm text-surface-muted-foreground shadow-sm">
-              No progress data available yet for this difficulty.
+              {t("benchmarks:page.noProgress")}
             </div>
           )}
       </div>

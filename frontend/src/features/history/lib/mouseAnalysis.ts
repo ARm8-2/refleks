@@ -84,10 +84,11 @@ export type SensSuggestion = {
   recommended: number;
   changePct: number;
   direction: "slower" | "faster";
-  reason: string;
   primaryIssue: "overshoot" | "undershoot";
+  issuePercent: number;
+  movingClickTiming: boolean;
   avgMagnitudePixels: number;
-  severity: SeverityGrade;
+  severity: Exclude<SeverityGrade, "none">;
 };
 
 type NormalizedPoint = MousePoint & { buttons: number };
@@ -841,7 +842,7 @@ export function computeSuggestedSens(
     primaryIssue === "overshoot"
       ? analysis.severityCounts.overshoot
       : analysis.severityCounts.undershoot;
-  const severity: SeverityGrade =
+  const severity: Exclude<SeverityGrade, "none"> =
     severityCounts.severe >=
     Math.max(2, severityCounts.moderate + severityCounts.slight)
       ? "severe"
@@ -869,19 +870,14 @@ export function computeSuggestedSens(
     primaryIssue === "overshoot"
       ? overshootMagnitude / Math.max(1, overshootScore)
       : undershootMagnitude / Math.max(1, undershootScore);
-  const issueLabel = primaryIssue === "overshoot" ? "overshoot" : "undershoot";
-  const clickNote =
-    movingClicks / known.length > 0.35
-      ? " Click timing also appears to contribute."
-      : "";
-
   return {
     current,
     recommended,
     changePct,
     direction,
-    reason: `${severity[0].toUpperCase() + severity.slice(1)} ${issueLabel} pattern in ${Math.round(issueFraction * 100)}% of reliable kills.${clickNote} Train temporarily at ${recommended.toFixed(2)} cm/360 (${Math.abs(Math.round(changePct))}% ${primaryIssue === "overshoot" ? "lower cm/360 / higher sensitivity" : "higher cm/360 / lower sensitivity"}). This is intentionally exaggerated to force adaptation to the diagnosed error; use it for a short block, then return to your normal sens and reassess.`,
     primaryIssue,
+    issuePercent: Math.round(issueFraction * 100),
+    movingClickTiming: movingClicks / known.length > 0.35,
     avgMagnitudePixels: avgMagnitude,
     severity,
   };

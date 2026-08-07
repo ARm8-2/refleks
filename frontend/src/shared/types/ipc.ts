@@ -207,6 +207,7 @@ export interface BenchmarkProgress {
 import type { Font, Theme } from "../lib/theme";
 
 export interface Settings {
+  language?: "en" | "zh-CN";
   steamInstallDir?: string;
   kovaaksInstallDir: string;
   steamIdOverride?: string;
@@ -256,14 +257,21 @@ export interface ScreenCaptureInfo {
   active: boolean;
   healthy: boolean;
   state: string;
-  message: string;
-  lastError?: string;
+  messageCode: string;
+  messageParams?: MessageParams;
   lastFrameUnixMilli?: number;
 }
 
-export interface ReplayStatus {
+export type MessagePrimitive = string | number | boolean;
+export type MessageParams = Record<string, MessagePrimitive>;
+
+export interface UserMessage {
+  messageCode: string;
+  messageParams?: MessageParams;
+}
+
+export interface ReplayStatus extends UserMessage {
   state: "processing" | "ready" | "unavailable" | "failed";
-  message: string;
 }
 
 export interface ReplayFileInfo {

@@ -13,6 +13,7 @@ import {
   chartDot,
 } from "@/shared/lib";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import type { ScenarioTrendPoint } from "../lib/historyModels";
 import { formatNumber } from "../lib/historyModels";
@@ -24,17 +25,17 @@ type Props = {
   className?: string;
 };
 
-const dualChartConfig: ChartConfig = {
-  score: { label: "Score", color: CHART_SERIES_COLORS.scoreHistory },
-  accuracy: { label: "Accuracy %", color: CHART_SERIES_COLORS.accuracy },
-};
-
 export function ScenarioTrendChart({
   scenarioName,
   points,
   onClickPoint,
   className,
 }: Props) {
+  const { t } = useTranslation("history");
+  const chartConfig: ChartConfig = {
+    score: { label: t("charts.score"), color: CHART_SERIES_COLORS.scoreHistory },
+    accuracy: { label: t("charts.accuracyPercent"), color: CHART_SERIES_COLORS.accuracy },
+  };
   const hasAccuracy = points.some(
     (point) => point.accuracy != null && point.accuracy > 0,
   );
@@ -54,7 +55,7 @@ export function ScenarioTrendChart({
 
     return (
       <ChartContainer
-        config={dualChartConfig}
+        config={chartConfig}
         className={`aspect-auto w-full h-full`}
       >
         <LineChart
@@ -142,7 +143,7 @@ export function ScenarioTrendChart({
   return (
     <Widget
       title={scenarioName}
-      modalTitle={`${scenarioName} — Trend`}
+      modalTitle={t("charts.trendTitle", { scenario: scenarioName })}
       modalContent={chart(true)}
       className={className}
     >

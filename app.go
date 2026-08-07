@@ -209,7 +209,10 @@ func (a *App) GetRunReplay(filePath string) string {
 // missing file.
 func (a *App) GetRunReplayStatus(filePath string) models.ReplayStatus {
 	if a.runStore == nil {
-		return models.ReplayStatus{State: models.ReplayStateUnavailable, Message: "run storage is not initialized"}
+		return models.ReplayStatus{
+			State:       models.ReplayStateUnavailable,
+			UserMessage: models.NewUserMessage("replay.unavailable", nil),
+		}
 	}
 	return a.runStore.GetReplayStatus(filePath)
 }
@@ -300,7 +303,10 @@ func copyFile(src, dst string) error {
 // success because the D3D/FFmpeg session starts later.
 func (a *App) GetScreenCaptureInfo() screen.CaptureStatus {
 	if a.runsRuntimeSvc == nil {
-		return screen.CaptureStatus{State: "unavailable", Message: "screen capture runtime is not initialized"}
+		return screen.CaptureStatus{
+			State:       "unavailable",
+			UserMessage: models.NewUserMessage("screenCapture.unavailable", nil),
+		}
 	}
 	return a.runsRuntimeSvc.ScreenCaptureStatus()
 }

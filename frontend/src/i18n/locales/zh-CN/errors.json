@@ -1,0 +1,52 @@
+{
+  "generic": {
+    "developmentDetails": "开发诊断信息",
+    "title": "出现了问题。",
+    "unexpected": "发生了意外错误。"
+  },
+  "replay": {
+    "captureStopped": "屏幕录制停止，回放处理未能完成。",
+    "captureUnavailable": "此训练记录没有可用的屏幕录制。",
+    "failed": "回放处理失败。",
+    "incompleteCoverage": "录制片段未覆盖完整训练时间。",
+    "notRecorded": "此训练记录没有回放。",
+    "outsideSession": "此训练记录不在可用的录制会话内。",
+    "processing": "正在处理回放……",
+    "publishing": "回放已生成，正在等待文件可用……",
+    "ready": "回放已就绪。",
+    "sessionUnavailable": "没有录制会话覆盖此训练记录。",
+    "timeout": "等待录制片段超时。",
+    "unavailable": "回放存储不可用。",
+    "exportFailed": "回放导出失败。",
+    "deleteFailed": "无法删除回放。",
+    "playbackFailed": "回放播放失败。"
+  },
+  "screenCapture": {
+    "active": "屏幕录制正在运行。",
+    "disabled": "屏幕录制已关闭。",
+    "failed": "屏幕录制发生错误。",
+    "idle": "屏幕录制空闲。",
+    "ready": "正在等待 KovaaK's 启动。",
+    "starting": "屏幕录制正在启动。",
+    "unavailable": "FFmpeg 或兼容的编码器不可用。",
+    "unsupported": "屏幕录制仅支持 Windows。"
+  },
+  "settings": {
+    "autostartFailed": "无法更新开机启动设置。",
+    "clearCacheFailed": "无法清除缓存。",
+    "updateCheckFailed": "检查更新失败。",
+    "updateDownloadFailed": "下载更新失败。",
+    "resetFailed": "无法重置设置。",
+    "saveFailed": "无法保存设置。"
+  },
+  "history": {
+    "saveNotesFailed": "无法保存训练会话备注。",
+    "renameFailed": "无法更新训练会话名称。"
+  },
+  "benchmarks": {
+    "copyScreenshotUnsupported": "当前环境不支持图片剪贴板。",
+    "copyScreenshotFailed": "无法复制截图。",
+    "historyLoadFailed": "无法加载场景历史。",
+    "progressLoadFailed": "无法加载基准进度。"
+  }
+}

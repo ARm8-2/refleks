@@ -12,8 +12,10 @@ import {
   StreakPlaytimeWidget,
 } from "../components/SessionWidgets";
 import { useRecentSessionSnapshot } from "../hooks/useRecentSessionSnapshot";
+import { useTranslation } from "react-i18next";
 
 export function OverviewPage() {
+  const { t } = useTranslation("overview");
   const snapshot = useRecentSessionSnapshot();
   const sessions = useStore((s) => s.sessions);
   const runHydration = useStore((s) => s.runHydration);
@@ -21,8 +23,11 @@ export function OverviewPage() {
   if (sessions.length === 0 && runHydration.loading) {
     const label =
       runHydration.total > 0
-        ? `Loading run history ${Math.min(runHydration.loaded, runHydration.total)}/${runHydration.total}...`
-        : "Loading run history...";
+        ? t("page.loadingHistoryProgress", {
+            loaded: Math.min(runHydration.loaded, runHydration.total),
+            total: runHydration.total,
+          })
+        : t("page.loadingHistory");
 
     return <Loading label={label} />;
   }

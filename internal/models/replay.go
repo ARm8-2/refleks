@@ -10,6 +10,6 @@ const (
 )
 
 type ReplayStatus struct {
-	State   string `json:"state"`
-	Message string `json:"message"`
+	State string `json:"state"`
+	UserMessage
 }

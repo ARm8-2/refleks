@@ -39,6 +39,7 @@ import {
 import type { ProgressScenario, Settings } from "@/shared/types";
 import { Play, Settings2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 const LEFT_PANEL_PADDING = 16;
@@ -57,6 +58,7 @@ type HistoryState = {
 };
 
 export function BenchmarkOverviewWidget() {
+  const { t } = useTranslation("overview");
   const navigate = useNavigate();
   const { selectedBenchmark, getBenchmarkByName } = useBenchmarks();
   const benchmark = selectedBenchmark
@@ -292,8 +294,8 @@ export function BenchmarkOverviewWidget() {
   if (!benchmark) {
     return (
       <Widget
-        title="Benchmark Overview"
-        description="No benchmark selected yet. Pick one to track your progress here."
+        title={t("widgets.benchmarkOverview")}
+        description={t("widgets.benchmarkEmpty")}
         headerAction={
           <Button
             variant="outline"
@@ -301,7 +303,7 @@ export function BenchmarkOverviewWidget() {
             className="shrink-0"
             onClick={() => navigate("/benchmarks")}
           >
-            Browse Benchmarks
+            {t("widgets.browseBenchmarks")}
           </Button>
         }
       >
@@ -314,7 +316,7 @@ export function BenchmarkOverviewWidget() {
     return (
       <Widget
         title={`${benchmark.abbreviation} ${benchmark.benchmarkName}`}
-        description="Loading progress…"
+        description={t("widgets.loadingProgress")}
       >
         <div />
       </Widget>
@@ -331,7 +333,7 @@ export function BenchmarkOverviewWidget() {
           onValueChange={(v) => setDifficultyIndex(Number(v) || 0)}
         >
           <SelectTrigger className="h-7 w-auto min-w-0 max-w-[200px] px-2 text-xs bg-surface-subtle">
-            <SelectValue placeholder="Difficulty" />
+            <SelectValue placeholder={t("benchmark.difficulty")} />
           </SelectTrigger>
           <SelectContent>
             {benchmark.difficulties.map((d, i) => (
@@ -352,7 +354,7 @@ export function BenchmarkOverviewWidget() {
           difficulty?.sharecode && launchPlaylist(difficulty.sharecode)
         }
         disabled={!difficulty?.sharecode}
-        title="Play benchmark playlist in Kovaak's"
+        title={t("benchmark.playPlaylist")}
       >
         <Play className="h-4 w-4" />
       </Button>
@@ -367,15 +369,19 @@ export function BenchmarkOverviewWidget() {
         className="h-8 px-3 text-xs"
         onClick={() => setCompactMode((v) => !v)}
         aria-pressed={compactMode}
-        title={compactMode ? "Disable compact mode" : "Enable compact mode"}
+        title={
+          compactMode
+            ? t("benchmark.disableCompact")
+            : t("benchmark.enableCompact")
+        }
       >
-        Compact
+        {t("benchmark.compact")}
       </Button>
       <Button
         variant="ghost"
         size="icon"
         onClick={() => setShowSettings(true)}
-        title="Widget settings"
+        title={t("benchmark.widgetSettings")}
       >
         <Settings2 className="h-4 w-4" />
       </Button>
@@ -402,20 +408,20 @@ export function BenchmarkOverviewWidget() {
               style={{ gridTemplateColumns: infoGridTemplate }}
             >
               <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[11px] uppercase tracking-wide text-surface-muted-foreground">
-                Scenario
+                {t("widgets.scenario")}
               </div>
               <div />
               {showNotesCol && <div />}
               {showRecCol && (
                 <div className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground">
-                  Rec
+                  {t("benchmark.recommendation")}
                 </div>
               )}
               {showPlayCol && <div />}
               {showHistoryCol && <div />}
               <div />
               <div className="text-right text-[11px] uppercase tracking-wide text-surface-muted-foreground">
-                Score
+                {t("widgets.score")}
               </div>
             </div>
 
@@ -458,7 +464,7 @@ export function BenchmarkOverviewWidget() {
                 />
               ) : (
                 <div className="h-[32px] flex items-center text-[12px] text-surface-muted-foreground">
-                  No recent scenario for this benchmark
+                  {t("widgets.noScenario")}
                 </div>
               )}
             </div>
@@ -472,7 +478,7 @@ export function BenchmarkOverviewWidget() {
             <div className="space-y-0.5">
               {recommendedScenarios.length === 0 ? (
                 <div className="h-[32px] flex items-center text-[12px] text-surface-muted-foreground">
-                  No recommendations yet
+                  {t("widgets.noRecommendations")}
                 </div>
               ) : (
                 recommendedScenarios.map((scenario) => (
@@ -543,7 +549,7 @@ export function BenchmarkOverviewWidget() {
                 })
               ) : (
                 <div className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground">
-                  Details
+                  {t("benchmark.details")}
                 </div>
               )}
             </div>
@@ -600,14 +606,14 @@ export function BenchmarkOverviewWidget() {
       <Modal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
-        title="Widget Settings"
+        title={t("benchmark.widgetSettings")}
         width={700}
         height="auto"
       >
         <div className="space-y-6 px-6 pb-6">
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-foreground">
-              Feature Columns
+              {t("benchmark.featureColumns")}
             </h4>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="inline-flex items-center gap-2 text-sm text-foreground">
@@ -615,35 +621,35 @@ export function BenchmarkOverviewWidget() {
                   checked={showNotesCol}
                   onCheckedChange={(v) => setShowNotesCol(Boolean(v))}
                 />
-                Notes
+                {t("benchmark.notes")}
               </label>
               <label className="inline-flex items-center gap-2 text-sm text-foreground">
                 <Checkbox
                   checked={showRecCol}
                   onCheckedChange={(v) => setShowRecCol(Boolean(v))}
                 />
-                Recommendations
+                {t("benchmark.recommendations")}
               </label>
               <label className="inline-flex items-center gap-2 text-sm text-foreground">
                 <Checkbox
                   checked={showPlayCol}
                   onCheckedChange={(v) => setShowPlayCol(Boolean(v))}
                 />
-                Play
+                {t("benchmark.play")}
               </label>
               <label className="inline-flex items-center gap-2 text-sm text-foreground">
                 <Checkbox
                   checked={showHistoryCol}
                   onCheckedChange={(v) => setShowHistoryCol(Boolean(v))}
                 />
-                History
+                {t("benchmark.history")}
               </label>
             </div>
           </div>
 
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-foreground">
-              Rank Visibility
+              {t("benchmark.rankVisibility")}
             </h4>
             <div className="flex flex-wrap items-center gap-4">
               <label className="inline-flex items-center gap-2 text-sm text-foreground">
@@ -651,12 +657,12 @@ export function BenchmarkOverviewWidget() {
                   checked={autoHideCleared}
                   onCheckedChange={(v) => setAutoHideCleared(Boolean(v))}
                 />
-                Auto-hide earlier cleared ranks
+                {t("benchmark.autoHideCleared")}
               </label>
 
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-surface-muted-foreground">
-                  Keep visible:
+                  {t("benchmark.keepVisible")}
                 </span>
                 <Select
                   value={String(visibleRankCount)}
@@ -678,7 +684,7 @@ export function BenchmarkOverviewWidget() {
               </div>
 
               <Button variant="outline" size="sm" onClick={resetManual}>
-                Reset Manual
+                {t("benchmark.resetManual")}
               </Button>
             </div>
 
@@ -699,7 +705,7 @@ export function BenchmarkOverviewWidget() {
                     }
                     title={
                       hiddenAutomatically
-                        ? "Hidden automatically because every scenario is already past this rank"
+                        ? t("benchmark.hiddenAutomatically")
                         : undefined
                     }
                   >

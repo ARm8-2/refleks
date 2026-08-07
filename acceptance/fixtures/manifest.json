@@ -1,0 +1,16 @@
+{
+  "name": "sanitized-kovaaks",
+  "version": 1,
+  "files": [
+    "kovaaks/FPSAimTrainer/stats/Long Sanitized Scenario Name For Wrapping Checks - Challenge - 2026.08.07-20.00.00 Stats.csv"
+  ],
+  "states": [
+    "first-run",
+    "empty-history-before-import",
+    "populated-history-after-import",
+    "dynamic-date-number",
+    "long-text",
+    "replay-unavailable"
+  ],
+  "realData": false
+}

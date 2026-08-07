@@ -5,6 +5,7 @@ import {
   type MouseEvent,
   type ReactNode,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "../lib/utils";
 import { Modal } from "./Modal";
 
@@ -41,6 +42,7 @@ export function Widget({
   modalWidth,
   modalHeight,
 }: WidgetProps) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const canExpand = Boolean(modalContent);
 
@@ -109,8 +111,8 @@ export function Widget({
               <button
                 type="button"
                 className="inline-flex h-6 w-6 items-center justify-center rounded-md text-surface-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
-                title="Expand"
-                aria-label="Expand"
+                title={t("actions.expand")}
+                aria-label={t("actions.expand")}
                 onClick={handleExpandClick}
               >
                 <Maximize2 className="h-3 w-3" />
@@ -147,11 +149,13 @@ export function WidgetEmpty({
   icon: LucideIcon;
   label: string;
 }) {
+  const { t } = useTranslation("common");
+
   return (
     <Widget icon={icon} title={label}>
       <p className="text-lg font-semibold text-surface-muted-foreground">--</p>
       <p className="mt-0.5 text-xs text-surface-muted-foreground">
-        No session loaded
+        {t("empty.noSession")}
       </p>
     </Widget>
   );

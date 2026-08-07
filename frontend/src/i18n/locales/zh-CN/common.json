@@ -1,0 +1,51 @@
+{
+  "app": {
+    "name": "RefleK's"
+  },
+  "actions": {
+    "cancel": "取消",
+    "close": "关闭",
+    "confirm": "确认",
+    "dismiss": "忽略",
+    "expand": "展开",
+    "reload": "重新加载",
+    "save": "保存"
+  },
+  "empty": {
+    "noSession": "尚未加载训练会话"
+  },
+  "language": {
+    "en": "English",
+    "zh-CN": "简体中文"
+  },
+  "navigation": {
+    "primary": "主导航",
+    "secondary": "次要导航",
+    "overview": "概览",
+    "history": "历史记录",
+    "benchmarks": "基准",
+    "favorites": "收藏",
+    "help": "帮助",
+    "support": "支持",
+    "settings": "设置"
+  },
+  "richText": {
+    "documentation": "在<docsLink>文档</docsLink>中进一步了解 {{topic}}。"
+  },
+  "status": {
+    "loading": "正在加载……",
+    "saving": "正在保存……"
+  },
+  "terms": {
+    "anonymousMode": "匿名模式",
+    "benchmark": "基准",
+    "mouseTrace": "鼠标轨迹",
+    "rank": "等级",
+    "replay": "回放",
+    "run": "训练记录",
+    "scenario": "场景",
+    "score": "分数",
+    "screenCapture": "屏幕录制",
+    "session": "训练会话"
+  }
+}

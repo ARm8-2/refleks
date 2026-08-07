@@ -1,0 +1,35 @@
+[
+  {
+    "pattern": "^RefleK's$|^KovaaK's$|^Steam$|^Discord$|^FFmpeg$|^FPSAimTrainer|^ffmpeg\\.exe$|^refleks\\.exe$",
+    "reason": "brand and technical names",
+    "owner": "src"
+  },
+  {
+    "pattern": "^https?://|^/|^\\$|^\\{.*\\}$|^#[0-9a-fA-F]{3,8}$",
+    "reason": "URLs, paths, interpolation values, and color literals",
+    "owner": "src"
+  },
+  {
+    "pattern": "^A$|^B$|^All$|^Other$|^Rec$|^DPI$|^FPS$|^TTK$|^VID$|^PID$|^MI$|^cm/360$|^FOV$|^fps$|^x$|^s$|^ms$",
+    "reason": "source-owned abbreviations and unit symbols",
+    "owner": "src"
+  },
+  {
+    "pattern": "^Scenario$|^Score$|^Category$|^Subcategory$|^Pinned$|^Compare$|^Notes$|^Less$|^More$|^Unknown$",
+    "reason": "source-owned labels preserved from external benchmark data",
+    "owner": "frontend/src/features/benchmarks"
+  },
+  {
+    "file": "src/features/benchmarks/components/detail/BenchmarkProgressTable.tsx",
+    "line": 630,
+    "pattern": "^refleksapp\\.com$",
+    "reason": "external service domain",
+    "owner": "src/features/benchmarks/components/detail/BenchmarkProgressTable.tsx"
+  },
+  {
+    "file": "src/shared/lib/theme.ts",
+    "pattern": "^Montserrat$|^Inter$|^JetBrains Mono UI$",
+    "reason": "font family display names",
+    "owner": "src/shared/lib/theme.ts"
+  }
+]

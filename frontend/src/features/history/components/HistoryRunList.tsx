@@ -19,6 +19,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import type { RunSortKey } from "../hooks/useHistoryPageState";
 import type { HistoryRun } from "../lib/historyModels";
 import {
@@ -67,6 +68,7 @@ export function HistoryRunList({
   filterPb,
   onFilterPbChange,
 }: Props) {
+  const { t } = useTranslation("history");
   const hasActiveFilters = sort !== "default" || filterPb;
   return (
     <section
@@ -83,7 +85,7 @@ export function HistoryRunList({
             <Input
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
-              placeholder="Search..."
+              placeholder={t("page.search")}
               className="h-9 pl-8"
             />
           </div>
@@ -103,7 +105,7 @@ export function HistoryRunList({
             size="icon"
             className="shrink-0"
             onClick={onToggleInspector}
-            title={inspectorOpen ? "Hide inspector" : "Show inspector"}
+            title={inspectorOpen ? t("page.hideInspector") : t("page.showInspector")}
           >
             <ScanSearch
               className={cn("h-4 w-4", inspectorOpen && "text-foreground")}
@@ -115,7 +117,7 @@ export function HistoryRunList({
           size="icon"
           className="shrink-0"
           onClick={onToggleCollapsed}
-          title={collapsed ? "Expand runs" : "Collapse runs"}
+          title={collapsed ? t("page.expandRuns") : t("page.collapseRuns")}
         >
           {collapsed ? (
             <PanelRightOpen className="h-4 w-4" />
@@ -135,8 +137,8 @@ export function HistoryRunList({
             {collapsed
               ? "—"
               : !session
-                ? "No session selected."
-                : "No runs match the current search."}
+                ? t("page.noSession")
+                : t("page.noRunsMatch")}
           </p>
         }
         renderItem={useCallback(
@@ -234,7 +236,7 @@ export function HistoryRunList({
                     {run.accuracy !== null && (
                       <>
                         <span>·</span>
-                        <span>{formatPercent(run.accuracy)} acc</span>
+                        <span>{formatPercent(run.accuracy)} {t("runs.accuracyShort")}</span>
                       </>
                     )}
                   </div>
@@ -256,10 +258,10 @@ export function HistoryRunList({
                   disabled={!primaryRun || isPrimary}
                   title={
                     !primaryRun
-                      ? "Select a run first"
+                      ? t("runs.selectFirst")
                       : isPrimary
-                        ? "Primary run"
-                        : "Compare"
+                        ? t("runs.primary")
+                        : t("runs.compare")
                   }
                 >
                   <ArrowRightLeft className="h-3.5 w-3.5" />
@@ -283,13 +285,20 @@ export function HistoryRunList({
 
 /* ─── Sort / Filter dropdown ─── */
 
-const RUN_SORT_OPTIONS: { value: RunSortKey; label: string }[] = [
-  { value: "default", label: "Chronological" },
-  { value: "score-desc", label: "Score (high → low)" },
-  { value: "score-asc", label: "Score (low → high)" },
-  { value: "accuracy-desc", label: "Accuracy (high → low)" },
-  { value: "scenario", label: "Group by scenario" },
+const RUN_SORT_OPTIONS: RunSortKey[] = [
+  "default",
+  "score-desc",
+  "score-asc",
+  "accuracy-desc",
+  "scenario",
 ];
+const RUN_SORT_LABEL_KEYS = {
+  default: "runs.chronological",
+  "score-desc": "runs.scoreHighLow",
+  "score-asc": "runs.scoreLowHigh",
+  "accuracy-desc": "runs.accuracyHighLow",
+  scenario: "runs.groupScenario",
+} as const;
 
 function RunListSortFilter({
   sort,
@@ -304,6 +313,7 @@ function RunListSortFilter({
   onFilterPbChange: (v: boolean | ((prev: boolean) => boolean)) => void;
   hasActiveFilters: boolean;
 }) {
+  const { t } = useTranslation("history");
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -311,7 +321,7 @@ function RunListSortFilter({
           variant={hasActiveFilters ? "secondary" : "ghost"}
           size="icon"
           className="shrink-0"
-          title="Sort & filter"
+          title={t("runs.sortFilter")}
         >
           <ListFilter
             className={cn("h-4 w-4", hasActiveFilters && "text-foreground")}
@@ -322,25 +332,27 @@ function RunListSortFilter({
         {/* Sort */}
         <div className="px-2 py-1.5 text-[10px] font-medium uppercase tracking-wider text-surface-muted-foreground">
           <ArrowUpDown className="mr-1 inline h-3 w-3" />
-          Sort
+          {t("runs.sort")}
         </div>
-        {RUN_SORT_OPTIONS.map((opt) => (
+        {RUN_SORT_OPTIONS.map((option) => (
           <button
-            key={opt.value}
+            key={option}
             type="button"
-            onClick={() => onSortChange(opt.value)}
+            onClick={() => onSortChange(option)}
             className={cn(
               "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-xs transition-colors",
-              sort === opt.value
+              sort === option
                 ? "bg-surface-muted text-foreground"
                 : "text-surface-muted-foreground hover:bg-surface-emphasis hover:text-foreground",
             )}
           >
-            <span className="min-w-0 flex-1 text-left">{opt.label}</span>
+            <span className="min-w-0 flex-1 text-left">
+              {t(RUN_SORT_LABEL_KEYS[option])}
+            </span>
             <Check
               className={cn(
                 "h-3 w-3 shrink-0",
-                sort === opt.value ? "opacity-100" : "opacity-0",
+                sort === option ? "opacity-100" : "opacity-0",
               )}
             />
           </button>
@@ -352,7 +364,7 @@ function RunListSortFilter({
         {/* Filters */}
         <div className="px-2 py-1.5 text-[10px] font-medium uppercase tracking-wider text-surface-muted-foreground">
           <ListFilter className="mr-1 inline h-3 w-3" />
-          Filter
+          {t("runs.filter")}
         </div>
         <button
           type="button"
@@ -370,7 +382,7 @@ function RunListSortFilter({
               filterPb ? "text-amber-500" : "opacity-40",
             )}
           />
-          PB runs only
+          {t("runs.pbOnly")}
         </button>
       </PopoverContent>
     </Popover>

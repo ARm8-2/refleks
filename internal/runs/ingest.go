@@ -123,7 +123,7 @@ func (s *Store) IngestRun(fullPath string, mouse models.MouseTraceProvider) (mod
 	rec.FilePath = runPath
 
 	// --- Screen capture: trim the session recording to the run window ---
-	s.setReplayStatus(runPath, models.ReplayStateProcessing, "Processing replay…")
+	s.setReplayStatus(runPath, models.ReplayStateProcessing, "replay.processing")
 	s.scheduleScreenTrim(runPath, rec.FileName, start, end)
 
 	return rec, nil
@@ -142,14 +142,14 @@ func (s *Store) scheduleScreenTrim(runPath, runFileName string, start, end time.
 
 	if provider == nil || encoder == nil || !encoder.Available() {
 		runtime.LogDebugf(s.ctx, "screen/schedule: provider=%v encoder=%v available=%v", provider != nil, encoder != nil, encoder != nil && encoder.Available())
-		s.setReplayStatus(runPath, models.ReplayStateUnavailable, "Screen capture was not available for this run.")
+		s.setReplayStatus(runPath, models.ReplayStateUnavailable, "replay.captureUnavailable")
 		return
 	}
 
 	dir, sessionStart := s.captureSessionForRun(provider, start, end)
 	runtime.LogDebugf(s.ctx, "screen/schedule: run=%s session=%q enabled=%v", runFileName, dir, provider.Enabled())
 	if dir == "" || sessionStart.IsZero() {
-		s.setReplayStatus(runPath, models.ReplayStateUnavailable, "No capture session covered this run.")
+		s.setReplayStatus(runPath, models.ReplayStateUnavailable, "replay.sessionUnavailable")
 		return
 	}
 	// The watcher may ingest historical files while a new capture session is
@@ -157,7 +157,7 @@ func (s *Store) scheduleScreenTrim(runPath, runFileName string, start, end time.
 	// plausible-looking but completely unrelated replay, so reject it instead.
 	if start.Before(sessionStart) || !end.After(sessionStart) {
 		runtime.LogDebugf(s.ctx, "screen/schedule: run=%s is outside capture session", runFileName)
-		s.setReplayStatus(runPath, models.ReplayStateUnavailable, "This run was outside the available capture session.")
+		s.setReplayStatus(runPath, models.ReplayStateUnavailable, "replay.outsideSession")
 		return
 	}
 
@@ -205,7 +205,7 @@ func (s *Store) runScreenTrim(trim pendingScreenTrim) {
 		provider := s.screenProvider
 		s.screenMu.Unlock()
 		if provider == nil {
-			s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "Capture stopped before replay processing completed.")
+			s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "replay.captureStopped")
 			return
 		}
 
@@ -216,9 +216,9 @@ func (s *Store) runScreenTrim(trim pendingScreenTrim) {
 			// Segments leases the selected files so the rolling-retention prune
 			// cannot remove one while ffmpeg is opening or copying it.
 			if err := s.trimScreenRecording(trim, paths, firstSegmentStart); err != nil {
-				s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "Replay processing failed.")
+				s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "replay.failed")
 			} else {
-				s.publishReplayStatus(trim.runPath, models.ReplayStateReady, "Replay is ready.")
+				s.publishReplayStatus(trim.runPath, models.ReplayStateReady, "replay.ready")
 			}
 			provider.ReleaseSegments(paths)
 			return
@@ -235,22 +235,22 @@ func (s *Store) runScreenTrim(trim pendingScreenTrim) {
 			)
 			if ready {
 				if err := s.trimScreenRecording(fallback, paths, firstSegmentStart); err != nil {
-					s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "Replay processing failed.")
+					s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "replay.failed")
 				} else {
-					s.publishReplayStatus(trim.runPath, models.ReplayStateReady, "Replay is ready.")
+					s.publishReplayStatus(trim.runPath, models.ReplayStateReady, "replay.ready")
 				}
 				provider.ReleaseSegments(paths)
 				return
 			}
 			// A stopped or replaced session cannot produce any more segments. Do
 			// not spend the full polling deadline waiting for an impossible tail.
-			s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "Capture segments did not cover the run window.")
+			s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "replay.incompleteCoverage")
 			return
 		}
 
 		if time.Now().After(deadline) {
 			runtime.LogWarningf(s.ctx, "screen/trim: gave up waiting for segments covering %s after %ds", trim.runFileName, constants.ScreenCaptureTrimMaxWaitSeconds)
-			s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "Timed out waiting for capture segments.")
+			s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "replay.timeout")
 			return
 		}
 		time.Sleep(time.Duration(constants.ScreenCaptureTrimPollInterval) * time.Second)

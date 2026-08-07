@@ -13,6 +13,7 @@ import type { Benchmark } from "@/shared/types";
 import { ChevronDown, Dice5, Search, Sparkles, Star } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { BenchmarkCard } from "../components/BenchmarkCard";
 import { getRecommendedBenchmarks } from "../lib/recommendations";
 
@@ -107,6 +108,22 @@ const BENCHMARK_CATEGORIES: Record<string, string[]> = {
 };
 const DEFAULT_CATEGORY = "Other";
 
+function getBenchmarkCategoryLabel(
+  category: string,
+  t: (key: "categories.aimGroups" | "categories.community" | "categories.notable" | "categories.other") => string,
+): string {
+  switch (category) {
+    case "Aim Groups":
+      return t("categories.aimGroups");
+    case "Community Benchmarks":
+      return t("categories.community");
+    case "Notable Creator Benchmarks":
+      return t("categories.notable");
+    default:
+      return t("categories.other");
+  }
+}
+
 function getBenchmarkCategory(abbreviation: string): string {
   const abbr = (abbreviation ?? "").trim();
   if (!abbr) return DEFAULT_CATEGORY;
@@ -123,23 +140,28 @@ function getBenchmarkCategory(abbreviation: string): string {
 type SortBy = "name" | "abbreviation" | "date";
 type GroupBy = "none" | "abbreviation" | "category";
 
-const sortOptions = [
-  { label: "Name", value: "name" },
-  { label: "Abbreviation", value: "abbreviation" },
-  { label: "Date Added", value: "date" },
-];
+const sortOptions: SortBy[] = ["name", "abbreviation", "date"];
 
-const groupOptions = [
-  { label: "None", value: "none" },
-  { label: "Abbreviation", value: "abbreviation" },
-  { label: "Category", value: "category" },
-];
+const groupOptions: GroupBy[] = ["none", "abbreviation", "category"];
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 export function BenchmarksExplorePage() {
+  const { t } = useTranslation("benchmarks");
+  const sortLabel = (value: SortBy) =>
+    value === "name"
+      ? t("sortOptions.name")
+      : value === "abbreviation"
+        ? t("sortOptions.abbreviation")
+        : t("sortOptions.date");
+  const groupLabel = (value: GroupBy) =>
+    value === "none"
+      ? t("groupOptions.none")
+      : value === "abbreviation"
+        ? t("groupOptions.abbreviation")
+        : t("groupOptions.category");
   const navigate = useNavigate();
   const {
     benchmarks,
@@ -264,7 +286,7 @@ export function BenchmarksExplorePage() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-canvas px-6 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold text-foreground">Benchmarks</h1>
+          <h1 className="text-lg font-semibold text-foreground">{t("page.title")}</h1>
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Search */}
@@ -274,7 +296,7 @@ export function BenchmarksExplorePage() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search..."
+                placeholder={t("page.search")}
                 className="h-9 pl-8 w-32 sm:w-48 focus:w-64 transition-all"
               />
             </div>
@@ -285,12 +307,12 @@ export function BenchmarksExplorePage() {
               onValueChange={(v) => setSortBy(v as SortBy)}
             >
               <SelectTrigger className="h-9 w-auto min-w-[8rem] text-sm">
-                <SelectValue>{`Sort: ${sortOptions.find((o) => o.value === sortBy)?.label}`}</SelectValue>
+                <SelectValue>{`${t("page.sort")}: ${sortLabel(sortBy)}`}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {sortOptions.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
+              {sortOptions.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {sortLabel(option)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -302,12 +324,12 @@ export function BenchmarksExplorePage() {
               onValueChange={(v) => setGroupBy(v as GroupBy)}
             >
               <SelectTrigger className="h-9 w-auto min-w-[8rem] text-sm">
-                <SelectValue>{`Group: ${groupOptions.find((o) => o.value === groupBy)?.label}`}</SelectValue>
+                <SelectValue>{`${t("page.group")}: ${groupLabel(groupBy)}`}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {groupOptions.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
+              {groupOptions.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {groupLabel(option)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -319,10 +341,10 @@ export function BenchmarksExplorePage() {
               size="default"
               className="px-3"
               onClick={handleRandom}
-              title="Open a random benchmark"
+              title={t("page.randomTitle")}
             >
               <Dice5 className="w-4 h-4" />
-              Random
+              {t("page.random")}
             </Button>
 
             <Button
@@ -331,14 +353,14 @@ export function BenchmarksExplorePage() {
               className="px-3"
               onClick={() => setShowFavOnly((v) => !v)}
               title={
-                showFavOnly ? "Show all benchmarks" : "Show favorites only"
+                showFavOnly ? t("page.showAll") : t("page.showFavorites")
               }
             >
               <Star
                 className="h-4 w-4"
                 fill={showFavOnly ? "currentColor" : "none"}
               />
-              {showFavOnly ? "Favorites" : "All"}
+              {showFavOnly ? t("page.favorites") : t("page.all")}
             </Button>
 
             <Button
@@ -348,12 +370,12 @@ export function BenchmarksExplorePage() {
               onClick={() => setShowRecs((v) => !v)}
               title={
                 showRecs
-                  ? "Hide recommendations"
-                  : "Show recommended benchmarks"
+                  ? t("page.hideRecommendations")
+                  : t("page.showRecommendations")
               }
             >
               <Sparkles className="h-4 w-4" />
-              Recommended
+              {t("page.recommended")}
             </Button>
           </div>
         </div>
@@ -378,7 +400,7 @@ export function BenchmarksExplorePage() {
             {/* Recommended benchmarks section */}
             {showRecs && showRecommendationWarmup && (
               <div className="rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-surface-muted-foreground">
-                Loading benchmark progress for recommendations...
+                {t("page.loadingRecommendations")}
               </div>
             )}
 
@@ -387,7 +409,7 @@ export function BenchmarksExplorePage() {
                 <div className="flex items-center gap-2 text-sm font-medium text-primary mt-1 mb-2 select-none">
                   <Sparkles size={16} />
                   <span className="whitespace-nowrap">
-                    Recommended{" "}
+                    {t("page.recommended")}{" "}
                     <span className="text-xs opacity-50">
                       ({recommendedBenchmarks.length})
                     </span>
@@ -411,12 +433,12 @@ export function BenchmarksExplorePage() {
             {filtered.length === 0 ? (
               <div className="text-sm text-surface-muted-foreground py-8 text-center">
                 {benchmarks.length === 0
-                  ? "Waiting for the benchmark catalog to finish syncing..."
+                  ? t("page.waitingCatalog")
                   : showFavOnly
-                    ? "No favorite benchmarks yet. Star a benchmark to add it here."
+                    ? t("page.noFavorites")
                     : query
-                      ? "No benchmarks match your search."
-                      : "No benchmarks found."}
+                      ? t("page.noMatches")
+                      : t("page.noResults")}
               </div>
             ) : (
               groupKeys.map((group) => {
@@ -436,7 +458,9 @@ export function BenchmarksExplorePage() {
                           className={`transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}
                         />
                         <span className="whitespace-nowrap">
-                          {group}{" "}
+                          {groupBy === "category"
+                            ? getBenchmarkCategoryLabel(group, t)
+                            : group}{" "}
                           <span className="text-xs opacity-50">
                             ({items.length})
                           </span>

@@ -1,19 +1,21 @@
 import { getScenarioName } from "@/features/benchmarks/lib/detailFormatting";
+import { getActiveLocaleFormatters } from "@/i18n";
 import { useStore } from "@/shared/hooks";
 import type { RunRecord } from "@/shared/types";
+import type { TFunction } from "i18next";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
-const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
+const shortDateOptions: Intl.DateTimeFormatOptions = {
   month: "short",
   day: "numeric",
-});
-
-const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+};
+const dateTimeOptions: Intl.DateTimeFormatOptions = {
   month: "short",
   day: "numeric",
   hour: "numeric",
   minute: "2-digit",
-});
+};
 
 export type TrendPoint = {
   label: string;
@@ -28,6 +30,7 @@ type CurrentScenarioHistory = {
 };
 
 export function useCurrentScenarioHistory(): CurrentScenarioHistory {
+  const { t } = useTranslation("overview");
   const sessions = useStore((state) => state.sessions);
 
   return useMemo(() => {
@@ -71,11 +74,13 @@ export function useCurrentScenarioHistory(): CurrentScenarioHistory {
       const shortLabel = formatShortDate(
         sessionTs,
         sessionAveragePoints.length + 1,
+        t,
       );
       const fullLabel = formatSessionLabel(
         session.start,
         session.end,
         scores.length,
+        t,
       );
 
       sessionAveragePoints.push({
@@ -91,7 +96,7 @@ export function useCurrentScenarioHistory(): CurrentScenarioHistory {
 
         attemptPoints.push({
           label: String(nextIndex),
-          fullLabel: formatAttemptLabel(timestamp, nextIndex),
+          fullLabel: formatAttemptLabel(timestamp, nextIndex, t),
           score,
         });
       }
@@ -102,7 +107,7 @@ export function useCurrentScenarioHistory(): CurrentScenarioHistory {
       sessionAveragePoints,
       attemptPoints,
     };
-  }, [sessions]);
+  }, [sessions, t]);
 }
 
 function readRunScore(item: Pick<RunRecord, "stats">): number {
@@ -118,27 +123,55 @@ function readRunTimestamp(item: Pick<RunRecord, "stats">): number {
   return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
-function formatShortDate(timestamp: number, fallbackIndex: number): string {
-  if (timestamp <= 0) return `S${fallbackIndex}`;
-  return shortDateFormatter.format(new Date(timestamp));
+function formatShortDate(
+  timestamp: number,
+  fallbackIndex: number,
+  t: TFunction<"overview">,
+): string {
+  if (timestamp <= 0) return t("history.sessionShort", { index: fallbackIndex });
+  return getActiveLocaleFormatters().dateTimeFormatter(shortDateOptions).format(new Date(timestamp));
 }
 
-function formatAttemptLabel(timestamp: number, attemptIndex: number): string {
-  if (timestamp <= 0) return `Attempt ${attemptIndex}`;
-  return `Attempt ${attemptIndex} · ${dateTimeFormatter.format(new Date(timestamp))}`;
+function formatAttemptLabel(
+  timestamp: number,
+  attemptIndex: number,
+  t: TFunction<"overview">,
+): string {
+  if (timestamp <= 0) return t("history.attempt", { index: attemptIndex });
+  return t("history.attemptWithDate", {
+    index: attemptIndex,
+    date: getActiveLocaleFormatters()
+      .dateTimeFormatter(dateTimeOptions)
+      .format(new Date(timestamp)),
+  });
 }
 
 function formatSessionLabel(
   start: string,
   end: string,
   attempts: number,
+  t: TFunction<"overview">,
 ): string {
   const startDate = new Date(start);
   const endDate = new Date(end);
 
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-    return `${attempts} ${attempts === 1 ? "run" : "runs"}`;
+    return formatRunCount(attempts, t);
   }
 
-  return `${dateTimeFormatter.format(startDate)} to ${dateTimeFormatter.format(endDate)} · ${attempts} ${attempts === 1 ? "run" : "runs"}`;
+  const formatter = getActiveLocaleFormatters().dateTimeFormatter(dateTimeOptions);
+  return t("history.sessionRange", {
+    start: formatter.format(startDate),
+    end: formatter.format(endDate),
+    runs: formatRunCount(attempts, t),
+  });
+}
+
+function formatRunCount(
+  count: number,
+  t: TFunction<"overview">,
+): string {
+  return count === 1
+    ? t("history.run_one", { count })
+    : t("history.run_other", { count });
 }

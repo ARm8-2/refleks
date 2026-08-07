@@ -1,0 +1,74 @@
+{
+  "page": {
+    "title": "历史记录",
+    "loadingHistory": "正在加载训练记录历史……",
+    "loadingHistoryProgress": "正在加载训练记录历史 {{loaded}}/{{total}}……",
+    "search": "搜索……",
+    "noSession": "未选择训练会话。",
+    "noRunsMatch": "没有匹配当前搜索的训练记录。",
+    "hideInspector": "隐藏检查器",
+    "showInspector": "显示检查器",
+    "expandRuns": "展开训练记录列表",
+    "collapseRuns": "折叠训练记录列表"
+  },
+  "sessions": {
+    "search": "搜索……", "expand": "展开训练会话列表", "collapse": "折叠训练会话列表", "empty": "没有找到训练会话。", "notes": "有训练会话备注", "run": "条训练记录", "runs": "条训练记录", "sortFilter": "排序和筛选", "sort": "排序", "filter": "筛选", "newest": "最新优先", "oldest": "最旧优先", "mostRuns": "训练记录最多", "longest": "时长最长", "containsPb": "包含 PB"
+  },
+  "runs": {
+    "sortFilter": "排序和筛选", "sort": "排序", "filter": "筛选", "chronological": "按时间顺序", "scoreHighLow": "分数（高到低）", "scoreLowHigh": "分数（低到高）", "accuracyHighLow": "准确率（高到低）", "groupScenario": "按场景分组", "pbOnly": "仅 PB 训练记录", "selectFirst": "请先选择一条训练记录", "primary": "主训练记录", "compare": "对比", "accuracyShort": "准确率"
+  },
+  "detail": {
+    "comparePbTitle": "与个人最佳对比", "comparePb": "对比 PB", "showSideBySide": "显示并排视图", "overlayBoth": "叠加两条训练记录", "sideBySide": "并排", "overlay": "叠加", "single": "单个", "clear": "清除", "close": "关闭检查器", "selectRun": "选择一条训练记录以查看详情"
+  },
+  "overview": {
+    "selectSession": "选择一个训练会话", "sessionName": "训练会话名称", "rename": "重命名训练会话", "editNotes": "编辑训练会话备注", "addNotes": "添加训练会话备注", "runs": "训练记录数", "length": "时长", "playtime": "游戏时间", "notes": "备注", "edit": "编辑", "searchScenarios": "搜索场景……", "scenarios": "场景", "more": "更多", "sessionBest": "训练会话最佳", "latest": "最近一次", "inspectPb": "查看个人最佳", "allTimePb": "历史 PB", "performanceVsSensitivity": "表现与灵敏度", "cancel": "取消", "save": "保存", "saving": "正在保存……"
+  },
+  "inspector": {
+    "stats": "统计", "analysis": "分析", "trace": "轨迹", "replay": "回放", "environment": "环境", "pinned": "主训练记录", "compare": "对比", "noStats": "此训练记录没有可用统计数据。", "loadingEvents": "正在加载事件数据……", "noEvents": "此训练记录没有可用事件数据。请确认 KovaaK's 正在将事件详情写入 stats CSV。", "loadingTrace": "正在加载轨迹……", "noTrace": "没有鼠标轨迹数据。请在设置中启用鼠标轨迹以记录数据。", "score": "分数", "accuracy": "准确率", "duration": "时长", "avgTtk": "平均 TTK"
+  },
+  "analysis": {
+    "accuracyOverTime": "准确率随时间变化", "ttkTrend": "TTK 趋势", "ttkMovingAverage": "TTK 移动平均", "accuracyVsSpeed": "准确率与速度", "overlay": "叠加", "pinned": "主训练记录", "compare": "对比", "accPinned": "准确率与速度：主训练记录", "accCompare": "准确率与速度：对比", "waitingForFirstKill": "等待首次击杀后计算 TTK 趋势、准确率与速度及汇总统计。", "series": { "kills": "击杀", "accuracy": "准确率", "ttkSeconds": "TTK（s）", "ma5": "MA(5)", "kill": "击杀", "pinnedKills": "主训练记录击杀", "pinnedAccuracy": "主训练记录准确率", "compareKills": "对比击杀", "compareAccuracy": "对比准确率", "pinnedTtk": "主训练记录 TTK", "pinnedMa5": "主训练记录 MA(5)", "compareTtk": "对比 TTK", "compareMa5": "对比 MA(5)" }, "metrics": { "kills": "击杀", "accuracy": "准确率", "avgTtk": "平均 TTK", "medianTtk": "TTK 中位数", "avgKpm": "平均 KPM", "ttkStdDev": "TTK σ" }
+  },
+  "performance": {
+    "title": "表现与灵敏度",
+    "scope": "范围",
+    "metric": "指标",
+    "scopes": { "session": "当前训练会话", "all": "全部历史记录" },
+    "metrics": { "score": "分数", "accuracy": "准确率（%）", "ttk": "实际平均 TTK（s）" },
+    "playDescription": "完成一个场景后即可比较灵敏度与表现。",
+    "noRecentScenario": "暂无最近场景。请完成包含 cm/360 数据的训练记录以填充此组件。",
+    "noUsableData": "{{scenario}} 没有可用的灵敏度数据。",
+    "modalTitle": "{{scenario}} · {{title}}",
+    "description": "{{scenario}} · {{count}} 次训练记录 · {{metric}} · {{scope}}",
+    "runLabel": "训练记录 {{index}} · {{date}}",
+    "sensitivity": "灵敏度"
+  },
+  "trace": {
+    "back5": "后退 5 秒", "pause": "暂停", "play": "播放", "forward5": "前进 5 秒", "reset": "重置", "resetSpeed": "将速度重置为 1×", "all": "全部", "last2": "2 秒", "trailFull": "轨迹：完整路径", "trailLast2": "轨迹：最近 2 秒", "follow": "跟随", "static": "静止", "followingCursor": "跟随光标", "staticView": "静态视图", "off": "关闭", "down": "按下", "clickMarkers": "点击标记：{{mode}}", "target": "目标", "hideTarget": "隐藏目标推断", "showTarget": "显示目标推断", "time": "时间", "ratio": "比例", "syncTime": "按经过时间同步", "syncRatio": "按进度百分比同步", "expand": "展开", "mouseTrace": "鼠标轨迹", "pathAnalysis": "鼠标路径分析", "overshoot": "过冲", "undershoot": "欠冲", "optimal": "最佳", "unknown": "未知", "suggestedSens": "建议训练灵敏度", "copyValue": "复制 {{value}}", "outsideTrace": "条记录不在轨迹内", "pathDescription": "使用时间归一化运动学、轨迹质量、按键转换和击杀时钟对移动形态进行分类。已有轨迹不包含目标中心，因此距离单位是原始输入单位而非像素。", "overshootDescription": "光标越过目标后又修正回来", "undershootDescription": "停在目标前并进行了微调", "optimalDescription": "直接接近，修正较少", "unknownDescription": "轨迹覆盖或时间证据不足", "avgOvershoot": "平均过冲：{{value}} 轨迹单位", "avgUndershoot": "平均欠冲：{{value}} 轨迹单位", "clickKillHint": "点击下方击杀以高亮路径。", "noSensitivity": "没有建议的训练灵敏度，请继续使用当前灵敏度。", "pathEfficiency": "路径效率", "killTitle": "击杀 #{{index}}：{{classification}}{{distance}}，效率 {{efficiency}}", "traceDistance": "（{{value}} 轨迹单位）", "trainingSensitivity": "训练灵敏度", "trainingReason": "可靠击杀中有 {{percent}}% 呈现{{severity}}{{issue}}模式。{{clickNote}}临时使用 {{recommended}} cm/360（{{change}}% {{direction}}）进行训练。该调整刻意放大，用于迫使身体适应已识别的问题；短时训练后请恢复常用灵敏度并重新评估。", "clickTimingNote": "点击时机似乎也有影响。", "severity": { "slight": "轻微", "moderate": "中等", "severe": "严重" }, "direction": { "overshoot": "降低 cm/360 / 提高灵敏度", "undershoot": "提高 cm/360 / 降低灵敏度" }
+  },
+  "replay": {
+    "fullscreen": "全屏打开回放", "export": "导出回放", "delete": "删除回放", "deleteTitle": "删除回放", "deleteDescription": "这将永久删除此训练记录的屏幕录制，且无法撤销。", "deleting": "正在删除……", "loadingInfo": "正在加载回放信息……", "infoUnavailable": "回放信息不可用", "info": "回放信息", "resolution": "分辨率", "frameRate": "帧率", "codec": "编码器", "duration": "时长", "fileSize": "文件大小", "unknown": "未知"
+  },
+  "controls": {
+    "speed": "速度", "playbackPosition": "播放位置", "playbackSpeed": "播放速度"
+  },
+  "models": {
+    "unknownScenario": "未知场景", "attempt": "第 {{index}} 次尝试", "untitledSession": "未命名会话", "noTimingData": "没有时间数据", "timeRange": "{{start}} 至 {{end}}", "noTimestamp": "没有时间戳", "justNow": "刚刚", "minutesAgo": "{{count}} 分钟前", "hoursAgo": "{{count}} 小时前", "daysAgo": "{{count}} 天前", "weeksAgo": "{{count}} 周前"
+  },
+  "stats": {
+    "categories": {
+      "overview": "概览", "accuracy": "准确率详情", "timing": "时间", "controls": "控制", "display": "显示", "technical": "技术信息", "game": "游戏信息", "additional": "其他统计"
+    },
+    "fields": {
+      "score": "分数", "kills": "击杀", "hitCount": "命中次数", "accuracy": "准确率", "missCount": "未命中次数", "totalOvershots": "总过冲次数", "damageDone": "造成伤害", "damageTaken": "承受伤害", "fightTime": "战斗时间", "timeRemaining": "剩余时间", "avgTtk": "平均 TTK", "realAvgTtk": "实际平均 TTK", "pauseCount": "暂停次数", "pauseDuration": "暂停时长", "challengeStart": "挑战开始时间", "duration": "时长", "sensScale": "灵敏度刻度", "sensIncrement": "灵敏度增量", "horizSens": "水平灵敏度", "vertSens": "垂直灵敏度", "dpi": "DPI", "cm360": "cm/360", "fov": "FOV", "fovScale": "FOVScale", "resolution": "分辨率", "hideGun": "隐藏武器", "crosshair": "准星", "crosshairScale": "准星缩放", "crosshairColor": "准星颜色", "inputLag": "输入延迟", "maxFpsConfig": "最大 FPS（配置）", "avgFps": "平均 FPS", "resolutionScale": "分辨率缩放", "scenario": "场景", "hash": "Hash", "gameVersion": "游戏版本", "datePlayed": "游玩日期", "distanceTraveled": "移动距离", "mbsPoints": "MBS 点数", "midairs": "空中命中", "midaired": "被空中命中", "directs": "直接命中", "directed": "被直接命中", "deaths": "死亡", "avgTargetScale": "平均目标缩放", "avgTimeDilation": "平均时间膨胀", "reloads": "换弹次数"
+    }
+  },
+  "charts": {
+    "score": "分数", "accuracyPercent": "准确率 %", "trendTitle": "{{scenario}}：趋势", "scenarioMix": "训练会话场景分布", "scenarioMixDescription": "本次训练会话游玩的场景及各场景的训练记录数。", "runs": "训练记录数", "noActiveSession": "尚无活跃训练会话数据。游玩一个场景后此组件会显示数据。", "noScenarioNames": "本次训练会话尚未找到场景名称。"
+  },
+  "environment": {
+    "yes": "是", "no": "否", "privateLocal": "仅保存在本地，上传前会清除。",
+    "groups": { "appOs": "应用与操作系统", "hardware": "电脑硬件", "display": "显示环境", "mouse": "鼠标设备", "trace": "轨迹元数据", "diagnostics": "诊断信息" },
+    "fields": { "appVersion": "应用版本", "fileVersion": "文件版本", "os": "操作系统", "architecture": "架构", "osVersion": "操作系统版本", "steamId": "Steam ID", "personaName": "玩家名称", "cpu": "CPU", "cpuCores": "CPU 核心数", "gpu": "GPU", "ramTotal": "内存总量（MB）", "refreshRate": "刷新率（Hz）", "screenWidth": "屏幕宽度", "screenHeight": "屏幕高度", "windowed": "窗口模式", "inputBackend": "输入后端", "vendorId": "厂商 ID（VID）", "productId": "产品 ID（PID）", "interface": "接口（MI）", "tracePoints": "轨迹点数", "traceDuration": "轨迹时长（s）", "sampleRate": "采样率（Hz）", "mousePath": "鼠标设备路径（原始值）", "backend": "后端" }
+  }
+}

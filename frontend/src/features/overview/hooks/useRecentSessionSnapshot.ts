@@ -1,15 +1,18 @@
 import { getScenarioName } from "@/features/benchmarks/lib/detailFormatting";
+import { getActiveLocaleFormatters } from "@/i18n";
 import { buildStreakActivity } from "@/features/overview/lib/streakActivity";
 import { useStore } from "@/shared/hooks";
 import type { RunRecord, Session } from "@/shared/types";
+import type { TFunction } from "i18next";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
-const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+const dateTimeOptions: Intl.DateTimeFormatOptions = {
   month: "short",
   day: "numeric",
   hour: "numeric",
   minute: "2-digit",
-});
+};
 
 export type SnapshotTone = "success" | "warning" | "neutral" | "muted";
 
@@ -77,6 +80,7 @@ type PerformanceRead = {
 };
 
 export function useRecentSessionSnapshot(): RecentSessionSnapshot {
+  const { t } = useTranslation("overview");
   const sessions = useStore((state) => state.sessions);
   const isInSession = useStore((state) => state.isInSession);
 
@@ -88,17 +92,17 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
         currentSession: null,
         isInSession,
         statusTone: "muted",
-        statusLabel: "No session",
+        statusLabel: t("snapshot.noSession"),
         latestSessionLabel: "--",
         sessionLengthLabel: "--",
-        sessionLengthDetail: "No session loaded",
+        sessionLengthDetail: t("snapshot.noSessionLoaded"),
         activePlaytimeLabel: "--",
-        activePlaytimeDetail: "No run duration data",
+        activePlaytimeDetail: t("snapshot.noRunDuration"),
         streakLabel: "--",
-        streakDetail: "No recent activity",
+        streakDetail: t("snapshot.noRecentActivity"),
         topStreak: 0,
         performanceValue: "--",
-        performanceDetail: "Need more history",
+        performanceDetail: t("snapshot.needMoreHistory"),
         currentRuns: 0,
         suggestedRuns: 8,
         warmupRuns: 2,
@@ -127,7 +131,7 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
         ? activePlaytimeMs / Math.max(activePlaytimeMs, sessionLengthMs)
         : 0;
     const streakActivity = buildStreakActivity(sessions);
-    const performance = readPerformance(currentSession, sessions.slice(1));
+    const performance = readPerformance(currentSession, sessions.slice(1), t);
     const recommendation = recommendSessionLength(sessions);
     const currentRuns = currentSession.items.length;
     const lastRunStats = computeLastRunStats(currentSession);
@@ -138,27 +142,33 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
       isInSession,
       statusTone: performance.tone,
       statusLabel: performance.label,
-      latestSessionLabel: formatTimestamp(lastPlayedAt),
+      latestSessionLabel: formatTimestamp(lastPlayedAt, t),
       sessionLengthLabel: formatDuration(sessionLengthMs),
       sessionLengthDetail: isInSession
-        ? "Elapsed so far"
-        : "Latest session window",
+        ? t("snapshot.elapsed")
+        : t("snapshot.latestWindow"),
       activePlaytimeLabel: formatDuration(activePlaytimeMs),
       activePlaytimeDetail:
         focusRatio > 0
-          ? `${Math.round(focusRatio * 100)}% active`
-          : "No run duration data",
-      streakLabel: `${streakActivity.currentStreak} ${pluralize("day", streakActivity.currentStreak)}`,
+          ? t("snapshot.active", { percent: Math.round(focusRatio * 100) })
+          : t("snapshot.noRunDuration"),
+      streakLabel: formatDayCount(streakActivity.currentStreak, t),
       streakDetail:
         streakActivity.currentStreak > 0
-          ? `${formatDuration(streakActivity.todayPlaytimeMs)} today`
+          ? t("snapshot.todayPlaytime", {
+              duration: formatDuration(streakActivity.todayPlaytimeMs),
+            })
           : streakActivity.lastActiveDayTs !== null
-            ? `Last active ${formatRelativeDay(streakActivity.lastActiveDayTs)}`
-            : "No recent activity",
+            ? t("snapshot.lastActive", {
+                day: formatRelativeDay(streakActivity.lastActiveDayTs, t),
+              })
+            : t("snapshot.noRecentActivity"),
       topStreak: streakActivity.topStreak,
       performanceValue: performance.value,
       performanceDetail:
-        performance.tone === "muted" ? "Need more history" : performance.label,
+        performance.tone === "muted"
+          ? t("snapshot.needMoreHistory")
+          : performance.label,
       currentRuns,
       suggestedRuns: recommendation.suggestedRuns,
       warmupRuns: recommendation.warmupRuns,
@@ -177,7 +187,7 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
       recentScoresPb: recentScoresData.pb,
       recentScoresSessionStartIndex: recentScoresData.sessionStartIndex,
     };
-  }, [isInSession, sessions]);
+  }, [isInSession, sessions, t]);
 }
 
 function computeLastRunStats(session: Session) {
@@ -323,6 +333,7 @@ function computeRecentScores(session: Session, allSessions: Session[]) {
 function readPerformance(
   currentSession: Session,
   previousSessions: Session[],
+  t: TFunction<"overview">,
 ): PerformanceRead {
   const historyByScenario = new Map<string, number[]>();
 
@@ -361,9 +372,12 @@ function readPerformance(
     const delta = average(comparableDeltas);
     return {
       tone: toneFromDelta(delta),
-      label: labelFromHistoryDelta(delta),
+      label: labelFromHistoryDelta(delta, t),
       value: formatSignedPercent(delta),
-      detail: `${labelFromHistoryDelta(delta)} across ${comparableDeltas.length} comparable ${pluralize("run", comparableDeltas.length)}`,
+      detail: t("snapshot.comparableRuns", {
+        label: labelFromHistoryDelta(delta, t),
+        count: comparableDeltas.length,
+      }),
     };
   }
 
@@ -371,17 +385,19 @@ function readPerformance(
   if (repeatDelta !== null) {
     return {
       tone: toneFromDelta(repeatDelta),
-      label: labelFromRepeatDelta(repeatDelta),
+      label: labelFromRepeatDelta(repeatDelta, t),
       value: formatSignedPercent(repeatDelta),
-      detail: `${labelFromRepeatDelta(repeatDelta)} based on repeated scenarios in this session`,
+      detail: t("snapshot.repeatedScenarios", {
+        label: labelFromRepeatDelta(repeatDelta, t),
+      }),
     };
   }
 
   return {
     tone: "muted",
-    label: "Building signal",
+    label: t("snapshot.buildingSignal"),
     value: "--",
-    detail: "Need older comparison runs or repeated scenarios",
+    detail: t("snapshot.needComparison"),
   };
 }
 
@@ -705,30 +721,40 @@ function readRunDurationMs(item: RunRecord): number {
   return seconds * 1000;
 }
 
-function formatTimestamp(timestamp: number): string {
-  if (timestamp <= 0) return "Unknown time";
-  return dateTimeFormatter.format(new Date(timestamp));
+function formatTimestamp(
+  timestamp: number,
+  t: TFunction<"overview">,
+): string {
+  if (timestamp <= 0) return t("snapshot.unknownTime");
+  return getActiveLocaleFormatters().dateTimeFormatter(dateTimeOptions).format(new Date(timestamp));
 }
 
 function formatDuration(ms: number): string {
   if (ms <= 0) return "<1m";
 
+  const formatInteger = (value: number) =>
+    getActiveLocaleFormatters().formatNumber(value, {
+      maximumFractionDigits: 0,
+      useGrouping: false,
+    });
   const totalMinutes = Math.round(ms / 60000);
   if (totalMinutes < 1) return "<1m";
 
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
 
-  if (hours === 0) return `${minutes}m`;
-  if (minutes === 0) return `${hours}h`;
-  return `${hours}h ${minutes}m`;
+  if (hours === 0) return `${formatInteger(minutes)}m`;
+  if (minutes === 0) return `${formatInteger(hours)}h`;
+  return `${formatInteger(hours)}h ${formatInteger(minutes)}m`;
 }
 
 function formatSignedPercent(value: number): string {
-  const percent = value * 100;
-  const fixed =
-    Math.abs(percent) >= 10 ? percent.toFixed(0) : percent.toFixed(1);
-  return `${percent >= 0 ? "+" : ""}${fixed}%`;
+  return getActiveLocaleFormatters().formatNumber(value, {
+    style: "percent",
+    signDisplay: "always",
+    minimumFractionDigits: Math.abs(value) >= 0.1 ? 0 : 1,
+    maximumFractionDigits: Math.abs(value) >= 0.1 ? 0 : 1,
+  });
 }
 
 function toneFromDelta(delta: number): SnapshotTone {
@@ -737,16 +763,22 @@ function toneFromDelta(delta: number): SnapshotTone {
   return "neutral";
 }
 
-function labelFromHistoryDelta(delta: number): string {
-  if (delta >= 0.06) return "Above usual";
-  if (delta <= -0.06) return "Below usual";
-  return "On pace";
+function labelFromHistoryDelta(
+  delta: number,
+  t: TFunction<"overview">,
+): string {
+  if (delta >= 0.06) return t("snapshot.aboveUsual");
+  if (delta <= -0.06) return t("snapshot.belowUsual");
+  return t("snapshot.onPace");
 }
 
-function labelFromRepeatDelta(delta: number): string {
-  if (delta >= 0.04) return "Warming up";
-  if (delta <= -0.04) return "Cooling off";
-  return "Steady";
+function labelFromRepeatDelta(
+  delta: number,
+  t: TFunction<"overview">,
+): string {
+  if (delta >= 0.04) return t("snapshot.warmingUp");
+  if (delta <= -0.04) return t("snapshot.coolingOff");
+  return t("snapshot.steady");
 }
 
 function average(values: number[]): number {
@@ -771,11 +803,19 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function pluralize(word: string, count: number): string {
-  return count === 1 ? word : `${word}s`;
+function formatDayCount(
+  count: number,
+  t: TFunction<"overview">,
+): string {
+  return count === 1
+    ? t("snapshot.day_one", { count })
+    : t("snapshot.day_other", { count });
 }
 
-function formatRelativeDay(timestamp: number): string {
+function formatRelativeDay(
+  timestamp: number,
+  t: TFunction<"overview">,
+): string {
   const target = new Date(timestamp);
   target.setHours(0, 0, 0, 0);
 
@@ -785,10 +825,10 @@ function formatRelativeDay(timestamp: number): string {
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
-  if (target.getTime() === today.getTime()) return "today";
-  if (target.getTime() === yesterday.getTime()) return "yesterday";
+  if (target.getTime() === today.getTime()) return t("snapshot.today");
+  if (target.getTime() === yesterday.getTime()) return t("snapshot.yesterday");
 
-  return new Intl.DateTimeFormat("en-US", {
+  return getActiveLocaleFormatters().dateTimeFormatter({
     month: "short",
     day: "numeric",
     year: "numeric",

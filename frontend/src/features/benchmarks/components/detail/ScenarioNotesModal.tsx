@@ -1,6 +1,7 @@
 import { Button, Modal } from "@/shared/components";
 import { Copy, Save } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export function ScenarioNotesModal({
   initialSensitivity,
   onSave,
 }: Props) {
+  const { t } = useTranslation("benchmarks");
   const [notes, setNotes] = useState(initialNotes);
   const [sensitivity, setSensitivity] = useState(initialSensitivity);
   const [saving, setSaving] = useState(false);
@@ -62,7 +64,7 @@ export function ScenarioNotesModal({
             htmlFor="scenario-sensitivity"
             className="text-xs font-semibold text-surface-muted-foreground uppercase tracking-wide"
           >
-            Training Sensitivity
+            {t("notes.trainingSensitivity")}
           </label>
           <div className="flex gap-2">
             <input
@@ -70,7 +72,7 @@ export function ScenarioNotesModal({
               type="text"
               value={sensitivity}
               onChange={(event) => setSensitivity(event.target.value)}
-              placeholder="e.g. 35.8cm or 0.5"
+              placeholder={t("notes.sensitivityPlaceholder")}
               className="flex-1 rounded-xl border border-input bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-surface-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
             <Button
@@ -78,7 +80,7 @@ export function ScenarioNotesModal({
               size="icon"
               onClick={handleCopy}
               disabled={!sensitivity.trim()}
-              title="Copy sensitivity"
+              title={t("notes.copySensitivity")}
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -90,24 +92,24 @@ export function ScenarioNotesModal({
             htmlFor="scenario-notes"
             className="text-xs font-semibold text-surface-muted-foreground uppercase tracking-wide"
           >
-            Notes
+            {t("notes.notes")}
           </label>
           <textarea
             id="scenario-notes"
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            placeholder="Track your strategy, weaknesses, and focus points..."
+            placeholder={t("notes.notesPlaceholder")}
             className="min-h-[170px] w-full resize-none rounded-xl border border-input bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-surface-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
 
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="ghost" onClick={onClose} disabled={saving}>
-            Cancel
+            {t("notes.cancel")}
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             <Save className="h-4 w-4 mr-1.5" />
-            {saving ? "Saving..." : "Save"}
+            {saving ? t("notes.saving") : t("notes.save")}
           </Button>
         </div>
       </div>

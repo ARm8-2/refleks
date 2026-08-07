@@ -1,0 +1,123 @@
+{
+  "page": {
+    "title": "Benchmarks",
+    "search": "Search...",
+    "sort": "Sort",
+    "group": "Group",
+    "random": "Random",
+    "randomTitle": "Open a random benchmark",
+    "all": "All",
+    "favorites": "Favorites",
+    "showAll": "Show all benchmarks",
+    "showFavorites": "Show favorites only",
+    "recommended": "Recommended",
+    "hideRecommendations": "Hide recommendations",
+    "showRecommendations": "Show recommended benchmarks",
+    "loadingRecommendations": "Loading benchmark progress for recommendations...",
+    "waitingCatalog": "Waiting for the benchmark catalog to finish syncing...",
+    "noFavorites": "No favorite benchmarks yet. Star a benchmark to add it here.",
+    "noMatches": "No benchmarks match your search.",
+    "noResults": "No benchmarks found.",
+    "back": "Back",
+    "difficulty": "Difficulty",
+    "playPlaylist": "Play benchmark playlist in Kovaak's",
+    "copied": "Copied!",
+    "copyScreenshot": "Copy progress table screenshot",
+    "unfavorite": "Unfavorite benchmark",
+    "favorite": "Favorite benchmark",
+    "notFound": "Benchmark not found.",
+    "noProgress": "No progress data available yet for this difficulty."
+  },
+  "sortOptions": {
+    "name": "Name",
+    "abbreviation": "Abbreviation",
+    "date": "Date Added"
+  },
+  "groupOptions": {
+    "none": "None",
+    "abbreviation": "Abbreviation",
+    "category": "Category"
+  },
+  "categories": {
+    "aimGroups": "Aim Groups",
+    "community": "Community Benchmarks",
+    "notable": "Notable Creator Benchmarks",
+    "other": "Other"
+  },
+  "card": {
+    "favorite": "Favorite",
+    "unfavorite": "Unfavorite"
+  },
+  "detail": {
+    "snapshot": "Benchmark Progress Snapshot",
+    "progressTracker": "Progress Tracker",
+    "compact": "Compact",
+    "enableCompact": "Enable compact mode",
+    "disableCompact": "Disable compact mode",
+    "lastPlayed": "Last Played",
+    "showLastPlayed": "Show last played highlight",
+    "hideLastPlayed": "Hide last played highlight",
+    "trackerSettings": "View tracker settings",
+    "scenario": "Scenario",
+    "recommendation": "Rec",
+    "score": "Score",
+    "details": "Details",
+    "featureColumns": "Feature Columns",
+    "notes": "Notes",
+    "recommendations": "Recommendations",
+    "play": "Play",
+    "history": "History",
+    "rankVisibility": "Rank Visibility",
+    "autoHideCleared": "Auto-hide earlier cleared ranks",
+    "keepVisible": "Keep visible:",
+    "resetManual": "Reset Manual",
+    "hiddenAutomatically": "Hidden automatically because every scenario is already past this rank",
+    "unknownDifficulty": "Unknown difficulty"
+  },
+  "rankDistribution": {
+    "title": "Rank Distribution",
+    "description": "How your scenarios are spread across rank tiers.",
+    "all": "All",
+    "category": "Category",
+    "subcategory": "Subcategory",
+    "categoryScope": "Category scope: {{name}}",
+    "subcategoryScope": "Subcategory scope: {{name}}",
+    "unknown": "Unknown",
+    "belowR1": "Below R1",
+    "noData": "No data.",
+    "scenarios": "Scenarios",
+    "ariaLabel": "Rank distribution donut"
+  },
+  "strength": {
+    "title": "Strength Breakdown",
+    "description": "{{level}}-level progress toward max rank.",
+    "category": "Category",
+    "subcategory": "Subcategory",
+    "scenario": "Scenario",
+    "noData": "No data.",
+    "unranked": "Unranked",
+    "average": "Avg"
+  },
+  "scenario": {
+    "notesSensitivity": "Notes & Sensitivity",
+    "recommendationScore": "Recommendation score: {{score}}",
+    "play": "Play in Kovaak's",
+    "lastScores": "Last 10 Scores"
+  },
+  "notes": {
+    "trainingSensitivity": "Training Sensitivity",
+    "sensitivityPlaceholder": "e.g. 35.8cm or 0.5",
+    "copySensitivity": "Copy sensitivity",
+    "notes": "Notes",
+    "notesPlaceholder": "Track your strategy, weaknesses, and focus points...",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "history": {
+    "title": "Scenario History · {{scenario}}",
+    "score": "Score",
+    "unknown": "Unknown",
+    "noScores": "No scores found."
+  }
+}

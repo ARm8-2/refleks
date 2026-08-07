@@ -1,4 +1,5 @@
 import { Loading, Modal } from "@/shared/components";
+import { getActiveLocaleFormatters } from "@/i18n";
 import type { ChartConfig } from "@/shared/components/ui/chart";
 import {
   ChartContainer,
@@ -13,6 +14,7 @@ import {
 } from "@/shared/lib";
 import type { KovaaksLastScore, RankDef } from "@/shared/types";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   CartesianGrid,
   Line,
@@ -43,10 +45,6 @@ type RankBand = {
   color: string;
 };
 
-const chartConfig: ChartConfig = {
-  score: { label: "Score", color: CHART_SERIES_COLORS.scoreHistory },
-};
-
 export function ScenarioHistoryModal({
   isOpen,
   onClose,
@@ -54,6 +52,16 @@ export function ScenarioHistoryModal({
   thresholds,
   rankDefs,
 }: Props) {
+  const { t } = useTranslation(["benchmarks", "errors"]);
+  const chartConfig: ChartConfig = useMemo(
+    () => ({
+      score: {
+        label: t("benchmarks:history.score"),
+        color: CHART_SERIES_COLORS.scoreHistory,
+      },
+    }),
+    [t],
+  );
   const [scores, setScores] = useState<KovaaksLastScore[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,12 +76,11 @@ export function ScenarioHistoryModal({
     getLastScenarioScores(scenarioName)
       .then((result) => setScores(result))
       .catch((fetchError) => {
-        setError(
-          fetchError instanceof Error ? fetchError.message : String(fetchError),
-        );
+        console.error("Failed to load scenario history:", fetchError);
+        setError(t("errors:benchmarks.historyLoadFailed"));
       })
       .finally(() => setLoading(false));
-  }, [isOpen, scenarioName]);
+  }, [isOpen, scenarioName, t]);
 
   const sorted = useMemo(() => [...scores].reverse(), [scores]);
 
@@ -83,8 +90,11 @@ export function ScenarioHistoryModal({
       const date = rawDate ? new Date(rawDate) : null;
       const dateLabel =
         date && !Number.isNaN(date.getTime())
-          ? date.toLocaleString()
-          : rawDate || "Unknown";
+          ? getActiveLocaleFormatters().dateTimeFormatter({
+              dateStyle: "short",
+              timeStyle: "short",
+            }).format(date)
+          : rawDate || t("benchmarks:history.unknown");
 
       return {
         run: index + 1,
@@ -92,7 +102,7 @@ export function ScenarioHistoryModal({
         dateLabel,
       };
     });
-  }, [sorted]);
+  }, [sorted, t]);
 
   const numericScores = useMemo(
     () =>
@@ -115,7 +125,7 @@ export function ScenarioHistoryModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Scenario History · ${scenarioName}`}
+      title={t("benchmarks:history.title", { scenario: scenarioName })}
     >
       <div className="space-y-3 px-4 pb-4">
         {loading && <Loading />}
@@ -128,7 +138,7 @@ export function ScenarioHistoryModal({
 
         {!loading && !error && trendData.length === 0 && (
           <div className="rounded-xl border border-border bg-surface p-4 text-sm text-surface-muted-foreground">
-            No scores found.
+            {t("benchmarks:history.noScores")}
           </div>
         )}
 

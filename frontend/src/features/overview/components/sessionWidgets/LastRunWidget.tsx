@@ -1,15 +1,17 @@
 import { Widget, WidgetEmpty } from "@/shared/components";
 import { Activity, Crosshair } from "lucide-react";
 import type { RecentSessionSnapshot } from "../../hooks/useRecentSessionSnapshot";
-import { formatScore, TrendIndicator } from "./shared";
+import { useTranslation } from "react-i18next";
+import { formatPercent, formatScore, TrendIndicator } from "./shared";
 
 export function LastRunWidget({
   snapshot,
 }: {
   snapshot: RecentSessionSnapshot;
 }) {
+  const { t } = useTranslation("overview");
   if (!snapshot.currentSession)
-    return <WidgetEmpty icon={Activity} label="Last Run" />;
+    return <WidgetEmpty icon={Activity} label={t("widgets.lastRun")} />;
 
   const {
     lastRunScore,
@@ -22,12 +24,12 @@ export function LastRunWidget({
 
   if (lastRunScore === null && lastRunAccuracy === null) {
     return (
-      <Widget icon={Activity} title="Last Run">
+      <Widget icon={Activity} title={t("widgets.lastRun")}>
         <p className="text-lg font-semibold text-surface-muted-foreground">
           --
         </p>
         <p className="mt-0.5 text-xs text-surface-muted-foreground">
-          No score data
+          {t("lastRun.noScore")}
         </p>
       </Widget>
     );
@@ -36,7 +38,7 @@ export function LastRunWidget({
   return (
     <Widget
       icon={Activity}
-      title="Last Run"
+      title={t("widgets.lastRun")}
       headerAction={
         lastRunScenario ? (
           <span
@@ -61,7 +63,7 @@ export function LastRunWidget({
           <div className="flex items-baseline gap-1.5">
             <Crosshair className="h-3 w-3 text-surface-muted-foreground" />
             <span className="text-sm font-medium text-foreground">
-              {(lastRunAccuracy * 100).toFixed(1)}%
+              {formatPercent(lastRunAccuracy)}
             </span>
             <TrendIndicator trend={lastRunAccTrend} />
           </div>
@@ -70,12 +72,14 @@ export function LastRunWidget({
       <div className="mt-0.5 flex items-center gap-2 text-xs text-surface-muted-foreground">
         <span>
           {lastRunScoreTrend !== null
-            ? "Trend: last 40% vs first 60%"
-            : "Score & accuracy"}
+            ? t("lastRun.trend")
+            : t("lastRun.scoreAccuracy")}
         </span>
         {recentScores.length > 0 && (
           <span className="ml-auto tabular-nums">
-            {recentScores.length} {recentScores.length === 1 ? "run" : "runs"}
+            {recentScores.length === 1
+              ? t("lastRun.run_one", { count: recentScores.length })
+              : t("lastRun.run_other", { count: recentScores.length })}
           </span>
         )}
       </div>

@@ -1,5 +1,7 @@
 import { useStore } from "@/shared/hooks";
+import { getActiveLocaleFormatters } from "@/i18n";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 export type DailyPlaytimePoint = {
   day: string;
@@ -8,6 +10,7 @@ export type DailyPlaytimePoint = {
 };
 
 export function useDailyPlaytime(days = 7): DailyPlaytimePoint[] {
+  const { t } = useTranslation("overview");
   const sessions = useStore((state) => state.sessions);
 
   return useMemo(() => {
@@ -38,7 +41,7 @@ export function useDailyPlaytime(days = 7): DailyPlaytimePoint[] {
       }
     }
 
-    const shortDay = new Intl.DateTimeFormat("en-US", { weekday: "short" });
+    const shortDay = getActiveLocaleFormatters().dateTimeFormatter({ weekday: "short" });
     const result: DailyPlaytimePoint[] = [];
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(today);
@@ -46,13 +49,13 @@ export function useDailyPlaytime(days = 7): DailyPlaytimePoint[] {
       const key = toDayKey(d);
       result.push({
         day: key,
-        label: i === 0 ? "Today" : shortDay.format(d),
+        label: i === 0 ? t("snapshot.today") : shortDay.format(d),
         minutes: Math.round(dayBuckets.get(key) ?? 0),
       });
     }
 
     return result;
-  }, [days, sessions]);
+  }, [days, sessions, t]);
 }
 
 function toDayKey(date: Date): string {

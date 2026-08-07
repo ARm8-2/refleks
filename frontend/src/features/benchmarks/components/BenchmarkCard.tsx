@@ -1,6 +1,7 @@
 import type { Benchmark } from "@/shared/types";
 import { ChevronRight, Star } from "lucide-react";
 import type { MouseEvent } from "react";
+import { useTranslation } from "react-i18next";
 
 interface BenchmarkCardProps {
   benchmark: Benchmark;
@@ -15,6 +16,7 @@ export function BenchmarkCard({
   onToggleFavorite,
   onSelect,
 }: BenchmarkCardProps) {
+  const { t } = useTranslation("benchmarks");
   const handleToggle = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     onToggleFavorite();
@@ -37,8 +39,10 @@ export function BenchmarkCard({
         <button
           type="button"
           aria-pressed={isFavorite}
-          aria-label={isFavorite ? "Unfavorite" : "Favorite"}
-          title={isFavorite ? "Unfavorite" : "Favorite"}
+          aria-label={
+            isFavorite ? t("card.unfavorite") : t("card.favorite")
+          }
+          title={isFavorite ? t("card.unfavorite") : t("card.favorite")}
           onClick={handleToggle}
           className={`inline-flex h-8 w-8 items-center justify-center rounded-xl focus:outline-none transition-[transform,background-color,color] duration-200 ease-emphasized hover:bg-surface-emphasis hover:scale-[1.05] active:scale-[0.96] ${
             isFavorite ? "text-primary" : "text-foreground hover:text-primary"

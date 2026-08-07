@@ -1,6 +1,7 @@
 import { Button, Modal } from "@/shared/components";
 import { clearCache } from "@/shared/lib";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type ClearCacheModalProps = {
   isOpen: boolean;
@@ -8,6 +9,7 @@ type ClearCacheModalProps = {
 };
 
 export function ClearCacheModal({ isOpen, onClose }: ClearCacheModalProps) {
+  const { t } = useTranslation(["settings", "common"]);
   const [loading, setLoading] = useState(false);
 
   const handleClear = async () => {
@@ -26,25 +28,24 @@ export function ClearCacheModal({ isOpen, onClose }: ClearCacheModalProps) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Clear Cache"
+      title={t("modals.clearCacheTitle")}
       width={400}
       height="auto"
     >
       <div className="p-4 flex flex-col gap-4">
         <p className="text-surface-muted-foreground text-sm">
-          This will clear all cached data including parsed stats and computed
-          rankings. Your settings and session data will not be affected.
+          {t("modals.clearCacheDescription")}
         </p>
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {t("common:actions.cancel")}
           </Button>
           <Button
             variant="destructive"
             onClick={handleClear}
             disabled={loading}
           >
-            {loading ? "Clearing..." : "Clear Cache"}
+            {loading ? t("modals.clearing") : t("modals.clearCacheTitle")}
           </Button>
         </div>
       </div>

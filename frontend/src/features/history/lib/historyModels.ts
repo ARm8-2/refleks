@@ -5,32 +5,31 @@ import {
   readRunScore,
   readRunTimestamp,
 } from "@/shared/lib";
+import { getActiveLocaleFormatters, i18n } from "@/i18n";
 import type { RunRecord, Session, StatKey } from "@/shared/types";
 
-const sessionFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
+function sessionFormatter() {
+  return getActiveLocaleFormatters().dateTimeFormatter({
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
-const compactDateFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-});
+function compactDateFormatter() {
+  return getActiveLocaleFormatters().dateTimeFormatter({
+    month: "short",
+    day: "numeric",
+  });
+}
 
-const timeFormatter = new Intl.DateTimeFormat("en-US", {
-  hour: "numeric",
-  minute: "2-digit",
-});
-
-const numberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-});
-
-const preciseNumberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 2,
-});
+function timeFormatter() {
+  return getActiveLocaleFormatters().dateTimeFormatter({
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
 
 export type HistoryRun = {
   id: string;
@@ -45,77 +44,45 @@ export type HistoryRun = {
   orderInSession: number;
 };
 
-type RunStatFieldDefinition = {
-  key: StatKey;
-  label: string;
-  category: string;
-};
+const CATEGORY_KEYS = {
+  overview: "history:stats.categories.overview",
+  accuracy: "history:stats.categories.accuracy",
+  timing: "history:stats.categories.timing",
+  controls: "history:stats.categories.controls",
+  display: "history:stats.categories.display",
+  technical: "history:stats.categories.technical",
+  game: "history:stats.categories.game",
+  additional: "history:stats.categories.additional",
+} as const;
 
-const RUN_STAT_FIELDS: RunStatFieldDefinition[] = [
-  { key: "score", label: "Score", category: "Overview" },
-  { key: "kills", label: "Kills", category: "Overview" },
-  { key: "hitCount", label: "Hit Count", category: "Overview" },
-  { key: "accuracy", label: "Accuracy", category: "Overview" },
-  { key: "missCount", label: "Miss Count", category: "Accuracy Details" },
-  {
-    key: "totalOvershots",
-    label: "Total Overshots",
-    category: "Accuracy Details",
-  },
-  { key: "damageDone", label: "Damage Done", category: "Accuracy Details" },
-  { key: "damageTaken", label: "Damage Taken", category: "Accuracy Details" },
-  { key: "fightTime", label: "Fight Time", category: "Timing" },
-  { key: "timeRemaining", label: "Time Remaining", category: "Timing" },
-  { key: "avgTtk", label: "Avg TTK", category: "Timing" },
-  { key: "realAvgTtk", label: "Real Avg TTK", category: "Timing" },
-  { key: "pauseCount", label: "Pause Count", category: "Timing" },
-  { key: "pauseDuration", label: "Pause Duration", category: "Timing" },
-  { key: "challengeStart", label: "Challenge Start", category: "Timing" },
-  { key: "duration", label: "Duration", category: "Timing" },
-  { key: "sensScale", label: "Sens Scale", category: "Controls" },
-  { key: "sensIncrement", label: "Sens Increment", category: "Controls" },
-  { key: "horizSens", label: "Horiz Sens", category: "Controls" },
-  { key: "vertSens", label: "Vert Sens", category: "Controls" },
-  { key: "dpi", label: "DPI", category: "Controls" },
-  { key: "cm360", label: "cm/360", category: "Controls" },
-  { key: "fov", label: "FOV", category: "Display" },
-  { key: "fovScale", label: "FOVScale", category: "Display" },
-  { key: "resolution", label: "Resolution", category: "Display" },
-  { key: "hideGun", label: "Hide Gun", category: "Display" },
-  { key: "crosshair", label: "Crosshair", category: "Display" },
-  { key: "crosshairScale", label: "Crosshair Scale", category: "Display" },
-  { key: "crosshairColor", label: "Crosshair Color", category: "Display" },
-  { key: "inputLag", label: "Input Lag", category: "Technical" },
-  { key: "maxFpsConfig", label: "Max FPS (config)", category: "Technical" },
-  { key: "avgFps", label: "Avg FPS", category: "Technical" },
-  { key: "resolutionScale", label: "Resolution Scale", category: "Technical" },
-  { key: "scenario", label: "Scenario", category: "Game Information" },
-  { key: "hash", label: "Hash", category: "Game Information" },
-  { key: "gameVersion", label: "Game Version", category: "Game Information" },
-  { key: "datePlayed", label: "Date Played", category: "Game Information" },
-  {
-    key: "distanceTraveled",
-    label: "Distance Traveled",
-    category: "Game Information",
-  },
-  { key: "mbsPoints", label: "MBS Points", category: "Game Information" },
-  { key: "midairs", label: "Midairs", category: "Additional Stats" },
-  { key: "midaired", label: "Midaired", category: "Additional Stats" },
-  { key: "directs", label: "Directs", category: "Additional Stats" },
-  { key: "directed", label: "Directed", category: "Additional Stats" },
-  { key: "deaths", label: "Deaths", category: "Additional Stats" },
-  {
-    key: "avgTargetScale",
-    label: "Avg Target Scale",
-    category: "Additional Stats",
-  },
-  {
-    key: "avgTimeDilation",
-    label: "Avg Time Dilation",
-    category: "Additional Stats",
-  },
-  { key: "reloads", label: "Reloads", category: "Additional Stats" },
-];
+const RUN_STAT_FIELDS = ([
+  ["score", "overview"], ["kills", "overview"], ["hitCount", "overview"],
+  ["accuracy", "overview"], ["missCount", "accuracy"],
+  ["totalOvershots", "accuracy"], ["damageDone", "accuracy"],
+  ["damageTaken", "accuracy"], ["fightTime", "timing"],
+  ["timeRemaining", "timing"], ["avgTtk", "timing"],
+  ["realAvgTtk", "timing"], ["pauseCount", "timing"],
+  ["pauseDuration", "timing"], ["challengeStart", "timing"],
+  ["duration", "timing"], ["sensScale", "controls"],
+  ["sensIncrement", "controls"], ["horizSens", "controls"],
+  ["vertSens", "controls"], ["dpi", "controls"], ["cm360", "controls"],
+  ["fov", "display"], ["fovScale", "display"],
+  ["resolution", "display"], ["hideGun", "display"],
+  ["crosshair", "display"], ["crosshairScale", "display"],
+  ["crosshairColor", "display"], ["inputLag", "technical"],
+  ["maxFpsConfig", "technical"], ["avgFps", "technical"],
+  ["resolutionScale", "technical"], ["scenario", "game"],
+  ["hash", "game"], ["gameVersion", "game"], ["datePlayed", "game"],
+  ["distanceTraveled", "game"], ["mbsPoints", "game"],
+  ["midairs", "additional"], ["midaired", "additional"],
+  ["directs", "additional"], ["directed", "additional"],
+  ["deaths", "additional"], ["avgTargetScale", "additional"],
+  ["avgTimeDilation", "additional"], ["reloads", "additional"],
+] as const).map(([key, category]) => ({
+  key,
+  labelKey: `history:stats.fields.${key}` as const,
+  categoryKey: CATEGORY_KEYS[category],
+}));
 
 export function buildHistoryRuns(sessions: Session[]): HistoryRun[] {
   return sessions.flatMap((session) =>
@@ -124,7 +91,8 @@ export function buildHistoryRuns(sessions: Session[]): HistoryRun[] {
       sessionId: session.id,
       session,
       item,
-      scenarioName: getScenarioName(item).trim() || "Unknown scenario",
+      scenarioName:
+        getScenarioName(item).trim() || i18n.t("history:models.unknownScenario"),
       playedAt: readRunTimestamp(item),
       score: readRunScore(item),
       accuracy: readRunAccuracy(item),
@@ -272,12 +240,12 @@ export function buildSessionScenarioTrendPoints(
   return scenarioRuns.map((run, i) => ({
     label:
       run.playedAt > 0
-        ? compactDateFormatter.format(run.playedAt)
+        ? compactDateFormatter().format(run.playedAt)
         : `#${i + 1}`,
     fullLabel:
       run.playedAt > 0
-        ? sessionFormatter.format(run.playedAt)
-        : `Attempt #${i + 1}`,
+        ? sessionFormatter().format(run.playedAt)
+        : i18n.t("history:models.attempt", { index: i + 1 }),
     score: run.score,
     accuracy: run.accuracy,
     runId: run.id,
@@ -290,33 +258,41 @@ export function formatSessionTitle(session: Session): string {
 
   const startedAt = readSessionStartTimestamp(session);
   return startedAt > 0
-    ? sessionFormatter.format(startedAt)
-    : "Untitled session";
+    ? sessionFormatter().format(startedAt)
+    : i18n.t("history:models.untitledSession");
 }
 
 export function formatSessionDateRange(session: Session): string {
   const start = readSessionStartTimestamp(session);
   const end = readSessionEndTimestamp(session);
 
-  if (start <= 0 && end <= 0) return "No timing data";
+  if (start <= 0 && end <= 0) return i18n.t("history:models.noTimingData");
   if (start <= 0 || end <= 0)
-    return sessionFormatter.format(Math.max(start, end));
+    return sessionFormatter().format(Math.max(start, end));
 
   const sameDay =
     new Date(start).toDateString() === new Date(end).toDateString();
   if (sameDay) {
-    return `${sessionFormatter.format(start)} to ${timeFormatter.format(end)}`;
+    return i18n.t("history:models.timeRange", {
+      start: sessionFormatter().format(start),
+      end: timeFormatter().format(end),
+    });
   }
 
-  return `${sessionFormatter.format(start)} to ${sessionFormatter.format(end)}`;
+  return i18n.t("history:models.timeRange", {
+    start: sessionFormatter().format(start),
+    end: sessionFormatter().format(end),
+  });
 }
 
 export function formatCompactDate(timestamp: number): string {
-  return timestamp > 0 ? compactDateFormatter.format(timestamp) : "--";
+  return timestamp > 0 ? compactDateFormatter().format(timestamp) : "--";
 }
 
 export function formatRunTimestamp(timestamp: number): string {
-  return timestamp > 0 ? sessionFormatter.format(timestamp) : "No timestamp";
+  return timestamp > 0
+    ? sessionFormatter().format(timestamp)
+    : i18n.t("history:models.noTimestamp");
 }
 
 export function formatRelativeTime(timestamp: number): string {
@@ -325,50 +301,43 @@ export function formatRelativeTime(timestamp: number): string {
   const diff = timestamp - Date.now();
   const abs = Math.abs(diff);
 
-  if (abs < 60_000) return "just now";
+  if (abs < 60_000) return i18n.t("history:models.justNow");
   if (abs < 3_600_000) {
     const minutes = Math.round(abs / 60_000);
-    return `${minutes}m ago`;
+    return i18n.t("history:models.minutesAgo", { count: minutes });
   }
   if (abs < 86_400_000) {
     const hours = Math.round(abs / 3_600_000);
-    return `${hours}h ago`;
+    return i18n.t("history:models.hoursAgo", { count: hours });
   }
   if (abs < 604_800_000) {
     const days = Math.round(abs / 86_400_000);
-    return `${days}d ago`;
+    return i18n.t("history:models.daysAgo", { count: days });
   }
 
   const weeks = Math.round(abs / 604_800_000);
-  return `${weeks}w ago`;
+  return i18n.t("history:models.weeksAgo", { count: weeks });
 }
 
 export function formatDurationLabel(durationMs: number): string {
   if (!Number.isFinite(durationMs) || durationMs <= 0) return "--";
 
-  const totalSeconds = Math.round(durationMs / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m ${seconds}s`;
-  return `${seconds}s`;
+  return getActiveLocaleFormatters().formatDuration(durationMs / 1000);
 }
 
 export function formatScore(value: number): string {
   if (!Number.isFinite(value) || value <= 0) return "--";
-  return numberFormatter.format(value);
+  return getActiveLocaleFormatters().numberFormatter({ maximumFractionDigits: 0 }).format(value);
 }
 
 export function formatNumber(value: number, decimals = 0): string {
   if (!Number.isFinite(value)) return "--";
 
   if (decimals <= 0) {
-    return numberFormatter.format(value);
+    return getActiveLocaleFormatters().numberFormatter({ maximumFractionDigits: 0 }).format(value);
   }
 
-  return new Intl.NumberFormat("en-US", {
+  return getActiveLocaleFormatters().numberFormatter({
     minimumFractionDigits: 0,
     maximumFractionDigits: decimals,
   }).format(value);
@@ -376,7 +345,7 @@ export function formatNumber(value: number, decimals = 0): string {
 
 export function formatPercent(value: number | null): string {
   if (value === null || !Number.isFinite(value)) return "--";
-  return `${preciseNumberFormatter.format(value)}%`;
+  return `${getActiveLocaleFormatters().numberFormatter({ maximumFractionDigits: 2 }).format(value)}%`;
 }
 
 export function matchSessionSearch(session: Session, query: string): boolean {
@@ -438,9 +407,9 @@ export function buildRunStats(
     if (value !== "--") {
       entries.push({
         key: field.key,
-        label: field.label,
+        label: i18n.t(field.labelKey),
         value,
-        category: field.category,
+        category: i18n.t(field.categoryKey),
       });
     }
   }

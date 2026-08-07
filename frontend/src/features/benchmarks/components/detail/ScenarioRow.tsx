@@ -1,5 +1,6 @@
 import type { RankDef } from "@/shared/types";
 import { ChartLine, NotebookPen, Play } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   cellFill,
   computeFillColor,
@@ -177,6 +178,7 @@ export function ScenarioInfoRow({
   onHistory,
   onPlay,
 }: ScenarioInfoRowProps) {
+  const { t } = useTranslation("benchmarks");
   return (
     <div
       className={`grid items-center ${cls.rowHeightClass}`}
@@ -201,7 +203,7 @@ export function ScenarioInfoRow({
                   )
                 : cls.iconButtonClass
             }
-            title="Notes & Sensitivity"
+            title={t("scenario.notesSensitivity")}
             onClick={onNotes}
           >
             <NotebookPen size={cls.iconSize} />
@@ -212,7 +214,7 @@ export function ScenarioInfoRow({
       {showRecCol && (
         <div
           className="flex items-center justify-center"
-          title={`Recommendation score: ${recommendation}`}
+          title={t("scenario.recommendationScore", { score: recommendation })}
         >
           <RecommendationIndicator
             compact={cls.iconSize === 13}
@@ -228,7 +230,7 @@ export function ScenarioInfoRow({
           <button
             type="button"
             className={cls.actionButtonClass}
-            title="Play in Kovaak's"
+            title={t("scenario.play")}
             onClick={onPlay}
           >
             <Play size={cls.iconSize} />
@@ -241,7 +243,7 @@ export function ScenarioInfoRow({
           <button
             type="button"
             className={cls.actionButtonClass}
-            title="Last 10 Scores"
+            title={t("scenario.lastScores")}
             onClick={onHistory}
           >
             <ChartLine size={cls.iconSize} />

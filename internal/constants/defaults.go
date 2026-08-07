@@ -3,6 +3,9 @@ package constants
 import "math"
 
 const (
+	LanguageEnglish           = "en"
+	LanguageSimplifiedChinese = "zh-CN"
+
 	// Default UI/analysis values
 	DefaultSessionGapMinutes  = 20
 	DefaultTheme              = "dark"

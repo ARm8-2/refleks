@@ -63,6 +63,7 @@ func Default() models.Settings {
 
 // Sanitize applies defaults to zero/empty fields and returns the updated copy.
 func Sanitize(s models.Settings) models.Settings {
+	s.Language = sanitizeLanguage(s.Language)
 	if strings.TrimSpace(s.SteamInstallDir) == "" {
 		s.SteamInstallDir = constants.DefaultWindowsSteamInstallDir
 	}
@@ -98,6 +99,17 @@ func Sanitize(s models.Settings) models.Settings {
 		s.SessionNotes = make(map[string]models.SessionNote)
 	}
 	return s
+}
+
+func sanitizeLanguage(language string) string {
+	switch strings.TrimSpace(language) {
+	case constants.LanguageEnglish:
+		return constants.LanguageEnglish
+	case constants.LanguageSimplifiedChinese:
+		return constants.LanguageSimplifiedChinese
+	default:
+		return ""
+	}
 }
 
 func sanitizeScreenCaptureFPS(fps int) int {

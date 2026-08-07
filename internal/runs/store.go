@@ -70,14 +70,14 @@ func NewStore(settingsSvc *appsettings.Service) *Store {
 }
 
 // setReplayStatus updates the in-memory status exposed to the history UI.
-func (s *Store) setReplayStatus(runPath, state, message string) {
+func (s *Store) setReplayStatus(runPath, state, messageCode string) {
 	s.replayMu.Lock()
 	if state == models.ReplayStateReady {
 		delete(s.replayStatuses, runPath)
 	} else {
 		s.replayStatuses[runPath] = models.ReplayStatus{
-			State:   state,
-			Message: message,
+			State:       state,
+			UserMessage: models.NewUserMessage(messageCode, nil),
 		}
 	}
 	s.replayMu.Unlock()
@@ -88,15 +88,16 @@ func (s *Store) setReplayStatus(runPath, state, message string) {
 // of waiting for its next poll tick. The processing state is never pushed: it
 // is set at ingest time, usually before the tab mounts, and only terminal
 // transitions are worth an event.
-func (s *Store) publishReplayStatus(runPath, state, message string) {
-	s.setReplayStatus(runPath, state, message)
+func (s *Store) publishReplayStatus(runPath, state, messageCode string) {
+	s.setReplayStatus(runPath, state, messageCode)
 	if s.ctx == nil {
 		return
 	}
 	runtime.EventsEmit(s.ctx, constants.EventReplayStatus, map[string]any{
-		"path":    runPath,
-		"state":   state,
-		"message": message,
+		"path":          runPath,
+		"state":         state,
+		"messageCode":   messageCode,
+		"messageParams": models.MessageParams(nil),
 	})
 }
 
@@ -107,7 +108,10 @@ func (s *Store) GetReplayStatus(runPath string) models.ReplayStatus {
 	for _, ext := range []string{".mp4", ".webm"} {
 		if path, err := s.ReplayPath(runPath, ext); err == nil {
 			if _, err := os.Stat(path); err == nil {
-				return models.ReplayStatus{State: models.ReplayStateReady, Message: "Replay is ready."}
+				return models.ReplayStatus{
+					State:       models.ReplayStateReady,
+					UserMessage: models.NewUserMessage("replay.ready", nil),
+				}
 			}
 		}
 	}
@@ -119,8 +123,8 @@ func (s *Store) GetReplayStatus(runPath string) models.ReplayStatus {
 		return status
 	}
 	return models.ReplayStatus{
-		State:   models.ReplayStateUnavailable,
-		Message: "No replay was recorded for this run.",
+		State:       models.ReplayStateUnavailable,
+		UserMessage: models.NewUserMessage("replay.notRecorded", nil),
 	}
 }
 

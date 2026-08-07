@@ -1,5 +1,6 @@
 import { Button, Label, Modal } from "@/shared/components";
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   isOpen: boolean;
@@ -16,6 +17,8 @@ export function HistorySessionDetailsModal({
   onClose,
   onSave,
 }: Props) {
+  const { t } = useTranslation("errors");
+  const { t: tHistory } = useTranslation("history");
   const [notes, setNotes] = useState(initialNotes);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +51,7 @@ export function HistorySessionDetailsModal({
       await onSave(notes);
       onClose();
     } catch {
-      setError("Failed to save session notes. Please try again.");
+      setError(t("history.saveNotesFailed"));
     } finally {
       setSaving(false);
     }
@@ -58,7 +61,7 @@ export function HistorySessionDetailsModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Session Notes"
+      title={tHistory("overview.notes")}
       width={620}
       height="auto"
     >
@@ -68,13 +71,13 @@ export function HistorySessionDetailsModal({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="session-notes">Notes</Label>
+          <Label htmlFor="session-notes">{tHistory("overview.notes")}</Label>
           <textarea
             ref={notesRef}
             id="session-notes"
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            placeholder="Add notes for this session..."
+            placeholder={tHistory("overview.addNotes")}
             className="min-h-[180px] w-full resize-none rounded-xl border border-input bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-surface-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
@@ -83,10 +86,10 @@ export function HistorySessionDetailsModal({
 
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="ghost" onClick={onClose} disabled={saving}>
-            Cancel
+            {tHistory("overview.cancel")}
           </Button>
           <Button onClick={handleSave} disabled={saving || !hasChanges}>
-            {saving ? "Saving..." : "Save"}
+            {saving ? tHistory("overview.saving") : tHistory("overview.save")}
           </Button>
         </div>
       </div>

@@ -12,6 +12,7 @@ import { CHART_SERIES_COLORS, STORAGE_KEYS } from "@/shared/lib";
 import { Pencil, Plus, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { RecentSessionSnapshot } from "../../hooks/useRecentSessionSnapshot";
+import { useTranslation } from "react-i18next";
 
 const PHASE_SWATCH = {
   warmup: "var(--phase-warmup)",
@@ -33,6 +34,7 @@ function SessionProgressTargetEditor({
   isCustom,
   onChange,
 }: SessionProgressTargetEditorProps) {
+  const { t } = useTranslation("overview");
   const [open, setOpen] = useState(false);
   const [draftTarget, setDraftTarget] = useState(targetRuns);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -99,11 +101,13 @@ function SessionProgressTargetEditor({
           variant={isCustom ? "secondary" : "ghost"}
           size="sm"
           className="h-7 gap-1.5 px-2 text-xs"
-          title="Edit session target"
+          title={t("widgets.sessionTargetRuns")}
         >
           <span className="tabular-nums">{targetRuns}</span>
           <span className="text-surface-muted-foreground">
-            target{isCustom ? "" : " auto"}
+            {isCustom
+              ? t("widgets.target")
+              : t("widgets.automaticTargetShort")}
           </span>
           <Pencil className="h-3 w-3" />
         </Button>
@@ -112,7 +116,7 @@ function SessionProgressTargetEditor({
       <PopoverContent align="end" className="w-56 p-2">
         <div className="space-y-2">
           <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-surface-muted-foreground">
-            Session target runs
+            {t("widgets.sessionTargetRuns")}
           </div>
 
           <div className="flex items-center gap-1">
@@ -158,7 +162,7 @@ function SessionProgressTargetEditor({
 
           <div className="flex items-center justify-between gap-2 px-1 pt-1">
             <span className="text-xs text-surface-muted-foreground">
-              {isCustom ? "Custom target" : "Automatic target"}
+              {isCustom ? t("widgets.customTarget") : t("widgets.automaticTarget")}
             </span>
             <div className="flex items-center gap-1">
               {isCustom && (
@@ -174,7 +178,7 @@ function SessionProgressTargetEditor({
                   }}
                 >
                   <RotateCcw className="h-3 w-3" />
-                  Reset
+                  {t("widgets.reset")}
                 </Button>
               )}
             </div>
@@ -190,6 +194,7 @@ export function SessionProgressWidget({
 }: {
   snapshot: RecentSessionSnapshot;
 }) {
+  const { t } = useTranslation("overview");
   const {
     currentSession,
     currentRuns,
@@ -209,9 +214,9 @@ export function SessionProgressWidget({
 
   if (!currentSession) {
     return (
-      <Widget title="Session Progress">
+      <Widget title={t("widgets.sessionProgress")}>
         <div className="flex h-full items-center justify-center rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
-          Play or import a few runs to see session progress.
+          {t("widgets.playRuns")}
         </div>
       </Widget>
     );
@@ -259,7 +264,7 @@ export function SessionProgressWidget({
 
   return (
     <Widget
-      title="Session Progress"
+      title={t("widgets.sessionProgress")}
       headerAction={
         <SessionProgressTargetEditor
           targetRuns={targetRuns}
@@ -328,7 +333,7 @@ export function SessionProgressWidget({
               dominantBaseline="middle"
               className="fill-surface-muted-foreground text-[11px]"
             >
-              / {targetRuns} target
+              / {targetRuns} {t("widgets.target")}
             </text>
             <text
               x={cx}
@@ -350,7 +355,7 @@ export function SessionProgressWidget({
                   className="inline-block h-2 w-2 rounded-full"
                   style={{ background: PHASE_SWATCH.warmup }}
                 />
-                <span className="text-popover-foreground/70">Warm-up</span>
+                <span className="text-popover-foreground/70">{t("widgets.warmup")}</span>
                 <span className="ml-auto font-medium text-popover-foreground">
                   1–{warmupRuns}
                 </span>
@@ -360,7 +365,7 @@ export function SessionProgressWidget({
                   className="inline-block h-2 w-2 rounded-full"
                   style={{ background: PHASE_SWATCH.peak }}
                 />
-                <span className="text-popover-foreground/70">Peak</span>
+                <span className="text-popover-foreground/70">{t("widgets.peak")}</span>
                 <span className="ml-auto font-medium text-popover-foreground">
                   {peakStart}–{peakEnd}
                 </span>
@@ -370,7 +375,7 @@ export function SessionProgressWidget({
                   className="inline-block h-2 w-2 rounded-full"
                   style={{ background: PHASE_SWATCH.diminishing }}
                 />
-                <span className="text-popover-foreground/70">Diminishing</span>
+                <span className="text-popover-foreground/70">{t("widgets.diminishing")}</span>
                 <span className="ml-auto font-medium text-popover-foreground">
                   {diminishingReturnsAt}+
                 </span>

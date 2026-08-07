@@ -1,4 +1,5 @@
 import { buildScoreDomain as buildSharedScoreDomain } from "@/shared/lib";
+import { getActiveLocaleFormatters } from "@/i18n";
 import {
   Gauge,
   Minus,
@@ -20,13 +21,29 @@ export function TrendIndicator({
 }
 
 export function formatScore(score: number): string {
-  return score >= 1000 ? `${(score / 1000).toFixed(1)}k` : score.toFixed(0);
+  const formatter = getActiveLocaleFormatters();
+  return score >= 1000
+    ? `${formatter.formatNumber(score / 1000, {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+        useGrouping: false,
+      })}k`
+    : formatter.formatNumber(score, {
+        maximumFractionDigits: 0,
+        useGrouping: false,
+      });
 }
 
 export function formatScoreCompact(score: number): string {
-  if (score >= 10000) return `${(score / 1000).toFixed(1)}k`;
-  if (score >= 1000) return `${(score / 1000).toFixed(1)}k`;
-  return score.toFixed(0);
+  return formatScore(score);
+}
+
+export function formatPercent(value: number): string {
+  return getActiveLocaleFormatters().formatNumber(value, {
+    style: "percent",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
 }
 
 export function getStatusIcon(tone: SnapshotTone): LucideIcon {

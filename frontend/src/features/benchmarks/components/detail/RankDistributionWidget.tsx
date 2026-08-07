@@ -10,6 +10,7 @@ import { usePersistedState } from "@/shared/hooks";
 import { STORAGE_KEYS } from "@/shared/lib";
 import type { BenchmarkProgress } from "@/shared/types";
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { adjustColorForTheme, formatNumber } from "../../lib/detailFormatting";
 
 type Props = {
@@ -44,6 +45,7 @@ function buildConicGradient(segments: Segment[]): string {
 }
 
 export function RankDistributionWidget({ progress }: Props) {
+  const { t } = useTranslation("benchmarks");
   const [scopeLevel, setScopeLevel] = usePersistedState<ScopeLevel>(
     STORAGE_KEYS.benchmarksDetailRankDistributionScope,
     "all",
@@ -120,7 +122,7 @@ export function RankDistributionWidget({ progress }: Props) {
     const counts: Segment[] = [];
     if (belowR1 > 0) {
       counts.push({
-        label: "Below R1",
+        label: t("rankDistribution.belowR1"),
         count: belowR1,
         color: adjustColorForTheme(
           "var(--surface-muted-foreground)",
@@ -149,7 +151,7 @@ export function RankDistributionWidget({ progress }: Props) {
       ...segment,
       percent: total > 0 ? (segment.count / total) * 100 : 0,
     }));
-  }, [progress.ranks, scopedScenarios]);
+  }, [progress.ranks, scopedScenarios, t]);
 
   const totalScenarios = segments.reduce(
     (sum, segment) => sum + segment.count,
@@ -158,16 +160,22 @@ export function RankDistributionWidget({ progress }: Props) {
   const donutBackground = buildConicGradient(segments);
 
   const scopeDescription = useMemo(() => {
-    if (scopeLevel === "all")
-      return "How your scenarios are spread across rank tiers.";
+    if (scopeLevel === "all") return t("rankDistribution.description");
     if (scopeLevel === "category")
-      return `Category scope: ${selectedCategory?.name || "Unknown"}`;
-    return `Subcategory scope: ${selectedGroups[safeSubcategoryIndex]?.name || "Unknown"}`;
+      return t("rankDistribution.categoryScope", {
+        name: selectedCategory?.name || t("rankDistribution.unknown"),
+      });
+    return t("rankDistribution.subcategoryScope", {
+      name:
+        selectedGroups[safeSubcategoryIndex]?.name ||
+        t("rankDistribution.unknown"),
+    });
   }, [
     scopeLevel,
     selectedCategory?.name,
     selectedGroups,
     safeSubcategoryIndex,
+    t,
   ]);
 
   const scopeControls = (
@@ -180,9 +188,9 @@ export function RankDistributionWidget({ progress }: Props) {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All</SelectItem>
-          <SelectItem value="category">Category</SelectItem>
-          <SelectItem value="subcategory">Subcategory</SelectItem>
+          <SelectItem value="all">{t("rankDistribution.all")}</SelectItem>
+          <SelectItem value="category">{t("rankDistribution.category")}</SelectItem>
+          <SelectItem value="subcategory">{t("rankDistribution.subcategory")}</SelectItem>
         </SelectContent>
       </Select>
 
@@ -234,7 +242,7 @@ export function RankDistributionWidget({ progress }: Props) {
     if (totalScenarios === 0) {
       return (
         <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">
-          No data.
+          {t("rankDistribution.noData")}
         </div>
       );
     }
@@ -249,11 +257,11 @@ export function RankDistributionWidget({ progress }: Props) {
           <div
             className="h-full w-full rounded-full"
             style={{ background: donutBackground }}
-            aria-label="Rank distribution donut"
+            aria-label={t("rankDistribution.ariaLabel")}
           />
           <div className="absolute inset-[22%] flex flex-col items-center justify-center rounded-full bg-surface">
             <span className="text-[11px] text-surface-muted-foreground">
-              Scenarios
+              {t("rankDistribution.scenarios")}
             </span>
             <span className="text-xl font-semibold text-foreground">
               {formatNumber(totalScenarios, 0)}
@@ -291,10 +299,10 @@ export function RankDistributionWidget({ progress }: Props) {
 
   return (
     <Widget
-      title="Rank Distribution"
+      title={t("rankDistribution.title")}
       description={scopeDescription}
       headerAction={scopeControls}
-      modalTitle="Rank Distribution"
+      modalTitle={t("rankDistribution.title")}
       modalControls={scopeControls}
       modalContent={renderBody(true)}
       modalWidth={920}

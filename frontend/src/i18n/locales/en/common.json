@@ -1,0 +1,51 @@
+{
+  "app": {
+    "name": "RefleK's"
+  },
+  "actions": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "dismiss": "Dismiss",
+    "expand": "Expand",
+    "reload": "Reload",
+    "save": "Save"
+  },
+  "empty": {
+    "noSession": "No session loaded"
+  },
+  "language": {
+    "en": "English",
+    "zh-CN": "简体中文"
+  },
+  "navigation": {
+    "primary": "Primary navigation",
+    "secondary": "Secondary navigation",
+    "overview": "Overview",
+    "history": "History",
+    "benchmarks": "Benchmarks",
+    "favorites": "Favorites",
+    "help": "Help",
+    "support": "Support",
+    "settings": "Settings"
+  },
+  "richText": {
+    "documentation": "Learn more about {{topic}} in the <docsLink>documentation</docsLink>."
+  },
+  "status": {
+    "loading": "Loading...",
+    "saving": "Saving..."
+  },
+  "terms": {
+    "anonymousMode": "Anonymous Mode",
+    "benchmark": "Benchmark",
+    "mouseTrace": "Mouse Trace",
+    "rank": "Rank",
+    "replay": "Replay",
+    "run": "Run",
+    "scenario": "Scenario",
+    "score": "Score",
+    "screenCapture": "Screen Capture",
+    "session": "Session"
+  }
+}

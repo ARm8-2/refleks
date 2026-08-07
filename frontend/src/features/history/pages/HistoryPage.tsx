@@ -5,8 +5,10 @@ import { HistoryRunList } from "../components/HistoryRunList";
 import { HistorySessionList } from "../components/HistorySessionList";
 import { HistorySessionOverview } from "../components/HistorySessionOverview";
 import { useHistoryPageState } from "../hooks/useHistoryPageState";
+import { useTranslation } from "react-i18next";
 
 export function HistoryPage() {
+  const { t } = useTranslation("history");
   const allSessions = useStore((s) => s.sessions);
   const runHydration = useStore((s) => s.runHydration);
   const {
@@ -53,8 +55,11 @@ export function HistoryPage() {
   if (allSessions.length === 0 && runHydration.loading) {
     const label =
       runHydration.total > 0
-        ? `Loading run history ${Math.min(runHydration.loaded, runHydration.total)}/${runHydration.total}...`
-        : "Loading run history...";
+        ? t("page.loadingHistoryProgress", {
+            loaded: Math.min(runHydration.loaded, runHydration.total),
+            total: runHydration.total,
+          })
+        : t("page.loadingHistory");
 
     return <Loading label={label} />;
   }

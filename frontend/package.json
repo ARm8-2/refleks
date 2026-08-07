@@ -4,8 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "acceptance:verify": "node scripts/acceptance-launcher.mjs --verify-isolation",
     "dev": "vite",
-    "build": "tsc && vite build",
+    "generate:i18n-types": "node scripts/generate-i18n-types.mjs",
+    "check:i18n": "node scripts/generate-i18n-types.mjs --check && node scripts/check-i18n.mjs && node scripts/check-zh-typography.mjs",
+    "test:i18n": "vitest run",
+    "build": "npm run check:i18n && tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -23,23 +27,29 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "html-to-image": "^1.11.13",
+    "i18next": "^26.3.6",
     "lucide-react": "^0.548.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-i18next": "^17.0.11",
     "react-router-dom": "^6.30.1",
     "recharts": "^2.15.4",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^25.2.3",
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
     "@vitejs/plugin-react": "5.1",
     "autoprefixer": "^10.4.24",
+    "jsdom": "^29.1.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "5.4",
-    "vite": "^6.4.2"
+    "vite": "^6.4.2",
+    "vitest": "^4.1.10"
   }
 }

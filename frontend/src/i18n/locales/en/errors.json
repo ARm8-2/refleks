@@ -1,0 +1,52 @@
+{
+  "generic": {
+    "developmentDetails": "Development diagnostics",
+    "title": "Something went wrong.",
+    "unexpected": "An unexpected error occurred."
+  },
+  "replay": {
+    "captureStopped": "Capture stopped before replay processing completed.",
+    "captureUnavailable": "Screen capture was not available for this run.",
+    "failed": "Replay processing failed.",
+    "incompleteCoverage": "Capture segments did not cover the run window.",
+    "notRecorded": "No replay was recorded for this run.",
+    "outsideSession": "This run was outside the available capture session.",
+    "processing": "Processing replay...",
+    "publishing": "Replay was published and is becoming available...",
+    "ready": "Replay is ready.",
+    "sessionUnavailable": "No capture session covered this run.",
+    "timeout": "Timed out waiting for capture segments.",
+    "unavailable": "Replay storage is not available.",
+    "exportFailed": "Replay export failed.",
+    "deleteFailed": "Replay could not be deleted.",
+    "playbackFailed": "Replay playback failed."
+  },
+  "screenCapture": {
+    "active": "Screen capture is active.",
+    "disabled": "Screen capture is disabled.",
+    "failed": "Screen capture encountered an error.",
+    "idle": "Screen capture is idle.",
+    "ready": "Waiting for KovaaK's to start.",
+    "starting": "Screen capture is starting.",
+    "unavailable": "FFmpeg or a compatible encoder is not available.",
+    "unsupported": "Screen capture is only supported on Windows."
+  },
+  "settings": {
+    "autostartFailed": "Autostart could not be updated.",
+    "clearCacheFailed": "Cache could not be cleared.",
+    "updateCheckFailed": "Failed to check for updates.",
+    "updateDownloadFailed": "Failed to download the update.",
+    "resetFailed": "Settings could not be reset.",
+    "saveFailed": "Settings could not be saved."
+  },
+  "history": {
+    "saveNotesFailed": "Session notes could not be saved.",
+    "renameFailed": "Session name could not be updated."
+  },
+  "benchmarks": {
+    "copyScreenshotUnsupported": "Image clipboard is not supported in this environment.",
+    "copyScreenshotFailed": "Screenshot could not be copied.",
+    "historyLoadFailed": "Scenario history could not be loaded.",
+    "progressLoadFailed": "Benchmark progress could not be loaded."
+  }
+}

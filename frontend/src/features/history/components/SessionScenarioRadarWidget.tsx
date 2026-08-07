@@ -13,6 +13,7 @@ import {
 } from "@/shared/lib";
 import type { Session } from "@/shared/types";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -34,19 +35,15 @@ type SessionScenarioRadarWidgetProps = {
   className?: string;
 };
 
-const scenarioUsageConfig: ChartConfig = {
-  runs: {
-    label: "Runs",
-    color: CHART_SERIES_COLORS.scoreCurrent,
-  },
-};
-
 export function SessionScenarioRadarWidget({
   session,
-  title = "Session Scenario Mix",
-  description = "Scenarios played this session and how much you played each one.",
+  title,
+  description,
   className,
 }: SessionScenarioRadarWidgetProps) {
+  const { t } = useTranslation("history");
+  const resolvedTitle = title ?? t("charts.scenarioMix");
+  const resolvedDescription = description ?? t("charts.scenarioMixDescription");
   const storeSessions = useStore((state) => state.sessions);
   const currentSession = session ?? storeSessions[0] ?? null;
 
@@ -81,9 +78,9 @@ export function SessionScenarioRadarWidget({
 
   return (
     <Widget
-      title={title}
-      description={description}
-      modalTitle={title}
+      title={resolvedTitle}
+      description={resolvedDescription}
+      modalTitle={resolvedTitle}
       modalContent={renderBody(true)}
       className={className}
     >
@@ -94,13 +91,13 @@ export function SessionScenarioRadarWidget({
   function renderBody(expanded: boolean) {
     if (!currentSession) {
       return (
-        <EmptyState message="No active session data yet. Play a scenario to populate this widget." />
+        <EmptyState message={t("charts.noActiveSession")} />
       );
     }
 
     if (scenarioUsage.length === 0) {
       return (
-        <EmptyState message="No scenario names found in this session yet." />
+        <EmptyState message={t("charts.noScenarioNames")} />
       );
     }
 
@@ -123,6 +120,13 @@ function SessionScenarioRadarChart({
   maxRuns: number;
   expanded: boolean;
 }) {
+  const { t } = useTranslation("history");
+  const chartConfig: ChartConfig = {
+    runs: {
+      label: t("charts.runs"),
+      color: CHART_SERIES_COLORS.scoreCurrent,
+    },
+  };
   const angleTickSize = expanded
     ? points.length >= 8
       ? 10
@@ -148,7 +152,7 @@ function SessionScenarioRadarChart({
 
   return (
     <ChartContainer
-      config={scenarioUsageConfig}
+      config={chartConfig}
       className="aspect-auto h-full w-full"
     >
       <RadarChart

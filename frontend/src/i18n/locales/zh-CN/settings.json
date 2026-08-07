@@ -1,0 +1,122 @@
+{
+  "page": {
+    "title": "设置",
+    "description": "通用行为、隐私、外观和高级集成选项。",
+    "loading": "正在加载设置……"
+  },
+  "updates": {
+    "title": "更新",
+    "description": "检查最新版本、重新打开欢迎页并查看当前版本信息。",
+    "currentVersion": "当前版本：",
+    "check": "检查更新",
+    "checking": "正在检查……",
+    "welcomeAgain": "再次查看欢迎页",
+    "latest": "当前已是最新版本！",
+    "available": "可用版本：{{version}}",
+    "installDescription": "当前版本为 {{currentVersion}}。点击<strong>安装更新</strong>在后台下载，应用将关闭并自动启动安装程序。",
+    "downloading": "正在下载……",
+    "install": "安装更新",
+    "changelog": "查看更新日志",
+    "checkFailed": "检查更新失败",
+    "downloadFailed": "下载更新失败"
+  },
+  "sections": {
+    "general": "通用",
+    "generalDescription": "核心目录和训练会话行为。",
+    "privacy": "隐私",
+    "privacyDescription": "控制训练记录是否上传，以及同步前是否清理环境标识信息。",
+    "appearance": "外观",
+    "appearanceDescription": "界面视觉偏好。",
+    "advanced": "高级",
+    "advancedDescription": "集成和数据保留选项。",
+    "steam": "Steam",
+    "dataRetention": "数据保留"
+  },
+  "fields": {
+    "installFolder": "KovaaK's 安装目录",
+    "installFolderDescription": "用于查找 FPSAimTrainer/stats 和 FPSAimTrainer/performances 的 KovaaK's 安装目录",
+    "startWithGame": "随 KovaaK's 启动",
+    "startWithGameDescription": "启动 KovaaK's 时自动启动 RefleK's，RefleK's 也会随 Windows 启动",
+    "mouseTracking": "鼠标追踪",
+    "mouseTrackingDescription": "记录场景中的鼠标移动（仅限 Windows）",
+    "bufferDuration": "缓冲时长",
+    "bufferDurationDescription": "在内存中保留鼠标数据的分钟数",
+    "screenCapture": "屏幕录制",
+    "screenCaptureDescription": "记录场景画面以生成回放（仅限 Windows，需要 FFmpeg）",
+    "resolution": "分辨率",
+    "resolutionDescription": "新录制会话使用的分辨率；游戏运行时修改会立即轮换录制会话。",
+    "captureFps": "录制帧率",
+    "captureFpsDescription": "新录制会话的每秒帧数；游戏运行时修改会立即轮换录制会话。",
+    "sessionGap": "训练会话间隔",
+    "sessionGapDescription": "开始新训练会话前允许的无操作分钟数。",
+    "runSync": "训练记录同步",
+    "runSyncDescription": "将已完成的训练记录上传到 RefleK's Index。",
+    "anonymousMode": "匿名模式",
+    "anonymousModeDescription": "同步上传前从训练记录的环境数据中移除 Steam ID 和 Steam 昵称。",
+    "theme": "主题",
+    "themeDescription": "应用的颜色主题",
+    "font": "字体",
+    "fontDescription": "界面字体",
+    "steamInstallDirectory": "Steam 安装目录",
+    "steamIdOverride": "Steam ID 覆盖",
+    "personaNameOverride": "昵称覆盖",
+    "autoDetect": "留空以自动检测",
+    "displayName": "显示名称",
+    "recentRunsWindow": "近期训练记录窗口（天）",
+    "recentRunsWindowDescription": "仅加载并显示最近 N 天的训练记录。",
+    "recentRunsMinimum": "近期训练记录最少数量",
+    "recentRunsMinimumDescription": "如果时间窗口内训练记录太少，则继续加载更早记录直到达到此数量。"
+  },
+  "screenCapture": {
+    "active": "屏幕录制运行中",
+    "error": "屏幕录制错误",
+    "unavailable": "屏幕录制不可用",
+    "ready": "屏幕录制已就绪",
+    "usingEncoder": "使用 {{encoder}}",
+    "hardware": "（硬件加速）",
+    "software": "（软件编码）",
+    "ffmpegMissing": "未检测到 FFmpeg",
+    "ffmpegHint": "请将 ffmpeg.exe 放入应用目录或安装 FFmpeg。"
+  },
+  "options": {
+    "nativeResolution": "原生（显示器分辨率）",
+    "resolution1080": "1080p（1920x1080）",
+    "resolution900": "900p（1600x900）",
+    "resolution720": "720p（1280x720）",
+    "minutes": "{{value}} 分钟"
+  },
+  "advancedToggle": {
+    "show": "显示高级设置",
+    "hide": "隐藏高级设置"
+  },
+  "state": {
+    "saving": "正在保存设置……",
+    "unsaved": "有未保存的更改",
+    "saved": "所有更改已保存"
+  },
+  "actions": {
+    "reset": "重置",
+    "clearCache": "清除缓存",
+    "save": "保存",
+    "saving": "正在保存……",
+    "quit": "退出应用"
+  },
+  "modals": {
+    "clearCacheTitle": "清除缓存",
+    "clearCacheDescription": "这会清除所有缓存数据，包括解析后的统计和计算结果。不会影响设置和训练会话数据。",
+    "clearing": "正在清除……",
+    "resetTitle": "重置设置",
+    "resetDescription": "选择要恢复为默认值的数据：",
+    "config": "设置和配置",
+    "favorites": "收藏场景",
+    "scenarioNotes": "场景备注",
+    "sessionNotes": "训练会话备注",
+    "resetting": "正在重置……",
+    "resetSelected": "重置选中项"
+  },
+  "language": {
+    "description": "界面使用的语言",
+    "label": "语言",
+    "saveFailed": "无法保存语言设置。"
+  }
+}

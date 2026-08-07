@@ -109,6 +109,18 @@
     --sidebar-ring: #0da2e7;
   }
 
+  :root:lang(zh-CN) {
+    --font-stack-montserrat:
+      "Montserrat", "Microsoft YaHei UI", "Microsoft YaHei",
+      "Noto Sans CJK SC", system-ui, sans-serif;
+    --font-stack-inter:
+      "Inter", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC",
+      system-ui, sans-serif;
+    --font-stack-jetbrains-mono:
+      "JetBrains Mono", "Microsoft YaHei UI", "Microsoft YaHei",
+      "Noto Sans CJK SC", monospace;
+  }
+
   .dark {
     --canvas: #151515;
     --canvas-foreground: #ececec;

@@ -1,0 +1,122 @@
+{
+  "page": {
+    "title": "Settings",
+    "description": "General behavior, privacy, appearance, and advanced integration options.",
+    "loading": "Loading settings..."
+  },
+  "updates": {
+    "title": "Updates",
+    "description": "Check for the latest version, reopen the welcome screen, and review the current release.",
+    "currentVersion": "Current version:",
+    "check": "Check for Updates",
+    "checking": "Checking...",
+    "welcomeAgain": "Read Welcome Again",
+    "latest": "You're on the latest version!",
+    "available": "Version {{version}} available",
+    "installDescription": "You're on {{currentVersion}}. Click <strong>Install Update</strong> to download in the background - the app will close and the installer will launch automatically.",
+    "downloading": "Downloading...",
+    "install": "Install Update",
+    "changelog": "View Changelog",
+    "checkFailed": "Failed to check for updates",
+    "downloadFailed": "Failed to download update"
+  },
+  "sections": {
+    "general": "General",
+    "generalDescription": "Core folders and session behavior.",
+    "privacy": "Privacy",
+    "privacyDescription": "Control whether runs are uploaded and whether identifying environment data is scrubbed before sync.",
+    "appearance": "Appearance",
+    "appearanceDescription": "Visual preferences for the interface.",
+    "advanced": "Advanced",
+    "advancedDescription": "Integration and data retention options.",
+    "steam": "Steam",
+    "dataRetention": "Data Retention"
+  },
+  "fields": {
+    "installFolder": "KovaaK's Install Folder",
+    "installFolderDescription": "Path to the KovaaK's install folder used to locate FPSAimTrainer/stats and FPSAimTrainer/performances",
+    "startWithGame": "Start with KovaaK's",
+    "startWithGameDescription": "Automatically launch RefleK's when you start KovaaK's, RefleK's will also start with Windows",
+    "mouseTracking": "Mouse Tracking",
+    "mouseTrackingDescription": "Record mouse movement during scenarios (Windows only)",
+    "bufferDuration": "Buffer Duration",
+    "bufferDurationDescription": "Minutes of mouse data to keep in memory",
+    "screenCapture": "Screen Capture",
+    "screenCaptureDescription": "Record screen during scenarios for video replays (Windows only, requires FFmpeg)",
+    "resolution": "Resolution",
+    "resolutionDescription": "Resolution used for new capture sessions; changing it while the game is running rotates the capture session immediately",
+    "captureFps": "Capture FPS",
+    "captureFpsDescription": "Frames per second for new capture sessions; changing it while the game is running rotates the capture session immediately",
+    "sessionGap": "Session Gap",
+    "sessionGapDescription": "Minutes of inactivity before starting a new session",
+    "runSync": "Run Sync",
+    "runSyncDescription": "Upload completed runs to the RefleK's Index.",
+    "anonymousMode": "Anonymous Mode",
+    "anonymousModeDescription": "Remove Steam ID and Steam persona name from run environment data before sync uploads.",
+    "theme": "Theme",
+    "themeDescription": "Color theme for the application",
+    "font": "Font",
+    "fontDescription": "Font family for the interface",
+    "steamInstallDirectory": "Steam Install Directory",
+    "steamIdOverride": "Steam ID Override",
+    "personaNameOverride": "Persona Name Override",
+    "autoDetect": "Leave empty to auto-detect",
+    "displayName": "Display name",
+    "recentRunsWindow": "Recent Runs Window (Days)",
+    "recentRunsWindowDescription": "Only runs from the last N days are loaded and shown",
+    "recentRunsMinimum": "Recent Runs Minimum Count",
+    "recentRunsMinimumDescription": "If the day window has too few runs, include older runs until this minimum is reached"
+  },
+  "screenCapture": {
+    "active": "Screen capture active",
+    "error": "Screen capture error",
+    "unavailable": "Screen capture unavailable",
+    "ready": "Screen capture ready",
+    "usingEncoder": "Using {{encoder}}",
+    "hardware": " (hardware accelerated)",
+    "software": " (software)",
+    "ffmpegMissing": "FFmpeg not detected",
+    "ffmpegHint": "Place ffmpeg.exe in the app folder or install FFmpeg."
+  },
+  "options": {
+    "nativeResolution": "Native (monitor res)",
+    "resolution1080": "1080p (1920x1080)",
+    "resolution900": "900p (1600x900)",
+    "resolution720": "720p (1280x720)",
+    "minutes": "{{value}} minutes"
+  },
+  "advancedToggle": {
+    "show": "Show advanced settings",
+    "hide": "Hide advanced settings"
+  },
+  "state": {
+    "saving": "Saving settings...",
+    "unsaved": "Unsaved changes",
+    "saved": "All changes saved"
+  },
+  "actions": {
+    "reset": "Reset",
+    "clearCache": "Clear Cache",
+    "save": "Save",
+    "saving": "Saving...",
+    "quit": "Quit App"
+  },
+  "modals": {
+    "clearCacheTitle": "Clear Cache",
+    "clearCacheDescription": "This will clear all cached data including parsed stats and computed rankings. Your settings and session data will not be affected.",
+    "clearing": "Clearing...",
+    "resetTitle": "Reset Settings",
+    "resetDescription": "Select which data you want to reset to defaults:",
+    "config": "Settings & Configuration",
+    "favorites": "Favorite Scenarios",
+    "scenarioNotes": "Scenario Notes",
+    "sessionNotes": "Session Notes",
+    "resetting": "Resetting...",
+    "resetSelected": "Reset Selected"
+  },
+  "language": {
+    "description": "Language used by the interface",
+    "label": "Language",
+    "saveFailed": "Language could not be saved."
+  }
+}

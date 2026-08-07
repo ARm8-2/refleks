@@ -6,6 +6,7 @@ import {
 import type { Benchmark, BenchmarkProgress } from "@/shared/types";
 import { EventsOn } from "@wails/runtime";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const REFRESH_DEBOUNCE_MS = 700;
 
@@ -34,6 +35,7 @@ function isBenchmarkProgressUpdatedEvent(
 export function useBenchmarkDetailProgress(
   benchmark: Benchmark | undefined,
 ): State {
+  const { t } = useTranslation("errors");
   const [difficultyIndex, setDifficultyIndex] = usePersistedState<number>(
     benchmarkDetailDifficultyStorageKey(benchmark?.benchmarkName),
     0,
@@ -76,11 +78,8 @@ export function useBenchmarkDetailProgress(
         setError(null);
       } catch (refreshError) {
         if (cancelled) return;
-        setError(
-          refreshError instanceof Error
-            ? refreshError.message
-            : String(refreshError),
-        );
+        console.error("Failed to refresh benchmark progress:", refreshError);
+        setError(t("benchmarks.progressLoadFailed"));
       }
     };
 
@@ -124,7 +123,7 @@ export function useBenchmarkDetailProgress(
         offRunsAdded();
       } catch {}
     };
-  }, [benchmarkId]);
+  }, [benchmarkId, t]);
 
   return {
     progress,

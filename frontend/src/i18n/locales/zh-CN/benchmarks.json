@@ -1,0 +1,123 @@
+{
+  "page": {
+    "title": "基准",
+    "search": "搜索……",
+    "sort": "排序",
+    "group": "分组",
+    "random": "随机",
+    "randomTitle": "打开随机基准",
+    "all": "全部",
+    "favorites": "收藏",
+    "showAll": "显示全部基准",
+    "showFavorites": "仅显示收藏",
+    "recommended": "推荐",
+    "hideRecommendations": "隐藏推荐",
+    "showRecommendations": "显示推荐基准",
+    "loadingRecommendations": "正在加载推荐所需的基准进度……",
+    "waitingCatalog": "正在等待基准目录同步完成……",
+    "noFavorites": "还没有收藏的基准。点击星标即可添加。",
+    "noMatches": "没有匹配搜索条件的基准。",
+    "noResults": "未找到基准",
+    "back": "返回",
+    "difficulty": "难度",
+    "playPlaylist": "在 Kovaak's 中开始基准列表",
+    "copied": "已复制！",
+    "copyScreenshot": "复制进度表截图",
+    "unfavorite": "取消收藏基准",
+    "favorite": "收藏基准",
+    "notFound": "未找到基准。",
+    "noProgress": "此难度暂无进度数据。"
+  },
+  "sortOptions": {
+    "name": "名称",
+    "abbreviation": "缩写",
+    "date": "添加日期"
+  },
+  "groupOptions": {
+    "none": "不分组",
+    "abbreviation": "缩写",
+    "category": "类别"
+  },
+  "categories": {
+    "aimGroups": "瞄准群组",
+    "community": "社区",
+    "notable": "知名创作者",
+    "other": "其他"
+  },
+  "card": {
+    "favorite": "收藏",
+    "unfavorite": "取消收藏"
+  },
+  "detail": {
+    "snapshot": "基准进度快照",
+    "progressTracker": "进度追踪",
+    "compact": "紧凑模式",
+    "enableCompact": "启用紧凑模式",
+    "disableCompact": "停用紧凑模式",
+    "lastPlayed": "最近游玩",
+    "showLastPlayed": "显示最近游玩高亮",
+    "hideLastPlayed": "隐藏最近游玩高亮",
+    "trackerSettings": "查看追踪设置",
+    "scenario": "场景",
+    "recommendation": "推荐",
+    "score": "分数",
+    "details": "详情",
+    "featureColumns": "功能列",
+    "notes": "备注",
+    "recommendations": "推荐",
+    "play": "游玩",
+    "history": "历史",
+    "rankVisibility": "等级可见性",
+    "autoHideCleared": "自动隐藏已通过的较低等级",
+    "keepVisible": "保持可见：",
+    "resetManual": "重置手动设置",
+    "hiddenAutomatically": "所有场景都已超过此等级，因此自动隐藏",
+    "unknownDifficulty": "未知难度"
+  },
+  "rankDistribution": {
+    "title": "等级分布",
+    "description": "查看你的场景在各等级层级中的分布。",
+    "all": "全部",
+    "category": "类别",
+    "subcategory": "子类别",
+    "categoryScope": "类别范围：{{name}}",
+    "subcategoryScope": "子类别范围：{{name}}",
+    "unknown": "未知",
+    "belowR1": "低于 R1",
+    "noData": "暂无数据。",
+    "scenarios": "场景",
+    "ariaLabel": "等级分布环图"
+  },
+  "strength": {
+    "title": "实力分解",
+    "description": "{{level}}级进度（按最高等级计算）。",
+    "category": "类别",
+    "subcategory": "子类别",
+    "scenario": "场景",
+    "noData": "暂无数据。",
+    "unranked": "未定级",
+    "average": "平均"
+  },
+  "scenario": {
+    "notesSensitivity": "备注和灵敏度",
+    "recommendationScore": "推荐分数：{{score}}",
+    "play": "在 KovaaK's 中游玩",
+    "lastScores": "最近 10 次分数"
+  },
+  "notes": {
+    "trainingSensitivity": "训练灵敏度",
+    "sensitivityPlaceholder": "例如：35.8cm 或 0.5",
+    "copySensitivity": "复制灵敏度",
+    "notes": "备注",
+    "notesPlaceholder": "记录你的策略、弱项和训练重点……",
+    "cancel": "取消",
+    "save": "保存",
+    "saving": "保存中……"
+  },
+  "history": {
+    "title": "场景历史 · {{scenario}}",
+    "score": "分数",
+    "unknown": "未知",
+    "noScores": "未找到分数记录。"
+  }
+}

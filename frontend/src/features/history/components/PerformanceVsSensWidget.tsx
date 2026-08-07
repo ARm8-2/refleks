@@ -1,4 +1,5 @@
 import { formatNumber } from "@/features/benchmarks/lib/detailFormatting";
+import { useLocaleFormat } from "@/i18n";
 import {
   Select,
   SelectContent,
@@ -25,6 +26,7 @@ import {
 } from "@/shared/lib";
 import type { RunRecord, Session } from "@/shared/types";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { CartesianGrid, Scatter, ScatterChart, XAxis, YAxis } from "recharts";
 
 type MetricKey = "score" | "accuracy" | "ttk";
@@ -46,11 +48,12 @@ type PerformanceVsSensWidgetProps = {
   allowScopeSelection?: boolean;
 };
 
-const metricOptions: Array<{ value: MetricKey; label: string }> = [
-  { value: "score", label: "Score" },
-  { value: "accuracy", label: "Accuracy (%)" },
-  { value: "ttk", label: "Real Avg TTK (s)" },
-];
+const metricOptions: MetricKey[] = ["score", "accuracy", "ttk"];
+const METRIC_LABEL_KEYS = {
+  score: "performance.metrics.score",
+  accuracy: "performance.metrics.accuracy",
+  ttk: "performance.metrics.ttk",
+} as const;
 
 const metricColors: Record<MetricKey, string> = {
   score: CHART_SERIES_COLORS.scoreHistory,
@@ -58,29 +61,33 @@ const metricColors: Record<MetricKey, string> = {
   ttk: CHART_SERIES_COLORS.ttk,
 };
 
-const scopeOptions: Array<{ value: DataScopeKey; label: string }> = [
-  { value: "session", label: "This Session" },
-  { value: "all", label: "All History" },
-];
+const scopeOptions: DataScopeKey[] = ["session", "all"];
+const SCOPE_LABEL_KEYS = {
+  session: "performance.scopes.session",
+  all: "performance.scopes.all",
+} as const;
 
 const DEFAULT_METRIC: MetricKey = "score";
 const DEFAULT_SCOPE: DataScopeKey = "all";
 
-const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+const dateTimeFormatOptions: Intl.DateTimeFormatOptions = {
   month: "short",
   day: "numeric",
   hour: "numeric",
   minute: "2-digit",
-});
+};
 
 export function PerformanceVsSensWidget({
   sessions,
   scenarioName,
-  title = "Performance vs Sensitivity",
+  title,
   description,
   className,
   allowScopeSelection = false,
 }: PerformanceVsSensWidgetProps) {
+  const { t } = useTranslation("history");
+  const locale = useLocaleFormat();
+  const resolvedTitle = title ?? t("performance.title");
   const storeSessions = useStore((state) => state.sessions);
   const currentSession = storeSessions[0] ?? null;
   const [storedMetric, setStoredMetric] = usePersistedState<MetricKey>(
@@ -105,17 +112,22 @@ export function PerformanceVsSensWidget({
       : storeSessions);
 
   const chartData = useMemo(
-    () => buildChartData(sourceSessions, scenarioName ?? null, metric),
-    [metric, scenarioName, sourceSessions],
+    () =>
+      buildChartData(sourceSessions, scenarioName ?? null, metric, (timestamp, runIndex) =>
+        t("performance.runLabel", {
+          index: runIndex,
+          date:
+            timestamp > 0
+              ? locale.dateTimeFormatter(dateTimeFormatOptions).format(new Date(timestamp))
+              : "",
+        }),
+      ),
+    [locale, metric, scenarioName, sourceSessions, t],
   );
-  const metricLabel =
-    metricOptions.find((option) => option.value === metric)?.label ??
-    "Performance";
+  const metricLabel = t(METRIC_LABEL_KEYS[metric]);
   const scopeLabel = sessions
-    ? "This Session"
-    : ((showScopeSelector
-        ? scopeOptions.find((option) => option.value === scope)?.label
-        : "All History") ?? "All History");
+    ? t("performance.scopes.session")
+    : t(SCOPE_LABEL_KEYS[showScopeSelector ? scope : "all"]);
   const headerActions = (
     <div className="flex items-center gap-2">
       {showScopeSelector && (
@@ -126,12 +138,12 @@ export function PerformanceVsSensWidget({
           }
         >
           <SelectTrigger className="h-7 w-auto min-w-0 max-w-[180px] px-2 text-xs bg-surface-subtle">
-            <SelectValue placeholder="Scope" />
+            <SelectValue placeholder={t("performance.scope")} />
           </SelectTrigger>
           <SelectContent>
             {scopeOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
+              <SelectItem key={option} value={option}>
+                {t(SCOPE_LABEL_KEYS[option])}
               </SelectItem>
             ))}
           </SelectContent>
@@ -145,12 +157,12 @@ export function PerformanceVsSensWidget({
         }
       >
         <SelectTrigger className="h-7 w-auto min-w-0 max-w-[180px] px-2 text-xs bg-surface-subtle">
-          <SelectValue placeholder="Metric" />
+          <SelectValue placeholder={t("performance.metric")} />
         </SelectTrigger>
         <SelectContent>
           {metricOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
+            <SelectItem key={option} value={option}>
+              {t(METRIC_LABEL_KEYS[option])}
             </SelectItem>
           ))}
         </SelectContent>
@@ -161,15 +173,15 @@ export function PerformanceVsSensWidget({
   if (!chartData.scenarioName) {
     return (
       <Widget
-        title={title}
+        title={resolvedTitle}
         description={
           description ??
-          "Play a scenario to compare sensitivity against performance."
+          t("performance.playDescription")
         }
         headerAction={headerActions}
         className={className}
       >
-        <EmptyState message="No recent scenario found yet. Play a run with cm/360 data to populate this widget." />
+        <EmptyState message={t("performance.noRecentScenario")} />
       </Widget>
     );
   }
@@ -177,7 +189,7 @@ export function PerformanceVsSensWidget({
   if (chartData.points.length === 0) {
     return (
       <Widget
-        title={title}
+        title={resolvedTitle}
         description={
           description ??
           `${chartData.scenarioName} · ${metricLabel} · ${scopeLabel}`
@@ -186,20 +198,28 @@ export function PerformanceVsSensWidget({
         className={className}
       >
         <EmptyState
-          message={`No usable sensitivity data found for ${chartData.scenarioName}.`}
+          message={t("performance.noUsableData", { scenario: chartData.scenarioName })}
         />
       </Widget>
     );
   }
 
-  const modalTitle = `${chartData.scenarioName} · ${title}`;
+  const modalTitle = t("performance.modalTitle", {
+    scenario: chartData.scenarioName,
+    title: resolvedTitle,
+  });
 
   return (
     <Widget
-      title={title}
+      title={resolvedTitle}
       description={
         description ??
-        `${chartData.scenarioName} · ${chartData.points.length} runs · ${metricLabel} · ${scopeLabel}`
+        t("performance.description", {
+          scenario: chartData.scenarioName,
+          count: chartData.points.length,
+          metric: metricLabel,
+          scope: scopeLabel,
+        })
       }
       headerAction={headerActions}
       modalTitle={modalTitle}
@@ -231,6 +251,7 @@ function PerformanceVsSensChartContent({
   metric: MetricKey;
   metricLabel: string;
 }) {
+  const { t } = useTranslation("history");
   const chartConfig: ChartConfig = {
     performance: {
       label: metricLabel,
@@ -282,7 +303,7 @@ function PerformanceVsSensChartContent({
                   return (
                     <div className="grid gap-0.5 text-popover-foreground/75">
                       <div>
-                        Sensitivity:{" "}
+                        {t("performance.sensitivity")}: {" "}
                         <span className="font-medium text-popover-foreground">
                           {formatNumber(point.rawSensitivity, 2)} cm/360
                         </span>
@@ -319,6 +340,7 @@ function buildChartData(
   sessions: Session[],
   scenarioName: string | null,
   metric: MetricKey,
+  formatLabel: (timestamp: number, runIndex: number) => string,
 ) {
   let resolvedScenarioName = scenarioName?.trim() || null;
 
@@ -364,7 +386,7 @@ function buildChartData(
         x: rawSensitivity,
         performance,
         rawSensitivity,
-        runLabel: formatRunLabel(timestamp, runIndex),
+        runLabel: formatLabel(timestamp, runIndex),
       });
     }
   }
@@ -416,11 +438,11 @@ function readTimestamp(item: RunRecord): number {
 }
 
 function isMetricKey(value: string): value is MetricKey {
-  return metricOptions.some((option) => option.value === value);
+  return metricOptions.includes(value as MetricKey);
 }
 
 function isDataScopeKey(value: string): value is DataScopeKey {
-  return scopeOptions.some((option) => option.value === value);
+  return scopeOptions.includes(value as DataScopeKey);
 }
 
 function buildNumericDomain(
@@ -440,11 +462,6 @@ function buildNumericDomain(
   const span = max - min;
   const pad = Math.max(span * padRatio, minPad);
   return [min - pad, max + pad];
-}
-
-function formatRunLabel(timestamp: number, runIndex: number): string {
-  if (timestamp <= 0) return `Run ${runIndex}`;
-  return `Run ${runIndex} · ${dateTimeFormatter.format(new Date(timestamp))}`;
 }
 
 function formatMetricTick(value: number, metric: MetricKey): string {

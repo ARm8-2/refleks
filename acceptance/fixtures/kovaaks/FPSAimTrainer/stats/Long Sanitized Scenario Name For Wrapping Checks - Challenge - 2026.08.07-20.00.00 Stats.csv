@@ -1,0 +1,53 @@
+Kill #,Timestamp,Bot,Weapon,TTK,Shots,Hits,Accuracy,Damage Done,Damage Possible,Efficiency,Cheated,OverShots
+1,19:58:33.253,FixtureBotClose,FixtureWeapon,24.825001s,2484,1000,0.402576,1000.000000,2484.000000,0.402576,0,25
+2,19:58:59.072,FixtureBotFar,FixtureWeapon,25.561001s,2460,1000,0.406504,1000.000000,2460.000000,0.406504,0,25
+3,19:59:14.842,FixtureBotMid,FixtureWeapon,15.511001s,1466,1000,0.682128,1000.000000,1466.000000,0.682128,0,25
+4,19:59:36.124,FixtureBotClose,FixtureWeapon,21.021002s,2029,1000,0.492854,1000.000000,2029.000000,0.492854,0,25
+5,20:00:00.000,FixtureBotUFO,FixtureWeapon,23.596001s,2463,1000,0.406009,1000.000000,2463.000000,0.406009,0,0
+
+Weapon,Shots,Hits,Damage Done,Damage Possible,,Sens Scale,Horiz Sens,Vert Sens,FOV,Hide Gun,Crosshair,Crosshair Scale,Crosshair Color,ADS Sens,ADS Zoom Scale,Avg Target Scale,Avg Time Dilation
+FixtureWeapon,10902,5000,5000.0,10902.0,
+
+Kills:,5
+Deaths:,0
+Fight Time:,112.514
+Time Remaining:,0.0
+Avg TTK:,22.786823
+Damage Done:,5000.0
+Total Overshots:,100
+Damage Taken:,0.0
+Hit Count:,5000
+Miss Count:,5902
+Midairs:,0
+Midaired:,0
+Directs:,0
+Directed:,0
+Reloads:,0
+Distance Traveled:,1234.5
+MBS Points:,99.75
+Score:,12345.67
+Scenario:,Long Sanitized Scenario Name For Wrapping Checks
+Hash:,acceptance-fixture-hash
+Game Version:,fixture-version
+Challenge Start:,19:58:07.785
+Pause Count:,0
+Pause Duration:,0
+Avg Target Scale:,1.0
+Avg Time Dilation:,1.0
+
+Input Lag:,0
+Max FPS (config):,240.0
+Sens Scale:,Quake/Source
+Sens Increment:,0.1
+Horiz Sens:,1.0
+Vert Sens:,1.0
+DPI:,800
+FOV:,103.0
+FOVScale:,Overwatch
+Hide Gun:,false
+Crosshair:,fixture.png
+Crosshair Scale:,1.0
+Crosshair Color:,FFFFFFFF
+Resolution:,1920x1080
+Avg FPS:,239.75
+Resolution Scale:,100.0

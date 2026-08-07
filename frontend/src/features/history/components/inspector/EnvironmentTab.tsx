@@ -1,6 +1,8 @@
+import { i18n } from "@/i18n";
 import { Button, InfoTooltip } from "@/shared/components";
 import type { RunEnvironment } from "@/shared/types/ipc";
 import { ArrowRightLeft, EyeOff, PinOff } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   formatNumber,
   formatRunTimestamp,
@@ -9,75 +11,94 @@ import {
 } from "../../lib/historyModels";
 import { HeroStat, StatsGroup } from "./shared";
 
+type EnvFieldLabelKey =
+  | "environment.fields.appVersion" | "environment.fields.fileVersion"
+  | "environment.fields.os" | "environment.fields.architecture"
+  | "environment.fields.osVersion" | "environment.fields.steamId"
+  | "environment.fields.personaName" | "environment.fields.cpu"
+  | "environment.fields.cpuCores" | "environment.fields.gpu"
+  | "environment.fields.ramTotal" | "environment.fields.refreshRate"
+  | "environment.fields.screenWidth" | "environment.fields.screenHeight"
+  | "environment.fields.windowed" | "environment.fields.inputBackend"
+  | "environment.fields.vendorId" | "environment.fields.productId"
+  | "environment.fields.interface" | "environment.fields.tracePoints"
+  | "environment.fields.traceDuration" | "environment.fields.sampleRate"
+  | "environment.fields.mousePath";
+
+type EnvGroupLabelKey =
+  | "environment.groups.appOs" | "environment.groups.hardware"
+  | "environment.groups.display" | "environment.groups.mouse"
+  | "environment.groups.trace" | "environment.groups.diagnostics";
+
 type EnvField = {
-  label: string;
+  labelKey: EnvFieldLabelKey;
   key?: keyof RunEnvironment;
   value?: (run: HistoryRun) => string;
-  privacyNote?: string;
+  private?: boolean;
 };
 
-const ENV_GROUPS: Array<{ label: string; fields: EnvField[] }> = [
+const ENV_GROUPS: Array<{ labelKey: EnvGroupLabelKey; fields: EnvField[] }> = [
   {
-    label: "App & OS",
+    labelKey: "environment.groups.appOs",
     fields: [
-      { label: "App Version", key: "appVersion" },
+      { labelKey: "environment.fields.appVersion", key: "appVersion" },
       {
-        label: "File Version",
+        labelKey: "environment.fields.fileVersion",
         value: (run) => formatRunFileVersion(run.item.fileVersion),
       },
-      { label: "OS", key: "os" },
-      { label: "Architecture", key: "arch" },
-      { label: "OS Version", key: "osVersion" },
+      { labelKey: "environment.fields.os", key: "os" },
+      { labelKey: "environment.fields.architecture", key: "arch" },
+      { labelKey: "environment.fields.osVersion", key: "osVersion" },
       {
-        label: "Steam ID",
+        labelKey: "environment.fields.steamId",
         key: "steamId",
-        privacyNote: "Kept local only and scrubbed before upload.",
+        private: true,
       },
       {
-        label: "Persona Name",
+        labelKey: "environment.fields.personaName",
         key: "personaName",
-        privacyNote: "Kept local only and scrubbed before upload.",
+        private: true,
       },
     ],
   },
   {
-    label: "PC Hardware",
+    labelKey: "environment.groups.hardware",
     fields: [
-      { label: "CPU", key: "cpuName" },
-      { label: "CPU Cores", key: "cpuCores" },
-      { label: "GPU", key: "gpuName" },
-      { label: "RAM Total (MB)", key: "ramTotalMB" },
+      { labelKey: "environment.fields.cpu", key: "cpuName" },
+      { labelKey: "environment.fields.cpuCores", key: "cpuCores" },
+      { labelKey: "environment.fields.gpu", key: "gpuName" },
+      { labelKey: "environment.fields.ramTotal", key: "ramTotalMB" },
     ],
   },
   {
-    label: "Display Context",
+    labelKey: "environment.groups.display",
     fields: [
-      { label: "Refresh Rate (Hz)", key: "displayHz" },
-      { label: "Screen Width", key: "screenWidth" },
-      { label: "Screen Height", key: "screenHeight" },
-      { label: "Windowed", key: "isWindowed" },
+      { labelKey: "environment.fields.refreshRate", key: "displayHz" },
+      { labelKey: "environment.fields.screenWidth", key: "screenWidth" },
+      { labelKey: "environment.fields.screenHeight", key: "screenHeight" },
+      { labelKey: "environment.fields.windowed", key: "isWindowed" },
     ],
   },
   {
-    label: "Mouse Device",
+    labelKey: "environment.groups.mouse",
     fields: [
-      { label: "Input Backend", key: "mouseBackend" },
-      { label: "Vendor ID (VID)", key: "mouseVid" },
-      { label: "Product ID (PID)", key: "mousePid" },
-      { label: "Interface (MI)", key: "mouseMi" },
+      { labelKey: "environment.fields.inputBackend", key: "mouseBackend" },
+      { labelKey: "environment.fields.vendorId", key: "mouseVid" },
+      { labelKey: "environment.fields.productId", key: "mousePid" },
+      { labelKey: "environment.fields.interface", key: "mouseMi" },
     ],
   },
   {
-    label: "Trace Metadata",
+    labelKey: "environment.groups.trace",
     fields: [
-      { label: "Trace Points", key: "tracePoints" },
-      { label: "Trace Duration (s)", key: "traceDuration" },
-      { label: "Sample Rate (Hz)", key: "sampleRate" },
+      { labelKey: "environment.fields.tracePoints", key: "tracePoints" },
+      { labelKey: "environment.fields.traceDuration", key: "traceDuration" },
+      { labelKey: "environment.fields.sampleRate", key: "sampleRate" },
     ],
   },
   {
-    label: "Diagnostics",
-    fields: [{ label: "Mouse Device Path (Raw)", key: "mouseName" }],
+    labelKey: "environment.groups.diagnostics",
+    fields: [{ labelKey: "environment.fields.mousePath", key: "mouseName" }],
   },
 ];
 
@@ -108,7 +129,9 @@ function formatEnvValue(
   }
 
   if (typeof raw === "boolean") {
-    return raw ? "Yes" : "No";
+    return raw
+      ? i18n.t("history:environment.yes")
+      : i18n.t("history:environment.no");
   }
 
   if (typeof raw === "string") {
@@ -229,6 +252,7 @@ function SingleEnvironmentView({
   anonymousEnabled: boolean;
   onClearPrimaryRun: () => void;
 }) {
+  const { t } = useTranslation("history");
   const env = primaryRun.item.env;
 
   return (
@@ -247,21 +271,21 @@ function SingleEnvironmentView({
         <HeroStat label="VID" value={formatEnvValue(env, "mouseVid")} />
         <HeroStat label="PID" value={formatEnvValue(env, "mousePid")} />
         <HeroStat label="MI" value={formatEnvValue(env, "mouseMi")} />
-        <HeroStat label="Backend" value={formatEnvValue(env, "mouseBackend")} />
+        <HeroStat label={t("environment.fields.backend")} value={formatEnvValue(env, "mouseBackend")} />
       </div>
 
       {ENV_GROUPS.map((group) => (
-        <StatsGroup key={group.label} label={group.label}>
+        <StatsGroup key={group.labelKey} label={t(group.labelKey)}>
           {group.fields.map((field) => (
             <EnvironmentStatRow
-              key={field.label}
-              label={field.label}
+              key={field.labelKey}
+              label={t(field.labelKey)}
               value={
                 field.value
                   ? field.value(primaryRun)
                   : formatEnvValue(env, field.key!)
               }
-              privacyNote={field.privacyNote}
+              privacyNote={field.private ? t("environment.privateLocal") : undefined}
               showPrivacyHint={anonymousEnabled}
             />
           ))}
@@ -284,6 +308,7 @@ function CompareEnvironmentView({
   onClearPrimaryRun: () => void;
   onClearComparison: () => void;
 }) {
+  const { t } = useTranslation("history");
   const primaryEnv = primaryRun.item.env;
   const compareEnv = compareRun.item.env;
 
@@ -292,7 +317,7 @@ function CompareEnvironmentView({
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex items-start justify-between gap-2 rounded-xl bg-surface-subtle px-3 py-2.5">
           <div className="min-w-0">
-            <div className="text-xs text-surface-muted-foreground">Pinned</div>
+            <div className="text-xs text-surface-muted-foreground">{t("inspector.pinned")}</div>
             <div className="mt-0.5 font-medium text-foreground truncate">
               {primaryRun.scenarioName}
             </div>
@@ -311,7 +336,7 @@ function CompareEnvironmentView({
         </div>
         <div className="flex items-start justify-between gap-2 rounded-xl bg-surface-subtle px-3 py-2.5">
           <div className="min-w-0">
-            <div className="text-xs text-surface-muted-foreground">Compare</div>
+            <div className="text-xs text-surface-muted-foreground">{t("inspector.compare")}</div>
             <div className="mt-0.5 font-medium text-foreground truncate">
               {compareRun.scenarioName}
             </div>
@@ -331,11 +356,11 @@ function CompareEnvironmentView({
       </div>
 
       {ENV_GROUPS.map((group) => (
-        <StatsGroup key={group.label} label={group.label}>
+        <StatsGroup key={group.labelKey} label={t(group.labelKey)}>
           {group.fields.map((field) => (
             <EnvironmentCompareStatRow
-              key={field.label}
-              label={field.label}
+              key={field.labelKey}
+              label={t(field.labelKey)}
               a={
                 field.value
                   ? field.value(primaryRun)
@@ -346,7 +371,7 @@ function CompareEnvironmentView({
                   ? field.value(compareRun)
                   : formatEnvValue(compareEnv, field.key!)
               }
-              privacyNote={field.privacyNote}
+              privacyNote={field.private ? t("environment.privateLocal") : undefined}
               showPrivacyHint={anonymousEnabled}
             />
           ))}

@@ -2,6 +2,7 @@ import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 
 import { THEME_SELECTORS, type Theme } from "@/shared/lib/theme";
+import { getActiveLocaleFormatters } from "@/i18n";
 import { cn } from "@/shared/lib/utils";
 
 export type ChartConfig = {
@@ -238,7 +239,9 @@ const ChartTooltipContent = React.forwardRef<
                         </div>
                         {item.value && (
                           <span className="font-mono font-medium tabular-nums text-popover-foreground">
-                            {item.value.toLocaleString()}
+                            {typeof item.value === "number"
+                              ? getActiveLocaleFormatters().formatNumber(item.value)
+                              : item.value}
                           </span>
                         )}
                       </div>

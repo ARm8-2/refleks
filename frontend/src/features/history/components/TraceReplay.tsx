@@ -17,6 +17,7 @@ import {
   SkipForward,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { TargetInferenceFrame } from "../lib/targetInference";
 import type {
   ClickMode,
@@ -112,6 +113,7 @@ export function TraceReplay({
   onReset,
   onHighlightChange,
 }: TraceReplayProps) {
+  const { t } = useTranslation("history");
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTraceSet, setModalTraceSet] = useState<
     "primary" | "compare" | "both"
@@ -596,7 +598,7 @@ export function TraceReplay({
         <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
           <ControlBtn
             icon={<SkipBack className="h-3.5 w-3.5" />}
-            title="Back 5s"
+            title={t("trace.back5")}
             onClick={() => actions.nudge(-5000)}
           />
           <ControlBtn
@@ -607,18 +609,18 @@ export function TraceReplay({
                 <Play className="h-3.5 w-3.5" />
               )
             }
-            title={isPlaying ? "Pause" : "Play"}
+            title={isPlaying ? t("trace.pause") : t("trace.play")}
             onClick={actions.toggle}
             active={isPlaying}
           />
           <ControlBtn
             icon={<SkipForward className="h-3.5 w-3.5" />}
-            title="Forward 5s"
+            title={t("trace.forward5")}
             onClick={() => actions.nudge(5000)}
           />
           <ControlBtn
             icon={<RotateCcw className="h-3.5 w-3.5" />}
-            title="Reset"
+            title={t("trace.reset")}
             onClick={() => {
               actions.reset();
               onReset?.();
@@ -629,7 +631,7 @@ export function TraceReplay({
         {/* Speed slider */}
         <div className="flex items-center gap-1.5 rounded-xl bg-surface-subtle p-1 pl-2.5">
           <span className="text-[11px] font-medium text-surface-muted-foreground">
-            Speed
+            {t("controls.speed")}
           </span>
           <Slider
             value={[speed]}
@@ -644,7 +646,7 @@ export function TraceReplay({
           </span>
           <ControlBtn
             icon={<RotateCcw className="h-3 w-3" />}
-            title="Reset speed to 1×"
+            title={t("trace.resetSpeed")}
             onClick={() => setSpeed(SPEED_DEFAULT)}
             disabled={isDefaultSpeed}
           />
@@ -654,14 +656,14 @@ export function TraceReplay({
         <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
           <OptionToggle
             icon={<LineSquiggle className="h-3.5 w-3.5" />}
-            label={trailMode === "all" ? "All" : "2s"}
-            title={`Trail: ${trailMode === "all" ? "Full path" : "Last 2 seconds"}`}
+            label={trailMode === "all" ? t("trace.all") : t("trace.last2")}
+            title={trailMode === "all" ? t("trace.trailFull") : t("trace.trailLast2")}
             onClick={() => setTrailMode((m) => (m === "all" ? "last2" : "all"))}
           />
           <OptionToggle
             icon={<Eye className="h-3.5 w-3.5" />}
-            label={autoFollow ? "Follow" : "Static"}
-            title={autoFollow ? "Following cursor" : "Static view"}
+            label={autoFollow ? t("trace.follow") : t("trace.static")}
+            title={autoFollow ? t("trace.followingCursor") : t("trace.staticView")}
             active={autoFollow}
             onClick={() => setAutoFollow((f) => !f)}
           />
@@ -669,12 +671,19 @@ export function TraceReplay({
             icon={<MousePointerClick className="h-3.5 w-3.5" />}
             label={
               clickMode === "none"
-                ? "Off"
+                ? t("trace.off")
                 : clickMode === "down"
-                  ? "Down"
-                  : "All"
+                  ? t("trace.down")
+                  : t("trace.all")
             }
-            title={`Click markers: ${clickMode}`}
+            title={t("trace.clickMarkers", {
+              mode:
+                clickMode === "none"
+                  ? t("trace.off")
+                  : clickMode === "down"
+                    ? t("trace.down")
+                    : t("trace.all"),
+            })}
             onClick={() =>
               setClickMode((m) =>
                 m === "down" ? "all" : m === "all" ? "none" : "down",
@@ -684,11 +693,11 @@ export function TraceReplay({
           {hasTargetInference && (
             <OptionToggle
               icon={<CircleDot className="h-3.5 w-3.5" />}
-              label={showTargetInference ? "Target" : "Target"}
+              label={t("trace.target")}
               title={
                 showTargetInference
-                  ? "Hide target inference"
-                  : "Show target inference"
+                  ? t("trace.hideTarget")
+                  : t("trace.showTarget")
               }
               active={showTargetInference}
               onClick={() => setShowTargetInference((v) => !v)}
@@ -701,11 +710,11 @@ export function TraceReplay({
           <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
             <OptionToggle
               icon={<Link className="h-3.5 w-3.5" />}
-              label={syncByTime ? "Time" : "Ratio"}
+              label={syncByTime ? t("trace.time") : t("trace.ratio")}
               title={
                 syncByTime
-                  ? "Synced by elapsed time"
-                  : "Synced by progress percentage"
+                  ? t("trace.syncTime")
+                  : t("trace.syncRatio")
               }
               active={syncByTime}
               onClick={() => setSyncByTime((v) => !v)}
@@ -724,7 +733,7 @@ export function TraceReplay({
       <button
         type="button"
         onClick={() => openModal(traceSet)}
-        title="Expand"
+        title={t("trace.expand")}
         className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-lg bg-surface/80 text-surface-muted-foreground backdrop-blur transition-colors hover:bg-surface hover:text-foreground"
       >
         <Maximize2 className="h-3.5 w-3.5" />
@@ -740,7 +749,7 @@ export function TraceReplay({
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <div className="text-[11px] font-medium text-surface-muted-foreground">
-                Pinned
+                {t("inspector.pinned")}
               </div>
               <div
                 ref={wrapRef}
@@ -756,7 +765,7 @@ export function TraceReplay({
             </div>
             <div className="flex flex-col gap-1">
               <div className="text-[11px] font-medium text-surface-muted-foreground">
-                Compare
+                {t("inspector.compare")}
               </div>
               <div
                 ref={splitWrapRef}
@@ -794,10 +803,10 @@ export function TraceReplay({
         onClose={() => setModalOpen(false)}
         title={
           modalTraceSet === "primary"
-            ? "Mouse Trace \u2013 Pinned"
+            ? `${t("trace.mouseTrace")} – ${t("inspector.pinned")}`
             : modalTraceSet === "compare"
-              ? "Mouse Trace \u2013 Compare"
-              : "Mouse Trace"
+              ? `${t("trace.mouseTrace")} – ${t("inspector.compare")}`
+              : t("trace.mouseTrace")
         }
         className="flex flex-col overflow-hidden"
       >
@@ -953,18 +962,19 @@ function OptionToggle({
 }
 
 function TraceLegend() {
+  const { t } = useTranslation("history");
   return (
     <div className="absolute left-2 top-2 flex flex-col gap-0.5">
       <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[10px] font-medium backdrop-blur">
         <span className="inline-block h-2 w-2 rounded-full bg-primary" />
-        <span className="text-surface-muted-foreground">Pinned</span>
+        <span className="text-surface-muted-foreground">{t("inspector.pinned")}</span>
       </div>
       <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[10px] font-medium backdrop-blur">
         <span
           className="inline-block h-2 w-2 rounded-full"
           style={{ background: "var(--trace-compare)" }}
         />
-        <span className="text-surface-muted-foreground">Compare</span>
+        <span className="text-surface-muted-foreground">{t("inspector.compare")}</span>
       </div>
     </div>
   );

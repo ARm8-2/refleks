@@ -19,6 +19,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import type { SessionSortKey } from "../hooks/useHistoryPageState";
 import {
   formatCompactDate,
@@ -57,6 +58,7 @@ export function HistorySessionList({
   filterPb,
   onFilterPbChange,
 }: Props) {
+  const { t } = useTranslation("history");
   const hasActiveFilters = sort !== "newest" || filterPb;
   return (
     <aside
@@ -73,7 +75,7 @@ export function HistorySessionList({
             <Input
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
-              placeholder="Search..."
+              placeholder={t("sessions.search")}
               className="h-9 pl-8"
             />
           </div>
@@ -92,7 +94,7 @@ export function HistorySessionList({
           size="icon"
           className="shrink-0"
           onClick={onToggleCollapsed}
-          title={collapsed ? "Expand sessions" : "Collapse sessions"}
+          title={collapsed ? t("sessions.expand") : t("sessions.collapse")}
         >
           {collapsed ? (
             <PanelLeftOpen className="h-4 w-4" />
@@ -109,7 +111,7 @@ export function HistorySessionList({
         className="scrollbar-compact min-h-0 flex-1 overflow-y-auto p-2"
         emptyContent={
           <p className="px-2 py-6 text-center text-sm text-surface-muted-foreground">
-            {collapsed ? "—" : "No sessions found."}
+            {collapsed ? "—" : t("sessions.empty")}
           </p>
         }
         renderItem={useCallback(
@@ -178,7 +180,7 @@ export function HistorySessionList({
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
                     {hasNotes && (
-                      <span title="Has session notes">
+                      <span title={t("sessions.notes")}>
                         <NotebookPen className="h-3.5 w-3.5 text-primary" />
                       </span>
                     )}
@@ -195,7 +197,7 @@ export function HistorySessionList({
                 >
                   <span>
                     {session.items.length}{" "}
-                    {session.items.length === 1 ? "run" : "runs"}
+                    {session.items.length === 1 ? t("sessions.run") : t("sessions.runs")}
                   </span>
                   <span>·</span>
                   <span>
@@ -214,12 +216,18 @@ export function HistorySessionList({
 
 /* ─── Sort dropdown ─── */
 
-const SESSION_SORT_OPTIONS: { value: SessionSortKey; label: string }[] = [
-  { value: "newest", label: "Newest first" },
-  { value: "oldest", label: "Oldest first" },
-  { value: "most-runs", label: "Most runs" },
-  { value: "longest", label: "Longest" },
+const SESSION_SORT_OPTIONS: SessionSortKey[] = [
+  "newest",
+  "oldest",
+  "most-runs",
+  "longest",
 ];
+const SESSION_SORT_LABEL_KEYS = {
+  newest: "sessions.newest",
+  oldest: "sessions.oldest",
+  "most-runs": "sessions.mostRuns",
+  longest: "sessions.longest",
+} as const;
 
 function SessionListSortFilter({
   sort,
@@ -234,6 +242,7 @@ function SessionListSortFilter({
   onFilterPbChange: (v: boolean | ((prev: boolean) => boolean)) => void;
   hasActiveFilters: boolean;
 }) {
+  const { t } = useTranslation("history");
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -241,7 +250,7 @@ function SessionListSortFilter({
           variant={hasActiveFilters ? "secondary" : "ghost"}
           size="icon"
           className="shrink-0"
-          title="Sort & filter"
+          title={t("sessions.sortFilter")}
         >
           <ListFilter
             className={cn("h-4 w-4", hasActiveFilters && "text-foreground")}
@@ -252,25 +261,27 @@ function SessionListSortFilter({
         {/* Sort */}
         <div className="px-2 py-1.5 text-[10px] font-medium uppercase tracking-wider text-surface-muted-foreground">
           <ArrowUpDown className="mr-1 inline h-3 w-3" />
-          Sort
+          {t("sessions.sort")}
         </div>
-        {SESSION_SORT_OPTIONS.map((opt) => (
+        {SESSION_SORT_OPTIONS.map((option) => (
           <button
-            key={opt.value}
+            key={option}
             type="button"
-            onClick={() => onSortChange(opt.value)}
+            onClick={() => onSortChange(option)}
             className={cn(
               "flex w-full cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 text-xs transition-[transform,background-color,color] duration-200 ease-emphasized will-change-transform active:scale-[0.985]",
-              sort === opt.value
+              sort === option
                 ? "bg-surface-muted text-foreground"
                 : "text-surface-muted-foreground hover:bg-surface-emphasis hover:text-foreground",
             )}
           >
-            <span className="min-w-0 flex-1 text-left">{opt.label}</span>
+            <span className="min-w-0 flex-1 text-left">
+              {t(SESSION_SORT_LABEL_KEYS[option])}
+            </span>
             <Check
               className={cn(
                 "h-3 w-3 shrink-0",
-                sort === opt.value ? "opacity-100" : "opacity-0",
+                sort === option ? "opacity-100" : "opacity-0",
               )}
             />
           </button>
@@ -282,7 +293,7 @@ function SessionListSortFilter({
         {/* Filters */}
         <div className="px-2 py-1.5 text-[10px] font-medium uppercase tracking-wider text-surface-muted-foreground">
           <ListFilter className="mr-1 inline h-3 w-3" />
-          Filter
+          {t("sessions.filter")}
         </div>
         <button
           type="button"
@@ -300,7 +311,7 @@ function SessionListSortFilter({
               filterPb ? "text-amber-500" : "opacity-40",
             )}
           />
-          Contains PB
+          {t("sessions.containsPb")}
         </button>
       </PopoverContent>
     </Popover>

@@ -3,6 +3,7 @@ import { cn } from "@/shared/lib/utils";
 
 import { Copy } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRunPerformanceEvents } from "../../hooks/useRunPerformanceEvents";
 import { useRunStatsEvents } from "../../hooks/useRunStatsEvents";
 import { useRunTrace } from "../../hooks/useRunTrace";
@@ -68,6 +69,7 @@ export function TraceTab({
   compareRun: HistoryRun | null;
   overlay: boolean;
 }) {
+  const { t } = useTranslation("history");
   const primaryPoints = useRunTrace(primaryRun);
   const comparePoints = useRunTrace(compareRun);
   const primaryEvents = useRunStatsEvents(primaryRun);
@@ -196,7 +198,7 @@ export function TraceTab({
   ) {
     return (
       <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
-        <p className="text-sm text-surface-muted-foreground">Loading trace…</p>
+        <p className="text-sm text-surface-muted-foreground">{t("inspector.loadingTrace")}</p>
       </div>
     );
   }
@@ -205,8 +207,7 @@ export function TraceTab({
     return (
       <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
         <p className="text-sm text-surface-muted-foreground">
-          No mouse trace data. Enable mouse tracking in settings to record
-          traces.
+          {t("inspector.noTrace")}
         </p>
       </div>
     );
@@ -259,6 +260,7 @@ function AnalysisPanel({
   selectedKillIdx: number | null;
   onKillClick: (kill: KillAnalysis) => void;
 }) {
+  const { t } = useTranslation("history");
   const { counts, kills } = analysis;
   const killListRef = useRef<HTMLDivElement>(null);
 
@@ -284,7 +286,7 @@ function AnalysisPanel({
                   CLASSIFICATION_STYLES.overshoot.dot,
                 )}
               />
-              {counts.overshoot} overshoot
+              {counts.overshoot} {t("trace.overshoot")}
             </span>
           )}
           {counts.undershoot > 0 && (
@@ -295,7 +297,7 @@ function AnalysisPanel({
                   CLASSIFICATION_STYLES.undershoot.dot,
                 )}
               />
-              {counts.undershoot} undershoot
+              {counts.undershoot} {t("trace.undershoot")}
             </span>
           )}
           {counts.optimal > 0 && (
@@ -306,7 +308,7 @@ function AnalysisPanel({
                   CLASSIFICATION_STYLES.optimal.dot,
                 )}
               />
-              {counts.optimal} optimal
+              {counts.optimal} {t("trace.optimal")}
             </span>
           )}
           {counts.unknown > 0 && (
@@ -317,15 +319,15 @@ function AnalysisPanel({
                   CLASSIFICATION_STYLES.unknown.dot,
                 )}
               />
-              {counts.unknown} unknown
+              {counts.unknown} {t("trace.unknown")}
             </span>
           )}
           <span>·</span>
-          <span>{fmtPct(analysis.avgEfficiency)} path eff</span>
+          <span>{fmtPct(analysis.avgEfficiency)} {t("trace.pathEfficiency")}</span>
           <span className="text-[11px]">({analysis.coordinateSpace})</span>
           {analysis.skippedKillCount > 0 && (
             <span className="text-[11px]">
-              {analysis.skippedKillCount} outside trace
+              {analysis.skippedKillCount} {t("trace.outsideTrace")}
             </span>
           )}
         </div>
@@ -333,54 +335,49 @@ function AnalysisPanel({
           <InfoTooltip side="left">
             <div className="max-w-xs space-y-1.5 text-[11px]">
               <p className="font-medium text-popover-foreground">
-                Mouse Path Analysis
+                {t("trace.pathAnalysis")}
               </p>
               <p className="text-popover-foreground/70">
-                Uses time-normalized kinematics, trace quality, button
-                transitions, and the recorded kill clock to classify movement
-                shape. Existing traces do not contain target centers, so
-                distances are raw-input units rather than pixels.
+                {t("trace.pathDescription")}
               </p>
               <div className="space-y-0.5 text-popover-foreground/70">
                 <p>
                   <span className={CLASSIFICATION_STYLES.overshoot.text}>
-                    Overshoot
+                    {t("trace.overshoot")}
                   </span>{" "}
-                  — cursor went past the target and corrected back
+                  {t("trace.overshootDescription")}
                 </p>
                 <p>
                   <span className={CLASSIFICATION_STYLES.undershoot.text}>
-                    Undershoot
+                    {t("trace.undershoot")}
                   </span>{" "}
-                  — stopped short and made micro-corrections
+                  {t("trace.undershootDescription")}
                 </p>
                 <p>
                   <span className={CLASSIFICATION_STYLES.optimal.text}>
-                    Optimal
+                    {t("trace.optimal")}
                   </span>{" "}
-                  — direct, low-correction approach
+                  {t("trace.optimalDescription")}
                 </p>
                 <p>
                   <span className={CLASSIFICATION_STYLES.unknown.text}>
-                    Unknown
+                    {t("trace.unknown")}
                   </span>{" "}
-                  — trace coverage or timing evidence is insufficient
+                  {t("trace.unknownDescription")}
                 </p>
               </div>
               {analysis.avgOvershootPixels > 0 && (
                 <p className="text-popover-foreground/70">
-                  Avg overshoot: {fmtNum(analysis.avgOvershootPixels)} trace
-                  units
+                  {t("trace.avgOvershoot", { value: fmtNum(analysis.avgOvershootPixels) })}
                 </p>
               )}
               {analysis.avgUndershootPixels > 0 && (
                 <p className="text-popover-foreground/70">
-                  Avg undershoot: {fmtNum(analysis.avgUndershootPixels)} trace
-                  units
+                  {t("trace.avgUndershoot", { value: fmtNum(analysis.avgUndershootPixels) })}
                 </p>
               )}
               <p className="text-popover-foreground/50">
-                Click a kill below to highlight its path.
+                {t("trace.clickKillHint")}
               </p>
             </div>
           </InfoTooltip>
@@ -392,7 +389,7 @@ function AnalysisPanel({
         <SensSuggestionCard suggestion={suggestion} />
       ) : (
         <div className="rounded-xl bg-surface-subtle px-3 py-2 text-xs text-surface-muted-foreground">
-          No training sensitivity suggested — continue on your current sens.
+          {t("trace.noSensitivity")}
         </div>
       )}
 
@@ -425,6 +422,7 @@ function KillChip({
   selected: boolean;
   onClick: () => void;
 }) {
+  const { t } = useTranslation("history");
   const px =
     kill.classification === "overshoot"
       ? kill.overshootPixels
@@ -436,7 +434,12 @@ function KillChip({
       type="button"
       data-kill={kill.killIdx}
       onClick={onClick}
-      title={`Kill #${kill.killIdx} — ${kill.classification}${px > 0 ? ` (${fmtNum(px, 0)} trace units)` : ""} — ${fmtPct(kill.efficiency)} eff`}
+      title={t("trace.killTitle", {
+        index: kill.killIdx,
+        classification: t(`trace.${kill.classification}` as const),
+        distance: px > 0 ? t("trace.traceDistance", { value: fmtNum(px, 0) }) : "",
+        efficiency: fmtPct(kill.efficiency),
+      })}
       className={cn(
         "flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] tabular-nums transition-colors",
         selected
@@ -458,6 +461,7 @@ function KillChip({
 /* ─── Sensitivity suggestion card ─── */
 
 function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
+  const { t } = useTranslation("history");
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(suggestion.recommended.toFixed(2));
@@ -471,7 +475,7 @@ function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-xs text-surface-muted-foreground">
-            Suggested training sens
+            {t("trace.suggestedSens")}
           </span>
           <span className="font-medium text-foreground">
             {fmtNum(suggestion.recommended, 2)} cm/360
@@ -483,7 +487,7 @@ function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
           <button
             type="button"
             onClick={handleCopy}
-            title={`Copy ${suggestion.recommended.toFixed(2)}`}
+            title={t("trace.copyValue", { value: suggestion.recommended.toFixed(2) })}
             className="inline-flex h-5 w-5 items-center justify-center rounded text-surface-muted-foreground hover:text-foreground"
           >
             <Copy className="h-3 w-3" />
@@ -492,9 +496,23 @@ function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
         <InfoTooltip side="left">
           <div className="max-w-xs space-y-1 text-[11px]">
             <p className="font-medium text-popover-foreground">
-              Training Sensitivity
+              {t("trace.trainingSensitivity")}
             </p>
-            <p className="text-popover-foreground/70">{suggestion.reason}</p>
+            <p className="text-popover-foreground/70">
+              {t("trace.trainingReason", {
+                severity: t(`trace.severity.${suggestion.severity}` as const),
+                issue: t(`trace.${suggestion.primaryIssue}` as const),
+                percent: suggestion.issuePercent,
+                clickNote: suggestion.movingClickTiming
+                  ? t("trace.clickTimingNote")
+                  : "",
+                recommended: suggestion.recommended.toFixed(2),
+                change: Math.abs(Math.round(suggestion.changePct)),
+                direction: t(
+                  `trace.direction.${suggestion.primaryIssue}` as const,
+                ),
+              })}
+            </p>
           </div>
         </InfoTooltip>
       </div>

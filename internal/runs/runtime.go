@@ -354,8 +354,7 @@ func (s *RuntimeService) ScreenCaptureStatus() screen.CaptureStatus {
 		Active:             providerStatus.Active,
 		Healthy:            providerStatus.Healthy,
 		State:              providerStatus.State,
-		Message:            providerStatus.Message,
-		LastError:          providerStatus.LastError,
+		UserMessage:        models.NewUserMessage("screenCapture.idle", nil),
 		LastFrameUnixMilli: providerStatus.LastFrameUnixMilli,
 	}
 	if s.encoder != nil && s.encoder.Available() {
@@ -370,37 +369,43 @@ func (s *RuntimeService) ScreenCaptureStatus() screen.CaptureStatus {
 		status.Active = false
 		status.Healthy = false
 		status.State = "unavailable"
-		status.Message = providerStatus.Message
+		status.UserMessage = models.NewUserMessage("screenCapture.unsupported", nil)
 		return status
 	}
 	if !settings.ScreenCaptureEnabled {
 		status.Active = false
 		status.Healthy = false
 		status.State = "disabled"
-		status.Message = "Screen capture is disabled."
+		status.UserMessage = models.NewUserMessage("screenCapture.disabled", nil)
 		return status
 	}
 	if !status.Available {
 		status.Active = false
 		status.Healthy = false
 		status.State = "unavailable"
-		status.Message = "FFmpeg or a compatible encoder is not available."
+		status.UserMessage = models.NewUserMessage("screenCapture.unavailable", nil)
 		return status
 	}
 	if status.State == screen.CaptureStateError {
-		status.Message = "Screen capture encountered an error."
+		status.UserMessage = models.NewUserMessage("screenCapture.failed", nil)
 		return status
 	}
 	if !process.IsRunning(constants.KovaaksProcessName) {
 		status.Active = false
 		status.Healthy = false
 		status.State = "ready"
-		status.Message = "Waiting for KovaaK's to start."
+		status.UserMessage = models.NewUserMessage("screenCapture.ready", nil)
 		return status
 	}
 	if !status.Active {
 		status.State = "starting"
-		status.Message = "Capture is starting."
+		status.UserMessage = models.NewUserMessage("screenCapture.starting", nil)
+		return status
+	}
+	if status.Healthy {
+		status.UserMessage = models.NewUserMessage("screenCapture.active", nil)
+	} else {
+		status.UserMessage = models.NewUserMessage("screenCapture.starting", nil)
 	}
 	return status
 }

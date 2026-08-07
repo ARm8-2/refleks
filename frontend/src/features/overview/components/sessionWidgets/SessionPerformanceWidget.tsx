@@ -7,14 +7,16 @@ import {
   getStatusIcon,
   getToneBadgeClasses,
 } from "./shared";
+import { useTranslation } from "react-i18next";
 
 export function SessionPerformanceWidget({
   snapshot,
 }: {
   snapshot: RecentSessionSnapshot;
 }) {
+  const { t } = useTranslation("overview");
   if (!snapshot.currentSession)
-    return <WidgetEmpty icon={Gauge} label="Performance" />;
+    return <WidgetEmpty icon={Gauge} label={t("widgets.performance")} />;
 
   const { statusTone, performanceValue, performanceDetail, statusLabel } =
     snapshot;
@@ -24,7 +26,7 @@ export function SessionPerformanceWidget({
     <Widget
       icon={Gauge}
       iconClassName={getPerformanceAccent(statusTone)}
-      title="Performance"
+      title={t("widgets.performance")}
       headerAction={
         <span
           className={cn(

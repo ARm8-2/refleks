@@ -397,7 +397,8 @@ export namespace models {
 	
 	export class ReplayStatus {
 	    state: string;
-	    message: string;
+	    messageCode: string;
+	    messageParams?: Record<string, any>;
 	
 	    static createFrom(source: any = {}) {
 	        return new ReplayStatus(source);
@@ -406,7 +407,8 @@ export namespace models {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.state = source["state"];
-	        this.message = source["message"];
+	        this.messageCode = source["messageCode"];
+	        this.messageParams = source["messageParams"];
 	    }
 	}
 	export class RunEnvironment {
@@ -806,6 +808,7 @@ export namespace models {
 	    }
 	}
 	export class Settings {
+	    language?: string;
 	    steamInstallDir: string;
 	    kovaaksInstallDir: string;
 	    steamIdOverride?: string;
@@ -834,6 +837,7 @@ export namespace models {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.language = source["language"];
 	        this.steamInstallDir = source["steamInstallDir"];
 	        this.kovaaksInstallDir = source["kovaaksInstallDir"];
 	        this.steamIdOverride = source["steamIdOverride"];
@@ -908,8 +912,8 @@ export namespace screen {
 	    active: boolean;
 	    healthy: boolean;
 	    state: string;
-	    message: string;
-	    lastError?: string;
+	    messageCode: string;
+	    messageParams?: Record<string, any>;
 	    lastFrameUnixMilli?: number;
 	
 	    static createFrom(source: any = {}) {
@@ -925,8 +929,8 @@ export namespace screen {
 	        this.active = source["active"];
 	        this.healthy = source["healthy"];
 	        this.state = source["state"];
-	        this.message = source["message"];
-	        this.lastError = source["lastError"];
+	        this.messageCode = source["messageCode"];
+	        this.messageParams = source["messageParams"];
 	        this.lastFrameUnixMilli = source["lastFrameUnixMilli"];
 	    }
 	}

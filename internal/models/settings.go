@@ -2,6 +2,7 @@ package models
 
 // Settings represents persisted application settings.
 type Settings struct {
+	Language                string                  `json:"language,omitempty"`
 	SteamInstallDir         string                  `json:"steamInstallDir"`
 	KovaaksInstallDir       string                  `json:"kovaaksInstallDir"`
 	SteamIDOverride         string                  `json:"steamIdOverride,omitempty"`

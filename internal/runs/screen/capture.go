@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"refleks/internal/constants"
+	"refleks/internal/models"
 )
 
 // CaptureConfig contains all settings that affect a capture session. A
@@ -44,16 +45,15 @@ type ProviderStatus struct {
 // capture session. Encoder probing alone is not sufficient to claim capture is
 // working because D3D11 and the long-lived FFmpeg process start later.
 type CaptureStatus struct {
-	EncoderName        string `json:"encoderName"`
-	Container          string `json:"container"`
-	IsHardware         bool   `json:"isHardware"`
-	Available          bool   `json:"available"`
-	Active             bool   `json:"active"`
-	Healthy            bool   `json:"healthy"`
-	State              string `json:"state"`
-	Message            string `json:"message"`
-	LastError          string `json:"lastError,omitempty"`
-	LastFrameUnixMilli int64  `json:"lastFrameUnixMilli,omitempty"`
+	EncoderName string `json:"encoderName"`
+	Container   string `json:"container"`
+	IsHardware  bool   `json:"isHardware"`
+	Available   bool   `json:"available"`
+	Active      bool   `json:"active"`
+	Healthy     bool   `json:"healthy"`
+	State       string `json:"state"`
+	models.UserMessage
+	LastFrameUnixMilli int64 `json:"lastFrameUnixMilli,omitempty"`
 }
 
 // Provider captures screen frames into a rolling buffer of short segments

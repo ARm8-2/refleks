@@ -1,4 +1,5 @@
 export { getScenarioName } from "@/shared/lib";
+import { getActiveLocaleFormatters } from "@/i18n";
 import { MISSING_STR } from "./detailConstants";
 
 type RGB = { r: number; g: number; b: number };
@@ -161,7 +162,7 @@ export function formatNumber(
   const number = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(number)) return MISSING_STR;
 
-  return new Intl.NumberFormat("en-US", {
+  return getActiveLocaleFormatters().numberFormatter({
     minimumFractionDigits: trimTrailingZeros ? 0 : decimals,
     maximumFractionDigits: decimals,
     useGrouping: true,
