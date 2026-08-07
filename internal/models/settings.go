@@ -18,6 +18,9 @@ type Settings struct {
 	ScreenCaptureEnabled    bool                    `json:"screenCaptureEnabled"`
 	ScreenCaptureFPS        int                     `json:"screenCaptureFps"`
 	ScreenCaptureResolution string                  `json:"screenCaptureResolution,omitempty"`
+	ReplayCleanupEnabled    bool                    `json:"replayCleanupEnabled"`
+	ReplayRetentionDays     int                     `json:"replayRetentionDays"`
+	ReplayStorageLimitGB    int                     `json:"replayStorageLimitGb"`
 	AutostartEnabled        bool                    `json:"autostartEnabled"`
 	AnonymousEnabled        bool                    `json:"anonymousEnabled"`
 	RunSyncEnabled          bool                    `json:"runSyncEnabled"`

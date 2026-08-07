@@ -219,6 +219,7 @@ func (s *Store) runScreenTrim(trim pendingScreenTrim) {
 				s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "Replay processing failed.")
 			} else {
 				s.publishReplayStatus(trim.runPath, models.ReplayStateReady, "Replay is ready.")
+				s.RequestReplayCleanup()
 			}
 			provider.ReleaseSegments(paths)
 			return
@@ -238,6 +239,7 @@ func (s *Store) runScreenTrim(trim pendingScreenTrim) {
 					s.publishReplayStatus(trim.runPath, models.ReplayStateFailed, "Replay processing failed.")
 				} else {
 					s.publishReplayStatus(trim.runPath, models.ReplayStateReady, "Replay is ready.")
+					s.RequestReplayCleanup()
 				}
 				provider.ReleaseSegments(paths)
 				return

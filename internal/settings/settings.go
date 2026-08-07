@@ -54,6 +54,9 @@ func Default() models.Settings {
 		ScreenCaptureEnabled:    false,
 		ScreenCaptureFPS:        constants.DefaultScreenCaptureFPS,
 		ScreenCaptureResolution: constants.DefaultScreenCaptureResolution,
+		ReplayCleanupEnabled:    true,
+		ReplayRetentionDays:     constants.DefaultReplayRetentionDays,
+		ReplayStorageLimitGB:    constants.DefaultReplayStorageLimitGB,
 		AutostartEnabled:        false,
 		AnonymousEnabled:        false,
 		RunSyncEnabled:          true,
@@ -90,6 +93,12 @@ func Sanitize(s models.Settings) models.Settings {
 	}
 	s.ScreenCaptureFPS = sanitizeScreenCaptureFPS(s.ScreenCaptureFPS)
 	s.ScreenCaptureResolution = sanitizeScreenCaptureResolution(s.ScreenCaptureResolution)
+	if s.ReplayRetentionDays < 0 {
+		s.ReplayRetentionDays = 0
+	}
+	if s.ReplayStorageLimitGB < 0 {
+		s.ReplayStorageLimitGB = 0
+	}
 
 	if s.ScenarioNotes == nil {
 		s.ScenarioNotes = make(map[string]models.ScenarioNote)

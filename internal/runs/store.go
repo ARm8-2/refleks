@@ -52,6 +52,12 @@ type Store struct {
 	replaySetDir string
 	replaySetMod time.Time
 	replaySet    map[string]struct{}
+
+	// cleanupMu coalesces startup, settings, and replay-publication cleanup
+	// triggers so only one cleanup pass touches the replay directory at a time.
+	cleanupMu      sync.Mutex
+	cleanupRunning bool
+	cleanupPending bool
 }
 
 // NewStore constructs a run store.

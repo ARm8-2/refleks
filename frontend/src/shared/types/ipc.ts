@@ -223,6 +223,9 @@ export interface Settings {
   screenCaptureEnabled?: boolean;
   screenCaptureFps?: number;
   screenCaptureResolution?: string;
+  replayCleanupEnabled?: boolean;
+  replayRetentionDays?: number;
+  replayStorageLimitGb?: number;
   autostartEnabled?: boolean;
   anonymousEnabled?: boolean;
   runSyncEnabled?: boolean;
