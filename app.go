@@ -122,6 +122,10 @@ func (a *App) startup(ctx context.Context) {
 		}
 	}()
 
+	// Fire-and-forget replay cleanup. The runtime service also requests a
+	// coalesced pass whenever a new replay is published or its settings change.
+	a.runsRuntimeSvc.RequestReplayCleanup()
+
 	// Fire-and-forget check for app updates
 	go func() {
 		time.Sleep(2 * time.Second)

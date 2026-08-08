@@ -29,6 +29,10 @@ const (
 	MaxScreenCaptureFPS            = 60
 	DefaultScreenCaptureResolution = "720"
 
+	// Replay cleanup defaults. Zero means unlimited for either individual limit;
+	DefaultReplayRetentionDays  = 0
+	DefaultReplayStorageLimitGB = 5
+
 	// Screen capture rolling-segment buffer. Recording is split into short,
 	// independently-finalized segments (like OBS's replay buffer / GeForce
 	// Experience Instant Replay) instead of one continuous session-long file.

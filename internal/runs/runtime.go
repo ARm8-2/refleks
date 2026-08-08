@@ -150,6 +150,15 @@ func (s *RuntimeService) StopWatcher() error {
 	return s.watcher.Stop()
 }
 
+// RequestReplayCleanup schedules a non-blocking replay cleanup pass. The
+// store coalesces concurrent startup, settings, and replay-publication
+// triggers into a single worker.
+func (s *RuntimeService) RequestReplayCleanup() {
+	if s.runStore != nil {
+		s.runStore.RequestReplayCleanup()
+	}
+}
+
 func (s *RuntimeService) GetRecent(limit int) []models.RunRecord {
 	if s.runStore == nil {
 		return nil
@@ -197,6 +206,9 @@ func (s *RuntimeService) OverwriteSettings(newS models.Settings) error {
 	captureChanged := newS.ScreenCaptureEnabled != prevSettings.ScreenCaptureEnabled
 	captureConfigChanged := newS.ScreenCaptureFPS != prevSettings.ScreenCaptureFPS ||
 		newS.ScreenCaptureResolution != prevSettings.ScreenCaptureResolution
+	cleanupSettingsChanged := newS.ReplayCleanupEnabled != prevSettings.ReplayCleanupEnabled ||
+		newS.ReplayRetentionDays != prevSettings.ReplayRetentionDays ||
+		newS.ReplayStorageLimitGB != prevSettings.ReplayStorageLimitGB
 
 	if trackingChanged || captureChanged {
 		if newS.MouseTrackingEnabled || newS.ScreenCaptureEnabled {
@@ -229,6 +241,9 @@ func (s *RuntimeService) OverwriteSettings(newS models.Settings) error {
 
 	if err := s.updateWatcher(newS, needsWatcherRestart); err != nil {
 		return err
+	}
+	if cleanupSettingsChanged {
+		s.RequestReplayCleanup()
 	}
 	return nil
 }

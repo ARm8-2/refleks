@@ -68,6 +68,25 @@ const sessionGapOptions = [5, 10, 15, 20, 30, 45, 60, 90, 120].map((m) => ({
   value: String(m),
 }));
 
+const replayRetentionOptions = [
+  { label: "Unlimited", value: "0" },
+  { label: "1 day", value: "1" },
+  { label: "2 days", value: "2" },
+  { label: "4 days", value: "4" },
+  { label: "1 week", value: "7" },
+  { label: "2 weeks", value: "14" },
+  { label: "1 month", value: "30" },
+];
+
+const replayStorageOptions = [
+  { label: "Unlimited", value: "0" },
+  { label: "1 GB", value: "1" },
+  { label: "2 GB", value: "2" },
+  { label: "5 GB", value: "5" },
+  { label: "10 GB", value: "10" },
+  { label: "25 GB", value: "25" },
+];
+
 export function SettingsPage() {
   const setSessionGap = useStore((s) => s.setSessionGap);
   const setSessionNotes = useStore((s) => s.setSessionNotes);
@@ -604,6 +623,77 @@ export function SettingsPage() {
                         max={60}
                         className="w-20 text-center"
                       />
+                    </SettingsField>
+                  </div>
+                )}
+
+                <SettingsField
+                  label="Replay Cleanup"
+                  description="Automatically remove old replays and limit replay storage; runs at startup and after new replays are created"
+                  checkbox
+                >
+                  <Checkbox
+                    checked={settings.replayCleanupEnabled !== false}
+                    onCheckedChange={(v) =>
+                      updateField("replayCleanupEnabled", v === true, true)
+                    }
+                  />
+                </SettingsField>
+
+                {settings.replayCleanupEnabled !== false && (
+                  <div className="space-y-3 pl-6">
+                    <SettingsField
+                      label="Replay age limit"
+                      description="Delete replays older than this; Unlimited disables the age limit"
+                    >
+                      <Select
+                        value={String(settings.replayRetentionDays ?? 0)}
+                        onValueChange={(v) =>
+                          updateField(
+                            "replayRetentionDays",
+                            parseInt(v, 10),
+                            true,
+                          )
+                        }
+                      >
+                        <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {replayRetentionOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </SettingsField>
+
+                    <SettingsField
+                      label="Storage limit"
+                      description="Delete the oldest replays when the replay folder exceeds this size; Unlimited disables the storage limit"
+                    >
+                      <Select
+                        value={String(settings.replayStorageLimitGb ?? 5)}
+                        onValueChange={(v) =>
+                          updateField(
+                            "replayStorageLimitGb",
+                            parseInt(v, 10),
+                            true,
+                          )
+                        }
+                      >
+                        <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {replayStorageOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </SettingsField>
                   </div>
                 )}

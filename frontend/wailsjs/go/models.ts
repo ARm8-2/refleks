@@ -822,6 +822,9 @@ export namespace models {
 	    screenCaptureEnabled: boolean;
 	    screenCaptureFps: number;
 	    screenCaptureResolution?: string;
+	    replayCleanupEnabled: boolean;
+	    replayRetentionDays: number;
+	    replayStorageLimitGb: number;
 	    autostartEnabled: boolean;
 	    anonymousEnabled: boolean;
 	    runSyncEnabled: boolean;
@@ -850,6 +853,9 @@ export namespace models {
 	        this.screenCaptureEnabled = source["screenCaptureEnabled"];
 	        this.screenCaptureFps = source["screenCaptureFps"];
 	        this.screenCaptureResolution = source["screenCaptureResolution"];
+	        this.replayCleanupEnabled = source["replayCleanupEnabled"];
+	        this.replayRetentionDays = source["replayRetentionDays"];
+	        this.replayStorageLimitGb = source["replayStorageLimitGb"];
 	        this.autostartEnabled = source["autostartEnabled"];
 	        this.anonymousEnabled = source["anonymousEnabled"];
 	        this.runSyncEnabled = source["runSyncEnabled"];
