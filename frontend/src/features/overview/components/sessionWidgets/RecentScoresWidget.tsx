@@ -289,7 +289,7 @@ export function RecentScoresWidget({
     return (
       <ChartContainer
         config={recentScoresConfig}
-        className="aspect-auto w-full h-full min-h-[140px]"
+        className="aspect-auto w-full h-full min-h-[8.75rem]"
       >
         <LineChart
           data={compactData}
@@ -356,7 +356,7 @@ export function RecentScoresWidget({
           x={x + 10}
           y={labelY}
           fill={CHART_SERIES_COLORS.accuracy}
-          fontSize={11}
+          fontSize="0.6875rem"
           fontWeight={500}
         >
           {`Session Best: ${formatScoreCompact(sessionBestScore)}`}
@@ -377,7 +377,7 @@ export function RecentScoresWidget({
           x={x + 10}
           y={labelY}
           fill={CHART_SERIES_COLORS.scoreCurrent}
-          fontSize={11}
+          fontSize="0.6875rem"
           fontWeight={500}
         >
           {`Personal Best: ${formatScoreCompact(personalBestScore)}`}

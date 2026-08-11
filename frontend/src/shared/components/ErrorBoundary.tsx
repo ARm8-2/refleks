@@ -37,12 +37,12 @@ export class ErrorBoundary extends Component<
               {this.state.error.message}
             </div>
             {this.state.error?.stack && (
-              <div className="text-[11px] text-surface-muted-foreground whitespace-pre-wrap bg-surface-muted border rounded p-2 overflow-auto max-h-48">
+              <div className="text-[0.6875rem] text-surface-muted-foreground whitespace-pre-wrap bg-surface-muted border rounded p-2 overflow-auto max-h-48">
                 {this.state.error.stack}
               </div>
             )}
             {this.state.stack && (
-              <div className="text-[11px] text-surface-muted-foreground whitespace-pre-wrap bg-surface-muted border rounded p-2 overflow-auto max-h-48">
+              <div className="text-[0.6875rem] text-surface-muted-foreground whitespace-pre-wrap bg-surface-muted border rounded p-2 overflow-auto max-h-48">
                 {this.state.stack}
               </div>
             )}

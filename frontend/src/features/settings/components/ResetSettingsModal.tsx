@@ -57,7 +57,7 @@ export function ResetSettingsModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Reset Settings"
-      width={420}
+      width="26.25rem"
       height="auto"
     >
       <div className="flex flex-col gap-4">

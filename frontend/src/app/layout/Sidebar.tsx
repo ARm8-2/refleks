@@ -63,7 +63,7 @@ function SidebarItem({
     <>
       <span
         className={cn(
-          "relative flex size-[18px] shrink-0 items-center justify-center transition-transform duration-200 [&_svg]:size-[18px] [&_svg]:shrink-0",
+          "relative flex size-[1.125rem] shrink-0 items-center justify-center transition-transform duration-200 [&_svg]:size-[1.125rem] [&_svg]:shrink-0",
           active && "scale-110",
         )}
       >
@@ -138,7 +138,7 @@ function SidebarFavoriteItem({
   const collapsed = !open;
   const pill = (
     <span
-      className="w-[38px] shrink-0 rounded py-0.5 text-center text-[10px] font-semibold text-surface-muted-foreground"
+      className="w-[2.375rem] shrink-0 rounded py-0.5 text-center text-[0.625rem] font-semibold text-surface-muted-foreground"
       style={color ? { color } : undefined}
     >
       {abbreviation}
@@ -241,7 +241,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
                 aria-hidden
                 className="pointer-events-none absolute inset-x-0 top-0 h-8 rounded-md bg-sidebar-accent transition-transform duration-220 ease-emphasized will-change-transform"
                 style={{
-                  transform: `translateY(${primaryActiveIndex * 36}px)`,
+                  transform: `translateY(${primaryActiveIndex * 2.25}rem)`,
                 }}
               />
             )}
@@ -315,7 +315,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
                 <img
                   src={DISCORD_SYMBOL}
                   alt=""
-                  className="size-[18px] shrink-0"
+                  className="size-[1.125rem] shrink-0"
                 />
               }
               label="Discord"
@@ -333,7 +333,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
                 <img
                   src={KO_FI_SYMBOL}
                   alt=""
-                  className="size-[18px] shrink-0"
+                  className="size-[1.125rem] shrink-0"
                 />
               }
               label="Support"

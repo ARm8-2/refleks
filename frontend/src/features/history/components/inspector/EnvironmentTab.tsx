@@ -296,7 +296,7 @@ function CompareEnvironmentView({
             <div className="mt-0.5 font-medium text-foreground truncate">
               {primaryRun.scenarioName}
             </div>
-            <div className="text-[11px] text-surface-muted-foreground">
+            <div className="text-[0.6875rem] text-surface-muted-foreground">
               {formatRunTimestamp(primaryRun.playedAt)}
             </div>
           </div>
@@ -315,7 +315,7 @@ function CompareEnvironmentView({
             <div className="mt-0.5 font-medium text-foreground truncate">
               {compareRun.scenarioName}
             </div>
-            <div className="text-[11px] text-surface-muted-foreground">
+            <div className="text-[0.6875rem] text-surface-muted-foreground">
               {formatRunTimestamp(compareRun.playedAt)}
             </div>
           </div>

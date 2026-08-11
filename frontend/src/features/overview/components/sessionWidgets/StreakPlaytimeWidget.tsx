@@ -374,12 +374,12 @@ export function StreakPlaytimeWidget({
           <p className="text-sm font-semibold text-surface-muted-foreground">
             Activity
           </p>
-          <div className="flex items-center gap-1 text-[11px] text-surface-muted-foreground">
+          <div className="flex items-center gap-1 text-[0.6875rem] text-surface-muted-foreground">
             <span>Less</span>
             {[0, 1, 2, 3, 4].map((level) => (
               <span
                 key={level}
-                className="h-2.5 w-2.5 rounded-[3px]"
+                className="h-2.5 w-2.5 rounded-[0.1875rem]"
                 style={activityCellStyle(level as 0 | 1 | 2 | 3 | 4)}
               />
             ))}
@@ -390,13 +390,13 @@ export function StreakPlaytimeWidget({
         <div className="min-w-0 overflow-x-auto pb-1">
           <div className="min-w-max">
             {visibleMonthMarkers.length > 0 && (
-              <div className="mb-2 flex gap-2 text-[11px] font-medium text-surface-muted-foreground">
+              <div className="mb-2 flex gap-2 text-[0.6875rem] font-medium text-surface-muted-foreground">
                 <div className="w-5" aria-hidden="true" />
                 <div
                   className="grid min-w-max"
                   style={{
-                    gridTemplateColumns: `repeat(${Math.max(1, Math.ceil(paddedHeatmapCells.length / 7))}, 14px)`,
-                    columnGap: "6px",
+                    gridTemplateColumns: `repeat(${Math.max(1, Math.ceil(paddedHeatmapCells.length / 7))}, 0.875rem)`,
+                    columnGap: "0.375rem",
                   }}
                 >
                   {visibleMonthMarkers.map((marker) => (
@@ -413,7 +413,7 @@ export function StreakPlaytimeWidget({
             )}
 
             <div className="flex gap-2">
-              <div className="grid grid-rows-7 gap-1.5 pt-[2px] text-[11px] text-surface-muted-foreground">
+              <div className="grid grid-rows-7 gap-1.5 pt-[0.125rem] text-[0.6875rem] text-surface-muted-foreground">
                 {weekdayLabels.map((label, index) => (
                   <span key={`${label}-${index}`} className="h-4 leading-4">
                     {label}
@@ -423,7 +423,7 @@ export function StreakPlaytimeWidget({
 
               <div className="p-1">
                 <TooltipProvider delayDuration={100}>
-                  <div className="grid grid-flow-col auto-cols-[14px] grid-rows-7 gap-1.5">
+                  <div className="grid grid-flow-col auto-cols-[0.875rem] grid-rows-7 gap-1.5">
                     {paddedHeatmapCells.map((cell, index) => {
                       if (!cell) {
                         return (
@@ -449,7 +449,7 @@ export function StreakPlaytimeWidget({
                           <TooltipTrigger asChild>
                             <button
                               type="button"
-                              className={`relative h-4 w-4 rounded-[3px] border border-border-subtle transition-[transform,box-shadow,border-color,background-color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.96] hover:scale-110 hover:border-foreground/40 hover:shadow-sm focus-visible:scale-110 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${selected ? "scale-110 border-[color:var(--primary-border-strong)] ring-2 ring-[color:var(--primary-emphasis)] shadow-sm" : ""}`}
+                              className={`relative h-4 w-4 rounded-[0.1875rem] border border-border-subtle transition-[transform,box-shadow,border-color,background-color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.96] hover:scale-110 hover:border-foreground/40 hover:shadow-sm focus-visible:scale-110 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${selected ? "scale-110 border-[color:var(--primary-border-strong)] ring-2 ring-[color:var(--primary-emphasis)] shadow-sm" : ""}`}
                               style={
                                 selected
                                   ? selectedActivityCellStyle(cell.level)
@@ -500,7 +500,7 @@ export function StreakPlaytimeWidget({
 
         <div className="mt-4 border-t border-border-subtle pt-4">
           <div
-            className={`overflow-hidden transition-[max-height,opacity,transform] duration-220 ease-emphasized ${hasSelectedBreakdown ? "max-h-[360px] translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-1 opacity-0"}`}
+            className={`overflow-hidden transition-[max-height,opacity,transform] duration-220 ease-emphasized ${hasSelectedBreakdown ? "max-h-[22.5rem] translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-1 opacity-0"}`}
           >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold text-surface-muted-foreground">
@@ -524,7 +524,7 @@ export function StreakPlaytimeWidget({
 
             <ChartContainer
               config={drilldownConfig}
-              className="aspect-auto h-[220px] w-full"
+              className="aspect-auto h-[13.75rem] w-full"
             >
               <BarChart
                 data={selectedBreakdown}
@@ -576,7 +576,7 @@ export function StreakPlaytimeWidget({
           </div>
 
           <div
-            className={`overflow-hidden transition-[max-height,opacity,transform] duration-220 ease-emphasized ${hasSelectedBreakdown ? "pointer-events-none max-h-0 -translate-y-1 opacity-0" : "max-h-[120px] translate-y-0 opacity-100"}`}
+            className={`overflow-hidden transition-[max-height,opacity,transform] duration-220 ease-emphasized ${hasSelectedBreakdown ? "pointer-events-none max-h-0 -translate-y-1 opacity-0" : "max-h-[7.5rem] translate-y-0 opacity-100"}`}
           >
             <div className="px-4 py-5 text-center">
               <p className="text-sm font-medium text-foreground">
@@ -612,7 +612,7 @@ export function StreakPlaytimeWidget({
       </div>
       <ChartContainer
         config={playtimeConfig}
-        className="mt-1 aspect-auto h-[20px] w-full"
+        className="mt-1 aspect-auto h-[1.25rem] w-full"
       >
         <AreaChart
           data={chartData}

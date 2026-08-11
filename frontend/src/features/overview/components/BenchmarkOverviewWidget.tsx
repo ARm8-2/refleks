@@ -41,7 +41,7 @@ import { Play, Settings2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const LEFT_PANEL_PADDING = 16;
+const LEFT_PANEL_PADDING = 1;
 
 type NotesState = {
   open: boolean;
@@ -141,7 +141,7 @@ export function BenchmarkOverviewWidget() {
     [showNotesCol, showRecCol, showPlayCol, showHistoryCol],
   );
   const infoGridTemplate = useMemo(
-    () => infoColumns.map((c) => `${c.width}px`).join(" "),
+    () => infoColumns.map((c) => `${c.width}rem`).join(" "),
     [infoColumns],
   );
   const infoGridWidth = useMemo(
@@ -152,8 +152,8 @@ export function BenchmarkOverviewWidget() {
   const rightPanelOffset = LEFT_PANEL_PADDING + infoGridWidth;
   const hasVisibleRanks = visibleRankIndices.length > 0;
   const rightGridTemplate = hasVisibleRanks
-    ? `repeat(${visibleRankIndices.length}, minmax(${RANK_MIN_COLUMN_WIDTH}px, 1fr))`
-    : `minmax(${RANK_MIN_COLUMN_WIDTH}px, 1fr)`;
+    ? `repeat(${visibleRankIndices.length}, minmax(${RANK_MIN_COLUMN_WIDTH}rem, 1fr))`
+    : `minmax(${RANK_MIN_COLUMN_WIDTH}rem, 1fr)`;
   const rightGridMinWidth =
     Math.max(1, visibleRankIndices.length) * RANK_MIN_COLUMN_WIDTH;
   const overallRankName =
@@ -330,7 +330,7 @@ export function BenchmarkOverviewWidget() {
           value={String(difficultyIndex)}
           onValueChange={(v) => setDifficultyIndex(Number(v) || 0)}
         >
-          <SelectTrigger className="h-7 w-auto min-w-0 max-w-[200px] px-2 text-xs bg-surface-subtle">
+          <SelectTrigger className="h-7 w-auto min-w-0 max-w-[12.5rem] px-2 text-xs bg-surface-subtle">
             <SelectValue placeholder="Difficulty" />
           </SelectTrigger>
           <SelectContent>
@@ -398,23 +398,23 @@ export function BenchmarkOverviewWidget() {
           <div className="pr-2">
             {/* Column headers */}
             <div
-              className="grid h-[28px] items-center mb-1.5"
+              className="grid h-[1.75rem] items-center mb-1.5"
               style={{ gridTemplateColumns: infoGridTemplate }}
             >
-              <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[11px] uppercase tracking-wide text-surface-muted-foreground">
+              <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
                 Scenario
               </div>
               <div />
               {showNotesCol && <div />}
               {showRecCol && (
-                <div className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground">
+                <div className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
                   Rec
                 </div>
               )}
               {showPlayCol && <div />}
               {showHistoryCol && <div />}
               <div />
-              <div className="text-right text-[11px] uppercase tracking-wide text-surface-muted-foreground">
+              <div className="text-right text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
                 Score
               </div>
             </div>
@@ -457,21 +457,21 @@ export function BenchmarkOverviewWidget() {
                   }
                 />
               ) : (
-                <div className="h-[32px] flex items-center text-[12px] text-surface-muted-foreground">
+                <div className="h-[2rem] flex items-center text-[0.75rem] text-surface-muted-foreground">
                   No recent scenario for this benchmark
                 </div>
               )}
             </div>
 
             {/* Divider — extends to widget edge minus matching right padding (pr-4 = pl-4 of outer container) */}
-            <div className="h-[17px] flex items-center pr-4">
+            <div className="h-[1.0625rem] flex items-center pr-4">
               <div className="h-px w-full bg-border" />
             </div>
 
             {/* Recommended scenarios section */}
             <div className="space-y-0.5">
               {recommendedScenarios.length === 0 ? (
-                <div className="h-[32px] flex items-center text-[12px] text-surface-muted-foreground">
+                <div className="h-[2rem] flex items-center text-[0.75rem] text-surface-muted-foreground">
                   No recommendations yet
                 </div>
               ) : (
@@ -516,12 +516,12 @@ export function BenchmarkOverviewWidget() {
         {/* Right panel (scrollable rank cells, absolutely positioned) */}
         <div
           className="pointer-events-auto absolute bottom-0 right-0 top-0 z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          style={{ left: rightPanelOffset }}
+          style={{ left: `${rightPanelOffset}rem` }}
         >
           <div className="min-h-full min-w-full w-max pt-2 pb-3 pl-2 pr-2">
             {/* Rank column headers */}
             <div
-              className="grid h-[28px] items-center gap-1 mb-1.5"
+              className="grid h-[1.75rem] items-center gap-1 mb-1.5"
               style={{
                 gridTemplateColumns: rightGridTemplate,
                 minWidth: rightGridMinWidth,
@@ -534,7 +534,7 @@ export function BenchmarkOverviewWidget() {
                   return (
                     <div
                       key={`${rank.name}-${rankIndex}`}
-                      className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground"
+                      className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground"
                       style={rank.color ? { color: rank.color } : undefined}
                     >
                       {rank.name}
@@ -542,7 +542,7 @@ export function BenchmarkOverviewWidget() {
                   );
                 })
               ) : (
-                <div className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground">
+                <div className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
                   Details
                 </div>
               )}
@@ -564,17 +564,17 @@ export function BenchmarkOverviewWidget() {
                   cls={cls}
                 />
               ) : (
-                <div className="h-[32px]" />
+                <div className="h-[2rem]" />
               )}
             </div>
 
             {/* Spacer to match left panel divider height — line is only in the left panel */}
-            <div className="h-[17px]" />
+            <div className="h-[1.0625rem]" />
 
             {/* Recommended rank cells */}
             <div className="space-y-0.5">
               {recommendedScenarios.length === 0 ? (
-                <div className="h-[32px]" />
+                <div className="h-[2rem]" />
               ) : (
                 recommendedScenarios.map((scenario) => (
                   <ScenarioRankCells
@@ -601,7 +601,7 @@ export function BenchmarkOverviewWidget() {
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         title="Widget Settings"
-        width={700}
+        width="43.75rem"
         height="auto"
       >
         <div className="space-y-6 px-6 pb-6">
@@ -664,7 +664,7 @@ export function BenchmarkOverviewWidget() {
                     setVisibleRankCount(Math.max(1, Number(v) || 1))
                   }
                 >
-                  <SelectTrigger className="h-8 w-[80px]">
+                  <SelectTrigger className="h-8 w-[5rem]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

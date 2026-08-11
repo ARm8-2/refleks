@@ -3,8 +3,10 @@ import { AppProviders, AppRoutes } from "@/app";
 import { ErrorBoundary } from "@/shared/components";
 import {
   applyFont,
+  applyScale,
   applyTheme,
   getSavedFont,
+  getSavedScale,
   getSavedTheme,
 } from "@/shared/lib";
 
@@ -13,6 +15,7 @@ export default function Root() {
   useEffect(() => {
     applyTheme(getSavedTheme());
     applyFont(getSavedFont());
+    applyScale(getSavedScale());
   }, []);
 
   return (

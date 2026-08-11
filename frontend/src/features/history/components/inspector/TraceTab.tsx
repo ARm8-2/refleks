@@ -322,16 +322,16 @@ function AnalysisPanel({
           )}
           <span>·</span>
           <span>{fmtPct(analysis.avgEfficiency)} path eff</span>
-          <span className="text-[11px]">({analysis.coordinateSpace})</span>
+          <span className="text-[0.6875rem]">({analysis.coordinateSpace})</span>
           {analysis.skippedKillCount > 0 && (
-            <span className="text-[11px]">
+            <span className="text-[0.6875rem]">
               {analysis.skippedKillCount} outside trace
             </span>
           )}
         </div>
         <div className="ml-auto">
           <InfoTooltip side="left">
-            <div className="max-w-xs space-y-1.5 text-[11px]">
+            <div className="max-w-xs space-y-1.5 text-[0.6875rem]">
               <p className="font-medium text-popover-foreground">
                 Mouse Path Analysis
               </p>
@@ -438,7 +438,7 @@ function KillChip({
       onClick={onClick}
       title={`Kill #${kill.killIdx} — ${kill.classification}${px > 0 ? ` (${fmtNum(px, 0)} trace units)` : ""} — ${fmtPct(kill.efficiency)} eff`}
       className={cn(
-        "flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] tabular-nums transition-colors",
+        "flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.6875rem] tabular-nums transition-colors",
         selected
           ? "bg-surface-muted text-foreground"
           : "text-surface-muted-foreground hover:bg-surface-muted/50 hover:text-foreground",
@@ -476,7 +476,7 @@ function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
           <span className="font-medium text-foreground">
             {fmtNum(suggestion.recommended, 2)} cm/360
           </span>
-          <span className="text-[11px] text-surface-muted-foreground">
+          <span className="text-[0.6875rem] text-surface-muted-foreground">
             ({suggestion.changePct >= 0 ? "+" : ""}
             {fmtNum(suggestion.changePct)}%)
           </span>
@@ -490,7 +490,7 @@ function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
           </button>
         </div>
         <InfoTooltip side="left">
-          <div className="max-w-xs space-y-1 text-[11px]">
+          <div className="max-w-xs space-y-1 text-[0.6875rem]">
             <p className="font-medium text-popover-foreground">
               Training Sensitivity
             </p>

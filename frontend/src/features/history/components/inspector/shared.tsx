@@ -63,7 +63,7 @@ export function CompareMetric({
         {showDelta && (
           <span
             className={cn(
-              "text-[10px] font-medium",
+              "text-[0.625rem] font-medium",
               isImproved ? "text-emerald-500" : "text-red-400",
             )}
           >

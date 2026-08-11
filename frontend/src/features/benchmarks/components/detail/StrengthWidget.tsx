@@ -42,7 +42,7 @@ export function StrengthWidget({ progress }: Props) {
       value={level}
       onValueChange={(value) => setLevel(value as StrengthLevel)}
     >
-      <SelectTrigger className="h-8 min-w-[130px] w-auto px-2 text-xs bg-surface-subtle">
+      <SelectTrigger className="h-8 min-w-[8.125rem] w-auto px-2 text-xs bg-surface-subtle">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -171,7 +171,7 @@ export function StrengthWidget({ progress }: Props) {
         className={
           expanded
             ? "space-y-3 overflow-auto pr-1"
-            : "space-y-2.5 max-h-[320px] overflow-auto pr-1"
+            : "space-y-2.5 max-h-[20rem] overflow-auto pr-1"
         }
       >
         {rows.map((row) => (
@@ -211,8 +211,8 @@ export function StrengthWidget({ progress }: Props) {
       modalTitle="Strength Breakdown"
       modalControls={levelControls}
       modalContent={renderBody(true)}
-      modalWidth={900}
-      modalHeight={760}
+      modalWidth="56.25rem"
+      modalHeight="47.5rem"
     >
       {renderBody(false)}
     </Widget>

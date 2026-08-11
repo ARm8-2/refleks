@@ -601,7 +601,7 @@ function VideoPlayer({
             </div>
           )}
           {label && (
-            <span className="absolute left-2 top-2 z-20 rounded bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white/80">
+            <span className="absolute left-2 top-2 z-20 rounded bg-black/60 px-1.5 py-0.5 text-[0.6875rem] font-medium text-white/80">
               {label}
             </span>
           )}
@@ -703,7 +703,7 @@ function VideoPlayer({
             }}
             className="min-w-0 flex-1 cursor-pointer"
           />
-          <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-surface-muted-foreground">
+          <span className="shrink-0 whitespace-nowrap font-mono text-[0.6875rem] text-surface-muted-foreground">
             {fmtTime(currentTime)} / {fmtTime(duration)}
           </span>
         </div>
@@ -738,7 +738,7 @@ function VideoPlayer({
 
           {/* Speed */}
           <div className="flex items-center gap-1.5 rounded-xl bg-surface-subtle p-1 pl-2.5">
-            <span className="text-[11px] font-medium text-surface-muted-foreground">
+            <span className="text-[0.6875rem] font-medium text-surface-muted-foreground">
               Speed
             </span>
             <Slider
@@ -750,7 +750,7 @@ function VideoPlayer({
               onValueChange={([v]) => setSpeed(v)}
               className="w-20"
             />
-            <span className="min-w-[2.5rem] text-center text-[11px] font-medium tabular-nums text-surface-muted-foreground">
+            <span className="min-w-[2.5rem] text-center text-[0.6875rem] font-medium tabular-nums text-surface-muted-foreground">
               {speedLabel}
             </span>
             <ControlBtn
@@ -774,7 +774,7 @@ function VideoPlayer({
                 iconClassName="h-7 w-7"
               >
                 {info ? (
-                  <div className="max-w-xs space-y-1 text-[11px]">
+                  <div className="max-w-xs space-y-1 text-[0.6875rem]">
                     <p className="font-medium text-popover-foreground">
                       Replay Info
                     </p>
@@ -789,7 +789,7 @@ function VideoPlayer({
                     </div>
                   </div>
                 ) : (
-                  <p className="text-[11px] text-popover-foreground/70">
+                  <p className="text-[0.6875rem] text-popover-foreground/70">
                     {infoUnavailable
                       ? "Replay info unavailable"
                       : "Loading replay info…"}
@@ -821,7 +821,7 @@ function VideoPlayer({
         {exportFeedback && (
           <p
             className={cn(
-              "text-[11px] leading-snug",
+              "text-[0.6875rem] leading-snug",
               exportFeedback.error
                 ? "text-destructive"
                 : "text-surface-muted-foreground",
@@ -836,7 +836,7 @@ function VideoPlayer({
         isOpen={confirmOpen}
         onClose={closeDeleteModal}
         title="Delete Replay"
-        width={380}
+        width="23.75rem"
         height="auto"
       >
         <div className="flex flex-col gap-4 p-4">

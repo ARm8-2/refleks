@@ -59,7 +59,7 @@ export function HistorySessionDetailsModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Session Notes"
-      width={620}
+      width="38.75rem"
       height="auto"
     >
       <div className="space-y-5 px-6 pb-6">
@@ -75,7 +75,7 @@ export function HistorySessionDetailsModal({
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             placeholder="Add notes for this session..."
-            className="min-h-[180px] w-full resize-none rounded-xl border border-input bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-surface-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="min-h-[11.25rem] w-full resize-none rounded-xl border border-input bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-surface-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
 

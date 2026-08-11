@@ -628,7 +628,7 @@ export function TraceReplay({
 
         {/* Speed slider */}
         <div className="flex items-center gap-1.5 rounded-xl bg-surface-subtle p-1 pl-2.5">
-          <span className="text-[11px] font-medium text-surface-muted-foreground">
+          <span className="text-[0.6875rem] font-medium text-surface-muted-foreground">
             Speed
           </span>
           <Slider
@@ -639,7 +639,7 @@ export function TraceReplay({
             onValueChange={([v]) => setSpeed(v)}
             className="w-24"
           />
-          <span className="min-w-[2.5rem] text-center text-[11px] font-medium tabular-nums text-surface-muted-foreground">
+          <span className="min-w-[2.5rem] text-center text-[0.6875rem] font-medium tabular-nums text-surface-muted-foreground">
             {speedLabel}
           </span>
           <ControlBtn
@@ -718,7 +718,7 @@ export function TraceReplay({
 
   const renderCanvasOverlay = (traceSet: "primary" | "compare" | "both") => (
     <>
-      <div className="absolute right-2 top-2 rounded-lg bg-surface/80 px-2 py-0.5 text-[10px] font-medium text-surface-muted-foreground backdrop-blur">
+      <div className="absolute right-2 top-2 rounded-lg bg-surface/80 px-2 py-0.5 text-[0.625rem] font-medium text-surface-muted-foreground backdrop-blur">
         {Math.round(zoom * 100)}%
       </div>
       <button
@@ -739,7 +739,7 @@ export function TraceReplay({
         {isSplit ? (
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
-              <div className="text-[11px] font-medium text-surface-muted-foreground">
+              <div className="text-[0.6875rem] font-medium text-surface-muted-foreground">
                 Pinned
               </div>
               <div
@@ -755,7 +755,7 @@ export function TraceReplay({
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <div className="text-[11px] font-medium text-surface-muted-foreground">
+              <div className="text-[0.6875rem] font-medium text-surface-muted-foreground">
                 Compare
               </div>
               <div
@@ -811,7 +811,7 @@ export function TraceReplay({
               className="block h-full w-full cursor-grab rounded-xl active:cursor-grabbing"
             />
             {modalTraceSet === "both" && hasCompare && <TraceLegend />}
-            <div className="absolute right-2 top-2 rounded-lg bg-surface/80 px-2 py-0.5 text-[10px] font-medium text-surface-muted-foreground backdrop-blur">
+            <div className="absolute right-2 top-2 rounded-lg bg-surface/80 px-2 py-0.5 text-[0.625rem] font-medium text-surface-muted-foreground backdrop-blur">
               {Math.round(zoom * 100)}%
             </div>
           </div>
@@ -884,7 +884,7 @@ function TimelineScrubber({
           onValueChange={handleValueChange}
         />
       </div>
-      <span className="min-w-[6.5rem] text-right font-mono text-[11px] text-surface-muted-foreground">
+      <span className="min-w-[6.5rem] text-right font-mono text-[0.6875rem] text-surface-muted-foreground">
         {formatTraceTime(progressMs)} / {formatTraceTime(durationMs)}
       </span>
     </div>
@@ -955,11 +955,11 @@ function OptionToggle({
 function TraceLegend() {
   return (
     <div className="absolute left-2 top-2 flex flex-col gap-0.5">
-      <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[10px] font-medium backdrop-blur">
+      <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[0.625rem] font-medium backdrop-blur">
         <span className="inline-block h-2 w-2 rounded-full bg-primary" />
         <span className="text-surface-muted-foreground">Pinned</span>
       </div>
-      <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[10px] font-medium backdrop-blur">
+      <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[0.625rem] font-medium backdrop-blur">
         <span
           className="inline-block h-2 w-2 rounded-full"
           style={{ background: "var(--trace-compare)" }}

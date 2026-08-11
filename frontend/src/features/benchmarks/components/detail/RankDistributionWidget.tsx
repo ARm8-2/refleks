@@ -176,7 +176,7 @@ export function RankDistributionWidget({ progress }: Props) {
         value={scopeLevel}
         onValueChange={(value) => setScopeLevel(value as ScopeLevel)}
       >
-        <SelectTrigger className="h-8 min-w-[120px] w-auto px-2 text-xs bg-surface-subtle">
+        <SelectTrigger className="h-8 min-w-[7.5rem] w-auto px-2 text-xs bg-surface-subtle">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -191,7 +191,7 @@ export function RankDistributionWidget({ progress }: Props) {
           value={String(safeCategoryIndex)}
           onValueChange={(value) => setCategoryIndex(Number(value) || 0)}
         >
-          <SelectTrigger className="h-8 min-w-[130px] w-auto max-w-[180px] px-2 text-xs bg-surface-subtle">
+          <SelectTrigger className="h-8 min-w-[8.125rem] w-auto max-w-[11.25rem] px-2 text-xs bg-surface-subtle">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -212,7 +212,7 @@ export function RankDistributionWidget({ progress }: Props) {
           value={String(safeSubcategoryIndex)}
           onValueChange={(value) => setSubcategoryIndex(Number(value) || 0)}
         >
-          <SelectTrigger className="h-8 min-w-[130px] w-auto max-w-[180px] px-2 text-xs bg-surface-subtle">
+          <SelectTrigger className="h-8 min-w-[8.125rem] w-auto max-w-[11.25rem] px-2 text-xs bg-surface-subtle">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -239,11 +239,13 @@ export function RankDistributionWidget({ progress }: Props) {
       );
     }
 
-    const donutSize = expanded ? "h-[200px] w-[200px]" : "h-[160px] w-[160px]";
+    const donutSize = expanded
+      ? "h-[12.5rem] w-[12.5rem]"
+      : "h-[10rem] w-[10rem]";
 
     return (
       <div
-        className={`grid grid-cols-1 items-center gap-4 ${expanded ? "sm:grid-cols-[220px_1fr]" : "sm:grid-cols-[180px_1fr]"}`}
+        className={`grid grid-cols-1 items-center gap-4 ${expanded ? "sm:grid-cols-[13.75rem_1fr]" : "sm:grid-cols-[11.25rem_1fr]"}`}
       >
         <div className={`mx-auto relative ${donutSize}`}>
           <div
@@ -252,7 +254,7 @@ export function RankDistributionWidget({ progress }: Props) {
             aria-label="Rank distribution donut"
           />
           <div className="absolute inset-[22%] flex flex-col items-center justify-center rounded-full bg-surface">
-            <span className="text-[11px] text-surface-muted-foreground">
+            <span className="text-[0.6875rem] text-surface-muted-foreground">
               Scenarios
             </span>
             <span className="text-xl font-semibold text-foreground">
@@ -261,7 +263,7 @@ export function RankDistributionWidget({ progress }: Props) {
           </div>
         </div>
 
-        <div className="space-y-2 max-h-[320px] overflow-auto pr-1">
+        <div className="space-y-2 max-h-[20rem] overflow-auto pr-1">
           {segments.map((segment) => (
             <div
               key={segment.label}
@@ -297,8 +299,8 @@ export function RankDistributionWidget({ progress }: Props) {
       modalTitle="Rank Distribution"
       modalControls={scopeControls}
       modalContent={renderBody(true)}
-      modalWidth={920}
-      modalHeight={760}
+      modalWidth="57.5rem"
+      modalHeight="47.5rem"
     >
       {renderBody(false)}
     </Widget>

@@ -204,7 +204,7 @@ export interface BenchmarkProgress {
   categories: ProgressCategory[];
 }
 
-import type { Font, Theme } from "../lib/theme";
+import type { Font, Scale, Theme } from "../lib/theme";
 
 export interface Settings {
   steamInstallDir?: string;
@@ -217,6 +217,7 @@ export interface Settings {
   recentRunsMinCount: number;
   theme: Theme;
   font: Font;
+  scale: Scale;
   favoriteBenchmarks?: string[];
   mouseTrackingEnabled?: boolean;
   mouseBufferMinutes?: number;

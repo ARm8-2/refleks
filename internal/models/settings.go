@@ -12,6 +12,7 @@ type Settings struct {
 	RecentRunsMinCount      int                     `json:"recentRunsMinCount"`
 	Theme                   string                  `json:"theme"`
 	Font                    string                  `json:"font,omitempty"`
+	Scale                   string                  `json:"scale,omitempty"`
 	FavoriteBenchmarks      []string                `json:"favoriteBenchmarks,omitempty"`
 	MouseTrackingEnabled    bool                    `json:"mouseTrackingEnabled"`
 	MouseBufferMinutes      int                     `json:"mouseBufferMinutes"`

@@ -27,7 +27,7 @@ export function ClearCacheModal({ isOpen, onClose }: ClearCacheModalProps) {
       isOpen={isOpen}
       onClose={onClose}
       title="Clear Cache"
-      width={400}
+      width="25rem"
       height="auto"
     >
       <div className="p-4 flex flex-col gap-4">

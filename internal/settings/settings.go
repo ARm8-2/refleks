@@ -49,6 +49,7 @@ func Default() models.Settings {
 		RecentRunsMinCount:      constants.DefaultRecentRunsMinCount,
 		Theme:                   constants.DefaultTheme,
 		Font:                    constants.DefaultFont,
+		Scale:                   constants.DefaultScale,
 		MouseTrackingEnabled:    true,
 		MouseBufferMinutes:      constants.DefaultMouseBufferMinutes,
 		ScreenCaptureEnabled:    false,
@@ -88,6 +89,7 @@ func Sanitize(s models.Settings) models.Settings {
 	if strings.TrimSpace(s.Font) == "" {
 		s.Font = constants.DefaultFont
 	}
+	s.Scale = sanitizeScale(s.Scale)
 	if s.MouseBufferMinutes <= 0 {
 		s.MouseBufferMinutes = constants.DefaultMouseBufferMinutes
 	}
@@ -107,6 +109,15 @@ func Sanitize(s models.Settings) models.Settings {
 		s.SessionNotes = make(map[string]models.SessionNote)
 	}
 	return s
+}
+
+func sanitizeScale(scale string) string {
+	for _, valid := range constants.ValidScales {
+		if scale == valid {
+			return scale
+		}
+	}
+	return constants.DefaultScale
 }
 
 func sanitizeScreenCaptureFPS(fps int) int {

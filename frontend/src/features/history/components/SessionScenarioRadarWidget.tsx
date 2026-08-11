@@ -125,15 +125,15 @@ function SessionScenarioRadarChart({
 }) {
   const angleTickSize = expanded
     ? points.length >= 8
-      ? 10
+      ? "0.625rem"
       : points.length >= 6
-        ? 11
-        : 12
+        ? "0.6875rem"
+        : "0.75rem"
     : points.length >= 8
-      ? 9
+      ? "0.5625rem"
       : points.length >= 6
-        ? 10
-        : 11;
+        ? "0.625rem"
+        : "0.6875rem";
   const outerRadius = expanded
     ? points.length >= 8
       ? "64%"
@@ -179,7 +179,10 @@ function SessionScenarioRadarChart({
           allowDecimals={false}
           axisLine={false}
           tickLine={false}
-          tick={{ fill: "var(--surface-muted-foreground)", fontSize: 11 }}
+          tick={{
+            fill: "var(--surface-muted-foreground)",
+            fontSize: "0.6875rem",
+          }}
         />
         <ChartTooltip
           content={

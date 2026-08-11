@@ -61,9 +61,9 @@ type HistoryState = {
   thresholds: number[];
 };
 
-const CATEGORY_COLUMN_WIDTH = 52;
-const GROUP_COLUMN_WIDTH = 24;
-const LEFT_PANEL_PADDING = 16;
+const CATEGORY_COLUMN_WIDTH = 3.25;
+const GROUP_COLUMN_WIDTH = 1.5;
+const LEFT_PANEL_PADDING = 1;
 
 export function BenchmarkProgressTable({
   benchmark,
@@ -277,7 +277,7 @@ export function BenchmarkProgressTable({
   );
 
   const infoGridTemplate = useMemo(
-    () => infoColumns.map((column) => `${column.width}px`).join(" "),
+    () => infoColumns.map((column) => `${column.width}rem`).join(" "),
     [infoColumns],
   );
 
@@ -293,8 +293,8 @@ export function BenchmarkProgressTable({
     infoGridWidth;
   const hasVisibleRanks = visibleRankIndices.length > 0;
   const rightGridTemplate = hasVisibleRanks
-    ? `repeat(${visibleRankIndices.length}, minmax(${RANK_MIN_COLUMN_WIDTH}px, 1fr))`
-    : `minmax(${RANK_MIN_COLUMN_WIDTH}px, 1fr)`;
+    ? `repeat(${visibleRankIndices.length}, minmax(${RANK_MIN_COLUMN_WIDTH}rem, 1fr))`
+    : `minmax(${RANK_MIN_COLUMN_WIDTH}rem, 1fr)`;
   const rightGridMinWidth =
     Math.max(1, visibleRankIndices.length) * RANK_MIN_COLUMN_WIDTH;
   const overallRankName =
@@ -305,7 +305,7 @@ export function BenchmarkProgressTable({
   const categoryPaddingClass = compactMode ? "py-3" : "py-4";
   const categorySpacingClass = compactMode ? "space-y-1.5" : "space-y-2";
   const rowSpacingClass = compactMode ? "space-y-0.5" : "space-y-1";
-  const labelTextClass = compactMode ? "text-[10px]" : "text-[11px]";
+  const labelTextClass = compactMode ? "text-[0.625rem]" : "text-[0.6875rem]";
   const rankVisibilityOptions = Array.from(
     { length: Math.max(1, rankDefs.length) },
     (_, index) => index + 1,
@@ -389,27 +389,27 @@ export function BenchmarkProgressTable({
         <div className="relative z-0 w-full space-y-3 pb-4">
           <div className="relative mb-3 w-full rounded-xl bg-surface py-2 shadow-sm">
             <div className="flex items-center">
-              <div className="flex h-[28px] w-[52px] shrink-0 bg-transparent pl-5" />
-              <div className="flex h-[28px] w-6 shrink-0 bg-transparent" />
+              <div className="flex h-[1.75rem] w-[3.25rem] shrink-0 bg-transparent pl-5" />
+              <div className="flex h-[1.75rem] w-6 shrink-0 bg-transparent" />
               <div className="shrink-0 bg-transparent pl-2 pr-2">
                 <div
-                  className="grid h-[28px] items-center"
+                  className="grid h-[1.75rem] items-center"
                   style={{ gridTemplateColumns: infoGridTemplate }}
                 >
-                  <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[11px] uppercase tracking-wide text-surface-muted-foreground">
+                  <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
                     Scenario
                   </div>
                   <div />
                   {effectiveShowNotesCol && <div />}
                   {effectiveShowRecCol && (
-                    <div className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground">
+                    <div className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
                       Rec
                     </div>
                   )}
                   {effectiveShowPlayCol && <div />}
                   {effectiveShowHistoryCol && <div />}
                   <div />
-                  <div className="text-right text-[11px] uppercase tracking-wide text-surface-muted-foreground">
+                  <div className="text-right text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
                     Score
                   </div>
                 </div>
@@ -423,7 +423,7 @@ export function BenchmarkProgressTable({
               className={`relative w-full overflow-hidden rounded-xl bg-surface shadow-sm ${categoryPaddingClass}`}
             >
               <div className="flex">
-                <div className="flex w-[52px] shrink-0 items-center justify-center bg-transparent pl-5">
+                <div className="flex w-[3.25rem] shrink-0 items-center justify-center bg-transparent pl-5">
                   <span
                     className={`font-semibold tracking-wide text-foreground ${labelTextClass}`}
                     style={{
@@ -464,7 +464,7 @@ export function BenchmarkProgressTable({
                           </span>
                         ) : (
                           <span
-                            className="text-[10px] text-surface-muted-foreground"
+                            className="text-[0.625rem] text-surface-muted-foreground"
                             style={{
                               writingMode: "vertical-rl",
                               transform: "rotate(180deg)",
@@ -540,14 +540,14 @@ export function BenchmarkProgressTable({
 
         <div
           className="pointer-events-auto absolute bottom-0 right-0 top-0 z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          style={{ left: rightPanelOffset }}
+          style={{ left: `${rightPanelOffset}rem` }}
         >
           <div className="min-h-full min-w-full w-max space-y-3 pb-4 pr-2">
             <div className="relative mb-3 min-w-full py-2 pr-1">
-              <div className="flex h-[28px] items-center">
+              <div className="flex h-[1.75rem] items-center">
                 <div className="flex-1">
                   <div
-                    className="grid h-[28px] items-center gap-1"
+                    className="grid h-[1.75rem] items-center gap-1"
                     style={{
                       gridTemplateColumns: rightGridTemplate,
                       minWidth: rightGridMinWidth,
@@ -558,14 +558,14 @@ export function BenchmarkProgressTable({
                       visibleRanks.map((rank, index) => (
                         <div
                           key={`${rank.name}-${visibleRankIndices[index]}`}
-                          className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground"
+                          className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground"
                           style={rank.color ? { color: rank.color } : undefined}
                         >
                           {rank.name}
                         </div>
                       ))
                     ) : (
-                      <div className="text-center text-[11px] uppercase tracking-wide text-surface-muted-foreground">
+                      <div className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
                         Details
                       </div>
                     )}
@@ -635,7 +635,7 @@ export function BenchmarkProgressTable({
             isOpen={showSettings}
             onClose={() => setShowSettings(false)}
             title="Tracker Settings"
-            width={700}
+            width="43.75rem"
             height="auto"
           >
             <div className="space-y-6 px-6 pb-6">
@@ -706,7 +706,7 @@ export function BenchmarkProgressTable({
                         setVisibleRankCount(Math.max(1, Number(value) || 1))
                       }
                     >
-                      <SelectTrigger className="h-8 w-[80px]">
+                      <SelectTrigger className="h-8 w-[5rem]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

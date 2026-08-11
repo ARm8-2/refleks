@@ -69,20 +69,36 @@ export function BenchmarkDetailPage() {
       }
 
       const { toBlob } = await import("html-to-image");
-      const blob = await toBlob(shareCaptureRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-      });
 
-      if (!blob) {
-        throw new Error("Failed to generate screenshot image");
+      // Share cards are always rendered at 100% scale so the exported image
+      // looks the same regardless of the user's UI scale setting.
+      const root = document.documentElement;
+      const previousFontSize = root.style.getPropertyValue("font-size");
+      root.style.removeProperty("font-size");
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => resolve()),
+      );
+
+      try {
+        const blob = await toBlob(shareCaptureRef.current, {
+          cacheBust: true,
+          pixelRatio: 2,
+        });
+
+        if (!blob) {
+          throw new Error("Failed to generate screenshot image");
+        }
+
+        await navigator.clipboard.write([
+          new ClipboardItem({ [blob.type]: blob }),
+        ]);
+        setShareCopied(true);
+        window.setTimeout(() => setShareCopied(false), 1800);
+      } finally {
+        if (previousFontSize) {
+          root.style.setProperty("font-size", previousFontSize);
+        }
       }
-
-      await navigator.clipboard.write([
-        new ClipboardItem({ [blob.type]: blob }),
-      ]);
-      setShareCopied(true);
-      window.setTimeout(() => setShareCopied(false), 1800);
     } catch (error) {
       console.error("Failed to copy benchmark screenshot:", error);
       alert("Failed to copy screenshot.");
@@ -111,7 +127,7 @@ export function BenchmarkDetailPage() {
               value={String(difficultyIndex)}
               onValueChange={(value) => setDifficultyIndex(Number(value) || 0)}
             >
-              <SelectTrigger className="h-8 w-auto min-w-0 max-w-[240px] px-2.5 text-xs sm:text-sm">
+              <SelectTrigger className="h-8 w-auto min-w-0 max-w-[15rem] px-2.5 text-xs sm:text-sm">
                 <SelectValue placeholder="Difficulty" />
               </SelectTrigger>
               <SelectContent>
@@ -177,7 +193,7 @@ export function BenchmarkDetailPage() {
         {showInitialSkeleton && (
           <div className="space-y-3 rounded-xl bg-surface p-6 shadow-sm">
             <div className="h-5 w-56 animate-pulse rounded-md bg-surface-subtle" />
-            <div className="h-[320px] animate-pulse rounded-xl bg-surface-subtle" />
+            <div className="h-[20rem] animate-pulse rounded-xl bg-surface-subtle" />
           </div>
         )}
 
