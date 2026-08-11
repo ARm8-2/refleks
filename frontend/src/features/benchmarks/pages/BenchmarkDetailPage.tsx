@@ -131,7 +131,8 @@ export function BenchmarkDetailPage() {
             variant="ghost"
             size="icon"
             onClick={() =>
-              difficulty?.sharecode && launchPlaylist(difficulty.sharecode)
+              difficulty?.sharecode &&
+              launchPlaylist(difficulty.sharecode).catch(() => {})
             }
             disabled={!difficulty?.sharecode}
             title="Play benchmark playlist in Kovaak's"

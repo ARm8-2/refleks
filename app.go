@@ -432,29 +432,51 @@ func (a *App) GetDefaultSettings() models.Settings {
 	return appsettings.Sanitize(appsettings.Default())
 }
 
+// escapeDeepLinkValue percent-encodes a value so it can be embedded in a
+// steam:// deep-link query. It encodes everything except RFC 3986 unreserved
+// characters (A-Za-z0-9-._~), so characters like '&', ';', '=', '?' and ':'
+// cannot be misinterpreted as separators by Steam's URL parser.
+// url.QueryEscape is close, but it encodes spaces as '+' (form encoding),
+// which some deep-link parsers pass through literally; '%20' is unambiguous.
+func escapeDeepLinkValue(s string) string {
+	return strings.ReplaceAll(url.QueryEscape(s), "+", "%20")
+}
+
 // LaunchKovaaksScenario opens the Steam deep-link to launch a given scenario in Kovaak's.
 func (a *App) LaunchKovaaksScenario(name string, mode string) error {
-	n := url.PathEscape(name)
-	if n == "" {
+	name = strings.TrimSpace(name)
+	if name == "" {
 		return fmt.Errorf("missing scenario name")
 	}
 	if mode == "" {
 		mode = "challenge"
 	}
-	m := url.PathEscape(mode)
-	deeplink := fmt.Sprintf("steam://run/%d/?action=jump-to-scenario;name=%s;mode=%s", constants.KovaaksSteamAppID, n, m)
-	process.OpenURL(deeplink)
+	deeplink := fmt.Sprintf(
+		"steam://run/%d/?action=jump-to-scenario;name=%s;mode=%s",
+		constants.KovaaksSteamAppID,
+		escapeDeepLinkValue(name),
+		escapeDeepLinkValue(mode),
+	)
+	if err := process.OpenURL(deeplink); err != nil {
+		return fmt.Errorf("failed to open scenario deep link: %w", err)
+	}
 	return nil
 }
 
 // LaunchKovaaksPlaylist opens a Steam deep-link that jumps directly to a shared playlist by sharecode.
 func (a *App) LaunchKovaaksPlaylist(sharecode string) error {
-	sc := url.PathEscape(sharecode)
-	if sc == "" {
+	sharecode = strings.TrimSpace(sharecode)
+	if sharecode == "" {
 		return fmt.Errorf("missing sharecode")
 	}
-	deeplink := fmt.Sprintf("steam://run/%d/?action=jump-to-playlist;sharecode=%s", constants.KovaaksSteamAppID, sc)
-	process.OpenURL(deeplink)
+	deeplink := fmt.Sprintf(
+		"steam://run/%d/?action=jump-to-playlist;sharecode=%s",
+		constants.KovaaksSteamAppID,
+		escapeDeepLinkValue(sharecode),
+	)
+	if err := process.OpenURL(deeplink); err != nil {
+		return fmt.Errorf("failed to open playlist deep link: %w", err)
+	}
 	return nil
 }
 
