@@ -69,36 +69,20 @@ export function BenchmarkDetailPage() {
       }
 
       const { toBlob } = await import("html-to-image");
+      const blob = await toBlob(shareCaptureRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+      });
 
-      // Share cards are always rendered at 100% scale so the exported image
-      // looks the same regardless of the user's UI scale setting.
-      const root = document.documentElement;
-      const previousFontSize = root.style.getPropertyValue("font-size");
-      root.style.removeProperty("font-size");
-      await new Promise<void>((resolve) =>
-        requestAnimationFrame(() => resolve()),
-      );
-
-      try {
-        const blob = await toBlob(shareCaptureRef.current, {
-          cacheBust: true,
-          pixelRatio: 2,
-        });
-
-        if (!blob) {
-          throw new Error("Failed to generate screenshot image");
-        }
-
-        await navigator.clipboard.write([
-          new ClipboardItem({ [blob.type]: blob }),
-        ]);
-        setShareCopied(true);
-        window.setTimeout(() => setShareCopied(false), 1800);
-      } finally {
-        if (previousFontSize) {
-          root.style.setProperty("font-size", previousFontSize);
-        }
+      if (!blob) {
+        throw new Error("Failed to generate screenshot image");
       }
+
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob }),
+      ]);
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 1800);
     } catch (error) {
       console.error("Failed to copy benchmark screenshot:", error);
       alert("Failed to copy screenshot.");
