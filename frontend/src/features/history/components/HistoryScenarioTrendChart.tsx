@@ -11,6 +11,8 @@ import {
   CHART_STYLE,
   chartActiveDot,
   chartDot,
+  useI18n,
+  type MessageKey,
 } from "@/shared/lib";
 import { useMemo } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
@@ -24,9 +26,15 @@ type Props = {
   className?: string;
 };
 
-const dualChartConfig: ChartConfig = {
-  score: { label: "Score", color: CHART_SERIES_COLORS.scoreHistory },
-  accuracy: { label: "Accuracy %", color: CHART_SERIES_COLORS.accuracy },
+const dualChartConfig = {
+  score: {
+    labelKey: "history.stats.score" as MessageKey,
+    color: CHART_SERIES_COLORS.scoreHistory,
+  },
+  accuracy: {
+    labelKey: "history.analysis.chart.accuracyPct" as MessageKey,
+    color: CHART_SERIES_COLORS.accuracy,
+  },
 };
 
 export function ScenarioTrendChart({
@@ -35,6 +43,7 @@ export function ScenarioTrendChart({
   onClickPoint,
   className,
 }: Props) {
+  const { t } = useI18n();
   const hasAccuracy = points.some(
     (point) => point.accuracy != null && point.accuracy > 0,
   );
@@ -51,12 +60,19 @@ export function ScenarioTrendChart({
 
   const chart = (expanded: boolean) => {
     const chartHeight = expanded ? "h-[20rem]" : "h-[12.5rem]";
+    const config: ChartConfig = {
+      score: {
+        label: t(dualChartConfig.score.labelKey),
+        color: dualChartConfig.score.color,
+      },
+      accuracy: {
+        label: t(dualChartConfig.accuracy.labelKey),
+        color: dualChartConfig.accuracy.color,
+      },
+    };
 
     return (
-      <ChartContainer
-        config={dualChartConfig}
-        className={`aspect-auto w-full h-full`}
-      >
+      <ChartContainer config={config} className={`aspect-auto w-full h-full`}>
         <LineChart
           data={points}
           margin={{ top: 8, right: 12, left: 6, bottom: 0 }}
@@ -142,7 +158,9 @@ export function ScenarioTrendChart({
   return (
     <Widget
       title={scenarioName}
-      modalTitle={`${scenarioName} — Trend`}
+      modalTitle={t("history.scenarioTrend.modalTitle", {
+        scenario: scenarioName,
+      })}
       modalContent={chart(true)}
       className={className}
     >

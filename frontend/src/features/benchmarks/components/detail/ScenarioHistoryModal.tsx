@@ -10,7 +10,9 @@ import {
   CHART_STYLE,
   buildThresholdAnchoredScoreDomain,
   getLastScenarioScores,
+  translateMessage,
 } from "@/shared/lib";
+import { getLocale, useI18n } from "@/shared/lib/i18n";
 import type { KovaaksLastScore, RankDef } from "@/shared/types";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -43,9 +45,21 @@ type RankBand = {
   color: string;
 };
 
-const chartConfig: ChartConfig = {
-  score: { label: "Score", color: CHART_SERIES_COLORS.scoreHistory },
-};
+let dateFormatterLocale: string | null = null;
+let dateFormatter: Intl.DateTimeFormat | null = null;
+function getDateFormatter(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  if (!dateFormatter || dateFormatterLocale !== locale) {
+    dateFormatterLocale = locale;
+    dateFormatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+  return dateFormatter;
+}
 
 export function ScenarioHistoryModal({
   isOpen,
@@ -54,6 +68,7 @@ export function ScenarioHistoryModal({
   thresholds,
   rankDefs,
 }: Props) {
+  const { t, locale } = useI18n();
   const [scores, setScores] = useState<KovaaksLastScore[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,14 +83,19 @@ export function ScenarioHistoryModal({
     getLastScenarioScores(scenarioName)
       .then((result) => setScores(result))
       .catch((fetchError) => {
-        setError(
-          fetchError instanceof Error ? fetchError.message : String(fetchError),
-        );
+        setError(translateMessage(fetchError));
       })
       .finally(() => setLoading(false));
   }, [isOpen, scenarioName]);
 
   const sorted = useMemo(() => [...scores].reverse(), [scores]);
+
+  const chartConfig: ChartConfig = {
+    score: {
+      label: t("benchmarks.scenarioHistory.score"),
+      color: CHART_SERIES_COLORS.scoreHistory,
+    },
+  };
 
   const trendData = useMemo<TrendPoint[]>(() => {
     return sorted.map((entry, index) => {
@@ -83,8 +103,8 @@ export function ScenarioHistoryModal({
       const date = rawDate ? new Date(rawDate) : null;
       const dateLabel =
         date && !Number.isNaN(date.getTime())
-          ? date.toLocaleString()
-          : rawDate || "Unknown";
+          ? getDateFormatter().format(date)
+          : rawDate || t("common.unknown");
 
       return {
         run: index + 1,
@@ -92,7 +112,8 @@ export function ScenarioHistoryModal({
         dateLabel,
       };
     });
-  }, [sorted]);
+    // `t` is referentially stable — the locale drives recomputation.
+  }, [sorted, locale]);
 
   const numericScores = useMemo(
     () =>
@@ -115,7 +136,7 @@ export function ScenarioHistoryModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Scenario History · ${scenarioName}`}
+      title={t("benchmarks.scenarioHistory.title", { scenario: scenarioName })}
     >
       <div className="space-y-3 px-4 pb-4">
         {loading && <Loading />}
@@ -128,7 +149,7 @@ export function ScenarioHistoryModal({
 
         {!loading && !error && trendData.length === 0 && (
           <div className="rounded-xl border border-border bg-surface p-4 text-sm text-surface-muted-foreground">
-            No scores found.
+            {t("benchmarks.scenarioHistory.noScores")}
           </div>
         )}
 

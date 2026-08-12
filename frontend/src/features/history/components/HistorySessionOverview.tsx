@@ -1,6 +1,6 @@
 import { Button, Input } from "@/shared/components";
 import { usePersistedState, useStore } from "@/shared/hooks";
-import { cn, STORAGE_KEYS } from "@/shared/lib";
+import { cn, STORAGE_KEYS, useI18n } from "@/shared/lib";
 import type { Session } from "@/shared/types";
 import {
   ChevronDown,
@@ -55,6 +55,7 @@ export function HistorySessionOverview({
   onSelectRun,
   globalPbByScenario,
 }: Props) {
+  const { t } = useI18n();
   const [scenarioGridExpanded, setScenarioGridExpanded] = usePersistedState(
     STORAGE_KEYS.historyScenarioGridExpanded,
     false,
@@ -135,7 +136,7 @@ export function HistorySessionOverview({
       await saveSessionNote(session.id, trimmedDraft, initialNotes);
       setNameEditing(false);
     } catch {
-      setNameError("Failed to update session name. Please try again.");
+      setNameError(t("history.overview.saveNameError"));
     } finally {
       setNameSaving(false);
     }
@@ -151,7 +152,7 @@ export function HistorySessionOverview({
     return (
       <section className="flex h-full min-h-0 items-center justify-center rounded-xl bg-surface p-5">
         <p className="text-sm text-surface-muted-foreground">
-          Select a session
+          {t("history.overview.selectSession")}
         </p>
       </section>
     );
@@ -183,7 +184,7 @@ export function HistorySessionOverview({
                       cancelNameEdit();
                     }
                   }}
-                  placeholder="Session name"
+                  placeholder={t("history.overview.sessionNamePlaceholder")}
                   className="max-w-[21.25rem] bg-transparent px-3 font-medium shadow-none focus-visible:bg-surface-subtle focus-visible:ring-0"
                   disabled={nameSaving}
                 />
@@ -198,7 +199,7 @@ export function HistorySessionOverview({
                   variant="ghost"
                   size="icon"
                   className="text-surface-muted-foreground"
-                  title="Rename session"
+                  title={t("history.overview.renameSession")}
                 >
                   <SquarePen />
                 </Button>
@@ -219,7 +220,11 @@ export function HistorySessionOverview({
               "shrink-0",
               hasNotes ? "text-primary" : "text-surface-muted-foreground",
             )}
-            title={hasNotes ? "Edit session notes" : "Add session notes"}
+            title={
+              hasNotes
+                ? t("history.overview.editSessionNotes")
+                : t("history.overview.addSessionNotes")
+            }
           >
             <NotebookPen />
           </Button>
@@ -230,18 +235,20 @@ export function HistorySessionOverview({
         <div className="grid gap-3 sm:grid-cols-3">
           <MetricCell
             icon={<Layers3 className="h-4 w-4" />}
-            label="Runs"
+            label={t("history.overview.runsLabel")}
             value={String(session.items.length)}
-            sub={`${readUniqueScenarioCount(session)} scenarios`}
+            sub={t("history.overview.scenarios", {
+              count: readUniqueScenarioCount(session),
+            })}
           />
           <MetricCell
             icon={<Clock3 className="h-4 w-4" />}
-            label="Length"
+            label={t("history.overview.length")}
             value={formatDurationLabel(readSessionDurationMs(session))}
           />
           <MetricCell
             icon={<Gamepad2 className="h-4 w-4" />}
-            label="Playtime"
+            label={t("history.overview.playtime")}
             value={formatDurationLabel(readSessionActivePlaytimeMs(session))}
           />
         </div>
@@ -249,14 +256,16 @@ export function HistorySessionOverview({
         {notes && (
           <div className="mt-4 rounded-xl bg-surface-subtle px-3 py-2.5">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-surface-muted-foreground">Notes</p>
+              <p className="text-xs text-surface-muted-foreground">
+                {t("history.overview.notes")}
+              </p>
               <Button
                 onClick={() => setNotesOpen(true)}
                 variant="ghost"
                 size="sm"
-                title="Edit session notes"
+                title={t("history.overview.editSessionNotes")}
               >
-                Edit
+                {t("common.actions.edit")}
               </Button>
             </div>
             <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">
@@ -278,7 +287,9 @@ export function HistorySessionOverview({
               ) : (
                 <ChevronDown className="h-3.5 w-3.5" />
               )}
-              Scenarios ({scenarioSummaries.length})
+              {t("history.overview.scenariosLabel", {
+                count: scenarioSummaries.length,
+              })}
             </button>
 
             {scenarioGridExpanded && scenarioSummaries.length > 3 && (
@@ -287,7 +298,7 @@ export function HistorySessionOverview({
                 <Input
                   value={scenarioQuery}
                   onChange={(e) => setScenarioQuery(e.target.value)}
-                  placeholder="Search scenarios..."
+                  placeholder={t("history.overview.searchScenarios")}
                   className="h-9 pl-8"
                 />
               </div>
@@ -314,7 +325,9 @@ export function HistorySessionOverview({
                 onClick={() => setScenarioGridExpanded(true)}
                 className="mt-2 text-xs text-surface-muted-foreground hover:text-foreground transition-colors"
               >
-                +{filteredSummaries.length - 3} more
+                {t("history.overview.more", {
+                  count: filteredSummaries.length - 3,
+                })}
               </button>
             )}
           </div>
@@ -330,11 +343,11 @@ export function HistorySessionOverview({
               <div className="mt-4 space-y-3">
                 <div className="grid gap-3 sm:grid-cols-3">
                   <SmallMetric
-                    label="Session best"
+                    label={t("history.overview.sessionBest")}
                     value={formatScore(selectedSummary.bestScore)}
                   />
                   <SmallMetric
-                    label="Latest"
+                    label={t("history.overview.latest")}
                     value={formatScore(
                       trendPoints[trendPoints.length - 1].score,
                     )}
@@ -344,11 +357,11 @@ export function HistorySessionOverview({
                       type="button"
                       onClick={() => onSelectRun(pb.id)}
                       className="rounded-xl bg-surface-subtle px-3 py-2.5 text-left transition-[transform,color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.985] hover:bg-surface-emphasis"
-                      title="Inspect personal best"
+                      title={t("history.overview.inspectPersonalBest")}
                     >
                       <div className="flex items-center gap-1 text-xs text-surface-muted-foreground">
                         <Trophy className="h-3 w-3 text-amber-500" />
-                        All-time PB
+                        {t("history.overview.allTimePb")}
                       </div>
                       <div className="text-lg font-semibold text-foreground">
                         {formatScore(pb.score)}
@@ -356,7 +369,7 @@ export function HistorySessionOverview({
                     </button>
                   ) : (
                     <SmallMetric
-                      label="Runs"
+                      label={t("history.overview.runsLabel")}
                       value={formatNumber(trendPoints.length, 0)}
                     />
                   )}
@@ -373,10 +386,11 @@ export function HistorySessionOverview({
                   <PerformanceVsSensWidget
                     sessions={session ? [session] : []}
                     scenarioName={selectedScenario}
-                    title="Performance vs Sensitivity"
                     description={
                       selectedScenario
-                        ? `${selectedScenario} in this session.`
+                        ? t("history.performanceVsSens.inThisSession", {
+                            scenario: selectedScenario,
+                          })
                         : undefined
                     }
                     className="bg-surface-subtle h-[20rem]"
@@ -449,6 +463,7 @@ function ScenarioCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -472,8 +487,8 @@ function ScenarioCard({
           {summary.name}
         </div>
         <div className="text-xs text-surface-muted-foreground">
-          {formatScore(summary.bestScore)} · {summary.count}{" "}
-          {summary.count === 1 ? "run" : "runs"}
+          {formatScore(summary.bestScore)} ·{" "}
+          {t("history.overview.runs", { count: summary.count })}
         </div>
       </div>
       {summary.trend === "up" && (

@@ -1,4 +1,5 @@
 import { Button, InfoTooltip } from "@/shared/components";
+import { translate, useI18n, type MessageKey } from "@/shared/lib";
 import type { RunEnvironment } from "@/shared/types/ipc";
 import { ArrowRightLeft, EyeOff, PinOff } from "lucide-react";
 import {
@@ -10,74 +11,76 @@ import {
 import { HeroStat, StatsGroup } from "./shared";
 
 type EnvField = {
-  label: string;
+  labelKey: MessageKey;
   key?: keyof RunEnvironment;
   value?: (run: HistoryRun) => string;
-  privacyNote?: string;
+  privacyNote?: MessageKey;
 };
 
-const ENV_GROUPS: Array<{ label: string; fields: EnvField[] }> = [
+// Labels are catalog keys resolved at render time; the `key` values are
+// RunEnvironment field names and never translate.
+const ENV_GROUPS: Array<{ labelKey: MessageKey; fields: EnvField[] }> = [
   {
-    label: "App & OS",
+    labelKey: "history.env.groups.appOs",
     fields: [
-      { label: "App Version", key: "appVersion" },
+      { labelKey: "history.env.fields.appVersion", key: "appVersion" },
       {
-        label: "File Version",
+        labelKey: "history.env.fields.fileVersion",
         value: (run) => formatRunFileVersion(run.item.fileVersion),
       },
-      { label: "OS", key: "os" },
-      { label: "Architecture", key: "arch" },
-      { label: "OS Version", key: "osVersion" },
+      { labelKey: "history.env.fields.os", key: "os" },
+      { labelKey: "history.env.fields.arch", key: "arch" },
+      { labelKey: "history.env.fields.osVersion", key: "osVersion" },
       {
-        label: "Steam ID",
+        labelKey: "history.env.fields.steamId",
         key: "steamId",
-        privacyNote: "Kept local only and scrubbed before upload.",
+        privacyNote: "history.env.privacyNote",
       },
       {
-        label: "Persona Name",
+        labelKey: "history.env.fields.personaName",
         key: "personaName",
-        privacyNote: "Kept local only and scrubbed before upload.",
+        privacyNote: "history.env.privacyNote",
       },
     ],
   },
   {
-    label: "PC Hardware",
+    labelKey: "history.env.groups.pcHardware",
     fields: [
-      { label: "CPU", key: "cpuName" },
-      { label: "CPU Cores", key: "cpuCores" },
-      { label: "GPU", key: "gpuName" },
-      { label: "RAM Total (MB)", key: "ramTotalMB" },
+      { labelKey: "history.env.fields.cpu", key: "cpuName" },
+      { labelKey: "history.env.fields.cpuCores", key: "cpuCores" },
+      { labelKey: "history.env.fields.gpu", key: "gpuName" },
+      { labelKey: "history.env.fields.ramTotalMb", key: "ramTotalMB" },
     ],
   },
   {
-    label: "Display Context",
+    labelKey: "history.env.groups.displayContext",
     fields: [
-      { label: "Refresh Rate (Hz)", key: "displayHz" },
-      { label: "Screen Width", key: "screenWidth" },
-      { label: "Screen Height", key: "screenHeight" },
-      { label: "Windowed", key: "isWindowed" },
+      { labelKey: "history.env.fields.displayHz", key: "displayHz" },
+      { labelKey: "history.env.fields.screenWidth", key: "screenWidth" },
+      { labelKey: "history.env.fields.screenHeight", key: "screenHeight" },
+      { labelKey: "history.env.fields.isWindowed", key: "isWindowed" },
     ],
   },
   {
-    label: "Mouse Device",
+    labelKey: "history.env.groups.mouseDevice",
     fields: [
-      { label: "Input Backend", key: "mouseBackend" },
-      { label: "Vendor ID (VID)", key: "mouseVid" },
-      { label: "Product ID (PID)", key: "mousePid" },
-      { label: "Interface (MI)", key: "mouseMi" },
+      { labelKey: "history.env.fields.mouseBackend", key: "mouseBackend" },
+      { labelKey: "history.env.fields.mouseVid", key: "mouseVid" },
+      { labelKey: "history.env.fields.mousePid", key: "mousePid" },
+      { labelKey: "history.env.fields.mouseMi", key: "mouseMi" },
     ],
   },
   {
-    label: "Trace Metadata",
+    labelKey: "history.env.groups.traceMetadata",
     fields: [
-      { label: "Trace Points", key: "tracePoints" },
-      { label: "Trace Duration (s)", key: "traceDuration" },
-      { label: "Sample Rate (Hz)", key: "sampleRate" },
+      { labelKey: "history.env.fields.tracePoints", key: "tracePoints" },
+      { labelKey: "history.env.fields.traceDuration", key: "traceDuration" },
+      { labelKey: "history.env.fields.sampleRate", key: "sampleRate" },
     ],
   },
   {
-    label: "Diagnostics",
-    fields: [{ label: "Mouse Device Path (Raw)", key: "mouseName" }],
+    labelKey: "history.env.groups.diagnostics",
+    fields: [{ labelKey: "history.env.fields.mouseName", key: "mouseName" }],
   },
 ];
 
@@ -108,7 +111,7 @@ function formatEnvValue(
   }
 
   if (typeof raw === "boolean") {
-    return raw ? "Yes" : "No";
+    return raw ? translate("common.yes") : translate("common.no");
   }
 
   if (typeof raw === "string") {
@@ -229,6 +232,7 @@ function SingleEnvironmentView({
   anonymousEnabled: boolean;
   onClearPrimaryRun: () => void;
 }) {
+  const { t } = useI18n();
   const env = primaryRun.item.env;
 
   return (
@@ -251,17 +255,19 @@ function SingleEnvironmentView({
       </div>
 
       {ENV_GROUPS.map((group) => (
-        <StatsGroup key={group.label} label={group.label}>
+        <StatsGroup key={group.labelKey} label={t(group.labelKey)}>
           {group.fields.map((field) => (
             <EnvironmentStatRow
-              key={field.label}
-              label={field.label}
+              key={field.key ?? field.labelKey}
+              label={t(field.labelKey)}
               value={
                 field.value
                   ? field.value(primaryRun)
                   : formatEnvValue(env, field.key!)
               }
-              privacyNote={field.privacyNote}
+              privacyNote={
+                field.privacyNote ? translate(field.privacyNote) : undefined
+              }
               showPrivacyHint={anonymousEnabled}
             />
           ))}
@@ -284,6 +290,7 @@ function CompareEnvironmentView({
   onClearPrimaryRun: () => void;
   onClearComparison: () => void;
 }) {
+  const { t } = useI18n();
   const primaryEnv = primaryRun.item.env;
   const compareEnv = compareRun.item.env;
 
@@ -292,7 +299,9 @@ function CompareEnvironmentView({
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex items-start justify-between gap-2 rounded-xl bg-surface-subtle px-3 py-2.5">
           <div className="min-w-0">
-            <div className="text-xs text-surface-muted-foreground">Pinned</div>
+            <div className="text-xs text-surface-muted-foreground">
+              {t("history.inspector.pinned")}
+            </div>
             <div className="mt-0.5 font-medium text-foreground truncate">
               {primaryRun.scenarioName}
             </div>
@@ -311,7 +320,9 @@ function CompareEnvironmentView({
         </div>
         <div className="flex items-start justify-between gap-2 rounded-xl bg-surface-subtle px-3 py-2.5">
           <div className="min-w-0">
-            <div className="text-xs text-surface-muted-foreground">Compare</div>
+            <div className="text-xs text-surface-muted-foreground">
+              {t("history.inspector.compare")}
+            </div>
             <div className="mt-0.5 font-medium text-foreground truncate">
               {compareRun.scenarioName}
             </div>
@@ -331,11 +342,11 @@ function CompareEnvironmentView({
       </div>
 
       {ENV_GROUPS.map((group) => (
-        <StatsGroup key={group.label} label={group.label}>
+        <StatsGroup key={group.labelKey} label={t(group.labelKey)}>
           {group.fields.map((field) => (
             <EnvironmentCompareStatRow
-              key={field.label}
-              label={field.label}
+              key={field.key ?? field.labelKey}
+              label={t(field.labelKey)}
               a={
                 field.value
                   ? field.value(primaryRun)
@@ -346,7 +357,11 @@ function CompareEnvironmentView({
                   ? field.value(compareRun)
                   : formatEnvValue(compareEnv, field.key!)
               }
-              privacyNote={field.privacyNote}
+              privacyNote={
+                field.privacyNote
+                  ? translate(field.privacyNote as MessageKey)
+                  : undefined
+              }
               showPrivacyHint={anonymousEnabled}
             />
           ))}

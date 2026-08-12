@@ -1,5 +1,5 @@
 import { Button, Modal } from "@/shared/components";
-import { cn, openURL } from "@/shared/lib";
+import { cn, openURL, useI18n } from "@/shared/lib";
 import {
   Clock,
   Database,
@@ -228,6 +228,7 @@ export function WelcomeModal({
   onConfirm,
   onClose,
 }: WelcomeModalProps) {
+  const { t } = useI18n();
   const [privacyMode, setPrivacyMode] = useState<PrivacyMode>(
     initialAnonymousEnabled ? "anonymous" : "public",
   );
@@ -250,8 +251,8 @@ export function WelcomeModal({
   }, [initialMouseTrackingEnabled, isOpen]);
 
   const syncStatus = runSyncEnabled
-    ? "Run Sync is currently enabled. You can change this later in Privacy settings."
-    : "Run Sync is currently turned off in Settings. If you enable it later, this choice will be used.";
+    ? t("welcome.modal.syncStatusEnabled")
+    : t("welcome.modal.syncStatusDisabled");
 
   const handleContinue = async () => {
     if (isSaving) {
@@ -314,36 +315,36 @@ export function WelcomeModal({
             <WelcomeSection
               title={
                 showMouseTraceChoice
-                  ? "First-Time Setup"
+                  ? t("welcome.modal.sectionFirstTime")
                   : showAnonymousChoice
-                    ? "Profile Settings"
-                    : "Settings"
+                    ? t("welcome.modal.sectionProfile")
+                    : t("welcome.modal.sectionReview")
               }
               description={
                 showMouseTraceChoice
-                  ? "Pick how you want your uploads and mouse traces to start. You can change these choices later in Settings."
+                  ? t("welcome.modal.sectionFirstTimeDescription")
                   : showAnonymousChoice
-                    ? "Choose how you want your runs to appear on the RefleK's Index. You can change this later in Privacy settings."
-                    : "Review your current settings. You can change these anytime in the Settings panel."
+                    ? t("welcome.modal.sectionProfileDescription")
+                    : t("welcome.modal.sectionReviewDescription")
               }
             >
               <div className="space-y-3">
                 {showAnonymousChoice && (
                   <ChoiceGroup
                     icon={<Database className="h-3.5 w-3.5" />}
-                    label="RefleK's Index"
-                    description="Completed runs can be uploaded to the RefleK's Index, a shared dataset that feeds rankings, comparisons, and research across the global player base."
+                    label={t("welcome.modal.index.label")}
+                    description={t("welcome.modal.index.description")}
                     helper={syncStatus}
                   >
                     <ChoiceCard
-                      eyebrow="Recommended"
+                      eyebrow={t("welcome.modal.recommended")}
                       eyebrowTone="primary"
-                      label="Public Profile"
-                      subtitle="Show my Steam name on the Index."
-                      description="Best if you want your Steam name shown with the runs you upload."
+                      label={t("welcome.modal.publicProfile.label")}
+                      subtitle={t("welcome.modal.publicProfile.subtitle")}
+                      description={t("welcome.modal.publicProfile.description")}
                       bullets={[
-                        "Your Steam name appears on runs you upload to the Index.",
-                        "You can switch to Anonymous later in Privacy settings.",
+                        t("welcome.modal.publicProfile.bullets.0"),
+                        t("welcome.modal.publicProfile.bullets.1"),
                       ]}
                       selected={privacyMode === "public"}
                       onSelect={() => setPrivacyMode("public")}
@@ -351,14 +352,14 @@ export function WelcomeModal({
                     />
 
                     <ChoiceCard
-                      eyebrow="Private"
-                      label="Anonymous"
-                      subtitle="Private identity, shared contribution."
-                      description="Best if you want to contribute data while keeping identifying information out of uploads."
+                      eyebrow={t("welcome.modal.private")}
+                      label={t("welcome.modal.anonymous.label")}
+                      subtitle={t("welcome.modal.anonymous.subtitle")}
+                      description={t("welcome.modal.anonymous.description")}
                       bullets={[
-                        "Steam ID and persona name are scrubbed before upload.",
-                        "Your runs still help the shared dataset, analysis, and research.",
-                        "You can switch back to Public later in Privacy settings.",
+                        t("welcome.modal.anonymous.bullets.0"),
+                        t("welcome.modal.anonymous.bullets.1"),
+                        t("welcome.modal.anonymous.bullets.2"),
                       ]}
                       selected={privacyMode === "anonymous"}
                       onSelect={() => setPrivacyMode("anonymous")}
@@ -370,20 +371,22 @@ export function WelcomeModal({
                 {showMouseTraceChoice && (
                   <ChoiceGroup
                     icon={<MousePointer2 className="h-3.5 w-3.5" />}
-                    label="Mouse Traces"
-                    description="Mouse traces capture your movement during runs so you can replay and compare them later. Tracing is designed to have no performance impact during play."
-                    helper="This is just your starting point — you can change it later in General settings."
+                    label={t("welcome.modal.mouseTraces.label")}
+                    description={t("welcome.modal.mouseTraces.description")}
+                    helper={t("welcome.modal.mouseTraces.helper")}
                   >
                     <ChoiceCard
-                      eyebrow="Recommended"
+                      eyebrow={t("welcome.modal.recommended")}
                       eyebrowTone="primary"
-                      label="Enable Mouse Traces"
-                      subtitle="Capture movement during supported runs."
-                      description="Best if you want richer history and replay tools from your very first session."
+                      label={t("welcome.modal.mouseTraces.enabled.label")}
+                      subtitle={t("welcome.modal.mouseTraces.enabled.subtitle")}
+                      description={t(
+                        "welcome.modal.mouseTraces.enabled.description",
+                      )}
                       bullets={[
-                        "No performance impact during play.",
-                        "Lets you replay and compare runs in the History view.",
-                        "Can be turned off anytime in General settings.",
+                        t("welcome.modal.mouseTraces.enabled.bullets.0"),
+                        t("welcome.modal.mouseTraces.enabled.bullets.1"),
+                        t("welcome.modal.mouseTraces.enabled.bullets.2"),
                       ]}
                       selected={mouseTraceMode === "enabled"}
                       onSelect={() => setMouseTraceMode("enabled")}
@@ -391,14 +394,18 @@ export function WelcomeModal({
                     />
 
                     <ChoiceCard
-                      eyebrow="Later"
-                      label="Not Right Now"
-                      subtitle="Start without trace capture and enable it whenever you want."
-                      description="A good starting point if you want to get familiar with the app first and decide about traces after a few sessions."
+                      eyebrow={t("welcome.modal.later")}
+                      label={t("welcome.modal.mouseTraces.disabled.label")}
+                      subtitle={t(
+                        "welcome.modal.mouseTraces.disabled.subtitle",
+                      )}
+                      description={t(
+                        "welcome.modal.mouseTraces.disabled.description",
+                      )}
                       bullets={[
-                        "Keeps first-time setup simple.",
-                        "Enable traces anytime later in General settings.",
-                        "The rest of the app works the same either way.",
+                        t("welcome.modal.mouseTraces.disabled.bullets.0"),
+                        t("welcome.modal.mouseTraces.disabled.bullets.1"),
+                        t("welcome.modal.mouseTraces.disabled.bullets.2"),
                       ]}
                       selected={mouseTraceMode === "disabled"}
                       onSelect={() => setMouseTraceMode("disabled")}
@@ -410,20 +417,24 @@ export function WelcomeModal({
                 {showScreenCaptureChoice && (
                   <ChoiceGroup
                     icon={<MonitorPlay className="h-3.5 w-3.5" />}
-                    label="Screen Replay"
-                    description="Record a video replay of your runs so you can rewatch and analyze your crosshair placement, movement, and decision-making directly in the app."
-                    helper="Requires FFmpeg. Can be changed later in General settings."
+                    label={t("welcome.modal.screenReplay.label")}
+                    description={t("welcome.modal.screenReplay.description")}
+                    helper={t("welcome.modal.screenReplay.helper")}
                   >
                     <ChoiceCard
-                      eyebrow="Recommended"
+                      eyebrow={t("welcome.modal.recommended")}
                       eyebrowTone="primary"
-                      label="Enable Replay Recording"
-                      subtitle="Capture screen during runs (hardware accelerated)."
-                      description="Best if you want to visually review your gameplay alongside your stats and mouse trace."
+                      label={t("welcome.modal.screenReplay.enabled.label")}
+                      subtitle={t(
+                        "welcome.modal.screenReplay.enabled.subtitle",
+                      )}
+                      description={t(
+                        "welcome.modal.screenReplay.enabled.description",
+                      )}
                       bullets={[
-                        "Records at 30 fps with hardware GPU encoding — zero CPU impact.",
-                        "Replays appear as a new tab in the run inspector after each match.",
-                        "Can be turned off anytime in General settings.",
+                        t("welcome.modal.screenReplay.enabled.bullets.0"),
+                        t("welcome.modal.screenReplay.enabled.bullets.1"),
+                        t("welcome.modal.screenReplay.enabled.bullets.2"),
                       ]}
                       selected={screenCaptureMode === "enabled"}
                       onSelect={() => setScreenCaptureMode("enabled")}
@@ -431,14 +442,18 @@ export function WelcomeModal({
                     />
 
                     <ChoiceCard
-                      eyebrow="Later"
-                      label="Start Without Recording"
-                      subtitle="Begin with mouse tracking only and add screen replays whenever."
-                      description="A low-friction starting point. You can enable replay recording later once you're comfortable with the app."
+                      eyebrow={t("welcome.modal.later")}
+                      label={t("welcome.modal.screenReplay.disabled.label")}
+                      subtitle={t(
+                        "welcome.modal.screenReplay.disabled.subtitle",
+                      )}
+                      description={t(
+                        "welcome.modal.screenReplay.disabled.description",
+                      )}
                       bullets={[
-                        "Keeps first-time setup simple.",
-                        "Mouse traces and all other features still work.",
-                        "Enable screen capture anytime in General settings.",
+                        t("welcome.modal.screenReplay.disabled.bullets.0"),
+                        t("welcome.modal.screenReplay.disabled.bullets.1"),
+                        t("welcome.modal.screenReplay.disabled.bullets.2"),
                       ]}
                       selected={screenCaptureMode === "disabled"}
                       onSelect={() => setScreenCaptureMode("disabled")}
@@ -465,7 +480,7 @@ export function WelcomeModal({
 
           <WelcomeSection
             title={content.linksTitle}
-            description="If you want the full release story, the changelog and docs are always only a click away."
+            description={t("welcome.modal.resourcesDescription")}
           >
             <div className="grid gap-2.5 md:grid-cols-2">
               {content.links.map((link) => (
@@ -485,7 +500,7 @@ export function WelcomeModal({
       {/* Footer pinned below the scroll area so the button is always visible */}
       <div className="flex justify-end pt-2">
         <Button onClick={handleContinue} disabled={isSaving}>
-          {isSaving ? "Saving..." : content.ctaLabel}
+          {isSaving ? t("common.actions.saving") : content.ctaLabel}
         </Button>
       </div>
     </Modal>

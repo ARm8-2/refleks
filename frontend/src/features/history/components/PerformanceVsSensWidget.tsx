@@ -18,10 +18,14 @@ import {
   CHART_SERIES_COLORS,
   CHART_STYLE,
   STORAGE_KEYS,
+  getLocale,
   getScenarioName,
   readRunAccuracy,
   readRunScore,
   readRunTimestamp,
+  translate,
+  useI18n,
+  type MessageKey,
 } from "@/shared/lib";
 import type { RunRecord, Session } from "@/shared/types";
 import { useMemo } from "react";
@@ -46,10 +50,10 @@ type PerformanceVsSensWidgetProps = {
   allowScopeSelection?: boolean;
 };
 
-const metricOptions: Array<{ value: MetricKey; label: string }> = [
-  { value: "score", label: "Score" },
-  { value: "accuracy", label: "Accuracy (%)" },
-  { value: "ttk", label: "Real Avg TTK (s)" },
+const metricOptions: Array<{ value: MetricKey; labelKey: MessageKey }> = [
+  { value: "score", labelKey: "history.performanceVsSens.metricScore" },
+  { value: "accuracy", labelKey: "history.performanceVsSens.metricAccuracy" },
+  { value: "ttk", labelKey: "history.performanceVsSens.metricTtk" },
 ];
 
 const metricColors: Record<MetricKey, string> = {
@@ -58,29 +62,39 @@ const metricColors: Record<MetricKey, string> = {
   ttk: CHART_SERIES_COLORS.ttk,
 };
 
-const scopeOptions: Array<{ value: DataScopeKey; label: string }> = [
-  { value: "session", label: "This Session" },
-  { value: "all", label: "All History" },
+const scopeOptions: Array<{ value: DataScopeKey; labelKey: MessageKey }> = [
+  { value: "session", labelKey: "history.performanceVsSens.scopeSession" },
+  { value: "all", labelKey: "history.performanceVsSens.scopeAll" },
 ];
 
 const DEFAULT_METRIC: MetricKey = "score";
 const DEFAULT_SCOPE: DataScopeKey = "all";
 
-const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
+let dateTimeFormatterLocale: string | null = null;
+let dateTimeFormatter: Intl.DateTimeFormat | null = null;
+function getDateTimeFormatter(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  if (!dateTimeFormatter || dateTimeFormatterLocale !== locale) {
+    dateTimeFormatterLocale = locale;
+    dateTimeFormatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+  return dateTimeFormatter;
+}
 
 export function PerformanceVsSensWidget({
   sessions,
   scenarioName,
-  title = "Performance vs Sensitivity",
+  title,
   description,
   className,
   allowScopeSelection = false,
 }: PerformanceVsSensWidgetProps) {
+  const { t } = useI18n();
   const storeSessions = useStore((state) => state.sessions);
   const currentSession = storeSessions[0] ?? null;
   const [storedMetric, setStoredMetric] = usePersistedState<MetricKey>(
@@ -108,14 +122,19 @@ export function PerformanceVsSensWidget({
     () => buildChartData(sourceSessions, scenarioName ?? null, metric),
     [metric, scenarioName, sourceSessions],
   );
-  const metricLabel =
-    metricOptions.find((option) => option.value === metric)?.label ??
-    "Performance";
+  const metricLabel = t(
+    metricOptions.find((option) => option.value === metric)?.labelKey ??
+      "history.performanceVsSens.performance",
+  );
   const scopeLabel = sessions
-    ? "This Session"
-    : ((showScopeSelector
-        ? scopeOptions.find((option) => option.value === scope)?.label
-        : "All History") ?? "All History");
+    ? t("history.performanceVsSens.scopeSession")
+    : t(
+        showScopeSelector
+          ? (scopeOptions.find((option) => option.value === scope)?.labelKey ??
+              "history.performanceVsSens.scopeAll")
+          : "history.performanceVsSens.scopeAll",
+      );
+  const resolvedTitle = title ?? t("history.performanceVsSens.title");
   const headerActions = (
     <div className="flex items-center gap-2">
       {showScopeSelector && (
@@ -126,12 +145,14 @@ export function PerformanceVsSensWidget({
           }
         >
           <SelectTrigger className="h-7 w-auto min-w-0 max-w-[11.25rem] px-2 text-xs bg-surface-subtle">
-            <SelectValue placeholder="Scope" />
+            <SelectValue
+              placeholder={t("history.performanceVsSens.scopePlaceholder")}
+            />
           </SelectTrigger>
           <SelectContent>
             {scopeOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
-                {option.label}
+                {t(option.labelKey)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -145,12 +166,14 @@ export function PerformanceVsSensWidget({
         }
       >
         <SelectTrigger className="h-7 w-auto min-w-0 max-w-[11.25rem] px-2 text-xs bg-surface-subtle">
-          <SelectValue placeholder="Metric" />
+          <SelectValue
+            placeholder={t("history.performanceVsSens.metricPlaceholder")}
+          />
         </SelectTrigger>
         <SelectContent>
           {metricOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              {option.label}
+              {t(option.labelKey)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -161,15 +184,14 @@ export function PerformanceVsSensWidget({
   if (!chartData.scenarioName) {
     return (
       <Widget
-        title={title}
+        title={resolvedTitle}
         description={
-          description ??
-          "Play a scenario to compare sensitivity against performance."
+          description ?? t("history.performanceVsSens.emptyDescription")
         }
         headerAction={headerActions}
         className={className}
       >
-        <EmptyState message="No recent scenario found yet. Play a run with cm/360 data to populate this widget." />
+        <EmptyState message={t("history.performanceVsSens.noRecentScenario")} />
       </Widget>
     );
   }
@@ -177,29 +199,41 @@ export function PerformanceVsSensWidget({
   if (chartData.points.length === 0) {
     return (
       <Widget
-        title={title}
+        title={resolvedTitle}
         description={
           description ??
-          `${chartData.scenarioName} · ${metricLabel} · ${scopeLabel}`
+          t("history.performanceVsSens.descriptionLine", {
+            scenario: chartData.scenarioName,
+            metric: metricLabel,
+            scope: scopeLabel,
+          })
         }
         headerAction={headerActions}
         className={className}
       >
         <EmptyState
-          message={`No usable sensitivity data found for ${chartData.scenarioName}.`}
+          message={t("history.performanceVsSens.noUsableSensData", {
+            scenario: chartData.scenarioName,
+          })}
         />
       </Widget>
     );
   }
 
-  const modalTitle = `${chartData.scenarioName} · ${title}`;
+  const modalTitle = `${chartData.scenarioName} · ${resolvedTitle}`;
 
   return (
     <Widget
-      title={title}
+      title={resolvedTitle}
       description={
         description ??
-        `${chartData.scenarioName} · ${chartData.points.length} runs · ${metricLabel} · ${scopeLabel}`
+        t("history.performanceVsSens.descriptionLineRuns", {
+          scenario: chartData.scenarioName,
+          count: chartData.points.length,
+          runs: t("history.page.runs", { count: chartData.points.length }),
+          metric: metricLabel,
+          scope: scopeLabel,
+        })
       }
       headerAction={headerActions}
       modalTitle={modalTitle}
@@ -231,6 +265,7 @@ function PerformanceVsSensChartContent({
   metric: MetricKey;
   metricLabel: string;
 }) {
+  const { t } = useI18n();
   const chartConfig: ChartConfig = {
     performance: {
       label: metricLabel,
@@ -282,13 +317,15 @@ function PerformanceVsSensChartContent({
                   return (
                     <div className="grid gap-0.5 text-popover-foreground/75">
                       <div>
-                        Sensitivity:{" "}
+                        {t("history.performanceVsSens.tooltipSensitivity")}
                         <span className="font-medium text-popover-foreground">
                           {formatNumber(point.rawSensitivity, 2)} cm/360
                         </span>
                       </div>
                       <div>
-                        {metricLabel}:{" "}
+                        {t("history.performanceVsSens.tooltipMetric", {
+                          metric: metricLabel,
+                        })}
                         <span className="font-medium text-popover-foreground">
                           {formatMetricValue(Number(value), metric)}
                         </span>
@@ -443,8 +480,14 @@ function buildNumericDomain(
 }
 
 function formatRunLabel(timestamp: number, runIndex: number): string {
-  if (timestamp <= 0) return `Run ${runIndex}`;
-  return `Run ${runIndex} · ${dateTimeFormatter.format(new Date(timestamp))}`;
+  if (timestamp <= 0)
+    return translate("history.performanceVsSens.runLabel", {
+      count: runIndex,
+    });
+  return translate("history.performanceVsSens.runLabelWithDate", {
+    count: runIndex,
+    date: getDateTimeFormatter().format(new Date(timestamp)),
+  });
 }
 
 function formatMetricTick(value: number, metric: MetricKey): string {

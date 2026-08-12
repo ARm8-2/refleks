@@ -8,7 +8,7 @@ import {
   Widget,
 } from "@/shared/components";
 import { usePersistedState } from "@/shared/hooks";
-import { CHART_SERIES_COLORS, STORAGE_KEYS } from "@/shared/lib";
+import { CHART_SERIES_COLORS, STORAGE_KEYS, useI18n } from "@/shared/lib";
 import { Pencil, Plus, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { RecentSessionSnapshot } from "../../hooks/useRecentSessionSnapshot";
@@ -33,6 +33,7 @@ function SessionProgressTargetEditor({
   isCustom,
   onChange,
 }: SessionProgressTargetEditorProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [draftTarget, setDraftTarget] = useState(targetRuns);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -99,11 +100,13 @@ function SessionProgressTargetEditor({
           variant={isCustom ? "secondary" : "ghost"}
           size="sm"
           className="h-7 gap-1.5 px-2 text-xs"
-          title="Edit session target"
+          title={t("overview.sessionProgress.editTarget")}
         >
           <span className="tabular-nums">{targetRuns}</span>
           <span className="text-surface-muted-foreground">
-            target{isCustom ? "" : " auto"}
+            {isCustom
+              ? t("overview.sessionProgress.target")
+              : t("overview.sessionProgress.targetAuto")}
           </span>
           <Pencil className="h-3 w-3" />
         </Button>
@@ -112,7 +115,7 @@ function SessionProgressTargetEditor({
       <PopoverContent align="end" className="w-56 p-2">
         <div className="space-y-2">
           <div className="px-1 text-[0.625rem] font-medium uppercase tracking-wide text-surface-muted-foreground">
-            Session target runs
+            {t("overview.sessionProgress.targetRuns")}
           </div>
 
           <div className="flex items-center gap-1">
@@ -158,7 +161,9 @@ function SessionProgressTargetEditor({
 
           <div className="flex items-center justify-between gap-2 px-1 pt-1">
             <span className="text-xs text-surface-muted-foreground">
-              {isCustom ? "Custom target" : "Automatic target"}
+              {isCustom
+                ? t("overview.sessionProgress.customTarget")
+                : t("overview.sessionProgress.automaticTarget")}
             </span>
             <div className="flex items-center gap-1">
               {isCustom && (
@@ -174,7 +179,7 @@ function SessionProgressTargetEditor({
                   }}
                 >
                   <RotateCcw className="h-3 w-3" />
-                  Reset
+                  {t("common.actions.reset")}
                 </Button>
               )}
             </div>
@@ -190,6 +195,7 @@ export function SessionProgressWidget({
 }: {
   snapshot: RecentSessionSnapshot;
 }) {
+  const { t } = useI18n();
   const {
     currentSession,
     currentRuns,
@@ -209,9 +215,9 @@ export function SessionProgressWidget({
 
   if (!currentSession) {
     return (
-      <Widget title="Session Progress">
+      <Widget title={t("overview.sessionProgress.title")}>
         <div className="flex h-full items-center justify-center rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
-          Play or import a few runs to see session progress.
+          {t("overview.sessionProgress.empty")}
         </div>
       </Widget>
     );
@@ -259,7 +265,7 @@ export function SessionProgressWidget({
 
   return (
     <Widget
-      title="Session Progress"
+      title={t("overview.sessionProgress.title")}
       headerAction={
         <SessionProgressTargetEditor
           targetRuns={targetRuns}
@@ -328,7 +334,9 @@ export function SessionProgressWidget({
               dominantBaseline="middle"
               className="fill-surface-muted-foreground text-[0.6875rem]"
             >
-              / {targetRuns} target
+              {t("overview.sessionProgress.targetSuffix", {
+                count: targetRuns,
+              })}
             </text>
             <text
               x={cx}
@@ -350,7 +358,9 @@ export function SessionProgressWidget({
                   className="inline-block h-2 w-2 rounded-full"
                   style={{ background: PHASE_SWATCH.warmup }}
                 />
-                <span className="text-popover-foreground/70">Warm-up</span>
+                <span className="text-popover-foreground/70">
+                  {t("overview.sessionProgress.warmup")}
+                </span>
                 <span className="ml-auto font-medium text-popover-foreground">
                   1–{warmupRuns}
                 </span>
@@ -360,7 +370,9 @@ export function SessionProgressWidget({
                   className="inline-block h-2 w-2 rounded-full"
                   style={{ background: PHASE_SWATCH.peak }}
                 />
-                <span className="text-popover-foreground/70">Peak</span>
+                <span className="text-popover-foreground/70">
+                  {t("overview.sessionProgress.peak")}
+                </span>
                 <span className="ml-auto font-medium text-popover-foreground">
                   {peakStart}–{peakEnd}
                 </span>
@@ -370,7 +382,9 @@ export function SessionProgressWidget({
                   className="inline-block h-2 w-2 rounded-full"
                   style={{ background: PHASE_SWATCH.diminishing }}
                 />
-                <span className="text-popover-foreground/70">Diminishing</span>
+                <span className="text-popover-foreground/70">
+                  {t("overview.sessionProgress.diminishing")}
+                </span>
                 <span className="ml-auto font-medium text-popover-foreground">
                   {diminishingReturnsAt}+
                 </span>

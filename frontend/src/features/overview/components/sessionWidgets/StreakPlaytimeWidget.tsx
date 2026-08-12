@@ -12,7 +12,13 @@ import {
   TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import { usePersistedState, useStore } from "@/shared/hooks";
-import { CHART_SERIES_COLORS, CHART_STYLE, STORAGE_KEYS } from "@/shared/lib";
+import {
+  CHART_SERIES_COLORS,
+  CHART_STYLE,
+  STORAGE_KEYS,
+  useI18n,
+} from "@/shared/lib";
+import { getLocale } from "@/shared/lib/i18n";
 import { Flame, Trophy } from "lucide-react";
 import { useEffect, useMemo, type ReactNode } from "react";
 import {
@@ -49,25 +55,74 @@ const BREAKDOWN_MODES = ["day", "week", "streak"] as const;
 type StreakRangeOption = (typeof STREAK_RANGE_OPTIONS)[number];
 type BreakdownMode = (typeof BREAKDOWN_MODES)[number];
 
-const weekdayLabels = ["", "Mon", "", "Wed", "", "Fri", ""] as const;
+// --- Locale-aware Intl formatters (cached per locale) ---
 
-const dayFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-const monthFormatter = new Intl.DateTimeFormat("en-US", { month: "short" });
+let dayFormatterLocale: string | null = null;
+let dayFormatter: Intl.DateTimeFormat | null = null;
+function getDayFormatter(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  if (!dayFormatter || dayFormatterLocale !== locale) {
+    dayFormatterLocale = locale;
+    dayFormatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+  return dayFormatter;
+}
+
+let monthFormatterLocale: string | null = null;
+let monthFormatter: Intl.DateTimeFormat | null = null;
+function getMonthFormatter(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  if (!monthFormatter || monthFormatterLocale !== locale) {
+    monthFormatterLocale = locale;
+    monthFormatter = new Intl.DateTimeFormat(locale, { month: "short" });
+  }
+  return monthFormatter;
+}
+
+let weekdayFormatterLocale: string | null = null;
+let weekdayFormatter: Intl.DateTimeFormat | null = null;
+function getWeekdayFormatter(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  if (!weekdayFormatter || weekdayFormatterLocale !== locale) {
+    weekdayFormatterLocale = locale;
+    weekdayFormatter = new Intl.DateTimeFormat(locale, { weekday: "short" });
+  }
+  return weekdayFormatter;
+}
+
+let streakDayFormatterLocale: string | null = null;
+let streakDayFormatter: Intl.DateTimeFormat | null = null;
+function getStreakDayFormatter(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  if (!streakDayFormatter || streakDayFormatterLocale !== locale) {
+    streakDayFormatterLocale = locale;
+    streakDayFormatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+    });
+  }
+  return streakDayFormatter;
+}
+
+// Heatmap row labels (Sunday-first grid). Keeps the compact layout by only
+// labeling Monday, Wednesday and Friday, like the original design.
+function buildWeekdayLabels(): string[] {
+  const labels = Array.from({ length: 7 }, (_, index) =>
+    getWeekdayFormatter().format(new Date(2024, 0, 7 + index)),
+  );
+  return labels.map((label, index) =>
+    index === 1 || index === 3 || index === 5 ? label : "",
+  );
+}
 
 type MonthMarker = {
   label: string;
   column: number;
 };
-
-const weekdayFormatter = new Intl.DateTimeFormat("en-US", { weekday: "short" });
-const streakDayFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-});
 
 const intensityOpacityByLevel: Record<1 | 2 | 3 | 4, number> = {
   1: 0.2,
@@ -81,6 +136,7 @@ export function StreakPlaytimeWidget({
 }: {
   snapshot: RecentSessionSnapshot;
 }) {
+  const { t, locale } = useI18n();
   const points = useDailyPlaytime(7);
   const sessions = useStore((state) => state.sessions);
   const [storedRangeDays, setStoredRangeDays] = usePersistedState<number>(
@@ -191,13 +247,14 @@ export function StreakPlaytimeWidget({
 
       lastMonthKey = monthKey;
       markers.push({
-        label: monthFormatter.format(date),
+        label: getMonthFormatter().format(date),
         column: Math.floor(index / 7),
       });
     });
 
     return markers;
-  }, [paddedHeatmapCells]);
+    // Month names follow the active locale.
+  }, [paddedHeatmapCells, locale]);
 
   const visibleMonthMarkers = useMemo(
     () =>
@@ -269,11 +326,12 @@ export function StreakPlaytimeWidget({
             (point) => ({
               key: `${point.dayTs}`,
               label: weekTickFormatter(new Date(point.dayTs)),
-              fullLabel: dayFormatter.format(new Date(point.dayTs)),
+              fullLabel: getDayFormatter().format(new Date(point.dayTs)),
               minutes: point.playtimeMs / 60000,
             }),
           ),
-    [selectedDayTs, streakActivity],
+    // Date labels follow the active locale.
+    [selectedDayTs, streakActivity, locale],
   );
 
   const streakBreakdown = useMemo(
@@ -286,10 +344,11 @@ export function StreakPlaytimeWidget({
           ).map((point) => ({
             key: `${point.dayTs}`,
             label: streakTickFormatter(new Date(point.dayTs)),
-            fullLabel: dayFormatter.format(new Date(point.dayTs)),
+            fullLabel: getDayFormatter().format(new Date(point.dayTs)),
             minutes: point.playtimeMs / 60000,
           })),
-    [selectedDayTs, streakActivity],
+    // Date labels follow the active locale.
+    [selectedDayTs, streakActivity, locale],
   );
 
   const selectedBreakdown =
@@ -300,7 +359,9 @@ export function StreakPlaytimeWidget({
         : streakBreakdown;
   const hasSelectedBreakdown = selectedDayTs !== null;
   const selectedBreakdownLabel =
-    selectedDayTs === null ? "" : dayFormatter.format(new Date(selectedDayTs));
+    selectedDayTs === null
+      ? ""
+      : getDayFormatter().format(new Date(selectedDayTs));
 
   const selectActivityDay = (dayTs: number) => {
     const normalizedDayTs = normalizeSelectedDayTs(dayTs);
@@ -320,7 +381,9 @@ export function StreakPlaytimeWidget({
   };
 
   if (!snapshot.currentSession)
-    return <WidgetEmpty icon={Flame} label="Streak & Playtime" />;
+    return (
+      <WidgetEmpty icon={Flame} label={t("overview.streakPlaytime.title")} />
+    );
 
   const { streakLabel, streakDetail } = snapshot;
 
@@ -331,7 +394,7 @@ export function StreakPlaytimeWidget({
         value: days,
         label:
           days === AUTO_RANGE_DAYS
-            ? "All"
+            ? t("common.actions.all")
             : days === 365
               ? "1Y"
               : `${Math.round(days / 30)}M`,
@@ -341,16 +404,43 @@ export function StreakPlaytimeWidget({
     />
   );
 
+  const weekdayLabels = useMemo(() => buildWeekdayLabels(), [locale]);
+
+  // Chart series labels follow the active locale; `t` is referentially stable
+  // so the locale drives recomputation.
+  const playtimeConfig = useMemo<ChartConfig>(
+    () => ({
+      minutes: {
+        label: t("overview.streakPlaytime.playtime"),
+        color: CHART_SERIES_COLORS.accuracy,
+      },
+    }),
+    [locale, t],
+  );
+  const drilldownConfig = useMemo<ChartConfig>(
+    () => ({
+      minutes: {
+        label: t("overview.streakPlaytime.playtime"),
+        color: "var(--streak)",
+      },
+    }),
+    [locale, t],
+  );
+
   const modalContent = (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <MetricCard
-          label="Current streak"
-          value={`${streakActivity.currentStreak} ${pluralize("day", streakActivity.currentStreak)}`}
+          label={t("overview.streakPlaytime.currentStreak")}
+          value={t("overview.streakPlaytime.days", {
+            count: streakActivity.currentStreak,
+          })}
         />
         <MetricCard
-          label="Top streak"
-          value={`${snapshot.topStreak} ${pluralize("day", snapshot.topStreak)}`}
+          label={t("overview.streakPlaytime.topStreak")}
+          value={t("overview.streakPlaytime.days", {
+            count: snapshot.topStreak,
+          })}
           icon={<Trophy className="h-3 w-3 text-amber-500" />}
           onClick={
             topStreakDayTs === null
@@ -360,11 +450,11 @@ export function StreakPlaytimeWidget({
           selected={topStreakDayTs !== null && selectedDayTs === topStreakDayTs}
         />
         <MetricCard
-          label="Active days"
+          label={t("overview.streakPlaytime.activeDays")}
           value={`${rangeSummary.activeDays}/${effectiveRangeDays}`}
         />
         <MetricCard
-          label="Total playtime"
+          label={t("overview.streakPlaytime.totalPlaytime")}
           value={formatDuration(rangeSummary.totalPlaytimeMs)}
         />
       </div>
@@ -372,10 +462,10 @@ export function StreakPlaytimeWidget({
       <div className="rounded-xl bg-surface-subtle p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm font-semibold text-surface-muted-foreground">
-            Activity
+            {t("overview.streakPlaytime.activity")}
           </p>
           <div className="flex items-center gap-1 text-[0.6875rem] text-surface-muted-foreground">
-            <span>Less</span>
+            <span>{t("overview.streakPlaytime.less")}</span>
             {[0, 1, 2, 3, 4].map((level) => (
               <span
                 key={level}
@@ -383,7 +473,7 @@ export function StreakPlaytimeWidget({
                 style={activityCellStyle(level as 0 | 1 | 2 | 3 | 4)}
               />
             ))}
-            <span>More</span>
+            <span>{t("overview.streakPlaytime.more")}</span>
           </div>
         </div>
 
@@ -441,8 +531,10 @@ export function StreakPlaytimeWidget({
                         streakLengthByDayTs.get(cell.dayTs) ?? 0;
                       const streakLabel =
                         streakLength > 0
-                          ? `${streakLength} ${pluralize("day", streakLength)}`
-                          : "No streak";
+                          ? t("overview.streakPlaytime.days", {
+                              count: streakLength,
+                            })
+                          : t("overview.streakPlaytime.noStreak");
 
                       return (
                         <Tooltip key={cell.dayTs}>
@@ -455,7 +547,19 @@ export function StreakPlaytimeWidget({
                                   ? selectedActivityCellStyle(cell.level)
                                   : activityCellStyle(cell.level)
                               }
-                              aria-label={`${dayFormatter.format(new Date(cell.dayTs))}: ${formatDuration(cell.playtimeMs)} playtime, ${streakLabel}${today ? ", today" : ""}`}
+                              aria-label={t(
+                                "overview.streakPlaytime.dayAriaLabel",
+                                {
+                                  date: getDayFormatter().format(
+                                    new Date(cell.dayTs),
+                                  ),
+                                  playtime: formatDuration(cell.playtimeMs),
+                                  streak: streakLabel,
+                                  today: today
+                                    ? `, ${t("overview.status.today")}`
+                                    : "",
+                                },
+                              )}
                               aria-pressed={selected}
                               onClick={() => {
                                 selectActivityDay(cell.dayTs);
@@ -472,16 +576,16 @@ export function StreakPlaytimeWidget({
                           <TooltipContent side="top" className="max-w-[14rem]">
                             <div className="space-y-1">
                               <div className="font-medium text-popover-foreground">
-                                {dayFormatter.format(new Date(cell.dayTs))}
+                                {getDayFormatter().format(new Date(cell.dayTs))}
                               </div>
                               <div className="text-popover-foreground/75">
-                                Playtime:{" "}
+                                {t("overview.streakPlaytime.playtimeLabel")}
                                 <span className="font-medium text-popover-foreground">
                                   {formatDuration(cell.playtimeMs)}
                                 </span>
                               </div>
                               <div className="text-popover-foreground/75">
-                                Streak:{" "}
+                                {t("overview.streakPlaytime.streakLabel")}
                                 <span className="font-medium text-popover-foreground">
                                   {streakLabel}
                                 </span>
@@ -512,10 +616,10 @@ export function StreakPlaytimeWidget({
                   value: mode,
                   label:
                     mode === "day"
-                      ? "By Hour"
+                      ? t("overview.streakPlaytime.byHour")
                       : mode === "week"
-                        ? "By Weekday"
-                        : "Streak Days",
+                        ? t("overview.streakPlaytime.byWeekday")
+                        : t("overview.streakPlaytime.streakDays"),
                 }))}
                 onValueChange={setStoredBreakdownMode}
                 size="sm"
@@ -560,7 +664,7 @@ export function StreakPlaytimeWidget({
                       }
                       formatter={(value) => [
                         `${formatDuration(Number(value) * 60000)}`,
-                        "Playtime",
+                        t("overview.streakPlaytime.playtime"),
                       ]}
                     />
                   }
@@ -580,11 +684,10 @@ export function StreakPlaytimeWidget({
           >
             <div className="px-4 py-5 text-center">
               <p className="text-sm font-medium text-foreground">
-                Click a day above to inspect its playtime breakdown.
+                {t("overview.streakPlaytime.clickDay")}
               </p>
               <p className="mt-1 text-xs text-surface-muted-foreground">
-                You can switch between hour, weekday, and streak-day views after
-                selecting a day.
+                {t("overview.streakPlaytime.switchViews")}
               </p>
             </div>
           </div>
@@ -597,8 +700,8 @@ export function StreakPlaytimeWidget({
     <Widget
       icon={Flame}
       iconClassName="text-[color:var(--streak)]"
-      title="Streak & Playtime"
-      modalTitle="Streak & Playtime Breakdown"
+      title={t("overview.streakPlaytime.title")}
+      modalTitle={t("overview.streakPlaytime.breakdownTitle")}
       modalControls={modalControls}
       modalContent={modalContent}
     >
@@ -721,11 +824,11 @@ function hourRangeLabel(hour: number): string {
 }
 
 function weekTickFormatter(date: Date): string {
-  return weekdayFormatter.format(date);
+  return getWeekdayFormatter().format(date);
 }
 
 function streakTickFormatter(date: Date): string {
-  return streakDayFormatter.format(date);
+  return getStreakDayFormatter().format(date);
 }
 
 function activityCellStyle(level: 0 | 1 | 2 | 3 | 4) {
@@ -757,10 +860,6 @@ function selectedActivityCellStyle(level: 0 | 1 | 2 | 3 | 4) {
     boxShadow:
       "inset 0 0 0 1px var(--primary-border-strong), 0 0 0 1px var(--primary), 0 0 10px var(--primary-soft)",
   };
-}
-
-function pluralize(word: string, count: number): string {
-  return count === 1 ? word : `${word}s`;
 }
 
 function MetricCard({

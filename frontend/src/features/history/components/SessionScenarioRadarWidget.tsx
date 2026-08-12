@@ -10,6 +10,8 @@ import {
   CHART_SERIES_COLORS,
   CHART_STYLE,
   getScenarioName,
+  useI18n,
+  type MessageKey,
 } from "@/shared/lib";
 import type { Session } from "@/shared/types";
 import { useMemo } from "react";
@@ -34,19 +36,26 @@ type SessionScenarioRadarWidgetProps = {
   className?: string;
 };
 
-const scenarioUsageConfig: ChartConfig = {
+const scenarioUsageConfig: Record<
+  string,
+  { labelKey: MessageKey; color: string }
+> = {
   runs: {
-    label: "Runs",
+    labelKey: "history.scenarioRadar.runs",
     color: CHART_SERIES_COLORS.scoreCurrent,
   },
 };
 
 export function SessionScenarioRadarWidget({
   session,
-  title = "Session Scenario Mix",
-  description = "Scenarios played this session and how much you played each one.",
+  title,
+  description,
   className,
 }: SessionScenarioRadarWidgetProps) {
+  const { t } = useI18n();
+  const resolvedTitle = title ?? t("history.scenarioRadar.title");
+  const resolvedDescription =
+    description ?? t("history.scenarioRadar.description");
   const storeSessions = useStore((state) => state.sessions);
   const currentSession = session ?? storeSessions[0] ?? null;
 
@@ -81,9 +90,9 @@ export function SessionScenarioRadarWidget({
 
   return (
     <Widget
-      title={title}
-      description={description}
-      modalTitle={title}
+      title={resolvedTitle}
+      description={resolvedDescription}
+      modalTitle={resolvedTitle}
       modalContent={renderBody(true)}
       className={className}
     >
@@ -94,13 +103,13 @@ export function SessionScenarioRadarWidget({
   function renderBody(expanded: boolean) {
     if (!currentSession) {
       return (
-        <EmptyState message="No active session data yet. Play a scenario to populate this widget." />
+        <EmptyState message={t("history.scenarioRadar.noActiveSession")} />
       );
     }
 
     if (scenarioUsage.length === 0) {
       return (
-        <EmptyState message="No scenario names found in this session yet." />
+        <EmptyState message={t("history.scenarioRadar.noScenarioNames")} />
       );
     }
 
@@ -145,12 +154,16 @@ function SessionScenarioRadarChart({
       : points.length >= 6
         ? "64%"
         : "72%";
+  const { t } = useI18n();
+  const config: ChartConfig = {
+    runs: {
+      label: t(scenarioUsageConfig.runs.labelKey),
+      color: scenarioUsageConfig.runs.color,
+    },
+  };
 
   return (
-    <ChartContainer
-      config={scenarioUsageConfig}
-      className="aspect-auto h-full w-full"
-    >
+    <ChartContainer config={config} className="aspect-auto h-full w-full">
       <RadarChart
         data={points}
         cx="50%"

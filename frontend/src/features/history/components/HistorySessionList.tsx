@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/shared/components";
-import { cn } from "@/shared/lib";
+import { cn, useI18n, type MessageKey } from "@/shared/lib";
 import type { Session } from "@/shared/types";
 import {
   ArrowUpDown,
@@ -57,6 +57,7 @@ export function HistorySessionList({
   filterPb,
   onFilterPbChange,
 }: Props) {
+  const { t } = useI18n();
   const hasActiveFilters = sort !== "newest" || filterPb;
   return (
     <aside
@@ -73,7 +74,7 @@ export function HistorySessionList({
             <Input
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
-              placeholder="Search..."
+              placeholder={t("common.search")}
               className="h-9 pl-8"
             />
           </div>
@@ -92,7 +93,11 @@ export function HistorySessionList({
           size="icon"
           className="shrink-0"
           onClick={onToggleCollapsed}
-          title={collapsed ? "Expand sessions" : "Collapse sessions"}
+          title={
+            collapsed
+              ? t("history.sessionList.expand")
+              : t("history.sessionList.collapse")
+          }
         >
           {collapsed ? (
             <PanelLeftOpen className="h-4 w-4" />
@@ -109,7 +114,7 @@ export function HistorySessionList({
         className="scrollbar-compact min-h-0 flex-1 overflow-y-auto p-2"
         emptyContent={
           <p className="px-2 py-6 text-center text-sm text-surface-muted-foreground">
-            {collapsed ? "—" : "No sessions found."}
+            {collapsed ? "—" : t("history.sessionList.noSessionsFound")}
           </p>
         }
         renderItem={useCallback(
@@ -178,7 +183,7 @@ export function HistorySessionList({
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
                     {hasNotes && (
-                      <span title="Has session notes">
+                      <span title={t("history.sessionList.hasNotes")}>
                         <NotebookPen className="h-3.5 w-3.5 text-primary" />
                       </span>
                     )}
@@ -194,8 +199,9 @@ export function HistorySessionList({
                   )}
                 >
                   <span>
-                    {session.items.length}{" "}
-                    {session.items.length === 1 ? "run" : "runs"}
+                    {t("history.sessionList.runs", {
+                      count: session.items.length,
+                    })}
                   </span>
                   <span>·</span>
                   <span>
@@ -214,11 +220,14 @@ export function HistorySessionList({
 
 /* ─── Sort dropdown ─── */
 
-const SESSION_SORT_OPTIONS: { value: SessionSortKey; label: string }[] = [
-  { value: "newest", label: "Newest first" },
-  { value: "oldest", label: "Oldest first" },
-  { value: "most-runs", label: "Most runs" },
-  { value: "longest", label: "Longest" },
+const SESSION_SORT_OPTIONS: {
+  value: SessionSortKey;
+  labelKey: MessageKey;
+}[] = [
+  { value: "newest", labelKey: "history.sessionList.sortNewest" },
+  { value: "oldest", labelKey: "history.sessionList.sortOldest" },
+  { value: "most-runs", labelKey: "history.sessionList.sortMostRuns" },
+  { value: "longest", labelKey: "history.sessionList.sortLongest" },
 ];
 
 function SessionListSortFilter({
@@ -234,6 +243,7 @@ function SessionListSortFilter({
   onFilterPbChange: (v: boolean | ((prev: boolean) => boolean)) => void;
   hasActiveFilters: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -241,7 +251,7 @@ function SessionListSortFilter({
           variant={hasActiveFilters ? "secondary" : "ghost"}
           size="icon"
           className="shrink-0"
-          title="Sort & filter"
+          title={t("history.sessionList.sortFilter")}
         >
           <ListFilter
             className={cn("h-4 w-4", hasActiveFilters && "text-foreground")}
@@ -252,7 +262,7 @@ function SessionListSortFilter({
         {/* Sort */}
         <div className="px-2 py-1.5 text-[0.625rem] font-medium uppercase tracking-wider text-surface-muted-foreground">
           <ArrowUpDown className="mr-1 inline h-3 w-3" />
-          Sort
+          {t("history.sessionList.sort")}
         </div>
         {SESSION_SORT_OPTIONS.map((opt) => (
           <button
@@ -266,7 +276,7 @@ function SessionListSortFilter({
                 : "text-surface-muted-foreground hover:bg-surface-emphasis hover:text-foreground",
             )}
           >
-            <span className="min-w-0 flex-1 text-left">{opt.label}</span>
+            <span className="min-w-0 flex-1 text-left">{t(opt.labelKey)}</span>
             <Check
               className={cn(
                 "h-3 w-3 shrink-0",
@@ -282,7 +292,7 @@ function SessionListSortFilter({
         {/* Filters */}
         <div className="px-2 py-1.5 text-[0.625rem] font-medium uppercase tracking-wider text-surface-muted-foreground">
           <ListFilter className="mr-1 inline h-3 w-3" />
-          Filter
+          {t("history.sessionList.filter")}
         </div>
         <button
           type="button"
@@ -300,7 +310,7 @@ function SessionListSortFilter({
               filterPb ? "text-amber-500" : "opacity-40",
             )}
           />
-          Contains PB
+          {t("history.sessionList.containsPb")}
         </button>
       </PopoverContent>
     </Popover>

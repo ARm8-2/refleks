@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/shared/components";
-import { cn } from "@/shared/lib";
+import { cn, useI18n, type MessageKey } from "@/shared/lib";
 import type { Session } from "@/shared/types";
 import {
   ArrowRightLeft,
@@ -67,6 +67,7 @@ export function HistoryRunList({
   filterPb,
   onFilterPbChange,
 }: Props) {
+  const { t } = useI18n();
   const hasActiveFilters = sort !== "default" || filterPb;
   return (
     <section
@@ -83,7 +84,7 @@ export function HistoryRunList({
             <Input
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
-              placeholder="Search..."
+              placeholder={t("common.search")}
               className="h-9 pl-8"
             />
           </div>
@@ -103,7 +104,11 @@ export function HistoryRunList({
             size="icon"
             className="shrink-0"
             onClick={onToggleInspector}
-            title={inspectorOpen ? "Hide inspector" : "Show inspector"}
+            title={
+              inspectorOpen
+                ? t("history.runList.hideInspector")
+                : t("history.runList.showInspector")
+            }
           >
             <ScanSearch
               className={cn("h-4 w-4", inspectorOpen && "text-foreground")}
@@ -115,7 +120,11 @@ export function HistoryRunList({
           size="icon"
           className="shrink-0"
           onClick={onToggleCollapsed}
-          title={collapsed ? "Expand runs" : "Collapse runs"}
+          title={
+            collapsed
+              ? t("history.runList.expand")
+              : t("history.runList.collapse")
+          }
         >
           {collapsed ? (
             <PanelRightOpen className="h-4 w-4" />
@@ -135,8 +144,8 @@ export function HistoryRunList({
             {collapsed
               ? "—"
               : !session
-                ? "No session selected."
-                : "No runs match the current search."}
+                ? t("history.runList.noSessionSelected")
+                : t("history.runList.noRunsMatch")}
           </p>
         }
         renderItem={useCallback(
@@ -234,7 +243,11 @@ export function HistoryRunList({
                     {run.accuracy !== null && (
                       <>
                         <span>·</span>
-                        <span>{formatPercent(run.accuracy)} acc</span>
+                        <span>
+                          {t("history.runList.accuracyLine", {
+                            value: formatPercent(run.accuracy),
+                          })}
+                        </span>
                       </>
                     )}
                   </div>
@@ -256,10 +269,10 @@ export function HistoryRunList({
                   disabled={!primaryRun || isPrimary}
                   title={
                     !primaryRun
-                      ? "Select a run first"
+                      ? t("history.runList.selectRunFirst")
                       : isPrimary
-                        ? "Primary run"
-                        : "Compare"
+                        ? t("history.runList.primaryRun")
+                        : t("history.runList.compare")
                   }
                 >
                   <ArrowRightLeft className="h-3.5 w-3.5" />
@@ -283,12 +296,12 @@ export function HistoryRunList({
 
 /* ─── Sort / Filter dropdown ─── */
 
-const RUN_SORT_OPTIONS: { value: RunSortKey; label: string }[] = [
-  { value: "default", label: "Chronological" },
-  { value: "score-desc", label: "Score (high → low)" },
-  { value: "score-asc", label: "Score (low → high)" },
-  { value: "accuracy-desc", label: "Accuracy (high → low)" },
-  { value: "scenario", label: "Group by scenario" },
+const RUN_SORT_OPTIONS: { value: RunSortKey; labelKey: MessageKey }[] = [
+  { value: "default", labelKey: "history.runList.sortChronological" },
+  { value: "score-desc", labelKey: "history.runList.sortScoreDesc" },
+  { value: "score-asc", labelKey: "history.runList.sortScoreAsc" },
+  { value: "accuracy-desc", labelKey: "history.runList.sortAccuracyDesc" },
+  { value: "scenario", labelKey: "history.runList.sortGroupByScenario" },
 ];
 
 function RunListSortFilter({
@@ -304,6 +317,7 @@ function RunListSortFilter({
   onFilterPbChange: (v: boolean | ((prev: boolean) => boolean)) => void;
   hasActiveFilters: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -311,7 +325,7 @@ function RunListSortFilter({
           variant={hasActiveFilters ? "secondary" : "ghost"}
           size="icon"
           className="shrink-0"
-          title="Sort & filter"
+          title={t("history.runList.sortFilter")}
         >
           <ListFilter
             className={cn("h-4 w-4", hasActiveFilters && "text-foreground")}
@@ -322,7 +336,7 @@ function RunListSortFilter({
         {/* Sort */}
         <div className="px-2 py-1.5 text-[0.625rem] font-medium uppercase tracking-wider text-surface-muted-foreground">
           <ArrowUpDown className="mr-1 inline h-3 w-3" />
-          Sort
+          {t("history.runList.sort")}
         </div>
         {RUN_SORT_OPTIONS.map((opt) => (
           <button
@@ -336,7 +350,7 @@ function RunListSortFilter({
                 : "text-surface-muted-foreground hover:bg-surface-emphasis hover:text-foreground",
             )}
           >
-            <span className="min-w-0 flex-1 text-left">{opt.label}</span>
+            <span className="min-w-0 flex-1 text-left">{t(opt.labelKey)}</span>
             <Check
               className={cn(
                 "h-3 w-3 shrink-0",
@@ -352,7 +366,7 @@ function RunListSortFilter({
         {/* Filters */}
         <div className="px-2 py-1.5 text-[0.625rem] font-medium uppercase tracking-wider text-surface-muted-foreground">
           <ListFilter className="mr-1 inline h-3 w-3" />
-          Filter
+          {t("history.runList.filter")}
         </div>
         <button
           type="button"
@@ -370,7 +384,7 @@ function RunListSortFilter({
               filterPb ? "text-amber-500" : "opacity-40",
             )}
           />
-          PB runs only
+          {t("history.runList.pbRunsOnly")}
         </button>
       </PopoverContent>
     </Popover>

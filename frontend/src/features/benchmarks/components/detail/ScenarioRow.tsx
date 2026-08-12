@@ -1,3 +1,4 @@
+import { useI18n } from "@/shared/lib/i18n";
 import type { RankDef } from "@/shared/types";
 import { ChartLine, NotebookPen, Play } from "lucide-react";
 import {
@@ -181,6 +182,7 @@ export function ScenarioInfoRow({
   onHistory,
   onPlay,
 }: ScenarioInfoRowProps) {
+  const { t } = useI18n();
   return (
     <div
       className={`grid items-center ${cls.rowHeightClass}`}
@@ -205,7 +207,7 @@ export function ScenarioInfoRow({
                   )
                 : cls.iconButtonClass
             }
-            title="Notes & Sensitivity"
+            title={t("benchmarks.scenarioRow.notesSensitivity")}
             onClick={onNotes}
           >
             <NotebookPen className={cls.iconClass} />
@@ -216,7 +218,9 @@ export function ScenarioInfoRow({
       {showRecCol && (
         <div
           className="flex items-center justify-center"
-          title={`Recommendation score: ${recommendation}`}
+          title={t("benchmarks.scenarioRow.recommendationScore", {
+            score: recommendation,
+          })}
         >
           <RecommendationIndicator
             compact={cls.compact}
@@ -232,7 +236,7 @@ export function ScenarioInfoRow({
           <button
             type="button"
             className={cls.actionButtonClass}
-            title="Play in Kovaak's"
+            title={t("benchmarks.scenarioRow.playInKovaaks")}
             onClick={onPlay}
           >
             <Play className={cls.iconClass} />
@@ -245,7 +249,7 @@ export function ScenarioInfoRow({
           <button
             type="button"
             className={cls.actionButtonClass}
-            title="Last 10 Scores"
+            title={t("benchmarks.scenarioRow.last10Scores")}
             onClick={onHistory}
           >
             <ChartLine className={cls.iconClass} />
@@ -288,6 +292,7 @@ export function ScenarioRankCells({
   rightGridMinWidth,
   cls,
 }: ScenarioRankCellsProps) {
+  useI18n(); // subscribe so locale-formatted numbers refresh on language switch
   const fillColor = computeFillColor(scenarioRank, rankDefs);
   return (
     <div

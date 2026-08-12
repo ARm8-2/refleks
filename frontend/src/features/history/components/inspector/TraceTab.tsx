@@ -1,5 +1,5 @@
 import { InfoTooltip } from "@/shared/components";
-import { cn } from "@/shared/lib/utils";
+import { cn, useI18n, type MessageKey } from "@/shared/lib";
 
 import { Copy } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -11,6 +11,7 @@ import {
   computeMouseTraceAnalysis,
   computeSuggestedSens,
   type KillAnalysis,
+  type KillClassification,
   type MouseTraceAnalysis,
   type SensSuggestion,
 } from "../../lib/mouseAnalysis";
@@ -43,6 +44,13 @@ const CLASSIFICATION_STYLES = {
   },
 } as const;
 
+const CLASSIFICATION_LABEL_KEYS: Record<KillClassification, MessageKey> = {
+  overshoot: "history.trace.overshoot",
+  undershoot: "history.trace.undershoot",
+  optimal: "history.trace.optimal",
+  unknown: "history.trace.unknown",
+};
+
 function getFlickStartTs(kill: KillAnalysis): number {
   return Math.max(kill.startMs, kill.movementOnsetMs - 40);
 }
@@ -68,6 +76,7 @@ export function TraceTab({
   compareRun: HistoryRun | null;
   overlay: boolean;
 }) {
+  const { t } = useI18n();
   const primaryPoints = useRunTrace(primaryRun);
   const comparePoints = useRunTrace(compareRun);
   const primaryEvents = useRunStatsEvents(primaryRun);
@@ -196,7 +205,9 @@ export function TraceTab({
   ) {
     return (
       <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
-        <p className="text-sm text-surface-muted-foreground">Loading trace…</p>
+        <p className="text-sm text-surface-muted-foreground">
+          {t("history.trace.loading")}
+        </p>
       </div>
     );
   }
@@ -205,8 +216,7 @@ export function TraceTab({
     return (
       <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
         <p className="text-sm text-surface-muted-foreground">
-          No mouse trace data. Enable mouse tracking in settings to record
-          traces.
+          {t("history.trace.noMouseTrace")}
         </p>
       </div>
     );
@@ -259,6 +269,7 @@ function AnalysisPanel({
   selectedKillIdx: number | null;
   onKillClick: (kill: KillAnalysis) => void;
 }) {
+  const { t } = useI18n();
   const { counts, kills } = analysis;
   const killListRef = useRef<HTMLDivElement>(null);
 
@@ -284,7 +295,7 @@ function AnalysisPanel({
                   CLASSIFICATION_STYLES.overshoot.dot,
                 )}
               />
-              {counts.overshoot} overshoot
+              {t("history.trace.killsOvershoot", { count: counts.overshoot })}
             </span>
           )}
           {counts.undershoot > 0 && (
@@ -295,7 +306,9 @@ function AnalysisPanel({
                   CLASSIFICATION_STYLES.undershoot.dot,
                 )}
               />
-              {counts.undershoot} undershoot
+              {t("history.trace.killsUndershoot", {
+                count: counts.undershoot,
+              })}
             </span>
           )}
           {counts.optimal > 0 && (
@@ -306,7 +319,7 @@ function AnalysisPanel({
                   CLASSIFICATION_STYLES.optimal.dot,
                 )}
               />
-              {counts.optimal} optimal
+              {t("history.trace.killsOptimal", { count: counts.optimal })}
             </span>
           )}
           {counts.unknown > 0 && (
@@ -317,15 +330,21 @@ function AnalysisPanel({
                   CLASSIFICATION_STYLES.unknown.dot,
                 )}
               />
-              {counts.unknown} unknown
+              {t("history.trace.killsUnknown", { count: counts.unknown })}
             </span>
           )}
           <span>·</span>
-          <span>{fmtPct(analysis.avgEfficiency)} path eff</span>
+          <span>
+            {t("history.trace.pathEff", {
+              value: fmtPct(analysis.avgEfficiency),
+            })}
+          </span>
           <span className="text-[0.6875rem]">({analysis.coordinateSpace})</span>
           {analysis.skippedKillCount > 0 && (
             <span className="text-[0.6875rem]">
-              {analysis.skippedKillCount} outside trace
+              {t("history.trace.outsideTrace", {
+                count: analysis.skippedKillCount,
+              })}
             </span>
           )}
         </div>
@@ -333,54 +352,53 @@ function AnalysisPanel({
           <InfoTooltip side="left">
             <div className="max-w-xs space-y-1.5 text-[0.6875rem]">
               <p className="font-medium text-popover-foreground">
-                Mouse Path Analysis
+                {t("history.trace.mousePathAnalysis")}
               </p>
               <p className="text-popover-foreground/70">
-                Uses time-normalized kinematics, trace quality, button
-                transitions, and the recorded kill clock to classify movement
-                shape. Existing traces do not contain target centers, so
-                distances are raw-input units rather than pixels.
+                {t("history.trace.analysisDescription")}
               </p>
               <div className="space-y-0.5 text-popover-foreground/70">
                 <p>
                   <span className={CLASSIFICATION_STYLES.overshoot.text}>
-                    Overshoot
+                    {t("history.trace.overshoot")}
                   </span>{" "}
-                  — cursor went past the target and corrected back
+                  — {t("history.trace.overshootDesc")}
                 </p>
                 <p>
                   <span className={CLASSIFICATION_STYLES.undershoot.text}>
-                    Undershoot
+                    {t("history.trace.undershoot")}
                   </span>{" "}
-                  — stopped short and made micro-corrections
+                  — {t("history.trace.undershootDesc")}
                 </p>
                 <p>
                   <span className={CLASSIFICATION_STYLES.optimal.text}>
-                    Optimal
+                    {t("history.trace.optimal")}
                   </span>{" "}
-                  — direct, low-correction approach
+                  — {t("history.trace.optimalDesc")}
                 </p>
                 <p>
                   <span className={CLASSIFICATION_STYLES.unknown.text}>
-                    Unknown
+                    {t("history.trace.unknown")}
                   </span>{" "}
-                  — trace coverage or timing evidence is insufficient
+                  — {t("history.trace.unknownDesc")}
                 </p>
               </div>
               {analysis.avgOvershootPixels > 0 && (
                 <p className="text-popover-foreground/70">
-                  Avg overshoot: {fmtNum(analysis.avgOvershootPixels)} trace
-                  units
+                  {t("history.trace.avgOvershoot", {
+                    value: fmtNum(analysis.avgOvershootPixels),
+                  })}
                 </p>
               )}
               {analysis.avgUndershootPixels > 0 && (
                 <p className="text-popover-foreground/70">
-                  Avg undershoot: {fmtNum(analysis.avgUndershootPixels)} trace
-                  units
+                  {t("history.trace.avgUndershoot", {
+                    value: fmtNum(analysis.avgUndershootPixels),
+                  })}
                 </p>
               )}
               <p className="text-popover-foreground/50">
-                Click a kill below to highlight its path.
+                {t("history.trace.clickKillHint")}
               </p>
             </div>
           </InfoTooltip>
@@ -392,7 +410,7 @@ function AnalysisPanel({
         <SensSuggestionCard suggestion={suggestion} />
       ) : (
         <div className="rounded-xl bg-surface-subtle px-3 py-2 text-xs text-surface-muted-foreground">
-          No training sensitivity suggested — continue on your current sens.
+          {t("history.trace.noSensSuggested")}
         </div>
       )}
 
@@ -430,13 +448,22 @@ function KillChip({
       ? kill.overshootPixels
       : kill.undershootPixels;
   const style = CLASSIFICATION_STYLES[kill.classification];
+  const { t } = useI18n();
+
+  const units =
+    px > 0 ? ` ${t("history.trace.traceUnits", { value: fmtNum(px, 0) })}` : "";
 
   return (
     <button
       type="button"
       data-kill={kill.killIdx}
       onClick={onClick}
-      title={`Kill #${kill.killIdx} — ${kill.classification}${px > 0 ? ` (${fmtNum(px, 0)} trace units)` : ""} — ${fmtPct(kill.efficiency)} eff`}
+      title={t("history.trace.killChipTitle", {
+        index: kill.killIdx,
+        classification: t(CLASSIFICATION_LABEL_KEYS[kill.classification]),
+        units,
+        eff: fmtPct(kill.efficiency),
+      })}
       className={cn(
         "flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.6875rem] tabular-nums transition-colors",
         selected
@@ -458,6 +485,7 @@ function KillChip({
 /* ─── Sensitivity suggestion card ─── */
 
 function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
+  const { t } = useI18n();
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(suggestion.recommended.toFixed(2));
@@ -471,7 +499,7 @@ function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-xs text-surface-muted-foreground">
-            Suggested training sens
+            {t("history.trace.suggestedTrainingSens")}
           </span>
           <span className="font-medium text-foreground">
             {fmtNum(suggestion.recommended, 2)} cm/360
@@ -483,7 +511,9 @@ function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
           <button
             type="button"
             onClick={handleCopy}
-            title={`Copy ${suggestion.recommended.toFixed(2)}`}
+            title={t("history.trace.copySens", {
+              value: suggestion.recommended.toFixed(2),
+            })}
             className="inline-flex h-5 w-5 items-center justify-center rounded text-surface-muted-foreground hover:text-foreground"
           >
             <Copy className="h-3 w-3" />
@@ -492,7 +522,7 @@ function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
         <InfoTooltip side="left">
           <div className="max-w-xs space-y-1 text-[0.6875rem]">
             <p className="font-medium text-popover-foreground">
-              Training Sensitivity
+              {t("history.trace.trainingSensitivity")}
             </p>
             <p className="text-popover-foreground/70">{suggestion.reason}</p>
           </div>

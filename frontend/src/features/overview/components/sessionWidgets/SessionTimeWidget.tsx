@@ -1,4 +1,5 @@
 import { Widget, WidgetEmpty } from "@/shared/components";
+import { useI18n } from "@/shared/lib";
 import { Clock3, Gamepad2 } from "lucide-react";
 import type { RecentSessionSnapshot } from "../../hooks/useRecentSessionSnapshot";
 
@@ -7,8 +8,11 @@ export function SessionTimeWidget({
 }: {
   snapshot: RecentSessionSnapshot;
 }) {
+  const { t } = useI18n();
   if (!snapshot.currentSession)
-    return <WidgetEmpty icon={Clock3} label="Session & Playtime" />;
+    return (
+      <WidgetEmpty icon={Clock3} label={t("overview.sessionPlaytime.title")} />
+    );
 
   const {
     sessionLengthLabel,
@@ -18,7 +22,7 @@ export function SessionTimeWidget({
   } = snapshot;
 
   return (
-    <Widget icon={Clock3} title="Session & Playtime">
+    <Widget icon={Clock3} title={t("overview.sessionPlaytime.title")}>
       <div className="flex items-baseline gap-2">
         <span className="text-lg font-semibold text-foreground">
           {sessionLengthLabel}

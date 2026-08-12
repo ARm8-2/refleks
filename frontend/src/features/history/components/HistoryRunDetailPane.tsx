@@ -1,6 +1,6 @@
 import { Button, SegmentedControl } from "@/shared/components";
 import { usePersistedState } from "@/shared/hooks";
-import { getSettings, STORAGE_KEYS } from "@/shared/lib";
+import { getSettings, STORAGE_KEYS, useI18n } from "@/shared/lib";
 import {
   Columns2,
   Layers,
@@ -45,6 +45,7 @@ export function HistoryRunDetailPane({
   isComparePb,
   onComparePb,
 }: Props) {
+  const { t } = useI18n();
   const [overlay, setOverlay] = usePersistedState(
     STORAGE_KEYS.historyAnalysisOverlay,
     false,
@@ -74,7 +75,10 @@ export function HistoryRunDetailPane({
       <div className="flex items-center justify-between gap-2 px-4 py-3">
         <SegmentedControl
           value={activeTab}
-          options={INSPECTOR_TABS}
+          options={INSPECTOR_TABS.map((tab) => ({
+            value: tab.value,
+            label: t(tab.labelKey),
+          }))}
           onValueChange={onTabChange}
         />
         <div className="flex items-center gap-1">
@@ -83,10 +87,10 @@ export function HistoryRunDetailPane({
               variant="ghost"
               size="sm"
               onClick={onComparePb}
-              title="Compare with personal best"
+              title={t("history.inspector.compareWithPb")}
             >
               <Trophy className="mr-1 h-3.5 w-3.5" />
-              vs PB
+              {t("history.inspector.vsPb")}
             </Button>
           )}
           {compareRun &&
@@ -95,17 +99,21 @@ export function HistoryRunDetailPane({
                 variant={overlay ? "secondary" : "ghost"}
                 size="sm"
                 onClick={() => setOverlay((o) => !o)}
-                title={overlay ? "Show side by side" : "Overlay both runs"}
+                title={
+                  overlay
+                    ? t("history.inspector.showSideBySide")
+                    : t("history.inspector.overlayBoth")
+                }
               >
                 {overlay ? (
                   <>
                     <Columns2 className="mr-1 h-3.5 w-3.5" />
-                    Side by side
+                    {t("history.inspector.sideBySide")}
                   </>
                 ) : (
                   <>
                     <Layers className="mr-1 h-3.5 w-3.5" />
-                    Overlay
+                    {t("history.inspector.overlay")}
                   </>
                 )}
               </Button>
@@ -113,20 +121,20 @@ export function HistoryRunDetailPane({
           {compareRun && (
             <Button variant="ghost" size="sm" onClick={onClearComparison}>
               <Rows2 className="mr-1 h-3.5 w-3.5" />
-              Single
+              {t("history.inspector.single")}
             </Button>
           )}
           {primaryRun && (
             <Button variant="ghost" size="sm" onClick={onClearPrimaryRun}>
               <PinOff className="mr-1 h-3.5 w-3.5" />
-              Clear
+              {t("history.inspector.clear")}
             </Button>
           )}
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            title="Close inspector"
+            title={t("history.inspector.closeInspector")}
           >
             <PanelRightClose className="h-4 w-4" />
           </Button>
@@ -136,7 +144,7 @@ export function HistoryRunDetailPane({
       {!primaryRun ? (
         <div className="flex flex-1 items-center justify-center p-6">
           <p className="text-sm text-surface-muted-foreground">
-            Select a run to inspect
+            {t("history.inspector.selectRunToInspect")}
           </p>
         </div>
       ) : (

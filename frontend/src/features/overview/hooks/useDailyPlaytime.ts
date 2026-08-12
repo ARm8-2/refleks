@@ -1,4 +1,5 @@
 import { useStore } from "@/shared/hooks";
+import { getLocale, translate } from "@/shared/lib/i18n";
 import { useMemo } from "react";
 
 export type DailyPlaytimePoint = {
@@ -7,8 +8,20 @@ export type DailyPlaytimePoint = {
   minutes: number;
 };
 
+let weekdayFormatterLocale: string | null = null;
+let weekdayFormatter: Intl.DateTimeFormat | null = null;
+function getWeekdayFormatter(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  if (!weekdayFormatter || weekdayFormatterLocale !== locale) {
+    weekdayFormatterLocale = locale;
+    weekdayFormatter = new Intl.DateTimeFormat(locale, { weekday: "short" });
+  }
+  return weekdayFormatter;
+}
+
 export function useDailyPlaytime(days = 7): DailyPlaytimePoint[] {
   const sessions = useStore((state) => state.sessions);
+  const locale = getLocale();
 
   return useMemo(() => {
     const today = new Date();
@@ -38,7 +51,6 @@ export function useDailyPlaytime(days = 7): DailyPlaytimePoint[] {
       }
     }
 
-    const shortDay = new Intl.DateTimeFormat("en-US", { weekday: "short" });
     const result: DailyPlaytimePoint[] = [];
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(today);
@@ -46,13 +58,16 @@ export function useDailyPlaytime(days = 7): DailyPlaytimePoint[] {
       const key = toDayKey(d);
       result.push({
         day: key,
-        label: i === 0 ? "Today" : shortDay.format(d),
+        label:
+          i === 0
+            ? translate("overview.dailyPlaytime.today")
+            : getWeekdayFormatter().format(d),
         minutes: Math.round(dayBuckets.get(key) ?? 0),
       });
     }
 
     return result;
-  }, [days, sessions]);
+  }, [days, sessions, locale]);
 }
 
 function toDayKey(date: Date): string {

@@ -1,4 +1,5 @@
 import { Button, Label, Modal } from "@/shared/components";
+import { useI18n } from "@/shared/lib";
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
@@ -16,6 +17,7 @@ export function HistorySessionDetailsModal({
   onClose,
   onSave,
 }: Props) {
+  const { t } = useI18n();
   const [notes, setNotes] = useState(initialNotes);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +50,7 @@ export function HistorySessionDetailsModal({
       await onSave(notes);
       onClose();
     } catch {
-      setError("Failed to save session notes. Please try again.");
+      setError(t("history.sessionDetails.saveError"));
     } finally {
       setSaving(false);
     }
@@ -58,7 +60,7 @@ export function HistorySessionDetailsModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Session Notes"
+      title={t("history.sessionDetails.title")}
       width="38.75rem"
       height="auto"
     >
@@ -68,13 +70,15 @@ export function HistorySessionDetailsModal({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="session-notes">Notes</Label>
+          <Label htmlFor="session-notes">
+            {t("history.sessionDetails.notesLabel")}
+          </Label>
           <textarea
             ref={notesRef}
             id="session-notes"
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            placeholder="Add notes for this session..."
+            placeholder={t("history.sessionDetails.notesPlaceholder")}
             className="min-h-[11.25rem] w-full resize-none rounded-xl border border-input bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-surface-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
@@ -83,10 +87,10 @@ export function HistorySessionDetailsModal({
 
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="ghost" onClick={onClose} disabled={saving}>
-            Cancel
+            {t("common.actions.cancel")}
           </Button>
           <Button onClick={handleSave} disabled={saving || !hasChanges}>
-            {saving ? "Saving..." : "Save"}
+            {saving ? t("common.actions.saving") : t("common.actions.save")}
           </Button>
         </div>
       </div>

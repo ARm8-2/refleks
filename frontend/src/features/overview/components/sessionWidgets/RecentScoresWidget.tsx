@@ -16,6 +16,7 @@ import {
   CHART_STYLE,
   primeHistoryRunSelection,
   STORAGE_KEYS,
+  useI18n,
 } from "@/shared/lib";
 import { useId, useMemo, type ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
@@ -32,10 +33,6 @@ import { buildScoreDomain, formatScoreCompact } from "./shared";
 
 const RECENT_SCORE_RUN_COUNT_OPTIONS = [10, 20, 50] as const;
 const REFERENCE_LABEL_OVERLAP_RATIO = 0.08;
-
-const recentScoresConfig: ChartConfig = {
-  score: { label: "Score", color: CHART_SERIES_COLORS.scoreHistory },
-};
 
 type RecentScorePoint = {
   index: number;
@@ -59,6 +56,7 @@ export function RecentScoresWidget({
   snapshot: RecentSessionSnapshot;
 }) {
   const navigate = useNavigate();
+  const { t, locale } = useI18n();
   const gradientBaseId = useId().replace(/:/g, "");
   const {
     currentSession,
@@ -85,6 +83,17 @@ export function RecentScoresWidget({
   )
     ? runCount
     : 10;
+
+  const recentScoresConfig = useMemo<ChartConfig>(
+    () => ({
+      score: {
+        label: t("overview.recentScores.score"),
+        color: CHART_SERIES_COLORS.scoreHistory,
+      },
+    }),
+    // `t` is referentially stable — the locale drives recomputation.
+    [locale],
+  );
 
   const compactData = useMemo(
     () =>
@@ -163,9 +172,9 @@ export function RecentScoresWidget({
 
   if (!currentSession || recentScores.length === 0) {
     return (
-      <Widget title="Recent Scores">
+      <Widget title={t("overview.recentScores.title")}>
         <div className="flex h-full items-center justify-center rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
-          Play a scenario to see recent scores here.
+          {t("overview.recentScores.empty")}
         </div>
       </Widget>
     );
@@ -359,7 +368,9 @@ export function RecentScoresWidget({
           fontSize="0.6875rem"
           fontWeight={500}
         >
-          {`Session Best: ${formatScoreCompact(sessionBestScore)}`}
+          {t("overview.recentScores.sessionBestLine", {
+            score: formatScoreCompact(sessionBestScore),
+          })}
         </text>
       );
     };
@@ -380,7 +391,9 @@ export function RecentScoresWidget({
           fontSize="0.6875rem"
           fontWeight={500}
         >
-          {`Personal Best: ${formatScoreCompact(personalBestScore)}`}
+          {t("overview.recentScores.personalBestLine", {
+            score: formatScoreCompact(personalBestScore),
+          })}
         </text>
       );
     };
@@ -448,7 +461,7 @@ export function RecentScoresWidget({
         value={effectiveRunCount}
         options={RECENT_SCORE_RUN_COUNT_OPTIONS.map((n) => ({
           value: n,
-          label: `Last ${n}`,
+          label: t("overview.recentScores.last", { count: n }),
         }))}
         onValueChange={setRunCount}
         size="sm"
@@ -458,10 +471,10 @@ export function RecentScoresWidget({
           active={showSessionBest}
           onClick={() => setShowSessionBest((v) => !v)}
         >
-          Session Best
+          {t("overview.recentScores.sessionBest")}
         </TogglePill>
         <TogglePill active={showPb} onClick={() => setShowPb((v) => !v)}>
-          Personal Best
+          {t("overview.recentScores.personalBest")}
         </TogglePill>
       </TogglePillGroup>
     </div>
@@ -469,8 +482,8 @@ export function RecentScoresWidget({
 
   return (
     <Widget
-      title="Recent Scores"
-      modalTitle={recentScoresScenario || "Recent Scores"}
+      title={t("overview.recentScores.title")}
+      modalTitle={recentScoresScenario || t("overview.recentScores.title")}
       modalControls={modalControls}
       modalContent={renderExpandedChart()}
       contentClassName="flex flex-col h-full"

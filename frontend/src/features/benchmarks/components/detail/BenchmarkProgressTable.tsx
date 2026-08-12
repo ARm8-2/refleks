@@ -17,6 +17,7 @@ import {
   getSettings,
   launchScenario,
   saveScenarioNote,
+  useI18n,
 } from "@/shared/lib";
 import type { Benchmark, BenchmarkProgress, Settings } from "@/shared/types";
 import { Settings2 } from "lucide-react";
@@ -72,6 +73,7 @@ export function BenchmarkProgressTable({
   progress,
   shareMode = false,
 }: Props) {
+  const { t } = useI18n();
   const sessions = useStore((state) => state.sessions);
 
   const storageBase = benchmarkDetailProgressStorageBase(
@@ -325,7 +327,7 @@ export function BenchmarkProgressTable({
           <div>
             <p className="text-lg font-semibold text-foreground">RefleK's</p>
             <p className="text-sm text-surface-muted-foreground">
-              Benchmark Progress Snapshot
+              {t("benchmarks.progressTable.snapshot")}
             </p>
           </div>
         </div>
@@ -334,7 +336,7 @@ export function BenchmarkProgressTable({
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <div>
           <h3 className="text-sm font-semibold text-foreground">
-            Progress Tracker
+            {t("benchmarks.progressTable.title")}
           </h3>
           <p className="text-xs text-surface-muted-foreground">
             {benchmark.benchmarkName} · {difficultyName} ·{" "}
@@ -355,10 +357,12 @@ export function BenchmarkProgressTable({
               onClick={() => setCompactMode((value) => !value)}
               aria-pressed={compactMode}
               title={
-                compactMode ? "Disable compact mode" : "Enable compact mode"
+                compactMode
+                  ? t("benchmarks.progressTable.disableCompact")
+                  : t("benchmarks.progressTable.enableCompact")
               }
             >
-              Compact
+              {t("benchmarks.progressTable.compact")}
             </Button>
             <Button
               variant={showLastPlayedHighlight ? "secondary" : "ghost"}
@@ -368,17 +372,17 @@ export function BenchmarkProgressTable({
               aria-pressed={showLastPlayedHighlight}
               title={
                 showLastPlayedHighlight
-                  ? "Hide last played highlight"
-                  : "Show last played highlight"
+                  ? t("benchmarks.progressTable.hideLastPlayed")
+                  : t("benchmarks.progressTable.showLastPlayed")
               }
             >
-              Last Played
+              {t("benchmarks.progressTable.lastPlayed")}
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowSettings(true)}
-              title="View tracker settings"
+              title={t("benchmarks.progressTable.viewSettings")}
             >
               <Settings2 className="h-4 w-4" />
             </Button>
@@ -398,13 +402,13 @@ export function BenchmarkProgressTable({
                   style={{ gridTemplateColumns: infoGridTemplate }}
                 >
                   <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
-                    Scenario
+                    {t("benchmarks.progressTable.columnScenario")}
                   </div>
                   <div />
                   {effectiveShowNotesCol && <div />}
                   {effectiveShowRecCol && (
                     <div className="flex items-center gap-1 pl-2 text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
-                      Rec
+                      {t("benchmarks.progressTable.columnRec")}
                       {!shareMode && <RecommendationInfo />}
                     </div>
                   )}
@@ -412,7 +416,7 @@ export function BenchmarkProgressTable({
                   {effectiveShowHistoryCol && <div />}
                   <div />
                   <div className="text-right text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
-                    Score
+                    {t("benchmarks.progressTable.columnScore")}
                   </div>
                 </div>
               </div>
@@ -568,7 +572,7 @@ export function BenchmarkProgressTable({
                       ))
                     ) : (
                       <div className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
-                        Details
+                        {t("benchmarks.progressTable.details")}
                       </div>
                     )}
                   </div>
@@ -636,14 +640,14 @@ export function BenchmarkProgressTable({
           <Modal
             isOpen={showSettings}
             onClose={() => setShowSettings(false)}
-            title="Tracker Settings"
+            title={t("benchmarks.progressTable.settingsTitle")}
             width="43.75rem"
             height="auto"
           >
             <div className="space-y-6 px-6 pb-6">
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-foreground">
-                  Feature Columns
+                  {t("benchmarks.progressTable.featureColumns")}
                 </h4>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="inline-flex items-center gap-2 text-sm text-foreground">
@@ -653,14 +657,14 @@ export function BenchmarkProgressTable({
                         setShowNotesCol(Boolean(value))
                       }
                     />
-                    Notes
+                    {t("benchmarks.progressTable.columnLabelNotes")}
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm text-foreground">
                     <Checkbox
                       checked={showRecCol}
                       onCheckedChange={(value) => setShowRecCol(Boolean(value))}
                     />
-                    Recommendations
+                    {t("benchmarks.progressTable.columnLabelRecommendations")}
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm text-foreground">
                     <Checkbox
@@ -669,7 +673,7 @@ export function BenchmarkProgressTable({
                         setShowPlayCol(Boolean(value))
                       }
                     />
-                    Play
+                    {t("benchmarks.progressTable.columnLabelPlay")}
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm text-foreground">
                     <Checkbox
@@ -678,14 +682,14 @@ export function BenchmarkProgressTable({
                         setShowHistoryCol(Boolean(value))
                       }
                     />
-                    History
+                    {t("benchmarks.progressTable.columnLabelHistory")}
                   </label>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-foreground">
-                  Rank Visibility
+                  {t("benchmarks.progressTable.rankVisibility")}
                 </h4>
                 <div className="flex flex-wrap items-center gap-4">
                   <label className="inline-flex items-center gap-2 text-sm text-foreground">
@@ -695,12 +699,12 @@ export function BenchmarkProgressTable({
                         setAutoHideCleared(Boolean(value))
                       }
                     />
-                    Auto-hide earlier cleared ranks
+                    {t("benchmarks.progressTable.autoHideCleared")}
                   </label>
 
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-surface-muted-foreground">
-                      Keep visible:
+                      {t("benchmarks.progressTable.keepVisible")}
                     </span>
                     <Select
                       value={String(visibleRankCount)}
@@ -722,7 +726,7 @@ export function BenchmarkProgressTable({
                   </div>
 
                   <Button variant="outline" size="sm" onClick={resetManual}>
-                    Reset Manual
+                    {t("benchmarks.progressTable.resetManual")}
                   </Button>
                 </div>
 
@@ -746,7 +750,7 @@ export function BenchmarkProgressTable({
                         }
                         title={
                           hiddenAutomatically
-                            ? "Hidden automatically because every scenario is already past this rank"
+                            ? t("benchmarks.progressTable.hiddenAutoTitle")
                             : undefined
                         }
                       >

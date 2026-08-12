@@ -7,7 +7,7 @@ import {
   Widget,
 } from "@/shared/components";
 import { usePersistedState } from "@/shared/hooks";
-import { STORAGE_KEYS } from "@/shared/lib";
+import { STORAGE_KEYS, useI18n } from "@/shared/lib";
 import type { BenchmarkProgress } from "@/shared/types";
 import { useMemo } from "react";
 import {
@@ -33,6 +33,7 @@ type StrengthLevel = "category" | "subcategory" | "scenario";
 const CARD_BACKGROUND = "var(--surface)";
 
 export function StrengthWidget({ progress }: Props) {
+  const { t, locale } = useI18n();
   const [level, setLevel] = usePersistedState<StrengthLevel>(
     STORAGE_KEYS.benchmarksDetailStrengthLevel,
     "category",
@@ -46,9 +47,15 @@ export function StrengthWidget({ progress }: Props) {
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="category">Category</SelectItem>
-        <SelectItem value="subcategory">Subcategory</SelectItem>
-        <SelectItem value="scenario">Scenario</SelectItem>
+        <SelectItem value="category">
+          {t("benchmarks.strength.scopeCategory")}
+        </SelectItem>
+        <SelectItem value="subcategory">
+          {t("benchmarks.strength.scopeSubcategory")}
+        </SelectItem>
+        <SelectItem value="scenario">
+          {t("benchmarks.strength.scopeScenario")}
+        </SelectItem>
       </SelectContent>
     </Select>
   );
@@ -66,7 +73,13 @@ export function StrengthWidget({ progress }: Props) {
       }>,
     ): StrengthRow => {
       if (!scenarios.length) {
-        return { label, percent: 0, avgScore: 0, color, rankName: "Unranked" };
+        return {
+          label,
+          percent: 0,
+          avgScore: 0,
+          color,
+          rankName: t("benchmarks.strength.unranked"),
+        };
       }
 
       const values = scenarios.map((scenario) =>
@@ -104,7 +117,8 @@ export function StrengthWidget({ progress }: Props) {
           CARD_BACKGROUND,
           0.94,
         ),
-        rankName: rankDefs[rankIndex]?.name || "Unranked",
+        rankName:
+          rankDefs[rankIndex]?.name || t("benchmarks.strength.unranked"),
       };
     };
 
@@ -148,20 +162,20 @@ export function StrengthWidget({ progress }: Props) {
     return data.sort(
       (a, b) => b.percent - a.percent || a.label.localeCompare(b.label),
     );
-  }, [progress, level]);
+  }, [progress, level, locale]);
 
   const levelLabel =
     level === "category"
-      ? "Category"
+      ? t("benchmarks.strength.scopeCategory")
       : level === "subcategory"
-        ? "Subcategory"
-        : "Scenario";
+        ? t("benchmarks.strength.scopeSubcategory")
+        : t("benchmarks.strength.scopeScenario");
 
   const renderBody = (expanded: boolean) => {
     if (rows.length === 0) {
       return (
         <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">
-          No data.
+          {t("benchmarks.strength.noData")}
         </div>
       );
     }
@@ -183,7 +197,8 @@ export function StrengthWidget({ progress }: Props) {
                 {row.label}
               </div>
               <div className="text-xs text-surface-muted-foreground">
-                {row.rankName} · Avg {formatNumber(row.avgScore, 1)}
+                {row.rankName} · {t("benchmarks.strength.avg")}{" "}
+                {formatNumber(row.avgScore, 1)}
               </div>
             </div>
 
@@ -205,10 +220,12 @@ export function StrengthWidget({ progress }: Props) {
 
   return (
     <Widget
-      title="Strength Breakdown"
-      description={`${levelLabel}-level progress toward max rank.`}
+      title={t("benchmarks.strength.title")}
+      description={t("benchmarks.strength.description", {
+        level: levelLabel,
+      })}
       headerAction={levelControls}
-      modalTitle="Strength Breakdown"
+      modalTitle={t("benchmarks.strength.title")}
       modalControls={levelControls}
       modalContent={renderBody(true)}
       modalWidth="56.25rem"

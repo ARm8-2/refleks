@@ -1,5 +1,5 @@
 import { Widget, WidgetEmpty } from "@/shared/components";
-import { cn } from "@/shared/lib";
+import { cn, useI18n } from "@/shared/lib";
 import { Gauge } from "lucide-react";
 import type { RecentSessionSnapshot } from "../../hooks/useRecentSessionSnapshot";
 import {
@@ -13,8 +13,9 @@ export function SessionPerformanceWidget({
 }: {
   snapshot: RecentSessionSnapshot;
 }) {
+  const { t } = useI18n();
   if (!snapshot.currentSession)
-    return <WidgetEmpty icon={Gauge} label="Performance" />;
+    return <WidgetEmpty icon={Gauge} label={t("overview.performance.title")} />;
 
   const { statusTone, performanceValue, performanceDetail, statusLabel } =
     snapshot;
@@ -24,7 +25,7 @@ export function SessionPerformanceWidget({
     <Widget
       icon={Gauge}
       iconClassName={getPerformanceAccent(statusTone)}
-      title="Performance"
+      title={t("overview.performance.title")}
       headerAction={
         <span
           className={cn(

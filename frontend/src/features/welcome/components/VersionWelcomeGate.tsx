@@ -1,5 +1,6 @@
-import { getSettings, getVersion, updateSettings } from "@/shared/lib";
-import { useEffect, useState } from "react";
+import { getSettings, getVersion, updateSettings, useI18n } from "@/shared/lib";
+import type { Settings } from "@/shared/types";
+import { useEffect, useRef, useState } from "react";
 import {
   buildVersionWelcomePresentation,
   buildWelcomeSeenSettingsUpdate,
@@ -9,7 +10,11 @@ import {
 import { WelcomeModalSession } from "./WelcomeModalSession";
 
 export function VersionWelcomeGate() {
+  const { locale } = useI18n();
   const [presentation, setPresentation] = useState<WelcomePresentation | null>(
+    null,
+  );
+  const latestRef = useRef<{ settings: Settings; version: string } | null>(
     null,
   );
 
@@ -19,6 +24,7 @@ export function VersionWelcomeGate() {
     void Promise.all([getSettings(), getVersion()])
       .then(([settings, version]) => {
         if (cancelled) return;
+        latestRef.current = { settings, version };
 
         const nextPresentation = buildVersionWelcomePresentation(
           settings,
@@ -36,6 +42,18 @@ export function VersionWelcomeGate() {
       cancelled = true;
     };
   }, []);
+
+  // Keep the open modal's content in sync when the locale changes (e.g. the
+  // persisted language arrives from the backend after mount). Never re-open
+  // the gate based on locale alone.
+  useEffect(() => {
+    if (!latestRef.current) return;
+    const nextPresentation = buildVersionWelcomePresentation(
+      latestRef.current.settings,
+      latestRef.current.version,
+    );
+    if (nextPresentation) setPresentation(nextPresentation);
+  }, [locale]);
 
   const handleConfirm = async ({
     anonymousEnabled,
