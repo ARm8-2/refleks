@@ -8,6 +8,7 @@ const (
 	DefaultTheme              = "dark"
 	DefaultFont               = "montserrat"
 	DefaultScale              = "100"
+	DefaultLanguage           = "en"
 	DefaultMouseBufferMinutes = 5
 	DefaultRecentRunsDays     = 180
 	DefaultRecentRunsMinCount = 2500
@@ -113,3 +114,7 @@ const (
 // ValidScales lists the UI scale percentages accepted from the frontend,
 // kept in sync with frontend/src/shared/lib/theme.ts (SCALES).
 var ValidScales = []string{"60", "75", "90", "100", "110", "125", "150"}
+
+// ValidLanguages lists the UI languages accepted from the frontend, kept in
+// sync with frontend/src/shared/lib/i18n (LOCALES).
+var ValidLanguages = []string{"en", "nl"}

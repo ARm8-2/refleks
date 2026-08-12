@@ -817,6 +817,7 @@ export namespace models {
 	    theme: string;
 	    font?: string;
 	    scale?: string;
+	    language: string;
 	    favoriteBenchmarks?: string[];
 	    mouseTrackingEnabled: boolean;
 	    mouseBufferMinutes: number;
@@ -849,6 +850,7 @@ export namespace models {
 	        this.theme = source["theme"];
 	        this.font = source["font"];
 	        this.scale = source["scale"];
+	        this.language = source["language"];
 	        this.favoriteBenchmarks = source["favoriteBenchmarks"];
 	        this.mouseTrackingEnabled = source["mouseTrackingEnabled"];
 	        this.mouseBufferMinutes = source["mouseBufferMinutes"];

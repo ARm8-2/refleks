@@ -50,6 +50,7 @@ func Default() models.Settings {
 		Theme:                   constants.DefaultTheme,
 		Font:                    constants.DefaultFont,
 		Scale:                   constants.DefaultScale,
+		Language:                constants.DefaultLanguage,
 		MouseTrackingEnabled:    true,
 		MouseBufferMinutes:      constants.DefaultMouseBufferMinutes,
 		ScreenCaptureEnabled:    false,
@@ -90,6 +91,7 @@ func Sanitize(s models.Settings) models.Settings {
 		s.Font = constants.DefaultFont
 	}
 	s.Scale = sanitizeScale(s.Scale)
+	s.Language = sanitizeLanguage(s.Language)
 	if s.MouseBufferMinutes <= 0 {
 		s.MouseBufferMinutes = constants.DefaultMouseBufferMinutes
 	}
@@ -118,6 +120,17 @@ func sanitizeScale(scale string) string {
 		}
 	}
 	return constants.DefaultScale
+}
+
+// sanitizeLanguage validates the language code against the supported set,
+// falling back to the default when unknown or empty.
+func sanitizeLanguage(language string) string {
+	for _, valid := range constants.ValidLanguages {
+		if language == valid {
+			return language
+		}
+	}
+	return constants.DefaultLanguage
 }
 
 func sanitizeScreenCaptureFPS(fps int) int {

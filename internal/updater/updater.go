@@ -26,6 +26,10 @@ type Updater struct {
 	client  *http.Client
 }
 
+// ErrUnsupportedOS is returned when an update operation runs on a platform
+// that the installer does not support.
+var ErrUnsupportedOS = errors.New("auto-update currently supported on Windows only")
+
 // New constructs a new Updater.
 func New(owner, repo, current string) *Updater {
 	return &Updater{
@@ -152,12 +156,11 @@ func (u *Updater) Latest(ctx context.Context) (string, string, error) {
 
 // BuildDownloadURL builds the expected installer URL for a given version and current OS.
 func (u *Updater) BuildDownloadURL(version string) (string, error) {
-	version = sanitizeVer(version)
 	if version == "" {
 		return "", errors.New("empty version")
 	}
 	if runtime.GOOS != "windows" {
-		return "", errors.New("auto-update currently supported on Windows only")
+		return "", ErrUnsupportedOS
 	}
 	asset := fmt.Sprintf(constants.WindowsInstallerNameFmt, version)
 	url := fmt.Sprintf(constants.GitHubDownloadURLFmt, u.Owner, u.Repo, version, asset)
@@ -220,7 +223,7 @@ func (u *Updater) LaunchInstaller(ctx context.Context, path string) error {
 	// Intentionally ignore ctx for the child process to avoid cancellation
 	// when the app quits. The installer must continue independently.
 	if runtime.GOOS != "windows" {
-		return errors.New("auto-update currently supported on Windows only")
+		return ErrUnsupportedOS
 	}
 	if err := launchInstallerDetached(path); err != nil {
 		cleanupDownloadedInstaller(path)

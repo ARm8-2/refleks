@@ -213,7 +213,7 @@ func (a *App) GetRunReplay(filePath string) string {
 // missing file.
 func (a *App) GetRunReplayStatus(filePath string) models.ReplayStatus {
 	if a.runStore == nil {
-		return models.ReplayStatus{State: models.ReplayStateUnavailable, Message: "run storage is not initialized"}
+		return models.ReplayStatus{State: models.ReplayStateUnavailable, Message: constants.ReplayStorageUnavailable}
 	}
 	return a.runStore.GetReplayStatus(filePath)
 }
@@ -252,7 +252,7 @@ func (a *App) DeleteRunReplay(filePath string) error {
 func (a *App) ExportRunReplay(filePath string) (string, error) {
 	diskPath, _, ok := a.resolveReplayPath(filePath)
 	if !ok {
-		return "", fmt.Errorf("no replay exists for this run")
+		return "", constants.NewCoded(constants.ReplayMissing)
 	}
 
 	savePath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
@@ -270,7 +270,7 @@ func (a *App) ExportRunReplay(filePath string) (string, error) {
 	}
 
 	if err := copyFile(diskPath, savePath); err != nil {
-		return "", fmt.Errorf("export replay: %w", err)
+		return "", constants.WrapCoded(constants.ReplayExportFailed, err)
 	}
 	return savePath, nil
 }
@@ -304,14 +304,18 @@ func copyFile(src, dst string) error {
 // success because the D3D/FFmpeg session starts later.
 func (a *App) GetScreenCaptureInfo() screen.CaptureStatus {
 	if a.runsRuntimeSvc == nil {
-		return screen.CaptureStatus{State: "unavailable", Message: "screen capture runtime is not initialized"}
+		return screen.CaptureStatus{State: "unavailable", Message: constants.ScreenCaptureUninitialized}
 	}
 	return a.runsRuntimeSvc.ScreenCaptureStatus()
 }
 
 // GetLastScenarioScores fetches the last 10 scores for a given scenario from KovaaK's API.
 func (a *App) GetLastScenarioScores(scenarioName string) ([]models.KovaaksLastScore, error) {
-	return a.scenarioSvc.GetLastScores(scenarioName)
+	scores, err := a.scenarioSvc.GetLastScores(scenarioName)
+	if err != nil {
+		return nil, constants.WrapCoded(constants.ScenarioScoresFetch, err)
+	}
+	return scores, nil
 }
 
 // GetBenchmarks returns the cached benchmark list for the Explore UI.
@@ -324,7 +328,7 @@ func (a *App) GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, e
 	// 1. Try to get from cache (or fetch if missing)
 	data, cached, err := a.benchmarkSvc.GetBenchmarkProgress(benchmarkId, true)
 	if err != nil {
-		return models.BenchmarkProgress{}, err
+		return models.BenchmarkProgress{}, constants.WrapCoded(constants.BenchmarkProgressFetch, err)
 	}
 
 	// 2. Trigger background refresh (if it was cached)
@@ -343,12 +347,20 @@ func (a *App) GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, e
 
 // GetAllBenchmarkProgresses returns progress for all benchmarks, using cache if available.
 func (a *App) GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
-	return a.benchmarkSvc.GetAllBenchmarkProgresses()
+	progress, err := a.benchmarkSvc.GetAllBenchmarkProgresses()
+	if err != nil {
+		return nil, constants.WrapCoded(constants.BenchmarkProgressFetch, err)
+	}
+	return progress, nil
 }
 
 // RefreshAllBenchmarkProgresses fetches fresh data for all benchmarks and updates the cache.
 func (a *App) RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgress, error) {
-	return a.benchmarkSvc.RefreshAllBenchmarkProgresses()
+	progress, err := a.benchmarkSvc.RefreshAllBenchmarkProgresses()
+	if err != nil {
+		return nil, constants.WrapCoded(constants.BenchmarkProgressFetch, err)
+	}
+	return progress, nil
 }
 
 // --- Settings IPC ---
@@ -386,6 +398,7 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		newSettings.Theme = defaults.Theme
 		newSettings.Font = defaults.Font
 		newSettings.Scale = defaults.Scale
+		newSettings.Language = defaults.Language
 		newSettings.MouseTrackingEnabled = defaults.MouseTrackingEnabled
 		newSettings.MouseBufferMinutes = defaults.MouseBufferMinutes
 		newSettings.ScreenCaptureEnabled = defaults.ScreenCaptureEnabled
@@ -529,7 +542,7 @@ func (a *App) SetAutostart(enabled bool) error {
 	// roll the entry back if persisting the setting fails, keeping the two in
 	// sync either way.
 	if err := a.autostartSvc.Sync(enabled, "--monitor"); err != nil {
-		return fmt.Errorf("failed to update autostart: %w", err)
+		return constants.WrapCoded(constants.AutostartUpdateFailed, err)
 	}
 	settings := a.settingsSvc.Get()
 	settings.AutostartEnabled = enabled

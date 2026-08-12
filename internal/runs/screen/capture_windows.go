@@ -168,14 +168,12 @@ func (c *captureWin) Status() ProviderStatus {
 	if c.running {
 		if c.ffmpegAlive && !c.lastFrameAt.IsZero() && time.Since(c.lastFrameAt) < 5*time.Second {
 			state = CaptureStateCapturing
-			message = "Capturing and receiving frames."
+			message = constants.ScreenCaptureActive
 			healthy = true
 		} else if state != CaptureStateError {
 			state = CaptureStateStarting
-			message = "Capture has not produced a frame yet."
+			message = constants.ScreenCaptureStarting
 		}
-	} else if state == "" {
-		state = CaptureStateIdle
 	}
 	lastFrameUnixMilli := int64(0)
 	if !c.lastFrameAt.IsZero() {
