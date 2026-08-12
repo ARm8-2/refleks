@@ -32,17 +32,9 @@ export function RecommendationIndicator({
     );
   }
 
-  if (score >= 3) {
-    return (
-      <div className={`flex flex-col items-center ${stackClass} ${upColor}`}>
-        <ChevronUp className={sizeClass} />
-      </div>
-    );
-  }
-
   if (score >= 1) {
     return (
-      <div className={`flex flex-col items-center ${stackClass} text-warning`}>
+      <div className={`flex flex-col items-center ${stackClass} ${upColor}`}>
         <ChevronUp className={sizeClass} />
       </div>
     );

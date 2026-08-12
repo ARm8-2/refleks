@@ -33,6 +33,7 @@ import {
 } from "../../lib/detailRecommendations";
 import { ScenarioHistoryModal } from "./ScenarioHistoryModal";
 import { ScenarioNotesModal } from "./ScenarioNotesModal";
+import { RecommendationInfo } from "./RecommendationInfo";
 import {
   buildInfoColumns,
   getRowClasses,
@@ -402,8 +403,9 @@ export function BenchmarkProgressTable({
                   <div />
                   {effectiveShowNotesCol && <div />}
                   {effectiveShowRecCol && (
-                    <div className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
+                    <div className="flex items-center gap-1 pl-2 text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
                       Rec
+                      {!shareMode && <RecommendationInfo />}
                     </div>
                   )}
                   {effectiveShowPlayCol && <div />}

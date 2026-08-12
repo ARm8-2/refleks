@@ -1,5 +1,6 @@
 import { ScenarioHistoryModal } from "@/features/benchmarks/components/detail/ScenarioHistoryModal";
 import { ScenarioNotesModal } from "@/features/benchmarks/components/detail/ScenarioNotesModal";
+import { RecommendationInfo } from "@/features/benchmarks/components/detail/RecommendationInfo";
 import {
   buildInfoColumns,
   getRowClasses,
@@ -408,8 +409,9 @@ export function BenchmarkOverviewWidget() {
               <div />
               {showNotesCol && <div />}
               {showRecCol && (
-                <div className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
+                <div className="flex items-center gap-1 pl-2 text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
                   Rec
+                  <RecommendationInfo />
                 </div>
               )}
               {showPlayCol && <div />}
