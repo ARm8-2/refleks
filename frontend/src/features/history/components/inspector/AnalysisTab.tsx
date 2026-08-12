@@ -178,7 +178,7 @@ export function AnalysisTab({
         {primaryAnalysis && <SummaryMetrics analysis={primaryAnalysis} />}
         <Widget
           title="Accuracy over time"
-          className="bg-surface-subtle h-[360px]"
+          className="bg-surface-subtle h-[22.5rem]"
           modalTitle="Accuracy over time"
           modalContent={
             <EventsChart
@@ -197,7 +197,7 @@ export function AnalysisTab({
             <Widget
               title="TTK trend"
               description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill · R² ${primaryAnalysis.movingAvg.r2.toFixed(3)}`}
-              className="bg-surface-subtle h-[360px]"
+              className="bg-surface-subtle h-[22.5rem]"
               modalTitle="TTK moving average"
               modalContent={<TTKChart data={primary.ttk} />}
             >
@@ -206,7 +206,7 @@ export function AnalysisTab({
             <Widget
               title="Accuracy vs speed"
               description={`Pearson r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-              className="bg-surface-subtle h-[360px]"
+              className="bg-surface-subtle h-[22.5rem]"
               modalTitle="Accuracy vs speed"
               modalContent={<ScatterPlot data={primary.scatter} />}
             >
@@ -269,7 +269,7 @@ function SplitCharts({
       <div className="grid gap-3 md:grid-cols-2">
         <Widget
           title="Accuracy over time — Pinned"
-          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+          className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
           modalTitle="Accuracy over time — Pinned"
           modalContent={
             <EventsChart
@@ -285,7 +285,7 @@ function SplitCharts({
         </Widget>
         <Widget
           title="Accuracy over time — Compare"
-          className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+          className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
           modalTitle="Accuracy over time — Compare"
           modalContent={
             <EventsChart
@@ -306,7 +306,7 @@ function SplitCharts({
           <Widget
             title="TTK trend — Pinned"
             description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill`}
-            className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+            className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
             modalTitle="TTK trend — Pinned"
             modalContent={<TTKChart data={primary.ttk} />}
           >
@@ -315,7 +315,7 @@ function SplitCharts({
           <Widget
             title="TTK trend — Compare"
             description={`Slope: ${compareAnalysis.movingAvg.slope >= 0 ? "+" : ""}${compareAnalysis.movingAvg.slope.toFixed(4)}s/kill`}
-            className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+            className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
             modalTitle="TTK trend — Compare"
             modalContent={<TTKChart data={compare.ttk} />}
           >
@@ -329,7 +329,7 @@ function SplitCharts({
           <Widget
             title="Acc vs speed — Pinned"
             description={`r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-            className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+            className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
             modalTitle="Accuracy vs speed — Pinned"
             modalContent={<ScatterPlot data={primary.scatter} />}
           >
@@ -338,7 +338,7 @@ function SplitCharts({
           <Widget
             title="Acc vs speed — Compare"
             description={`r: ${compareAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-            className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+            className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
             modalTitle="Accuracy vs speed — Compare"
             modalContent={<ScatterPlot data={compare.scatter} />}
           >
@@ -409,7 +409,7 @@ function OverlayCharts({
     <div className="space-y-3">
       <Widget
         title="Accuracy over time"
-        className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+        className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
         modalTitle="Accuracy over time — Overlay"
         modalContent={
           <EventsChartOverlay
@@ -425,7 +425,7 @@ function OverlayCharts({
           <Widget
             title="TTK trend"
             description={`Pinned slope: ${primaryAnalysis.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysis.movingAvg.slope.toFixed(4)} · Compare: ${compareAnalysis.movingAvg.slope >= 0 ? "+" : ""}${compareAnalysis.movingAvg.slope.toFixed(4)}`}
-            className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+            className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
             modalTitle="TTK trend — Overlay"
             modalContent={<TTKChartOverlay data={ttkOverlay} />}
           >
@@ -434,7 +434,7 @@ function OverlayCharts({
           <Widget
             title="Accuracy vs speed"
             description={`Pinned r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)} · Compare: ${compareAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
-            className="bg-surface-subtle hover:bg-surface-muted h-[360px]"
+            className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
             modalTitle="Accuracy vs speed — Overlay"
             modalContent={
               <ScatterPlotOverlay
@@ -884,7 +884,9 @@ function ScatterPlotOverlay({
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg bg-surface px-2.5 py-2">
-      <div className="text-[10px] text-surface-muted-foreground">{label}</div>
+      <div className="text-[0.625rem] text-surface-muted-foreground">
+        {label}
+      </div>
       <div className="mt-0.5 text-sm font-semibold text-foreground tabular-nums">
         {value}
       </div>

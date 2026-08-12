@@ -7,6 +7,7 @@ const (
 	DefaultSessionGapMinutes  = 20
 	DefaultTheme              = "dark"
 	DefaultFont               = "montserrat"
+	DefaultScale              = "100"
 	DefaultMouseBufferMinutes = 5
 	DefaultRecentRunsDays     = 180
 	DefaultRecentRunsMinCount = 2500
@@ -108,3 +109,7 @@ const (
 	// Shared by Rainbow 6: Siege and Reflex Arena.
 	YawDegPerCountSiege = 0.018 / math.Pi
 )
+
+// ValidScales lists the UI scale percentages accepted from the frontend,
+// kept in sync with frontend/src/shared/lib/theme.ts (SCALES).
+var ValidScales = []string{"60", "75", "90", "100", "110", "125", "150"}

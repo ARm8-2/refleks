@@ -53,7 +53,7 @@ export function ScenarioNotesModal({
       isOpen={isOpen}
       onClose={onClose}
       title={scenarioName}
-      width={560}
+      width="35rem"
       height="auto"
     >
       <div className="px-6 pb-6 space-y-5">
@@ -97,7 +97,7 @@ export function ScenarioNotesModal({
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             placeholder="Track your strategy, weaknesses, and focus points..."
-            className="min-h-[170px] w-full resize-none rounded-xl border border-input bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-surface-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="min-h-[10.625rem] w-full resize-none rounded-xl border border-input bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-surface-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
 

@@ -45,7 +45,7 @@ export function BenchmarkCard({
           }`}
         >
           <Star
-            size={20}
+            className="h-[1.25rem] w-[1.25rem]"
             strokeWidth={1.5}
             fill={isFavorite ? "currentColor" : "none"}
           />
@@ -56,7 +56,7 @@ export function BenchmarkCard({
         </div>
 
         <span
-          className="px-1.5 py-0.5 rounded text-[10px] font-semibold border shrink-0 border-border text-surface-muted-foreground"
+          className="px-1.5 py-0.5 rounded text-[0.625rem] font-semibold border shrink-0 border-border text-surface-muted-foreground"
           style={
             benchmark.color
               ? { borderColor: benchmark.color, color: benchmark.color }
@@ -69,7 +69,7 @@ export function BenchmarkCard({
 
         {/* Right arrow hint */}
         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-muted-foreground transition-colors duration-150 group-hover:text-foreground pointer-events-none">
-          <ChevronRight size={16} />
+          <ChevronRight className="h-4 w-4" />
         </div>
       </div>
     </div>

@@ -40,7 +40,7 @@ export function LastRunWidget({
       headerAction={
         lastRunScenario ? (
           <span
-            className="max-w-[120px] truncate text-[11px] text-surface-muted-foreground"
+            className="max-w-[7.5rem] truncate text-[0.6875rem] text-surface-muted-foreground"
             title={lastRunScenario}
           >
             {lastRunScenario}

@@ -62,7 +62,7 @@ export function HistorySessionList({
     <aside
       className={cn(
         "flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-surface shrink-0 transition-[width] duration-200 ease-out",
-        collapsed ? "w-16" : "w-[260px]",
+        collapsed ? "w-16" : "w-[16.25rem]",
       )}
     >
       {/* Header */}
@@ -145,7 +145,7 @@ export function HistorySessionList({
                   />
                   <span
                     className={cn(
-                      "relative z-10 mt-1 text-[10px] leading-tight text-surface-muted-foreground transition-colors duration-200",
+                      "relative z-10 mt-1 text-[0.625rem] leading-tight text-surface-muted-foreground transition-colors duration-200",
                       selected && "font-medium text-foreground",
                     )}
                   >
@@ -182,7 +182,7 @@ export function HistorySessionList({
                         <NotebookPen className="h-3.5 w-3.5 text-primary" />
                       </span>
                     )}
-                    <span className="text-[11px] text-surface-muted-foreground">
+                    <span className="text-[0.6875rem] text-surface-muted-foreground">
                       {formatRelativeTime(ts)}
                     </span>
                   </div>
@@ -250,7 +250,7 @@ function SessionListSortFilter({
       </PopoverTrigger>
       <PopoverContent align="start" className="w-44">
         {/* Sort */}
-        <div className="px-2 py-1.5 text-[10px] font-medium uppercase tracking-wider text-surface-muted-foreground">
+        <div className="px-2 py-1.5 text-[0.625rem] font-medium uppercase tracking-wider text-surface-muted-foreground">
           <ArrowUpDown className="mr-1 inline h-3 w-3" />
           Sort
         </div>
@@ -280,7 +280,7 @@ function SessionListSortFilter({
         <div className="my-1 border-t border-border" />
 
         {/* Filters */}
-        <div className="px-2 py-1.5 text-[10px] font-medium uppercase tracking-wider text-surface-muted-foreground">
+        <div className="px-2 py-1.5 text-[0.625rem] font-medium uppercase tracking-wider text-surface-muted-foreground">
           <ListFilter className="mr-1 inline h-3 w-3" />
           Filter
         </div>

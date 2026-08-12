@@ -18,11 +18,24 @@ export const FONTS = [
 ] as const;
 export type Font = (typeof FONTS)[number]["id"];
 
+export const SCALES = [
+  { id: "60", label: "60%", factor: 0.6 },
+  { id: "75", label: "75%", factor: 0.75 },
+  { id: "90", label: "90%", factor: 0.9 },
+  { id: "100", label: "100%", factor: 1 },
+  { id: "110", label: "110%", factor: 1.1 },
+  { id: "125", label: "125%", factor: 1.25 },
+  { id: "150", label: "150%", factor: 1.5 },
+] as const;
+export type Scale = (typeof SCALES)[number]["id"];
+
 export const THEME_CHANGED_EVENT = "refleks-theme-changed";
 export const FONT_CHANGED_EVENT = "refleks-font-changed";
+export const SCALE_CHANGED_EVENT = "refleks-scale-changed";
 
 const THEME_STORAGE_KEY = STORAGE_KEYS.theme;
 const FONT_STORAGE_KEY = STORAGE_KEYS.font;
+const SCALE_STORAGE_KEY = STORAGE_KEYS.scale;
 
 const THEME_CLASSES: Record<Theme, string | null> = {
   dark: "dark",
@@ -38,6 +51,7 @@ export const THEME_SELECTORS: Record<Theme, string> = {
 
 export const DEFAULT_THEME: Theme = "dark";
 export const DEFAULT_FONT: Font = "montserrat";
+export const DEFAULT_SCALE: Scale = "100";
 
 export function getFontStack(font: Font): string {
   const found = FONTS.find((f) => f.id === font);
@@ -131,6 +145,44 @@ export function applyFont(font: Font) {
 export function setFont(font: Font) {
   localStorage.setItem(FONT_STORAGE_KEY, font);
   applyFont(font);
+}
+
+// --- Scale ---
+
+export function getSavedScale(): Scale {
+  const v = localStorage.getItem(SCALE_STORAGE_KEY) || DEFAULT_SCALE;
+  return (SCALES.map((s) => s.id) as readonly string[]).includes(v)
+    ? (v as Scale)
+    : DEFAULT_SCALE;
+}
+
+export function applyScale(scale: Scale) {
+  if (typeof document === "undefined") return;
+  const found = SCALES.find((s) => s.id === scale);
+  const factor = found?.factor ?? 1;
+  const root = document.documentElement;
+  // Scale the whole UI by adjusting the root font size. Because the app is
+  // rem-based, this is a real layout reflow: portals (popovers, dropdowns)
+  // keep their anchor alignment and the page always fills the window — unlike
+  // CSS `zoom`, which scales rendering without reflow and breaks both.
+  if (factor === 1) {
+    root.style.removeProperty("font-size");
+  } else {
+    root.style.setProperty("font-size", `${factor * 100}%`);
+  }
+
+  try {
+    window.dispatchEvent(
+      new CustomEvent(SCALE_CHANGED_EVENT, { detail: { scale, factor } }),
+    );
+  } catch {
+    // ignore in non-browser contexts
+  }
+}
+
+export function setScale(scale: Scale) {
+  localStorage.setItem(SCALE_STORAGE_KEY, scale);
+  applyScale(scale);
 }
 
 // --- Token helpers ---

@@ -102,7 +102,7 @@ function ChoiceCard({
       <div className="flex min-h-[1.75rem] items-center justify-between gap-3">
         <span
           className={cn(
-            "inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide",
+            "inline-flex rounded-full px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-wide",
             eyebrowTone === "primary"
               ? "bg-primary/10 text-primary"
               : "bg-surface-muted text-surface-muted-foreground",
@@ -163,7 +163,7 @@ function ChoiceGroup({
 }) {
   return (
     <div className="rounded-xl bg-surface-subtle p-4">
-      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+      <div className="flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-primary">
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
           {icon}
         </span>
@@ -205,7 +205,7 @@ function ResourceCard({
       <p className="mt-1 text-xs leading-5 text-surface-muted-foreground">
         {description}
       </p>
-      <div className="mt-2 font-mono text-[11px] text-surface-muted-foreground">
+      <div className="mt-2 font-mono text-[0.6875rem] text-surface-muted-foreground">
         {urlLabel}
       </div>
     </button>
@@ -283,7 +283,7 @@ export function WelcomeModal({
           {content.title}
         </span>
       }
-      width={980}
+      width="61.25rem"
       height="auto"
       className="px-6 pt-7 pb-6"
       closeOnOutsideClick={closeOnOutsideClick}

@@ -17,7 +17,7 @@ export function TogglePill({
   ...props
 }: TogglePillProps) {
   const sizeClass =
-    size === "md" ? "h-7 px-2.5 text-xs" : "h-7 px-2 text-[11px]";
+    size === "md" ? "h-7 px-2.5 text-xs" : "h-7 px-2 text-[0.6875rem]";
 
   return (
     <button

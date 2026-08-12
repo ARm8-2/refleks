@@ -23,9 +23,11 @@ import {
   useStore,
 } from "@/shared/hooks";
 import {
+  DEFAULT_SCALE,
   EXTERNAL_LINKS,
   FONTS,
   MISSING_VALUE,
+  SCALES,
   STORAGE_KEYS,
   THEMES,
   checkForUpdates,
@@ -37,9 +39,11 @@ import {
   quitApp,
   setAutostart,
   setFont,
+  setScale,
   setTheme,
   updateSettings,
   type Font,
+  type Scale,
   type Theme,
 } from "@/shared/lib";
 import type { ScreenCaptureInfo, Settings, UpdateInfo } from "@/shared/types";
@@ -63,6 +67,7 @@ const themeOptions = THEMES.map((t) => ({
   value: t,
 }));
 const fontOptions = FONTS.map((f) => ({ label: f.label, value: f.id }));
+const scaleOptions = SCALES.map((s) => ({ label: s.label, value: s.id }));
 const sessionGapOptions = [5, 10, 15, 20, 30, 45, 60, 90, 120].map((m) => ({
   label: `${m} minutes`,
   value: String(m),
@@ -212,6 +217,12 @@ export function SettingsPage() {
     updateField("font", font, true);
   };
 
+  const handleScaleChange = (value: string) => {
+    const scale = value as Scale;
+    setScale(scale);
+    updateField("scale", scale, true);
+  };
+
   const handleCheckUpdate = async () => {
     setChecking(true);
     setCheckError("");
@@ -309,6 +320,7 @@ export function SettingsPage() {
       setHasUnsavedChanges(false);
       setTheme(current.theme);
       if (current.font) setFont(current.font);
+      if (current.scale) setScale(current.scale);
       setSessionGap(current.sessionGapMinutes);
       setSessionNotes(current.sessionNotes ?? {});
     } catch (e) {
@@ -521,7 +533,7 @@ export function SettingsPage() {
                           iconClassName="h-auto w-auto"
                         >
                           {screenCaptureInfo ? (
-                            <div className="max-w-xs space-y-1 text-[11px]">
+                            <div className="max-w-xs space-y-1 text-[0.6875rem]">
                               <p className="font-medium text-popover-foreground">
                                 {screenCaptureInfo.healthy
                                   ? "Screen capture active"
@@ -544,7 +556,7 @@ export function SettingsPage() {
                               )}
                             </div>
                           ) : (
-                            <div className="max-w-xs space-y-1 text-[11px]">
+                            <div className="max-w-xs space-y-1 text-[0.6875rem]">
                               <p className="font-medium text-popover-foreground">
                                 FFmpeg not detected
                               </p>
@@ -791,6 +803,27 @@ export function SettingsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {fontOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </SettingsField>
+
+                <SettingsField
+                  label="Scale"
+                  description="Interface size; smaller values fit more content on large screens"
+                >
+                  <Select
+                    value={settings.scale || DEFAULT_SCALE}
+                    onValueChange={handleScaleChange}
+                  >
+                    <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {scaleOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>

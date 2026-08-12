@@ -50,7 +50,7 @@ export function ScenarioTrendChart({
   };
 
   const chart = (expanded: boolean) => {
-    const chartHeight = expanded ? "h-[320px]" : "h-[200px]";
+    const chartHeight = expanded ? "h-[20rem]" : "h-[12.5rem]";
 
     return (
       <ChartContainer

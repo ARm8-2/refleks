@@ -111,7 +111,7 @@ export function BenchmarkDetailPage() {
               value={String(difficultyIndex)}
               onValueChange={(value) => setDifficultyIndex(Number(value) || 0)}
             >
-              <SelectTrigger className="h-8 w-auto min-w-0 max-w-[240px] px-2.5 text-xs sm:text-sm">
+              <SelectTrigger className="h-8 w-auto min-w-0 max-w-[15rem] px-2.5 text-xs sm:text-sm">
                 <SelectValue placeholder="Difficulty" />
               </SelectTrigger>
               <SelectContent>
@@ -131,7 +131,8 @@ export function BenchmarkDetailPage() {
             variant="ghost"
             size="icon"
             onClick={() =>
-              difficulty?.sharecode && launchPlaylist(difficulty.sharecode)
+              difficulty?.sharecode &&
+              launchPlaylist(difficulty.sharecode).catch(() => {})
             }
             disabled={!difficulty?.sharecode}
             title="Play benchmark playlist in Kovaak's"
@@ -177,7 +178,7 @@ export function BenchmarkDetailPage() {
         {showInitialSkeleton && (
           <div className="space-y-3 rounded-xl bg-surface p-6 shadow-sm">
             <div className="h-5 w-56 animate-pulse rounded-md bg-surface-subtle" />
-            <div className="h-[320px] animate-pulse rounded-xl bg-surface-subtle" />
+            <div className="h-[20rem] animate-pulse rounded-xl bg-surface-subtle" />
           </div>
         )}
 

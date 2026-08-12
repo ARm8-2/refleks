@@ -71,13 +71,13 @@ function thresholdTextOnFillColor(fillColor: string): string {
 }
 
 // --- Column layout constants ---
-export const SCENARIO_COLUMN_WIDTH = 240;
-export const GAP_COLUMN_WIDTH = 8;
-export const NOTES_COLUMN_WIDTH = 32;
-export const RECOMMEND_COLUMN_WIDTH = 40;
-export const ACTION_COLUMN_WIDTH = 32;
-export const SCORE_COLUMN_WIDTH = 60;
-export const RANK_MIN_COLUMN_WIDTH = 112;
+export const SCENARIO_COLUMN_WIDTH = 15;
+export const GAP_COLUMN_WIDTH = 0.5;
+export const NOTES_COLUMN_WIDTH = 2;
+export const RECOMMEND_COLUMN_WIDTH = 2.5;
+export const ACTION_COLUMN_WIDTH = 2;
+export const SCORE_COLUMN_WIDTH = 3.75;
+export const RANK_MIN_COLUMN_WIDTH = 7;
 
 export type InfoColumnKey =
   | "scenario"
@@ -123,22 +123,26 @@ export type RowClasses = {
   scoreTextClass: string;
   iconButtonClass: string;
   actionButtonClass: string;
-  iconSize: number;
+  iconClass: string;
+  compact: boolean;
 };
 
 export function getRowClasses(compact: boolean): RowClasses {
   return {
-    rowHeightClass: compact ? "h-[28px]" : "h-[32px]",
-    rankCellHeightClass: compact ? "h-[22px]" : "h-[24px]",
-    nameTextClass: compact ? "text-[12px]" : "text-[13px]",
-    scoreTextClass: compact ? "text-[11px]" : "text-[12px]",
+    rowHeightClass: compact ? "h-[1.75rem]" : "h-[2rem]",
+    rankCellHeightClass: compact ? "h-[1.375rem]" : "h-[1.5rem]",
+    nameTextClass: compact ? "text-[0.75rem]" : "text-[0.8125rem]",
+    scoreTextClass: compact ? "text-[0.6875rem]" : "text-[0.75rem]",
     iconButtonClass: compact
       ? "rounded-lg border border-transparent p-1 text-surface-muted-foreground transition-colors hover:bg-surface-muted"
       : "rounded-lg border border-transparent p-1.5 text-surface-muted-foreground transition-colors hover:bg-surface-muted",
     actionButtonClass: compact
       ? "rounded-lg border border-transparent p-1 text-foreground transition-colors hover:bg-surface-muted"
       : "rounded-lg border border-transparent p-1.5 text-foreground transition-colors hover:bg-surface-muted",
-    iconSize: compact ? 13 : 14,
+    iconClass: compact
+      ? "h-[0.8125rem] w-[0.8125rem]"
+      : "h-[0.875rem] w-[0.875rem]",
+    compact,
   };
 }
 
@@ -204,7 +208,7 @@ export function ScenarioInfoRow({
             title="Notes & Sensitivity"
             onClick={onNotes}
           >
-            <NotebookPen size={cls.iconSize} />
+            <NotebookPen className={cls.iconClass} />
           </button>
         </div>
       )}
@@ -215,7 +219,7 @@ export function ScenarioInfoRow({
           title={`Recommendation score: ${recommendation}`}
         >
           <RecommendationIndicator
-            compact={cls.iconSize === 13}
+            compact={cls.compact}
             score={recommendation}
             isTopPick={isTopPick}
             isCompleted={completed}
@@ -231,7 +235,7 @@ export function ScenarioInfoRow({
             title="Play in Kovaak's"
             onClick={onPlay}
           >
-            <Play size={cls.iconSize} />
+            <Play className={cls.iconClass} />
           </button>
         </div>
       )}
@@ -244,7 +248,7 @@ export function ScenarioInfoRow({
             title="Last 10 Scores"
             onClick={onHistory}
           >
-            <ChartLine size={cls.iconSize} />
+            <ChartLine className={cls.iconClass} />
           </button>
         </div>
       )}
@@ -305,7 +309,7 @@ export function ScenarioRankCells({
           return (
             <div
               key={`${scenarioName}-${rank.name}-${rankIndex}`}
-              className={`relative flex items-center justify-center overflow-hidden rounded-md bg-surface-panel px-3 text-center text-[11px] ${cls.rankCellHeightClass}`}
+              className={`relative flex items-center justify-center overflow-hidden rounded-md bg-surface-panel px-3 text-center text-[0.6875rem] ${cls.rankCellHeightClass}`}
             >
               <div
                 className="absolute inset-y-0 left-0"
@@ -330,7 +334,7 @@ export function ScenarioRankCells({
         })
       ) : (
         <div
-          className={`flex items-center justify-center rounded-md bg-surface-panel px-3 text-center text-[11px] text-surface-muted-foreground ${cls.rankCellHeightClass}`}
+          className={`flex items-center justify-center rounded-md bg-surface-panel px-3 text-center text-[0.6875rem] text-surface-muted-foreground ${cls.rankCellHeightClass}`}
         >
           -
         </div>

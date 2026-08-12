@@ -125,7 +125,7 @@ export function PerformanceVsSensWidget({
             setStoredScope(isDataScopeKey(value) ? value : DEFAULT_SCOPE)
           }
         >
-          <SelectTrigger className="h-7 w-auto min-w-0 max-w-[180px] px-2 text-xs bg-surface-subtle">
+          <SelectTrigger className="h-7 w-auto min-w-0 max-w-[11.25rem] px-2 text-xs bg-surface-subtle">
             <SelectValue placeholder="Scope" />
           </SelectTrigger>
           <SelectContent>
@@ -144,7 +144,7 @@ export function PerformanceVsSensWidget({
           setStoredMetric(isMetricKey(value) ? value : DEFAULT_METRIC)
         }
       >
-        <SelectTrigger className="h-7 w-auto min-w-0 max-w-[180px] px-2 text-xs bg-surface-subtle">
+        <SelectTrigger className="h-7 w-auto min-w-0 max-w-[11.25rem] px-2 text-xs bg-surface-subtle">
           <SelectValue placeholder="Metric" />
         </SelectTrigger>
         <SelectContent>

@@ -364,11 +364,11 @@ export function BenchmarksExplorePage() {
         {showInitialSkeleton ? (
           <div className="space-y-3">
             <div className="h-8 w-56 animate-pulse rounded-xl bg-surface-subtle" />
-            <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+            <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))]">
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-[68px] animate-pulse rounded-xl bg-surface-subtle"
+                  className="h-[4.25rem] animate-pulse rounded-xl bg-surface-subtle"
                 />
               ))}
             </div>
@@ -385,7 +385,7 @@ export function BenchmarksExplorePage() {
             {showRecs && recommendedBenchmarks.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium text-primary mt-1 mb-2 select-none">
-                  <Sparkles size={16} />
+                  <Sparkles className="h-4 w-4" />
                   <span className="whitespace-nowrap">
                     Recommended{" "}
                     <span className="text-xs opacity-50">
@@ -394,7 +394,7 @@ export function BenchmarksExplorePage() {
                   </span>
                   <div className="h-px bg-primary-muted flex-1" />
                 </div>
-                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))]">
                   {recommendedBenchmarks.map((b) => (
                     <BenchmarkCard
                       key={b.benchmarkName}
@@ -432,8 +432,7 @@ export function BenchmarksExplorePage() {
                         className="flex items-center gap-2 text-sm font-medium text-surface-muted-foreground mt-2 mb-2 w-full hover:text-foreground transition-colors text-left group/hdr select-none"
                       >
                         <ChevronDown
-                          size={16}
-                          className={`transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}
+                          className={`h-4 w-4 transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}
                         />
                         <span className="whitespace-nowrap">
                           {group}{" "}
@@ -447,7 +446,7 @@ export function BenchmarksExplorePage() {
 
                     {/* Cards grid */}
                     {!isCollapsed && (
-                      <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]">
+                      <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))]">
                         {items.map((b) => (
                           <BenchmarkCard
                             key={b.benchmarkName}

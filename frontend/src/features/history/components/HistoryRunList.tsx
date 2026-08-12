@@ -72,7 +72,7 @@ export function HistoryRunList({
     <section
       className={cn(
         "flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-surface shrink-0 transition-[width] duration-200 ease-out",
-        collapsed ? "w-16" : "w-[280px]",
+        collapsed ? "w-16" : "w-[17.5rem]",
       )}
     >
       {/* Header */}
@@ -182,7 +182,7 @@ export function HistoryRunList({
                   </span>
                   <span
                     className={cn(
-                      "relative z-10 mt-0.5 text-[10px] leading-tight text-surface-muted-foreground transition-colors duration-200",
+                      "relative z-10 mt-0.5 text-[0.625rem] leading-tight text-surface-muted-foreground transition-colors duration-200",
                       (isPrimary || isCompared) && "text-foreground/70",
                     )}
                   >
@@ -320,7 +320,7 @@ function RunListSortFilter({
       </PopoverTrigger>
       <PopoverContent align="end" className="w-52">
         {/* Sort */}
-        <div className="px-2 py-1.5 text-[10px] font-medium uppercase tracking-wider text-surface-muted-foreground">
+        <div className="px-2 py-1.5 text-[0.625rem] font-medium uppercase tracking-wider text-surface-muted-foreground">
           <ArrowUpDown className="mr-1 inline h-3 w-3" />
           Sort
         </div>
@@ -350,7 +350,7 @@ function RunListSortFilter({
         <div className="my-1 border-t border-border" />
 
         {/* Filters */}
-        <div className="px-2 py-1.5 text-[10px] font-medium uppercase tracking-wider text-surface-muted-foreground">
+        <div className="px-2 py-1.5 text-[0.625rem] font-medium uppercase tracking-wider text-surface-muted-foreground">
           <ListFilter className="mr-1 inline h-3 w-3" />
           Filter
         </div>

@@ -816,6 +816,7 @@ export namespace models {
 	    recentRunsMinCount: number;
 	    theme: string;
 	    font?: string;
+	    scale?: string;
 	    favoriteBenchmarks?: string[];
 	    mouseTrackingEnabled: boolean;
 	    mouseBufferMinutes: number;
@@ -847,6 +848,7 @@ export namespace models {
 	        this.recentRunsMinCount = source["recentRunsMinCount"];
 	        this.theme = source["theme"];
 	        this.font = source["font"];
+	        this.scale = source["scale"];
 	        this.favoriteBenchmarks = source["favoriteBenchmarks"];
 	        this.mouseTrackingEnabled = source["mouseTrackingEnabled"];
 	        this.mouseBufferMinutes = source["mouseBufferMinutes"];

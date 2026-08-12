@@ -111,7 +111,7 @@ function SessionProgressTargetEditor({
 
       <PopoverContent align="end" className="w-56 p-2">
         <div className="space-y-2">
-          <div className="px-1 text-[10px] font-medium uppercase tracking-wide text-surface-muted-foreground">
+          <div className="px-1 text-[0.625rem] font-medium uppercase tracking-wide text-surface-muted-foreground">
             Session target runs
           </div>
 
@@ -269,7 +269,7 @@ export function SessionProgressWidget({
       }
     >
       <div className="relative mx-auto flex flex-1 items-center justify-center">
-        <div className="relative aspect-square w-full max-w-[160px] shrink-0">
+        <div className="relative aspect-square w-full max-w-[10rem] shrink-0">
           <svg viewBox="0 0 200 200" className="h-full w-full">
             <circle
               cx={cx}
@@ -326,7 +326,7 @@ export function SessionProgressWidget({
               y={cy + 8}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="fill-surface-muted-foreground text-[11px]"
+              className="fill-surface-muted-foreground text-[0.6875rem]"
             >
               / {targetRuns} target
             </text>
@@ -335,7 +335,7 @@ export function SessionProgressWidget({
               y={cy + 22}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="fill-surface-muted-foreground text-[10px]"
+              className="fill-surface-muted-foreground text-[0.625rem]"
             >
               {pct}%
             </text>
@@ -344,7 +344,7 @@ export function SessionProgressWidget({
 
         <div className="absolute bottom-0 right-0">
           <InfoTooltip side="left">
-            <div className="space-y-1.5 text-[11px]">
+            <div className="space-y-1.5 text-[0.6875rem]">
               <div className="flex items-center gap-2">
                 <span
                   className="inline-block h-2 w-2 rounded-full"
