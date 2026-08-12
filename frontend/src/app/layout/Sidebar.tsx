@@ -1,4 +1,5 @@
 import { DISCORD_SYMBOL, KO_FI_SYMBOL } from "@/assets";
+import { useI18n } from "@/shared/lib/i18n";
 import {
   Tooltip,
   TooltipContent,
@@ -180,6 +181,7 @@ function SidebarFavoriteItem({
 }
 
 export function Sidebar({ open, onToggle }: SidebarProps) {
+  const { t } = useI18n();
   const [version, setVersion] = useState("");
   const { benchmarks, favorites, selectBenchmark, selectedBenchmark } =
     useBenchmarks();
@@ -235,7 +237,10 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 pb-2">
-          <nav aria-label="Primary" className="relative flex flex-col gap-1">
+          <nav
+            aria-label={t("common.nav.primary")}
+            className="relative flex flex-col gap-1"
+          >
             {primaryActiveIndex !== null && (
               <span
                 aria-hidden
@@ -251,7 +256,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
                 location.pathname.startsWith("/overview")
               }
               icon={<LayoutGrid />}
-              label="Overview"
+              label={t("common.nav.overview")}
               open={open}
               showActiveBackground={false}
               to="/overview"
@@ -259,7 +264,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
             <SidebarItem
               active={location.pathname.startsWith("/history")}
               icon={<TrendingUp />}
-              label="History"
+              label={t("common.nav.history")}
               open={open}
               showActiveBackground={false}
               to="/history"
@@ -267,7 +272,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
             <SidebarItem
               active={location.pathname.startsWith("/benchmarks")}
               icon={<Activity />}
-              label="Benchmarks"
+              label={t("common.nav.benchmarks")}
               open={open}
               showActiveBackground={false}
               to={benchmarksTarget}
@@ -279,7 +284,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
               <div className="h-px" />
               {!collapsed && (
                 <p className="px-2 text-xs font-medium text-sidebar-foreground-muted">
-                  Favorites
+                  {t("common.nav.favorites")}
                 </p>
               )}
               <div className="flex flex-col gap-2">
@@ -309,7 +314,10 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
         </div>
 
         <div className="border-t border-sidebar-border p-2">
-          <nav aria-label="Secondary" className="flex flex-col gap-1">
+          <nav
+            aria-label={t("common.nav.secondary")}
+            className="flex flex-col gap-1"
+          >
             <SidebarItem
               icon={
                 <img
@@ -324,7 +332,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
             />
             <SidebarItem
               icon={<HelpCircle />}
-              label="Help"
+              label={t("common.nav.help")}
               onClick={() => openURL(EXTERNAL_LINKS.docs)}
               open={open}
             />
@@ -336,14 +344,14 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
                   className="size-[1.125rem] shrink-0"
                 />
               }
-              label="Support"
+              label={t("common.nav.support")}
               onClick={() => openURL(EXTERNAL_LINKS.support)}
               open={open}
             />
             <SidebarItem
               active={location.pathname === "/settings"}
               icon={<Settings />}
-              label="Settings"
+              label={t("common.nav.settings")}
               open={open}
               showNotificationDot={availableUpdate?.hasUpdate === true}
               to="/settings"
