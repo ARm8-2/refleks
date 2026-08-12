@@ -205,6 +205,7 @@ export interface BenchmarkProgress {
 }
 
 import type { Font, Scale, Theme } from "../lib/theme";
+import type { Locale } from "../lib/i18n";
 
 export interface Settings {
   steamInstallDir?: string;
@@ -218,6 +219,7 @@ export interface Settings {
   theme: Theme;
   font: Font;
   scale: Scale;
+  language: Locale;
   favoriteBenchmarks?: string[];
   mouseTrackingEnabled?: boolean;
   mouseBufferMinutes?: number;

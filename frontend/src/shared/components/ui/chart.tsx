@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 
+import { getLocale } from "@/shared/lib/i18n";
 import { THEME_SELECTORS, type Theme } from "@/shared/lib/theme";
 import { cn } from "@/shared/lib/utils";
 
@@ -238,7 +239,7 @@ const ChartTooltipContent = React.forwardRef<
                         </div>
                         {item.value && (
                           <span className="font-mono font-medium tabular-nums text-popover-foreground">
-                            {item.value.toLocaleString()}
+                            {item.value.toLocaleString(getLocale())}
                           </span>
                         )}
                       </div>

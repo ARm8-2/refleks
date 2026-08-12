@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from "react";
+import { I18nContext, type I18nContextValue } from "@/shared/lib/i18n";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -13,6 +14,9 @@ export class ErrorBoundary extends Component<
   ErrorBoundaryProps,
   ErrorBoundaryState
 > {
+  static contextType = I18nContext;
+  declare context: I18nContextValue;
+
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { error: null };
@@ -29,10 +33,13 @@ export class ErrorBoundary extends Component<
 
   render() {
     if (this.state.error) {
+      const { t } = this.context;
       return (
         <div className="min-h-screen bg-canvas text-foreground flex items-center justify-center p-6">
           <div className="max-w-xl w-full rounded-xl bg-surface p-4 space-y-3 shadow-md">
-            <div className="text-lg font-semibold">Something went wrong.</div>
+            <div className="text-lg font-semibold">
+              {t("common.errorBoundary.title")}
+            </div>
             <div className="text-surface-muted-foreground text-sm break-words whitespace-pre-wrap">
               {this.state.error.message}
             </div>
@@ -51,13 +58,13 @@ export class ErrorBoundary extends Component<
                 className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-sm hover:bg-primary-hover"
                 onClick={() => window.location.reload()}
               >
-                Reload
+                {t("common.errorBoundary.reload")}
               </button>
               <button
                 className="px-3 py-1.5 rounded-xl bg-surface text-surface-muted-foreground text-sm hover:bg-surface-muted hover:text-foreground"
                 onClick={() => this.setState({ error: null })}
               >
-                Dismiss
+                {t("common.errorBoundary.dismiss")}
               </button>
             </div>
           </div>
