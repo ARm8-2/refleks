@@ -183,9 +183,15 @@ func ExpandPathPlaceholders(p string) string {
 
 // Path returns the settings file path under the user home config directory ($HOME/.refleks).
 func Path() (string, error) {
+	return ConfigFilePath(constants.SettingsFileName)
+}
+
+// ConfigFilePath returns the path to a named file inside the app config
+// directory ($HOME/.refleks/<name>). It does not ensure the directory exists.
+func ConfigFilePath(fileName string) (string, error) {
 	base, err := GetConfigDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(base, "settings.json"), nil
+	return filepath.Join(base, fileName), nil
 }

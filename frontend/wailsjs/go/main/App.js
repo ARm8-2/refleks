@@ -34,6 +34,10 @@ export function GetBenchmarks() {
   return window['go']['main']['App']['GetBenchmarks']();
 }
 
+export function GetCustomThemeCSS() {
+  return window['go']['main']['App']['GetCustomThemeCSS']();
+}
+
 export function GetDefaultSettings() {
   return window['go']['main']['App']['GetDefaultSettings']();
 }
@@ -94,6 +98,10 @@ export function LaunchKovaaksScenario(arg1, arg2) {
   return window['go']['main']['App']['LaunchKovaaksScenario'](arg1, arg2);
 }
 
+export function OpenCustomThemeCSS() {
+  return window['go']['main']['App']['OpenCustomThemeCSS']();
+}
+
 export function QuitApp() {
   return window['go']['main']['App']['QuitApp']();
 }
@@ -136,4 +144,8 @@ export function StopWatcher() {
 
 export function UpdateSettings(arg1) {
   return window['go']['main']['App']['UpdateSettings'](arg1);
+}
+
+export function WriteCustomThemeCSS(arg1) {
+  return window['go']['main']['App']['WriteCustomThemeCSS'](arg1);
 }

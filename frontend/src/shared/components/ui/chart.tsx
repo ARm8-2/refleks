@@ -11,7 +11,7 @@ export type ChartConfig = {
     icon?: React.ComponentType;
   } & (
     | { color?: string; theme?: never }
-    | { color?: never; theme: Record<Theme, string> }
+    | { color?: never; theme: Record<Exclude<Theme, "custom">, string> }
   );
 };
 

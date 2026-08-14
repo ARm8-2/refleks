@@ -19,6 +19,8 @@ export function GetBenchmarkProgress(arg1:number):Promise<models.BenchmarkProgre
 
 export function GetBenchmarks():Promise<Array<models.Benchmark>>;
 
+export function GetCustomThemeCSS():Promise<string>;
+
 export function GetDefaultSettings():Promise<models.Settings>;
 
 export function GetFavoriteBenchmarks():Promise<Array<string>>;
@@ -49,6 +51,8 @@ export function LaunchKovaaksPlaylist(arg1:string):Promise<void>;
 
 export function LaunchKovaaksScenario(arg1:string,arg2:string):Promise<void>;
 
+export function OpenCustomThemeCSS():Promise<void>;
+
 export function QuitApp():Promise<void>;
 
 export function RefreshAllBenchmarkProgresses():Promise<Record<number, models.BenchmarkProgress>>;
@@ -70,3 +74,5 @@ export function StartWatcher(arg1:string):Promise<void>;
 export function StopWatcher():Promise<void>;
 
 export function UpdateSettings(arg1:models.Settings):Promise<void>;
+
+export function WriteCustomThemeCSS(arg1:string):Promise<void>;

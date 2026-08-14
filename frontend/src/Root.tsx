@@ -4,16 +4,15 @@ import { ErrorBoundary } from "@/shared/components";
 import {
   applyFont,
   applyScale,
-  applyTheme,
   getSavedFont,
   getSavedScale,
-  getSavedTheme,
 } from "@/shared/lib";
 
 export default function Root() {
-  // Simple theme bootstrap: read localStorage and set class on <html>
+  // Simple bootstrap: read localStorage and set font/scale on <html>.
+  // Theme (including the custom stylesheet) is applied earlier in main.tsx
+  // so the first paint already shows the right colors.
   useEffect(() => {
-    applyTheme(getSavedTheme());
     applyFont(getSavedFont());
     applyScale(getSavedScale());
   }, []);

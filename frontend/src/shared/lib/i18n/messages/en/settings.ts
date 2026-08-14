@@ -40,7 +40,8 @@ export const settings = {
     startWithKovaaksDescription:
       "Automatically launch RefleK's when you start KovaaK's, RefleK's will also start with Windows",
     mouseTracking: "Mouse Tracking",
-    mouseTrackingDescription: "Record mouse movement during scenarios (Windows only)",
+    mouseTrackingDescription:
+      "Record mouse movement during scenarios (Windows only)",
     bufferDuration: "Buffer Duration",
     bufferDurationDescription: "Minutes of mouse data to keep in memory",
     screenCapture: "Screen Capture",
@@ -87,7 +88,8 @@ export const settings = {
     storage10gb: "10 GB",
     storage25gb: "25 GB",
     sessionGap: "Session Gap",
-    sessionGapDescription: "Minutes of inactivity before starting a new session",
+    sessionGapDescription:
+      "Minutes of inactivity before starting a new session",
     sessionGapMinutes: plural({ one: "1 minute", other: "{count} minutes" }),
   },
   privacy: {
@@ -108,10 +110,20 @@ export const settings = {
     themeDark: "Dark",
     themeDarker: "Darker",
     themeLight: "Light",
+    themeCustom: "Custom",
+    themeCustomDescription:
+      "Fully customize colors, fonts, and more by editing the custom theme file in your RefleK's config folder. Changes apply after restart.",
+    openThemeFile: "Open Theme File",
+    regenerateThemeFile: "Regenerate",
+    themeFileRegenerateConfirm:
+      "Regenerate the theme file? Your customizations will be replaced with the defaults.",
+    themeFileWriteFailed: "Failed to write the custom theme file.",
+    themeFileOpenFailed: "Failed to open the custom theme file.",
     font: "Font",
     fontDescription: "Font family for the interface",
     scale: "Scale",
-    scaleDescription: "Interface size; smaller values fit more content on large screens",
+    scaleDescription:
+      "Interface size; smaller values fit more content on large screens",
     language: "Language",
     languageDescription: "Interface language for the application",
   },

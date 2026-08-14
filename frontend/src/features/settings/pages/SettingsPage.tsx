@@ -29,13 +29,19 @@ import {
   SCALES,
   STORAGE_KEYS,
   THEMES,
+  buildCustomThemeTemplate,
   checkForUpdates,
   downloadAndInstallUpdate,
+  ensureCustomThemeFile,
+  getCustomThemeCSS,
   getScreenCaptureInfo,
   getSettings,
   getVersion,
+  injectCustomTheme,
+  openCustomThemeCSS,
   openURL,
   quitApp,
+  removeCustomTheme,
   setAutostart,
   setFont,
   setScale,
@@ -43,6 +49,7 @@ import {
   translateMessage,
   updateSettings,
   useI18n,
+  writeCustomThemeCSS,
   type Font,
   type Locale,
   type MessageKey,
@@ -66,6 +73,7 @@ const THEME_LABEL_KEYS: Record<Theme, MessageKey> = {
   dark: "settings.appearance.themeDark",
   darker: "settings.appearance.themeDarker",
   light: "settings.appearance.themeLight",
+  custom: "settings.appearance.themeCustom",
 };
 
 const fontOptions = FONTS.map((f) => ({ label: f.label, value: f.id }));
@@ -228,10 +236,51 @@ export function SettingsPage() {
     }
   };
 
-  const handleThemeChange = (value: string) => {
+  const handleThemeChange = async (value: string) => {
     const theme = value as Theme;
+    try {
+      if (theme === "custom") {
+        // Generate the stylesheet on first use, then apply it on top of the
+        // active base theme (the class on <html> stays untouched).
+        await ensureCustomThemeFile();
+      } else {
+        removeCustomTheme();
+      }
+    } catch (e) {
+      console.error("Custom theme apply error:", e);
+      alert(t("settings.appearance.themeFileWriteFailed"));
+      return;
+    }
     setTheme(theme);
     updateField("theme", theme, true);
+  };
+
+  const handleOpenThemeFile = async () => {
+    try {
+      // Recreate the file if it was deleted manually, then open it with the
+      // system's default handler (e.g. a text editor).
+      if (!(await getCustomThemeCSS())) {
+        await writeCustomThemeCSS(buildCustomThemeTemplate());
+      }
+      await openCustomThemeCSS();
+    } catch (e) {
+      console.error("Open custom theme file error:", e);
+      alert(t("settings.appearance.themeFileOpenFailed"));
+    }
+  };
+
+  const handleRegenerateThemeFile = async () => {
+    if (!window.confirm(t("settings.appearance.themeFileRegenerateConfirm"))) {
+      return;
+    }
+    try {
+      const template = buildCustomThemeTemplate();
+      await writeCustomThemeCSS(template);
+      injectCustomTheme(template);
+    } catch (e) {
+      console.error("Regenerate custom theme error:", e);
+      alert(t("settings.appearance.themeFileWriteFailed"));
+    }
   };
 
   const handleFontChange = (value: string) => {
@@ -350,6 +399,10 @@ export function SettingsPage() {
       setSettings(current);
       setHasUnsavedChanges(false);
       setTheme(current.theme);
+      // A reset restores a built-in theme; drop any injected custom styles.
+      if (current.theme !== "custom") {
+        removeCustomTheme();
+      }
       if (current.font) setFont(current.font);
       if (current.scale) setScale(current.scale);
       setLocale(current.language);
@@ -854,6 +907,29 @@ export function SettingsPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {settings.theme === "custom" && (
+                    <div className="mt-2 space-y-2 rounded-xl bg-surface-subtle p-3">
+                      <p className="text-xs leading-5 text-surface-muted-foreground">
+                        {t("settings.appearance.themeCustomDescription")}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void handleOpenThemeFile()}
+                        >
+                          {t("settings.appearance.openThemeFile")}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void handleRegenerateThemeFile()}
+                        >
+                          {t("settings.appearance.regenerateThemeFile")}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </SettingsField>
 
                 <SettingsField

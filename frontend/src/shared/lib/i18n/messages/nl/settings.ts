@@ -39,7 +39,8 @@ export const settings: SettingsMessages = {
     startWithKovaaksDescription:
       "Start RefleK's automatisch wanneer je KovaaK's start; RefleK's start dan ook met Windows",
     mouseTracking: "Muisregistratie",
-    mouseTrackingDescription: "Neem muisbeweging op tijdens scenario's (alleen Windows)",
+    mouseTrackingDescription:
+      "Neem muisbeweging op tijdens scenario's (alleen Windows)",
     bufferDuration: "Bufferduur",
     bufferDurationDescription: "Minuten muisdata om in het geheugen te bewaren",
     screenCapture: "Schermopname",
@@ -86,7 +87,8 @@ export const settings: SettingsMessages = {
     storage10gb: "10 GB",
     storage25gb: "25 GB",
     sessionGap: "Sessiepauze",
-    sessionGapDescription: "Minuten inactiviteit voordat een nieuwe sessie start",
+    sessionGapDescription:
+      "Minuten inactiviteit voordat een nieuwe sessie start",
     sessionGapMinutes: plural({ one: "1 minuut", other: "{count} minuten" }),
   },
   privacy: {
@@ -107,10 +109,20 @@ export const settings: SettingsMessages = {
     themeDark: "Donker",
     themeDarker: "Donkerder",
     themeLight: "Licht",
+    themeCustom: "Aangepast",
+    themeCustomDescription:
+      "Pas kleuren, lettertypen en meer volledig aan door het aangepaste themabestand in je RefleK's-configmap te bewerken. Wijzigingen gelden na een herstart.",
+    openThemeFile: "Themabestand openen",
+    regenerateThemeFile: "Opnieuw genereren",
+    themeFileRegenerateConfirm:
+      "Themabestand opnieuw genereren? Je aanpassingen worden vervangen door de standaardwaarden.",
+    themeFileWriteFailed: "Aangepaste themabestand schrijven mislukt.",
+    themeFileOpenFailed: "Aangepaste themabestand openen mislukt.",
     font: "Lettertype",
     fontDescription: "Lettertypefamilie voor de interface",
     scale: "Schaal",
-    scaleDescription: "Interfacegrootte; kleinere waarden passen meer inhoud op grote schermen",
+    scaleDescription:
+      "Interfacegrootte; kleinere waarden passen meer inhoud op grote schermen",
     language: "Taal",
     languageDescription: "Interfacetaal voor de applicatie",
   },
@@ -152,7 +164,8 @@ export const settings: SettingsMessages = {
   },
   resetSettings: {
     title: "Instellingen resetten",
-    description: "Selecteer welke gegevens je naar de standaardwaarden wilt resetten:",
+    description:
+      "Selecteer welke gegevens je naar de standaardwaarden wilt resetten:",
     settingsAndConfig: "Instellingen en configuratie",
     favoriteScenarios: "Favoriete scenario's",
     scenarioNotes: "Scenarionotities",

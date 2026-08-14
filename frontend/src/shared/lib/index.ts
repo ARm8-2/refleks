@@ -1,5 +1,6 @@
 export * from "./api";
 export * from "./chartTheme";
+export * from "./customTheme";
 export * from "./externalLinks";
 export * from "./i18n";
 export * from "./navigation";

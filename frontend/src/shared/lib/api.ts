@@ -7,6 +7,7 @@ import {
   GetAllBenchmarkProgresses as _GetAllBenchmarkProgresses,
   GetBenchmarkProgress as _GetBenchmarkProgress,
   GetBenchmarks as _GetBenchmarks,
+  GetCustomThemeCSS as _GetCustomThemeCSS,
   GetDefaultSettings as _GetDefaultSettings,
   GetFavoriteBenchmarks as _GetFavoriteBenchmarks,
   GetLastScenarioScores as _GetLastScenarioScores,
@@ -22,6 +23,7 @@ import {
   GetVersion as _GetVersion,
   LaunchKovaaksPlaylist as _LaunchKovaaksPlaylist,
   LaunchKovaaksScenario as _LaunchKovaaksScenario,
+  OpenCustomThemeCSS as _OpenCustomThemeCSS,
   QuitApp as _QuitApp,
   RefreshAllBenchmarkProgresses as _RefreshAllBenchmarkProgresses,
   ResetSettings as _ResetSettings,
@@ -32,6 +34,7 @@ import {
   StartWatcher as _StartWatcher,
   StopWatcher as _StopWatcher,
   UpdateSettings as _UpdateSettings,
+  WriteCustomThemeCSS as _WriteCustomThemeCSS,
 } from "@wails/go/main/App";
 import type {
   Benchmark,
@@ -140,6 +143,20 @@ export async function saveSessionNote(
 export async function getVersion(): Promise<string> {
   const res = await _GetVersion();
   return String(res || "");
+}
+
+// --- Custom theme ---
+
+export async function getCustomThemeCSS(): Promise<string> {
+  return String((await _GetCustomThemeCSS()) || "");
+}
+
+export async function writeCustomThemeCSS(content: string): Promise<void> {
+  await _WriteCustomThemeCSS(content);
+}
+
+export async function openCustomThemeCSS(): Promise<void> {
+  await _OpenCustomThemeCSS();
 }
 
 export async function checkForUpdates(): Promise<UpdateInfo> {

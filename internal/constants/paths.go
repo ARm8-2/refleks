@@ -45,4 +45,7 @@ const (
 	BenchmarksDataCacheFileName    = "benchmarks.json"
 	BenchmarkProgressCacheFileName = "benchmark_progress.json"
 	SettingsFileName               = "settings.json"
+
+	// User-editable custom theme stylesheet in the config directory.
+	CustomThemeFileName = "custom.css"
 )
