@@ -28,7 +28,12 @@ import {
   TogglePill,
   Widget,
 } from "@/shared/components";
-import { useBenchmarks, usePersistedState, useStore } from "@/shared/hooks";
+import {
+  useBenchmarks,
+  useHorizontalDragScroll,
+  usePersistedState,
+  useStore,
+} from "@/shared/hooks";
 import { useI18n } from "@/shared/lib";
 import {
   benchmarkDetailProgressStorageBase,
@@ -68,6 +73,7 @@ export function BenchmarkOverviewWidget() {
   const { progress, difficultyIndex, setDifficultyIndex } =
     useBenchmarkDetailProgress(benchmark ?? undefined);
   const sessions = useStore((s) => s.sessions);
+  const { isDragging, dragScrollProps } = useHorizontalDragScroll();
 
   const [settings, setSettings] = useState<Settings | null>(null);
   const [notesState, setNotesState] = useState<NotesState>({
@@ -526,8 +532,9 @@ export function BenchmarkOverviewWidget() {
 
         {/* Right panel (scrollable rank cells, absolutely positioned) */}
         <div
-          className="pointer-events-auto absolute bottom-0 right-0 top-0 z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          style={{ left: `${rightPanelOffset}rem` }}
+          {...dragScrollProps}
+          className={`pointer-events-auto absolute bottom-0 right-0 top-0 z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
+          style={{ left: `${rightPanelOffset}rem`, touchAction: "pan-y" }}
         >
           <div className="min-h-full min-w-full w-max pt-2 pb-3 pl-2 pr-2">
             {/* Rank column headers */}

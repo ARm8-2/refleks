@@ -10,7 +10,11 @@ import {
   SelectValue,
   TogglePill,
 } from "@/shared/components";
-import { usePersistedState, useStore } from "@/shared/hooks";
+import {
+  useHorizontalDragScroll,
+  usePersistedState,
+  useStore,
+} from "@/shared/hooks";
 import {
   benchmarkDetailProgressStorageBase,
   benchmarkDetailProgressStorageKey,
@@ -75,6 +79,7 @@ export function BenchmarkProgressTable({
 }: Props) {
   const { t } = useI18n();
   const sessions = useStore((state) => state.sessions);
+  const { isDragging, dragScrollProps } = useHorizontalDragScroll();
 
   const storageBase = benchmarkDetailProgressStorageBase(
     benchmark.benchmarkName,
@@ -545,8 +550,9 @@ export function BenchmarkProgressTable({
         </div>
 
         <div
-          className="pointer-events-auto absolute bottom-0 right-0 top-0 z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          style={{ left: `${rightPanelOffset}rem` }}
+          {...dragScrollProps}
+          className={`pointer-events-auto absolute bottom-0 right-0 top-0 z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
+          style={{ left: `${rightPanelOffset}rem`, touchAction: "pan-y" }}
         >
           <div className="min-h-full min-w-full w-max space-y-3 pb-4 pr-2">
             <div className="relative mb-3 min-w-full py-2 pr-1">
