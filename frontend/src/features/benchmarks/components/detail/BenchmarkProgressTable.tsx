@@ -25,7 +25,7 @@ import {
 } from "@/shared/lib";
 import type { Benchmark, BenchmarkProgress, Settings } from "@/shared/types";
 import { Settings2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useBenchmarkVisibility } from "../../hooks/useBenchmarkVisibility";
 import {
   adjustColorForTheme,
@@ -311,7 +311,6 @@ export function BenchmarkProgressTable({
     rankDefs[(progress.overallRank ?? 0) - 1]?.color ?? null;
   const cls = getRowClasses(compactMode);
   const categoryPaddingClass = compactMode ? "py-3" : "py-4";
-  const categorySpacingClass = compactMode ? "space-y-1.5" : "space-y-2";
   const rowSpacingClass = compactMode ? "space-y-0.5" : "space-y-1";
   const labelTextClass = compactMode ? "text-[0.625rem]" : "text-[0.6875rem]";
   const rankVisibilityOptions = Array.from(
@@ -451,97 +450,101 @@ export function BenchmarkProgressTable({
                   </span>
                 </div>
 
-                <div className={`flex-1 ${categorySpacingClass}`}>
+                <div className="flex-1">
                   {category.groups.map((group, groupIndex) => (
-                    <div
-                      key={`${category.name}-${groupIndex}`}
-                      className="relative flex"
-                    >
-                      <div className="flex w-6 shrink-0 items-center justify-center bg-transparent pr-2">
-                        {group.name ? (
-                          <span
-                            className={`font-semibold tracking-wide text-foreground ${labelTextClass}`}
-                            style={{
-                              color: adjustColorForTheme(
-                                group.color || category.color,
-                                labelBackgroundColor,
-                                0.96,
-                              ),
-                              writingMode: "vertical-rl",
-                              transform: "rotate(180deg)",
-                            }}
-                          >
-                            {group.name}
-                          </span>
-                        ) : (
-                          <span
-                            className="text-[0.625rem] text-surface-muted-foreground"
-                            style={{
-                              writingMode: "vertical-rl",
-                              transform: "rotate(180deg)",
-                            }}
-                          >
-                            -
-                          </span>
-                        )}
-                      </div>
+                    <Fragment key={`${category.name}-${groupIndex}`}>
+                      <div className="relative flex">
+                        <div className="flex w-6 shrink-0 items-center justify-center bg-transparent pr-2">
+                          {group.name ? (
+                            <span
+                              className={`font-semibold tracking-wide text-foreground ${labelTextClass}`}
+                              style={{
+                                color: adjustColorForTheme(
+                                  group.color || category.color,
+                                  labelBackgroundColor,
+                                  0.96,
+                                ),
+                                writingMode: "vertical-rl",
+                                transform: "rotate(180deg)",
+                              }}
+                            >
+                              {group.name}
+                            </span>
+                          ) : (
+                            <span
+                              className="text-[0.625rem] text-surface-muted-foreground"
+                              style={{
+                                writingMode: "vertical-rl",
+                                transform: "rotate(180deg)",
+                              }}
+                            >
+                              -
+                            </span>
+                          )}
+                        </div>
 
-                      <div className="shrink-0 bg-transparent">
-                        <div className={rowSpacingClass}>
-                          {group.scenarios.map((scenario) => {
-                            const recommendation = getRecommendation(
-                              scenario.name,
-                            );
-                            const completedThreshold = Math.max(
-                              1,
-                              (scenario.thresholds?.length ?? 0) - 1,
-                            );
-                            const completed =
-                              scenario.scenarioRank >= completedThreshold;
-                            const hasSavedNote = Boolean(
-                              settings?.scenarioNotes?.[scenario.name]?.notes,
-                            );
-                            const isCurrentScenarioRow =
-                              currentScenarioName === scenario.name;
+                        <div className="shrink-0 bg-transparent">
+                          <div className={rowSpacingClass}>
+                            {group.scenarios.map((scenario) => {
+                              const recommendation = getRecommendation(
+                                scenario.name,
+                              );
+                              const completedThreshold = Math.max(
+                                1,
+                                (scenario.thresholds?.length ?? 0) - 1,
+                              );
+                              const completed =
+                                scenario.scenarioRank >= completedThreshold;
+                              const hasSavedNote = Boolean(
+                                settings?.scenarioNotes?.[scenario.name]?.notes,
+                              );
+                              const isCurrentScenarioRow =
+                                currentScenarioName === scenario.name;
 
-                            return (
-                              <div
-                                key={scenario.name}
-                                className={`rounded-l-md pl-2 pr-2 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? "bg-surface-subtle-hover" : ""}`}
-                              >
-                                <ScenarioInfoRow
-                                  scenarioName={scenario.name}
-                                  score={scenario.score || 0}
-                                  gridTemplate={infoGridTemplate}
-                                  cls={cls}
-                                  showNotesCol={effectiveShowNotesCol}
-                                  showRecCol={effectiveShowRecCol}
-                                  showPlayCol={effectiveShowPlayCol}
-                                  showHistoryCol={effectiveShowHistoryCol}
-                                  hasSavedNote={hasSavedNote}
-                                  recommendation={recommendation}
-                                  isTopPick={isTopPick(scenario.name)}
-                                  completed={completed}
-                                  onNotes={() => openNotes(scenario.name)}
-                                  onHistory={() =>
-                                    openHistory(
-                                      scenario.name,
-                                      scenario.thresholds || [],
-                                    )
-                                  }
-                                  onPlay={() =>
-                                    launchScenario(
-                                      scenario.name,
-                                      "challenge",
-                                    ).catch(() => {})
-                                  }
-                                />
-                              </div>
-                            );
-                          })}
+                              return (
+                                <div
+                                  key={scenario.name}
+                                  className={`rounded-l-md pl-2 pr-2 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? "bg-surface-subtle-hover" : ""}`}
+                                >
+                                  <ScenarioInfoRow
+                                    scenarioName={scenario.name}
+                                    score={scenario.score || 0}
+                                    gridTemplate={infoGridTemplate}
+                                    cls={cls}
+                                    showNotesCol={effectiveShowNotesCol}
+                                    showRecCol={effectiveShowRecCol}
+                                    showPlayCol={effectiveShowPlayCol}
+                                    showHistoryCol={effectiveShowHistoryCol}
+                                    hasSavedNote={hasSavedNote}
+                                    recommendation={recommendation}
+                                    isTopPick={isTopPick(scenario.name)}
+                                    completed={completed}
+                                    onNotes={() => openNotes(scenario.name)}
+                                    onHistory={() =>
+                                      openHistory(
+                                        scenario.name,
+                                        scenario.thresholds || [],
+                                      )
+                                    }
+                                    onPlay={() =>
+                                      launchScenario(
+                                        scenario.name,
+                                        "challenge",
+                                      ).catch(() => {})
+                                    }
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                      {groupIndex < category.groups.length - 1 && (
+                        <div className="h-[1.0625rem] flex items-center pl-6 pr-4">
+                          <div className="h-px w-full bg-border" />
+                        </div>
+                      )}
+                    </Fragment>
                   ))}
                 </div>
               </div>
@@ -592,40 +595,42 @@ export function BenchmarkProgressTable({
                 className={`min-w-full ${categoryPaddingClass}`}
               >
                 <div className="flex">
-                  <div className={`w-full flex-1 ${categorySpacingClass}`}>
+                  <div className="w-full flex-1">
                     {category.groups.map((group, groupIndex) => (
-                      <div
-                        key={`${category.name}-${groupIndex}-right`}
-                        className="relative flex"
-                      >
-                        <div className="flex-1">
-                          <div className={rowSpacingClass}>
-                            {group.scenarios.map((scenario) => {
-                              const isCurrentScenarioRow =
-                                currentScenarioName === scenario.name;
-                              return (
-                                <div
-                                  key={`${scenario.name}-ranks`}
-                                  className={`rounded-r-md pr-1 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? "bg-surface-subtle-hover" : ""}`}
-                                >
-                                  <ScenarioRankCells
-                                    scenarioName={scenario.name}
-                                    score={scenario.score || 0}
-                                    scenarioRank={scenario.scenarioRank}
-                                    thresholds={scenario.thresholds || []}
-                                    rankDefs={rankDefs}
-                                    visibleRankIndices={visibleRankIndices}
-                                    hasVisibleRanks={hasVisibleRanks}
-                                    rightGridTemplate={rightGridTemplate}
-                                    rightGridMinWidth={rightGridMinWidth}
-                                    cls={cls}
-                                  />
-                                </div>
-                              );
-                            })}
+                      <Fragment key={`${category.name}-${groupIndex}-right`}>
+                        <div className="relative flex">
+                          <div className="flex-1">
+                            <div className={rowSpacingClass}>
+                              {group.scenarios.map((scenario) => {
+                                const isCurrentScenarioRow =
+                                  currentScenarioName === scenario.name;
+                                return (
+                                  <div
+                                    key={`${scenario.name}-ranks`}
+                                    className={`rounded-r-md pr-1 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? "bg-surface-subtle-hover" : ""}`}
+                                  >
+                                    <ScenarioRankCells
+                                      scenarioName={scenario.name}
+                                      score={scenario.score || 0}
+                                      scenarioRank={scenario.scenarioRank}
+                                      thresholds={scenario.thresholds || []}
+                                      rankDefs={rankDefs}
+                                      visibleRankIndices={visibleRankIndices}
+                                      hasVisibleRanks={hasVisibleRanks}
+                                      rightGridTemplate={rightGridTemplate}
+                                      rightGridMinWidth={rightGridMinWidth}
+                                      cls={cls}
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                        {groupIndex < category.groups.length - 1 && (
+                          <div className="h-[1.0625rem]" />
+                        )}
+                      </Fragment>
                     ))}
                   </div>
                 </div>
