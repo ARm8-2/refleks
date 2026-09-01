@@ -331,15 +331,9 @@ func (a *App) GetBenchmarkProgress(benchmarkId int) (models.BenchmarkProgress, e
 		return models.BenchmarkProgress{}, constants.WrapCoded(constants.BenchmarkProgressFetch, err)
 	}
 
-	// 2. Trigger background refresh (if it was cached)
+	// 2. Queue a deduplicated background refresh when cached data was returned.
 	if cached {
-		go func() {
-			fresh, _, err := a.benchmarkSvc.GetBenchmarkProgress(benchmarkId, false)
-			if err == nil {
-				// Emit event with fresh data so frontend can update
-				runtime.EventsEmit(a.ctx, fmt.Sprintf("%s%d", constants.EventBenchmarkProgressPrefix, benchmarkId), fresh)
-			}
-		}()
+		a.benchmarkSvc.QueueBenchmarkProgressRefresh(benchmarkId)
 	}
 
 	return data, nil

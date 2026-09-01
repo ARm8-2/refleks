@@ -35,14 +35,32 @@ func (s *Service) saveCacheLocked() error {
 	return s.cacheSvc.Save(constants.BenchmarkProgressCacheFileName, s.progressCache)
 }
 
+func (s *Service) ensureProgressCacheLoadedLocked() {
+	if s.progressCacheLoaded {
+		return
+	}
+
+	if _, err := s.loadCacheLocked(); err != nil {
+		s.progressCache = make(map[int]models.BenchmarkProgress)
+		s.scenarioIndex = make(map[string][]int)
+	}
+	s.progressCacheLoaded = true
+}
+
 func (s *Service) loadCacheLocked() (map[int]models.BenchmarkProgress, error) {
 	if !s.cacheSvc.Exists(constants.BenchmarkProgressCacheFileName) {
-		return make(map[int]models.BenchmarkProgress), nil
+		data := make(map[int]models.BenchmarkProgress)
+		s.progressCache = data
+		s.scenarioIndex = make(map[string][]int)
+		return data, nil
 	}
 
 	var data map[int]models.BenchmarkProgress
 	if err := s.cacheSvc.Load(constants.BenchmarkProgressCacheFileName, &data); err != nil {
 		return nil, err
+	}
+	if data == nil {
+		data = make(map[int]models.BenchmarkProgress)
 	}
 
 	s.progressCache = data
