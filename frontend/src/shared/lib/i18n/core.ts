@@ -1,6 +1,7 @@
 import { en, type Messages } from "./messages/en";
 import { nl } from "./messages/nl";
 import { es } from "./messages/es";
+import { zhCN } from "./messages/zh-CN";
 import type { MessageValue } from "./messages/types";
 
 /**
@@ -10,10 +11,10 @@ import type { MessageValue } from "./messages/types";
  * differs (e.g. `zh-CN` Simplified vs `zh-TW` Traditional — English and
  * Dutch share one catalog each, so `en` / `nl` suffice).
  */
-export const LOCALES = ["en", "nl", "es"] as const;
+export const LOCALES = ["en", "nl", "es", "zh-CN"] as const;
 export type Locale = (typeof LOCALES)[number];
 
-const CATALOGS: Record<Locale, Messages> = { en, nl, es };
+const CATALOGS: Record<Locale, Messages> = { en, nl, es, "zh-CN": zhCN };
 
 const DEFAULT_LOCALE: Locale = "en";
 

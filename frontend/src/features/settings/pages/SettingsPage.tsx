@@ -84,6 +84,7 @@ const languageOptions = [
   { label: "English", value: "en" },
   { label: "Nederlands", value: "nl" },
   { label: "Español", value: "es" },
+  { label: "简体中文", value: "zh-CN" },
 ];
 const replayRetentionOptionValues: { value: string; key: MessageKey }[] = [
   { value: "0", key: "common.actions.unlimited" },
