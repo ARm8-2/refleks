@@ -76,16 +76,25 @@ export function ScenarioHistoryModal({
   useEffect(() => {
     if (!isOpen || !scenarioName) return;
 
+    let cancelled = false;
     setLoading(true);
     setError(null);
     setScores([]);
 
     getLastScenarioScores(scenarioName)
-      .then((result) => setScores(result))
-      .catch((fetchError) => {
-        setError(translateMessage(fetchError));
+      .then((result) => {
+        if (!cancelled) setScores(result);
       })
-      .finally(() => setLoading(false));
+      .catch((fetchError) => {
+        if (!cancelled) setError(translateMessage(fetchError));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, scenarioName]);
 
   const sorted = useMemo(() => [...scores].reverse(), [scores]);
@@ -137,9 +146,14 @@ export function ScenarioHistoryModal({
       isOpen={isOpen}
       onClose={onClose}
       title={t("benchmarks.scenarioHistory.title", { scenario: scenarioName })}
+      className="grid-rows-[auto_minmax(0,1fr)]"
     >
-      <div className="space-y-3 px-4 pb-4">
-        {loading && <Loading />}
+      <div className="flex min-h-0 flex-1 flex-col space-y-3 px-4 pb-4">
+        {loading && (
+          <div className="flex min-h-0 flex-1 items-center justify-center">
+            <Loading />
+          </div>
+        )}
 
         {!loading && error && (
           <div className="rounded-xl border border-destructive-border bg-destructive-soft p-4 text-sm text-destructive">
@@ -157,7 +171,7 @@ export function ScenarioHistoryModal({
           <>
             <ChartContainer
               config={chartConfig}
-              className="aspect-auto h-full w-full"
+              className="min-h-0 flex-1 aspect-auto w-full"
             >
               <LineChart
                 data={trendData}
