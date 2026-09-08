@@ -140,7 +140,7 @@ export const settings: SettingsMessages = {
       "Detectado automáticamente desde la cuenta de Steam con sesión iniciada.",
     personaName: "Nombre de perfil",
     personaNameDescription:
-      "Detectado automáticamente desde la cuenta de Steam con sesión iniciada.",
+      "Introduce el nombre de usuario de tu cuenta en kovaaks.com.",
     displayNamePlaceholder: "Nombre para mostrar",
     dataRetention: "Conservación de datos",
     recentRunsWindow: "Periodo de partidas recientes (días)",

@@ -138,7 +138,7 @@ export const settings: SettingsMessages = {
       "Automatisch gedetecteerd uit het aangemelde Steam-account.",
     personaName: "Personanaam",
     personaNameDescription:
-      "Automatisch gedetecteerd uit het aangemelde Steam-account.",
+      "Voer de gebruikersnaam van je account op kovaaks.com in.",
     displayNamePlaceholder: "Weergavenaam",
     dataRetention: "Gegevensbewaring",
     recentRunsWindow: "Venster recente runs (dagen)",

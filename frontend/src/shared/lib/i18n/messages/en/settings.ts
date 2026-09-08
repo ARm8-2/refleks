@@ -135,11 +135,10 @@ export const settings = {
     steam: "Steam",
     steamInstallDirectory: "Steam Install Directory",
     steamId: "Steam ID",
-    steamIdDescription:
-      "Auto-detected from the signed-in Steam account.",
+    steamIdDescription: "Auto-detected from the signed-in Steam account.",
     personaName: "Persona Name",
     personaNameDescription:
-      "Auto-detected from the signed-in Steam account.",
+      "Enter the username from your account on kovaaks.com.",
     displayNamePlaceholder: "Display name",
     dataRetention: "Data Retention",
     recentRunsWindow: "Recent Runs Window (Days)",

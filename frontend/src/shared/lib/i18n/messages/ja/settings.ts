@@ -137,7 +137,7 @@ export const settings: SettingsMessages = {
     steamIdDescription: "サインイン中のSteamアカウントから自動検出されます。",
     personaName: "ペルソナ名",
     personaNameDescription:
-      "サインイン中のSteamアカウントから自動検出されます。",
+      "kovaaks.comのアカウントで使用しているユーザー名を入力してください。",
     displayNamePlaceholder: "表示名",
     dataRetention: "データ保持",
     recentRunsWindow: "最近のプレイ期間（日）",

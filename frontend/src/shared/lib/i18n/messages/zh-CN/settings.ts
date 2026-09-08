@@ -128,7 +128,7 @@ export const settings: SettingsMessages = {
     steamId: "Steam ID",
     steamIdDescription: "从已登录的 Steam 账户自动检测。",
     personaName: "用户名称",
-    personaNameDescription: "从已登录的 Steam 账户自动检测。",
+    personaNameDescription: "请输入你在 kovaaks.com 账户中使用的用户名。",
     displayNamePlaceholder: "显示名称",
     dataRetention: "数据保留",
     recentRunsWindow: "最近训练时间范围（天）",

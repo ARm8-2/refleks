@@ -84,7 +84,8 @@ export const settings: SettingsMessages = {
     storage10gb: "10 ГБ",
     storage25gb: "25 ГБ",
     sessionGap: "Перерыв между сессиями",
-    sessionGapDescription: "Сколько минут бездействия нужно для начала новой сессии",
+    sessionGapDescription:
+      "Сколько минут бездействия нужно для начала новой сессии",
     sessionGapMinutes: plural({ one: "1 минута", other: "{count} минут" }),
   },
   privacy: {
@@ -130,9 +131,11 @@ export const settings: SettingsMessages = {
     steam: "Steam",
     steamInstallDirectory: "Папка установки Steam",
     steamId: "Steam ID",
-    steamIdDescription: "Определяется автоматически из активной учётной записи Steam.",
+    steamIdDescription:
+      "Определяется автоматически из активной учётной записи Steam.",
     personaName: "Имя профиля",
-    personaNameDescription: "Определяется автоматически из активной учётной записи Steam.",
+    personaNameDescription:
+      "Введите имя пользователя из вашей учётной записи на kovaaks.com.",
     displayNamePlaceholder: "Отображаемое имя",
     dataRetention: "Хранение данных",
     recentRunsWindow: "Период последних забегов (дни)",
@@ -161,7 +164,8 @@ export const settings: SettingsMessages = {
   },
   resetSettings: {
     title: "Сбросить настройки",
-    description: "Выберите данные, которые нужно вернуть к значениям по умолчанию:",
+    description:
+      "Выберите данные, которые нужно вернуть к значениям по умолчанию:",
     settingsAndConfig: "Настройки и конфигурация",
     favoriteScenarios: "Избранные сценарии",
     scenarioNotes: "Заметки сценариев",
