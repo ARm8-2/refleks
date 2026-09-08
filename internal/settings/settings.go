@@ -7,13 +7,35 @@ import (
 	"strings"
 
 	"refleks/internal/constants"
+	"refleks/internal/detect"
 	"refleks/internal/models"
 )
 
-// DefaultKovaaksInstallDir returns an OS-appropriate default Kovaak's install directory.
+// DefaultSteamInstallDir returns an OS-appropriate default Steam install
+// directory. Priority order: environment override, auto-detection, platform
+// fallback.
+func DefaultSteamInstallDir() string {
+	if env := strings.TrimSpace(GetEnv(constants.EnvSteamInstallDirVar)); env != "" {
+		return NormalizeInstallDir(env)
+	}
+	if dir := detect.SteamInstallDir(); dir != "" {
+		return NormalizeInstallDir(dir)
+	}
+	if runtime.GOOS == "windows" {
+		return constants.DefaultWindowsSteamInstallDir
+	}
+	return ""
+}
+
+// DefaultKovaaksInstallDir returns an OS-appropriate default Kovaak's install
+// directory. Priority order: environment override, auto-detection, platform
+// fallback.
 func DefaultKovaaksInstallDir() string {
 	if env := strings.TrimSpace(GetEnv(constants.EnvKovaaksInstallDirVar)); env != "" {
-		return NormalizeKovaaksInstallDir(env)
+		return NormalizeInstallDir(env)
+	}
+	if dir := detect.KovaaksInstallDir(); dir != "" {
+		return NormalizeInstallDir(dir)
 	}
 	if runtime.GOOS == "windows" {
 		return constants.DefaultWindowsKovaaksInstallDir
@@ -21,8 +43,9 @@ func DefaultKovaaksInstallDir() string {
 	return ""
 }
 
-// NormalizeKovaaksInstallDir trims, normalizes separators, and cleans the install path.
-func NormalizeKovaaksInstallDir(p string) string {
+// NormalizeInstallDir trims, expands placeholders, and cleans an install path
+// so callers can rely on a canonical form regardless of how the user typed it.
+func NormalizeInstallDir(p string) string {
 	p = strings.TrimSpace(ExpandPathPlaceholders(p))
 	if p == "" {
 		return ""
@@ -32,7 +55,7 @@ func NormalizeKovaaksInstallDir(p string) string {
 
 // ResolveKovaaksStatsDir derives the stats directory from the configured install directory.
 func ResolveKovaaksStatsDir(installDir string) string {
-	installDir = NormalizeKovaaksInstallDir(installDir)
+	installDir = NormalizeInstallDir(installDir)
 	if installDir == "" {
 		return ""
 	}
@@ -42,7 +65,7 @@ func ResolveKovaaksStatsDir(installDir string) string {
 // Default returns sane default settings for a fresh install.
 func Default() models.Settings {
 	return models.Settings{
-		SteamInstallDir:         constants.DefaultWindowsSteamInstallDir,
+		SteamInstallDir:         DefaultSteamInstallDir(),
 		KovaaksInstallDir:       DefaultKovaaksInstallDir(),
 		SessionGapMinutes:       constants.DefaultSessionGapMinutes,
 		RecentRunsDays:          constants.DefaultRecentRunsDays,
@@ -68,10 +91,11 @@ func Default() models.Settings {
 
 // Sanitize applies defaults to zero/empty fields and returns the updated copy.
 func Sanitize(s models.Settings) models.Settings {
-	if strings.TrimSpace(s.SteamInstallDir) == "" {
-		s.SteamInstallDir = constants.DefaultWindowsSteamInstallDir
+	s.SteamInstallDir = NormalizeInstallDir(s.SteamInstallDir)
+	if s.SteamInstallDir == "" {
+		s.SteamInstallDir = DefaultSteamInstallDir()
 	}
-	s.KovaaksInstallDir = NormalizeKovaaksInstallDir(s.KovaaksInstallDir)
+	s.KovaaksInstallDir = NormalizeInstallDir(s.KovaaksInstallDir)
 	if s.KovaaksInstallDir == "" {
 		s.KovaaksInstallDir = DefaultKovaaksInstallDir()
 	}

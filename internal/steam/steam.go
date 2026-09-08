@@ -62,7 +62,7 @@ func GetPersonaName(s models.Settings) string {
 
 // steamLoginUsersPath builds the expected path to Steam's loginusers.vdf using settings.
 func steamLoginUsersPath(s models.Settings) string {
-	steamDir := settings.ExpandPathPlaceholders(s.SteamInstallDir)
+	steamDir := settings.NormalizeInstallDir(s.SteamInstallDir)
 	// Compose path to config/loginusers.vdf (use OS-specific separator)
 	return filepath.Join(steamDir, "config", "loginusers.vdf")
 }
