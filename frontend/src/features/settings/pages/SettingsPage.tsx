@@ -83,6 +83,7 @@ const sessionGapMinutes = [5, 10, 15, 20, 30, 45, 60, 90, 120];
 const languageOptions = [
   { label: "English", value: "en" },
   { label: "Nederlands", value: "nl" },
+  { label: "Español", value: "es" },
 ];
 const replayRetentionOptionValues: { value: string; key: MessageKey }[] = [
   { value: "0", key: "common.actions.unlimited" },
