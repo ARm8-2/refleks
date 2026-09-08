@@ -35,6 +35,6 @@ export const errors: ErrorMessages = {
     progressFetchFailed: "加载基准训练进度失败。",
   },
   scenario: {
-    scoresFetchFailed: "加载场景分数失败。",
+    scoresFetchFailed: "加载场景分数失败。请检查设置，并确保已配置用户名称。",
   },
 };

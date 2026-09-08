@@ -37,7 +37,8 @@ export const errors = {
     progressFetchFailed: "Failed to load benchmark progress.",
   },
   scenario: {
-    scoresFetchFailed: "Failed to load scenario scores.",
+    scoresFetchFailed:
+      "Failed to load scenario scores. Check Settings and make sure Persona Name is configured.",
   },
 } as const;
 

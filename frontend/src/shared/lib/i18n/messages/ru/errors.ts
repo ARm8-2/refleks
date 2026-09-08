@@ -32,6 +32,7 @@ export const errors: ErrorMessages = {
     progressFetchFailed: "Не удалось загрузить прогресс бенчмарка.",
   },
   scenario: {
-    scoresFetchFailed: "Не удалось загрузить результаты сценария.",
+    scoresFetchFailed:
+      "Не удалось загрузить результаты сценария. Проверьте настройки и убедитесь, что указано имя профиля.",
   },
 };

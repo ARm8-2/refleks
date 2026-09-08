@@ -37,6 +37,7 @@ export const errors: ErrorMessages = {
     progressFetchFailed: "Benchmarkvoortgang laden mislukt.",
   },
   scenario: {
-    scoresFetchFailed: "Scenarioscores laden mislukt.",
+    scoresFetchFailed:
+      "Scenarioscores laden mislukt. Controleer de instellingen en zorg ervoor dat de personanaam is ingesteld.",
   },
 };
