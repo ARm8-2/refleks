@@ -134,9 +134,12 @@ export const settings = {
     hide: "Hide advanced settings",
     steam: "Steam",
     steamInstallDirectory: "Steam Install Directory",
-    steamIdOverride: "Steam ID Override",
-    personaNameOverride: "Persona Name Override",
-    leaveEmpty: "Leave empty to auto-detect",
+    steamId: "Steam ID",
+    steamIdDescription:
+      "Auto-detected from the signed-in Steam account.",
+    personaName: "Persona Name",
+    personaNameDescription:
+      "Auto-detected from the signed-in Steam account.",
     displayNamePlaceholder: "Display name",
     dataRetention: "Data Retention",
     recentRunsWindow: "Recent Runs Window (Days)",

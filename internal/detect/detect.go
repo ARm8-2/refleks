@@ -1,6 +1,6 @@
-// Package detect locates installed applications such as Steam and KovaaK's by
+// Package detect locates installed applications and Steam account state by
 // inspecting the machine instead of relying on fixed default paths. Detection
-// is best-effort: functions return "" when an installation cannot be found so
+// is best-effort: functions return empty values when nothing can be found so
 // callers can fall back to their own defaults.
 package detect
 

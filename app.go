@@ -386,6 +386,8 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		defaults := appsettings.Default()
 		newSettings.SteamInstallDir = defaults.SteamInstallDir
 		newSettings.KovaaksInstallDir = defaults.KovaaksInstallDir
+		newSettings.SteamIDOverride = defaults.SteamIDOverride
+		newSettings.PersonaNameOverride = defaults.PersonaNameOverride
 		newSettings.SessionGapMinutes = defaults.SessionGapMinutes
 		newSettings.RecentRunsDays = defaults.RecentRunsDays
 		newSettings.RecentRunsMinCount = defaults.RecentRunsMinCount

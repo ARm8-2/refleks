@@ -133,9 +133,12 @@ export const settings: SettingsMessages = {
     hide: "Geavanceerde instellingen verbergen",
     steam: "Steam",
     steamInstallDirectory: "Steam-installatiemap",
-    steamIdOverride: "Steam-ID-overschrijving",
-    personaNameOverride: "Personanaam-overschrijving",
-    leaveEmpty: "Leeg laten om automatisch te detecteren",
+    steamId: "Steam-ID",
+    steamIdDescription:
+      "Automatisch gedetecteerd uit het aangemelde Steam-account.",
+    personaName: "Personanaam",
+    personaNameDescription:
+      "Automatisch gedetecteerd uit het aangemelde Steam-account.",
     displayNamePlaceholder: "Weergavenaam",
     dataRetention: "Gegevensbewaring",
     recentRunsWindow: "Venster recente runs (dagen)",

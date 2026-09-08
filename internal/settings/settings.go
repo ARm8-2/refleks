@@ -62,11 +62,46 @@ func ResolveKovaaksStatsDir(installDir string) string {
 	return filepath.Join(installDir, constants.KovaaksDataDirName, constants.KovaaksStatsDirName)
 }
 
+// DefaultSteamID returns a default Steam ID for a fresh install: the
+// REFLEKS_STEAM_ID environment override when set, otherwise the MostRecent
+// user in the default Steam installation's loginusers.vdf.
+func DefaultSteamID() string {
+	return steamIDDefault(DefaultSteamInstallDir())
+}
+
+// DefaultPersonaName returns a default persona name for a fresh install: the
+// REFLEKS_PERSONA_NAME environment override when set, otherwise the MostRecent
+// user in the default Steam installation's loginusers.vdf.
+func DefaultPersonaName() string {
+	return personaNameDefault(DefaultSteamInstallDir())
+}
+
+// steamIDDefault resolves a default Steam ID for the given Steam directory.
+func steamIDDefault(steamDir string) string {
+	if env := strings.TrimSpace(GetEnv(constants.EnvSteamIDVar)); env != "" {
+		return env
+	}
+	id, _ := detect.SteamAccount(steamDir)
+	return id
+}
+
+// personaNameDefault resolves a default persona name for the given Steam
+// directory.
+func personaNameDefault(steamDir string) string {
+	if env := strings.TrimSpace(GetEnv(constants.EnvPersonaNameVar)); env != "" {
+		return env
+	}
+	_, name := detect.SteamAccount(steamDir)
+	return name
+}
+
 // Default returns sane default settings for a fresh install.
 func Default() models.Settings {
 	return models.Settings{
 		SteamInstallDir:         DefaultSteamInstallDir(),
 		KovaaksInstallDir:       DefaultKovaaksInstallDir(),
+		SteamIDOverride:         DefaultSteamID(),
+		PersonaNameOverride:     DefaultPersonaName(),
 		SessionGapMinutes:       constants.DefaultSessionGapMinutes,
 		RecentRunsDays:          constants.DefaultRecentRunsDays,
 		RecentRunsMinCount:      constants.DefaultRecentRunsMinCount,
@@ -98,6 +133,18 @@ func Sanitize(s models.Settings) models.Settings {
 	s.KovaaksInstallDir = NormalizeInstallDir(s.KovaaksInstallDir)
 	if s.KovaaksInstallDir == "" {
 		s.KovaaksInstallDir = DefaultKovaaksInstallDir()
+	}
+	// Auto-detect the Steam account when nothing is configured yet, mirroring
+	// how the install directories are filled in. An empty value resolves
+	// against the configured Steam install directory, so a manually cleared
+	// field re-detects instead of staying stale.
+	s.SteamIDOverride = strings.TrimSpace(s.SteamIDOverride)
+	if s.SteamIDOverride == "" {
+		s.SteamIDOverride = steamIDDefault(s.SteamInstallDir)
+	}
+	s.PersonaNameOverride = strings.TrimSpace(s.PersonaNameOverride)
+	if s.PersonaNameOverride == "" {
+		s.PersonaNameOverride = personaNameDefault(s.SteamInstallDir)
 	}
 	if s.SessionGapMinutes <= 0 {
 		s.SessionGapMinutes = constants.DefaultSessionGapMinutes

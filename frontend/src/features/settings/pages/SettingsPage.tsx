@@ -1033,8 +1033,10 @@ export function SettingsPage() {
                         </SettingsField>
 
                         <SettingsField
-                          label={t("settings.advanced.steamIdOverride")}
-                          description={t("settings.advanced.leaveEmpty")}
+                          label={t("settings.advanced.steamId")}
+                          description={t(
+                            "settings.advanced.steamIdDescription",
+                          )}
                         >
                           <Input
                             type="text"
@@ -1052,8 +1054,10 @@ export function SettingsPage() {
                         </SettingsField>
 
                         <SettingsField
-                          label={t("settings.advanced.personaNameOverride")}
-                          description={t("settings.advanced.leaveEmpty")}
+                          label={t("settings.advanced.personaName")}
+                          description={t(
+                            "settings.advanced.personaNameDescription",
+                          )}
                         >
                           <Input
                             type="text"
