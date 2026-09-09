@@ -423,7 +423,7 @@ export function BenchmarkOverviewWidget() {
               <div />
               {showNotesCol && <div />}
               {showRecCol && (
-                <div className="flex items-center gap-1 pl-2 text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
+                <div className="relative flex w-max min-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap pl-2 text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
                   {t("overview.benchmarkOverview.columns.rec")}
                   <RecommendationInfo />
                 </div>
