@@ -47,7 +47,11 @@ const (
 	ScreenCaptureSegmentSeconds = 5
 	// ScreenCaptureReplayTailSeconds preserves the final visual feedback after
 	// a scenario reports its end without affecting the stored run statistics.
-	ScreenCaptureReplayTailSeconds    = 2
+	ScreenCaptureReplayTailSeconds = 2
+	// ScreenCaptureSegmentRetention is the rolling media buffer depth. It must
+	// comfortably exceed ScreenCaptureTrimMaxWaitSeconds plus the delay before a
+	// finished run's stats file is ingested, otherwise a run can age out of the
+	// buffer before its trim starts and its replay is lost.
 	ScreenCaptureSegmentRetention     = 5 * 60 // seconds; segments older than this are pruned
 	ScreenCaptureTrimPollInterval     = 1      // seconds between readiness checks while waiting on a segment to close
 	ScreenCaptureTrimMaxWaitSeconds   = 45     // give up waiting on a run's segment after this long

@@ -388,6 +388,12 @@ func (s *Store) trimScreenRecording(trim pendingScreenTrim, paths []string, firs
 	defer os.Remove(tmpPath)
 
 	firstSegmentStartMs := sessionStartMs + firstSegmentStart.Milliseconds()
+	// Log the resolved window so a misaligned replay can be traced back to the
+	// capture session anchor, the segment index, or the run timestamps.
+	runtime.LogDebugf(s.ctx,
+		"screen/trim: run=%s sessionStart=%d runStart=%d runEnd=%d replayEnd=%d firstSegmentStart=%d segments=%d",
+		trim.runFileName, sessionStartMs, runStartMs, trim.runEnd.UnixMilli(), runEndMs, firstSegmentStartMs, len(paths),
+	)
 	if err := encoder.TrimRecording(paths, tmpPath, sessionStartMs, firstSegmentStartMs, runStartMs, runEndMs); err != nil {
 		runtime.LogWarningf(s.ctx, "screen/trim: failed for %s: %v", trim.runFileName, err)
 		return fmt.Errorf("trim replay: %w", err)
