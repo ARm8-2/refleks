@@ -107,7 +107,6 @@ export const settings: SettingsMessages = {
     theme: "テーマ",
     themeDescription: "アプリケーションの配色テーマ",
     themeDark: "ダーク",
-    themeDarker: "より暗いダーク",
     themeLight: "ライト",
     themeCustom: "カスタム",
     themeCustomDescription:

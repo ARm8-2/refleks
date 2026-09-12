@@ -104,7 +104,6 @@ export const settings: SettingsMessages = {
     theme: "Тема",
     themeDescription: "Цветовая тема приложения",
     themeDark: "Тёмная",
-    themeDarker: "Ещё темнее",
     themeLight: "Светлая",
     themeCustom: "Своя",
     themeCustomDescription:

@@ -108,7 +108,6 @@ export const settings = {
     theme: "Theme",
     themeDescription: "Color theme for the application",
     themeDark: "Dark",
-    themeDarker: "Darker",
     themeLight: "Light",
     themeCustom: "Custom",
     themeCustomDescription:

@@ -71,7 +71,6 @@ import { SettingsSection } from "../components/SettingsSection";
 
 const THEME_LABEL_KEYS: Record<Theme, MessageKey> = {
   dark: "settings.appearance.themeDark",
-  darker: "settings.appearance.themeDarker",
   light: "settings.appearance.themeLight",
   custom: "settings.appearance.themeCustom",
 };

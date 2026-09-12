@@ -107,7 +107,6 @@ export const settings: SettingsMessages = {
     theme: "Thema",
     themeDescription: "Kleurenthema voor de applicatie",
     themeDark: "Donker",
-    themeDarker: "Donkerder",
     themeLight: "Licht",
     themeCustom: "Aangepast",
     themeCustomDescription:

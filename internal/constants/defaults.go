@@ -115,6 +115,10 @@ const (
 	YawDegPerCountSiege = 0.018 / math.Pi
 )
 
+// ValidThemes lists the themes accepted from the frontend, kept in sync with
+// frontend/src/shared/lib/theme.ts (THEMES).
+var ValidThemes = []string{"dark", "light", "custom"}
+
 // ValidScales lists the UI scale percentages accepted from the frontend,
 // kept in sync with frontend/src/shared/lib/theme.ts (SCALES).
 var ValidScales = []string{"60", "75", "90", "100", "110", "125", "150"}

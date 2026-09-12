@@ -45,7 +45,6 @@ const TEMPLATE_HEADER = `/* ====================================================
  * the class, so the underlying base theme stays in place).
  */
 function activeThemeScope(): string {
-  if (document.documentElement.classList.contains("darker")) return ".darker";
   if (document.documentElement.classList.contains("dark")) return ".dark";
   return ":root";
 }

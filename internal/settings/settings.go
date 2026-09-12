@@ -155,9 +155,7 @@ func Sanitize(s models.Settings) models.Settings {
 	if s.RecentRunsMinCount <= 0 {
 		s.RecentRunsMinCount = constants.DefaultRecentRunsMinCount
 	}
-	if strings.TrimSpace(s.Theme) == "" {
-		s.Theme = constants.DefaultTheme
-	}
+	s.Theme = sanitizeTheme(s.Theme)
 	if strings.TrimSpace(s.Font) == "" {
 		s.Font = constants.DefaultFont
 	}
@@ -182,6 +180,16 @@ func Sanitize(s models.Settings) models.Settings {
 		s.SessionNotes = make(map[string]models.SessionNote)
 	}
 	return s
+}
+
+func sanitizeTheme(theme string) string {
+	theme = strings.ToLower(strings.TrimSpace(theme))
+	for _, valid := range constants.ValidThemes {
+		if theme == valid {
+			return theme
+		}
+	}
+	return constants.DefaultTheme
 }
 
 func sanitizeScale(scale string) string {

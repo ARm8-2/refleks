@@ -100,7 +100,6 @@ export const settings: SettingsMessages = {
     theme: "主题",
     themeDescription: "应用的配色主题",
     themeDark: "深色",
-    themeDarker: "更深色",
     themeLight: "浅色",
     themeCustom: "自定义",
     themeCustomDescription:

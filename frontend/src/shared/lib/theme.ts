@@ -1,6 +1,6 @@
 import { STORAGE_KEYS } from "./storageKeys";
 
-export const THEMES = ["dark", "darker", "light", "custom"] as const;
+export const THEMES = ["dark", "light", "custom"] as const;
 export type Theme = (typeof THEMES)[number];
 
 export const FONTS = [
@@ -39,7 +39,6 @@ const SCALE_STORAGE_KEY = STORAGE_KEYS.scale;
 
 const THEME_CLASSES: Record<Theme, string | null> = {
   dark: "dark",
-  darker: "darker",
   light: null,
   // "custom" is not a CSS scope: it layers a user stylesheet on top of the
   // active base theme, so it never changes the class on <html>.
@@ -52,7 +51,6 @@ const THEME_CLASSES: Record<Theme, string | null> = {
 export const THEME_SELECTORS: Record<Exclude<Theme, "custom">, string> = {
   light: "",
   dark: ".dark",
-  darker: ".darker",
 };
 
 export const DEFAULT_THEME: Theme = "dark";

@@ -108,7 +108,6 @@ export const settings: SettingsMessages = {
     theme: "Tema",
     themeDescription: "Tema de color de la aplicación",
     themeDark: "Oscuro",
-    themeDarker: "Más oscuro",
     themeLight: "Claro",
     themeCustom: "Personalizado",
     themeCustomDescription:
