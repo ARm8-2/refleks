@@ -1060,9 +1060,8 @@ func (c *captureWin) captureInto(dst []byte) error {
 
 	// QueryInterface for ID3D11Texture2D — the resource from AcquireNextFrame
 	// is an IDXGIResource, not usable directly with D3D11.
-	iidTex2D := guidFromString("6f15aaf2-d208-4e89-9ab4-489535d34f9c")
 	var d3dTex uintptr
-	_ = comQueryInterface(resource, &iidTex2D, &d3dTex)
+	_ = comQueryInterface(resource, &id3d11Texture2D, &d3dTex)
 	iUnknownRelease(resource)
 	if d3dTex == 0 {
 		return fmt.Errorf("QueryInterface(ID3D11Texture2D) returned null")
@@ -1071,15 +1070,12 @@ func (c *captureWin) captureInto(dst []byte) error {
 
 	d3d11CopyResource(d3dCtx, staging, d3dTex)
 
-	// Lock before touching mapped surfaces; Stop() may have been called.
-	c.mu.Lock()
-	if !c.running || c.dup == 0 {
-		c.mu.Unlock()
-		return errNoNewFrame
-	}
+	// Map/copy/unmap run without c.mu. Stop() releases the D3D resources only
+	// after captureLoop has exited (it waits on captureDone), so staging stays
+	// valid here; holding c.mu across a full-frame copy would instead stall the
+	// writer and status polling for the duration of every frame.
 	mapped, err := d3d11Map(d3dCtx, staging, 0, 1)
 	if err != nil {
-		c.mu.Unlock()
 		return err
 	}
 
@@ -1098,7 +1094,6 @@ func (c *captureWin) captureInto(dst []byte) error {
 	}
 
 	d3d11Unmap(d3dCtx, staging, 0)
-	c.mu.Unlock()
 
 	// Publish as the newest frame so a static desktop can repeat it.
 	c.latestMu.Lock()
@@ -1193,6 +1188,11 @@ var (
 	errDxgiWaitTimeout = fmt.Errorf("DXGI_ERROR_WAIT_TIMEOUT")
 	errDxgiAccessLost  = fmt.Errorf("DXGI_ERROR_ACCESS_LOST")
 )
+
+// id3d11Texture2D is the IID queried for every copied desktop frame. It is
+// parsed once at package init: guidFromString uses reflection-based formatting,
+// which is far too expensive to run on the capture hot path.
+var id3d11Texture2D = guidFromString("6f15aaf2-d208-4e89-9ab4-489535d34f9c")
 
 type mappedSubresource struct {
 	pData      uintptr
