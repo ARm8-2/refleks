@@ -5,6 +5,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/shared/components/ui/chart";
+import { useChartAnimation } from "@/shared/hooks";
 import {
   buildScoreDomain,
   CHART_SERIES_COLORS,
@@ -44,6 +45,7 @@ export function ScenarioTrendChart({
   className,
 }: Props) {
   const { t } = useI18n();
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   const hasAccuracy = points.some(
     (point) => point.accuracy != null && point.accuracy > 0,
   );
@@ -72,8 +74,13 @@ export function ScenarioTrendChart({
     };
 
     return (
-      <ChartContainer config={config} className={`aspect-auto w-full h-full`}>
+      <ChartContainer
+        ref={chartRef}
+        config={config}
+        className={`aspect-auto w-full h-full`}
+      >
         <LineChart
+          key={revealed ? "revealed" : "hidden"}
           data={points}
           margin={{ top: 8, right: 12, left: 6, bottom: 0 }}
           onClick={handleChartClick}
@@ -119,7 +126,7 @@ export function ScenarioTrendChart({
           />
           <Line
             yAxisId="score"
-            isAnimationActive={false}
+            {...animationProps}
             type="monotone"
             dataKey="score"
             stroke="var(--color-score)"
@@ -135,7 +142,7 @@ export function ScenarioTrendChart({
           {hasAccuracy && (
             <Line
               yAxisId="accuracy"
-              isAnimationActive={false}
+              {...animationProps}
               type="monotone"
               dataKey="accuracy"
               stroke="var(--color-accuracy)"

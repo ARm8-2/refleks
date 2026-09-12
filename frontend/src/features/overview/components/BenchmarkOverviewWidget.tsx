@@ -440,6 +440,7 @@ export function BenchmarkOverviewWidget() {
             <div>
               {currentScenario ? (
                 <ScenarioInfoRow
+                  key={`${benchmark.benchmarkName}-${currentScenario.name}`}
                   scenarioName={currentScenario.name}
                   score={currentScenario.score || 0}
                   gridTemplate={infoGridTemplate}
@@ -570,6 +571,7 @@ export function BenchmarkOverviewWidget() {
             <div>
               {currentScenario ? (
                 <ScenarioRankCells
+                  key={`${benchmark.benchmarkName}-${currentScenario.name}-ranks`}
                   scenarioName={currentScenario.name}
                   score={currentScenario.score || 0}
                   scenarioRank={currentScenario.scenarioRank}

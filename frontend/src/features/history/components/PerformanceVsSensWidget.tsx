@@ -13,7 +13,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/shared/components/ui/chart";
-import { usePersistedState, useStore } from "@/shared/hooks";
+import { useChartAnimation, usePersistedState, useStore } from "@/shared/hooks";
 import {
   CHART_SERIES_COLORS,
   CHART_STYLE,
@@ -266,6 +266,7 @@ function PerformanceVsSensChartContent({
   metricLabel: string;
 }) {
   const { t } = useI18n();
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   const chartConfig: ChartConfig = {
     performance: {
       label: metricLabel,
@@ -276,10 +277,14 @@ function PerformanceVsSensChartContent({
   return (
     <div className="h-full w-full">
       <ChartContainer
+        ref={chartRef}
         config={chartConfig}
         className="aspect-auto h-full w-full"
       >
-        <ScatterChart margin={{ top: 12, right: 12, left: 6, bottom: 4 }}>
+        <ScatterChart
+          key={revealed ? "revealed" : "hidden"}
+          margin={{ top: 12, right: 12, left: 6, bottom: 4 }}
+        >
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="x"
@@ -343,7 +348,7 @@ function PerformanceVsSensChartContent({
             dataKey="performance"
             fill="var(--color-performance)"
             stroke="var(--color-performance)"
-            isAnimationActive={false}
+            {...animationProps}
             r={CHART_STYLE.scatterPointRadius}
           />
         </ScatterChart>

@@ -1,4 +1,10 @@
 import { useI18n } from "@/shared/lib/i18n";
+import {
+  useAnimatedNumber,
+  useInView,
+  useReveal,
+  REVEAL_DELAY_MS,
+} from "@/shared/hooks";
 import type { RankDef } from "@/shared/types";
 import { ChartLine, NotebookPen, Play } from "lucide-react";
 import {
@@ -183,8 +189,19 @@ export function ScenarioInfoRow({
   onPlay,
 }: ScenarioInfoRowProps) {
   const { t } = useI18n();
+  const { ref: rowRef, inView } = useInView<HTMLDivElement>();
+  const revealed = useReveal(inView, REVEAL_DELAY_MS);
+  // Count the scenario score up from zero on first reveal, in step with the
+  // rank cells beside it.
+  const animatedScore = useAnimatedNumber(score || 0, {
+    active: revealed,
+    delayMs: 0,
+    durationMs: 800,
+    initial: 0,
+  });
   return (
     <div
+      ref={rowRef}
       className={`grid items-center ${cls.rowHeightClass}`}
       style={{ gridTemplateColumns: gridTemplate }}
     >
@@ -261,7 +278,7 @@ export function ScenarioInfoRow({
       <div
         className={`flex items-center justify-end pr-1 text-foreground ${cls.scoreTextClass}`}
       >
-        {formatNumber(score || 0, 0)}
+        {formatNumber(Math.round(animatedScore), 0)}
       </div>
     </div>
   );
@@ -280,6 +297,12 @@ type ScenarioRankCellsProps = {
   cls: RowClasses;
 };
 
+// Fill bars animate with a transform instead of a width change so the browser
+// can composite them without a layout pass on every frame. The foreground
+// value text is revealed by an identically-timed clip so the two stay in sync.
+const RANK_FILL_TRANSITION = "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)";
+const RANK_CLIP_TRANSITION = "clip-path 700ms cubic-bezier(0.22, 1, 0.36, 1)";
+
 export function ScenarioRankCells({
   scenarioName,
   score,
@@ -293,9 +316,36 @@ export function ScenarioRankCells({
   cls,
 }: ScenarioRankCellsProps) {
   useI18n(); // subscribe so locale-formatted numbers refresh on language switch
+  const { ref: rowRef, inView } = useInView<HTMLDivElement>();
+  const revealed = useReveal(inView, REVEAL_DELAY_MS);
+
+  // One sweep drives every segment so the row fills like a single loading bar:
+  // segment 0 fills first, then segment 1, and so on. Each segment's share of
+  // the sweep is proportional to its own fill so no time is spent on empty
+  // segments, and the ease-out easing slows the sweep toward the end.
+  const fills = visibleRankIndices.map((rankIndex) =>
+    cellFill(rankIndex, score, thresholds),
+  );
+  const totalFill = fills.reduce((sum, value) => sum + value, 0);
+  const sweep = useAnimatedNumber(1, {
+    active: revealed,
+    delayMs: 0,
+    durationMs: 900,
+    initial: 0,
+  });
+
+  let consumed = 0;
+  const shownFills = fills.map((fill) => {
+    const start = consumed;
+    consumed += fill;
+    return Math.max(0, Math.min(fill, sweep * totalFill - start));
+  });
+  const sweeping = sweep < 1;
+
   const fillColor = computeFillColor(scenarioRank, rankDefs);
   return (
     <div
+      ref={rowRef}
       className={`grid items-center gap-1 ${cls.rowHeightClass}`}
       style={{
         gridTemplateColumns: rightGridTemplate,
@@ -304,10 +354,11 @@ export function ScenarioRankCells({
       }}
     >
       {hasVisibleRanks ? (
-        visibleRankIndices.map((rankIndex) => {
+        visibleRankIndices.map((rankIndex, cellIndex) => {
           const rank = rankDefs[rankIndex];
-          const fill = cellFill(rankIndex, score, thresholds);
-          const fillPercent = Math.round(fill * 100);
+          const fillPercent = Math.round(fills[cellIndex] * 100);
+          const shownFraction = shownFills[cellIndex];
+          const shownPercent = shownFraction * 100;
           const value = thresholds?.[rankIndex + 1];
           const displayValue = value != null ? formatNumber(value, 0) : "-";
           const fillTextColor = thresholdTextOnFillColor(fillColor);
@@ -317,8 +368,15 @@ export function ScenarioRankCells({
               className={`relative flex items-center justify-center overflow-hidden rounded-md bg-surface-panel px-3 text-center text-[0.6875rem] ${cls.rankCellHeightClass}`}
             >
               <div
-                className="absolute inset-y-0 left-0"
-                style={{ width: `${fillPercent}%`, background: fillColor }}
+                className="absolute inset-0 origin-left"
+                style={{
+                  transform: `scaleX(${shownFraction})`,
+                  background: fillColor,
+                  // While the shared sweep drives the fill the value changes
+                  // every frame and a transition would smear it; once settled,
+                  // the transition animates later data updates.
+                  transition: sweeping ? undefined : RANK_FILL_TRANSITION,
+                }}
               />
               <span className="pointer-events-none relative z-10 flex w-full items-center justify-center font-medium text-foreground">
                 {displayValue}
@@ -328,7 +386,8 @@ export function ScenarioRankCells({
                   className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-3 font-medium"
                   style={{
                     color: fillTextColor,
-                    clipPath: `inset(0 ${100 - fillPercent}% 0 0)`,
+                    clipPath: `inset(0 ${100 - shownPercent}% 0 0)`,
+                    transition: sweeping ? undefined : RANK_CLIP_TRANSITION,
                   }}
                 >
                   {displayValue}

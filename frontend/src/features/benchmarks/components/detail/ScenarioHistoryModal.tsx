@@ -13,6 +13,7 @@ import {
   translateMessage,
 } from "@/shared/lib";
 import { getLocale, useI18n } from "@/shared/lib/i18n";
+import { useChartAnimation } from "@/shared/hooks";
 import type { KovaaksLastScore, RankDef } from "@/shared/types";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -168,66 +169,94 @@ export function ScenarioHistoryModal({
         )}
 
         {!loading && !error && trendData.length > 0 && (
-          <>
-            <ChartContainer
-              config={chartConfig}
-              className="min-h-0 flex-1 aspect-auto w-full"
-            >
-              <LineChart
-                data={trendData}
-                margin={{ top: 2, right: 6, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis dataKey="run" hide />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={6}
-                  width={46}
-                  domain={scoreDomain}
-                  tickFormatter={(value) => formatNumber(value, 0)}
-                />
-
-                {rankBands.map((band, index) => (
-                  <ReferenceArea
-                    key={`rank-band-${index}`}
-                    y1={band.y1}
-                    y2={band.y2}
-                    fill={band.color}
-                    fillOpacity={0.16}
-                    strokeOpacity={0}
-                    ifOverflow="extendDomain"
-                  />
-                ))}
-
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      labelFormatter={(_, payload) =>
-                        payload?.[0]?.payload?.dateLabel ?? null
-                      }
-                    />
-                  }
-                />
-                <Line
-                  isAnimationActive={false}
-                  type="monotone"
-                  dataKey="score"
-                  stroke="var(--color-score)"
-                  strokeWidth={CHART_STYLE.linePrimaryWidth}
-                  dot={{
-                    r: CHART_STYLE.pointRadius,
-                    fill: "var(--color-score)",
-                    strokeWidth: 0,
-                  }}
-                  activeDot={{ r: CHART_STYLE.activePointRadius }}
-                />
-              </LineChart>
-            </ChartContainer>
-          </>
+          <ScenarioHistoryChart
+            trendData={trendData}
+            scoreDomain={scoreDomain}
+            rankBands={rankBands}
+            chartConfig={chartConfig}
+          />
         )}
       </div>
     </Modal>
+  );
+}
+
+/**
+ * The chart owns its animation hooks so they mount together with the dialog
+ * content. Radix unmounts the dialog on close, but a hook held by the
+ * always-mounted modal would stay revealed and skip the entrance animation on
+ * every reopen after the first.
+ */
+function ScenarioHistoryChart({
+  trendData,
+  scoreDomain,
+  rankBands,
+  chartConfig,
+}: {
+  trendData: TrendPoint[];
+  scoreDomain: [number, number];
+  rankBands: RankBand[];
+  chartConfig: ChartConfig;
+}) {
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
+  return (
+    <ChartContainer
+      ref={chartRef}
+      config={chartConfig}
+      className="min-h-0 flex-1 aspect-auto w-full"
+    >
+      <LineChart
+        key={revealed ? "revealed" : "hidden"}
+        data={trendData}
+        margin={{ top: 2, right: 6, left: 0, bottom: 0 }}
+      >
+        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+        <XAxis dataKey="run" hide />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          tickMargin={6}
+          width={46}
+          domain={scoreDomain}
+          tickFormatter={(value) => formatNumber(value, 0)}
+        />
+
+        {rankBands.map((band, index) => (
+          <ReferenceArea
+            key={`rank-band-${index}`}
+            y1={band.y1}
+            y2={band.y2}
+            fill={band.color}
+            fillOpacity={0.16}
+            strokeOpacity={0}
+            ifOverflow="extendDomain"
+          />
+        ))}
+
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              labelFormatter={(_, payload) =>
+                payload?.[0]?.payload?.dateLabel ?? null
+              }
+            />
+          }
+        />
+        <Line
+          {...animationProps}
+          type="monotone"
+          dataKey="score"
+          stroke="var(--color-score)"
+          strokeWidth={CHART_STYLE.linePrimaryWidth}
+          dot={{
+            r: CHART_STYLE.pointRadius,
+            fill: "var(--color-score)",
+            strokeWidth: 0,
+          }}
+          activeDot={{ r: CHART_STYLE.activePointRadius }}
+        />
+      </LineChart>
+    </ChartContainer>
   );
 }
 

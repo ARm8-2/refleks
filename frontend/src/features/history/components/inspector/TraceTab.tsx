@@ -1,4 +1,5 @@
 import { InfoTooltip } from "@/shared/components";
+import { useRetainedValue } from "@/shared/hooks";
 import { cn, useI18n, type MessageKey } from "@/shared/lib";
 
 import { Copy } from "lucide-react";
@@ -176,6 +177,63 @@ export function TraceTab({
     );
   }, [compareAnalysis, comparePerformanceEvents, comparePoints, compareRun]);
 
+  // Bundle everything the trace view renders so a run switch can keep the
+  // previous run on screen (replay and analysis together) instead of collapsing
+  // to the loading placeholder and back, which reads as a blink.
+  const primaryView = useMemo(() => {
+    if (
+      primaryPoints === null ||
+      primaryEvents === null ||
+      primaryPerformanceEvents === null
+    ) {
+      return null;
+    }
+    return {
+      points: primaryPoints,
+      resolution: primaryResolution || undefined,
+      targetInference: primaryTargetInference,
+      analysis,
+      suggestion,
+    };
+  }, [
+    analysis,
+    primaryEvents,
+    primaryPerformanceEvents,
+    primaryPoints,
+    primaryResolution,
+    primaryTargetInference,
+    suggestion,
+  ]);
+  const retainedPrimaryView = useRetainedValue(primaryView);
+
+  const compareView = useMemo(() => {
+    if (
+      !compareRun ||
+      comparePoints === null ||
+      compareEvents === null ||
+      comparePerformanceEvents === null
+    ) {
+      return null;
+    }
+    return {
+      points: comparePoints,
+      resolution: compareResolution || undefined,
+      targetInference: compareTargetInference,
+    };
+  }, [
+    compareEvents,
+    comparePerformanceEvents,
+    comparePoints,
+    compareResolution,
+    compareRun,
+    compareTargetInference,
+  ]);
+  const retainedCompareView = useRetainedValue(compareView);
+  const compareViewShown =
+    compareRun && retainedCompareView && retainedCompareView.points.length > 0
+      ? retainedCompareView
+      : null;
+
   // Highlight: show the last flick from the prior click to the current kill click
   const highlight: TraceHighlight | undefined = useMemo(() => {
     if (!selectedKill) return undefined;
@@ -194,15 +252,7 @@ export function TraceTab({
 
   const clearSelection = useCallback(() => setSelectedKill(null), []);
 
-  if (
-    primaryPoints === null ||
-    primaryEvents === null ||
-    primaryPerformanceEvents === null ||
-    (compareRun &&
-      (comparePoints === null ||
-        compareEvents === null ||
-        comparePerformanceEvents === null))
-  ) {
+  if (!retainedPrimaryView) {
     return (
       <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
         <p className="text-sm text-surface-muted-foreground">
@@ -212,7 +262,7 @@ export function TraceTab({
     );
   }
 
-  if (!primaryPoints || primaryPoints.length === 0) {
+  if (retainedPrimaryView.points.length === 0) {
     return (
       <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
         <p className="text-sm text-surface-muted-foreground">
@@ -222,22 +272,22 @@ export function TraceTab({
     );
   }
 
-  const hasCompare = comparePoints != null && comparePoints.length > 0;
-  const hasAnalysis = analysis != null && analysis.kills.length > 0;
+  const hasCompare = compareViewShown !== null;
+  const primaryAnalysisShown = retainedPrimaryView.analysis;
+  const hasAnalysis =
+    primaryAnalysisShown != null && primaryAnalysisShown.kills.length > 0;
 
   return (
     <div className="space-y-3">
       <TraceReplay
-        points={primaryPoints}
-        resolution={primaryResolution || undefined}
-        comparePoints={hasCompare ? comparePoints! : undefined}
-        compareResolution={
-          hasCompare ? compareResolution || undefined : undefined
-        }
+        points={retainedPrimaryView.points}
+        resolution={retainedPrimaryView.resolution}
+        comparePoints={compareViewShown?.points}
+        compareResolution={compareViewShown?.resolution}
         layout={hasCompare && !overlay ? "split" : "overlay"}
         highlight={highlight}
-        targetInference={primaryTargetInference}
-        compareTargetInference={hasCompare ? compareTargetInference : undefined}
+        targetInference={retainedPrimaryView.targetInference}
+        compareTargetInference={compareViewShown?.targetInference}
         seekToMs={seekToMs}
         onReset={clearSelection}
         onHighlightChange={(h) => h === null && setSelectedKill(null)}
@@ -246,8 +296,8 @@ export function TraceTab({
       {/* Analysis panel */}
       {hasAnalysis && (
         <AnalysisPanel
-          analysis={analysis}
-          suggestion={suggestion}
+          analysis={primaryAnalysisShown}
+          suggestion={retainedPrimaryView.suggestion}
           selectedKillIdx={selectedKill?.killIdx ?? null}
           onKillClick={handleKillClick}
         />

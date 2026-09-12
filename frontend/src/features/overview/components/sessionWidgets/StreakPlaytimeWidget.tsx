@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
-import { usePersistedState, useStore } from "@/shared/hooks";
+import { useChartAnimation, usePersistedState, useStore } from "@/shared/hooks";
 import {
   CHART_SERIES_COLORS,
   CHART_STYLE,
@@ -137,6 +137,8 @@ export function StreakPlaytimeWidget({
   snapshot: RecentSessionSnapshot;
 }) {
   const { t, locale } = useI18n();
+  const drilldownChart = useChartAnimation();
+  const playtimeChart = useChartAnimation();
   const points = useDailyPlaytime(7);
   const sessions = useStore((state) => state.sessions);
   const [storedRangeDays, setStoredRangeDays] = usePersistedState<number>(
@@ -627,10 +629,12 @@ export function StreakPlaytimeWidget({
             </div>
 
             <ChartContainer
+              ref={drilldownChart.ref}
               config={drilldownConfig}
               className="aspect-auto h-[13.75rem] w-full"
             >
               <BarChart
+                key={drilldownChart.revealed ? "revealed" : "hidden"}
                 data={selectedBreakdown}
                 margin={{ top: 6, right: 8, left: 2, bottom: 0 }}
               >
@@ -670,7 +674,7 @@ export function StreakPlaytimeWidget({
                   }
                 />
                 <Bar
-                  isAnimationActive={false}
+                  {...drilldownChart.animationProps}
                   dataKey="minutes"
                   fill="var(--color-minutes)"
                   radius={[4, 4, 0, 0]}
@@ -714,10 +718,12 @@ export function StreakPlaytimeWidget({
         </span>
       </div>
       <ChartContainer
+        ref={playtimeChart.ref}
         config={playtimeConfig}
         className="mt-1 aspect-auto h-[1.25rem] w-full"
       >
         <AreaChart
+          key={playtimeChart.revealed ? "revealed" : "hidden"}
           data={chartData}
           margin={{ top: 2, right: 2, left: 2, bottom: 0 }}
         >
@@ -736,7 +742,7 @@ export function StreakPlaytimeWidget({
             </linearGradient>
           </defs>
           <Area
-            isAnimationActive={false}
+            {...playtimeChart.animationProps}
             type="monotone"
             dataKey="minutes"
             stroke="var(--color-minutes)"

@@ -13,6 +13,7 @@ import {
   type MessageKey,
 } from "@/shared/lib";
 import { useMemo } from "react";
+import { useChartAnimation, useRetainedValue } from "@/shared/hooks";
 import {
   CartesianGrid,
   Line,
@@ -212,12 +213,26 @@ export function AnalysisTab({
     [compareAnalysis, compareEvents, comparePerformanceEvents, compareRun],
   );
 
-  if (
-    primaryEvents === null ||
-    primaryPerformanceEvents === null ||
-    (compareRun &&
-      (compareEvents === null || comparePerformanceEvents === null))
-  ) {
+  // Keep the last fully-computed run on screen while the next one loads. The
+  // charts and their summary are retained together so a load never pairs one
+  // run's events with another run's stats. Without this the panel collapses to
+  // the loading placeholder and back, which reads as a blink.
+  const retainedPrimary = useRetainedValue(
+    useMemo(
+      () => (primary ? { chart: primary, analysis: primaryAnalysis } : null),
+      [primary, primaryAnalysis],
+    ),
+  );
+  const retainedCompare = useRetainedValue(
+    useMemo(
+      () => (compare ? { chart: compare, analysis: compareAnalysis } : null),
+      [compare, compareAnalysis],
+    ),
+  );
+
+  const activeCompare = compareRun ? retainedCompare : null;
+
+  if (!retainedPrimary) {
     return (
       <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
         <p className="text-sm text-surface-muted-foreground">
@@ -227,7 +242,10 @@ export function AnalysisTab({
     );
   }
 
-  if (!primary || primary.events.length === 0) {
+  const primaryChart = retainedPrimary.chart;
+  const primaryAnalysisShown = retainedPrimary.analysis;
+
+  if (primaryChart.events.length === 0) {
     return (
       <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
         <p className="text-sm text-surface-muted-foreground">
@@ -237,50 +255,52 @@ export function AnalysisTab({
     );
   }
 
-  if (!compareAnalysis || !compare) {
+  if (!activeCompare) {
     return (
       <div className="space-y-3">
-        {primaryAnalysis && <SummaryMetrics analysis={primaryAnalysis} />}
+        {primaryAnalysisShown && (
+          <SummaryMetrics analysis={primaryAnalysisShown} />
+        )}
         <Widget
           title={t("history.analysis.accuracyOverTime")}
           className="bg-surface-subtle h-[22.5rem]"
           modalTitle={t("history.analysis.accuracyOverTime")}
           modalContent={
             <EventsChart
-              data={primary.events}
-              domainMax={primary.eventsDomainMax}
+              data={primaryChart.events}
+              domainMax={primaryChart.eventsDomainMax}
             />
           }
         >
           <EventsChart
-            data={primary.events}
-            domainMax={primary.eventsDomainMax}
+            data={primaryChart.events}
+            domainMax={primaryChart.eventsDomainMax}
           />
         </Widget>
-        {primaryAnalysis ? (
+        {primaryAnalysisShown ? (
           <div className="grid gap-3 lg:grid-cols-2">
             <Widget
               title={t("history.analysis.ttkTrend")}
               description={t("history.analysis.slopeLineWithR2", {
-                slope: `${primaryAnalysis.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysis.movingAvg.slope.toFixed(4)}`,
-                r2: primaryAnalysis.movingAvg.r2.toFixed(3),
+                slope: `${primaryAnalysisShown.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysisShown.movingAvg.slope.toFixed(4)}`,
+                r2: primaryAnalysisShown.movingAvg.r2.toFixed(3),
               })}
               className="bg-surface-subtle h-[22.5rem]"
               modalTitle={t("history.analysis.ttkMovingAverage")}
-              modalContent={<TTKChart data={primary.ttk} />}
+              modalContent={<TTKChart data={primaryChart.ttk} />}
             >
-              <TTKChart data={primary.ttk} />
+              <TTKChart data={primaryChart.ttk} />
             </Widget>
             <Widget
               title={t("history.analysis.accuracyVsSpeed")}
               description={t("history.analysis.pearsonR", {
-                r: primaryAnalysis.scatter.corrKpmAcc.toFixed(3),
+                r: primaryAnalysisShown.scatter.corrKpmAcc.toFixed(3),
               })}
               className="bg-surface-subtle h-[22.5rem]"
               modalTitle={t("history.analysis.accuracyVsSpeed")}
-              modalContent={<ScatterPlot data={primary.scatter} />}
+              modalContent={<ScatterPlot data={primaryChart.scatter} />}
             >
-              <ScatterPlot data={primary.scatter} />
+              <ScatterPlot data={primaryChart.scatter} />
             </Widget>
           </div>
         ) : (
@@ -294,16 +314,19 @@ export function AnalysisTab({
     );
   }
 
+  const compareChart = activeCompare.chart;
+  const compareAnalysisShown = activeCompare.analysis;
+
   return (
     <div className="space-y-3">
-      {primaryAnalysis && compareAnalysis && (
+      {primaryAnalysisShown && compareAnalysisShown && (
         <div className="grid gap-3 md:grid-cols-2">
           <SummaryMetrics
-            analysis={primaryAnalysis}
+            analysis={primaryAnalysisShown}
             label={t("history.inspector.pinned")}
           />
           <SummaryMetrics
-            analysis={compareAnalysis}
+            analysis={compareAnalysisShown}
             label={t("history.inspector.compare")}
           />
         </div>
@@ -311,17 +334,17 @@ export function AnalysisTab({
 
       {overlay ? (
         <OverlayCharts
-          primary={primary}
-          compare={compare}
-          primaryAnalysis={primaryAnalysis}
-          compareAnalysis={compareAnalysis}
+          primary={primaryChart}
+          compare={compareChart}
+          primaryAnalysis={primaryAnalysisShown}
+          compareAnalysis={compareAnalysisShown}
         />
       ) : (
         <SplitCharts
-          primary={primary}
-          compare={compare}
-          primaryAnalysis={primaryAnalysis}
-          compareAnalysis={compareAnalysis}
+          primary={primaryChart}
+          compare={compareChart}
+          primaryAnalysis={primaryAnalysisShown}
+          compareAnalysis={compareAnalysisShown}
         />
       )}
     </div>
@@ -602,9 +625,18 @@ function EventsChart({
   domainMax: number;
 }) {
   const config = useChartConfig(eventsConfig);
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   return (
-    <ChartContainer config={config} className={`aspect-auto w-full h-full`}>
-      <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+    <ChartContainer
+      ref={chartRef}
+      config={config}
+      className={`aspect-auto w-full h-full`}
+    >
+      <LineChart
+        key={revealed ? "revealed" : "hidden"}
+        data={data}
+        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           type="number"
@@ -640,7 +672,7 @@ function EventsChart({
         />
         <Line
           yAxisId="kills"
-          isAnimationActive={false}
+          {...animationProps}
           type="stepAfter"
           dataKey="killsOverTime"
           stroke="var(--color-killsOverTime)"
@@ -650,7 +682,7 @@ function EventsChart({
         />
         <Line
           yAxisId="acc"
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="accOverTime"
           stroke="var(--color-accOverTime)"
@@ -665,9 +697,18 @@ function EventsChart({
 
 function TTKChart({ data }: { data: Array<Record<string, unknown>> }) {
   const config = useChartConfig(ttkConfig);
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   return (
-    <ChartContainer config={config} className={`aspect-auto w-full h-full`}>
-      <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+    <ChartContainer
+      ref={chartRef}
+      config={config}
+      className={`aspect-auto w-full h-full`}
+    >
+      <LineChart
+        key={revealed ? "revealed" : "hidden"}
+        data={data}
+        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           type="number"
@@ -689,7 +730,7 @@ function TTKChart({ data }: { data: Array<Record<string, unknown>> }) {
           content={<ChartTooltipContent labelFormatter={formatTooltipTime} />}
         />
         <Line
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="realTTK"
           stroke="var(--color-realTTK)"
@@ -697,7 +738,7 @@ function TTKChart({ data }: { data: Array<Record<string, unknown>> }) {
           dot={chartDot("var(--color-realTTK)", CHART_STYLE.pointRadiusSmall)}
         />
         <Line
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="ma5"
           stroke="var(--color-ma5)"
@@ -712,9 +753,17 @@ function TTKChart({ data }: { data: Array<Record<string, unknown>> }) {
 function ScatterPlot({ data }: { data: Array<{ x: number; y: number }> }) {
   const config = useChartConfig(scatterConfig);
   const { t } = useI18n();
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   return (
-    <ChartContainer config={config} className={`aspect-auto w-full h-full`}>
-      <ScatterChart margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+    <ChartContainer
+      ref={chartRef}
+      config={config}
+      className={`aspect-auto w-full h-full`}
+    >
+      <ScatterChart
+        key={revealed ? "revealed" : "hidden"}
+        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+      >
         <CartesianGrid />
         <XAxis
           type="number"
@@ -758,7 +807,7 @@ function ScatterPlot({ data }: { data: Array<{ x: number; y: number }> }) {
           data={data}
           fill="var(--color-scatter)"
           r={CHART_STYLE.scatterPointRadius}
-          isAnimationActive={false}
+          {...animationProps}
         />
       </ScatterChart>
     </ChartContainer>
@@ -773,9 +822,18 @@ function EventsChartOverlay({
   domainMax: number;
 }) {
   const config = useChartConfig(eventsOverlayConfig);
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   return (
-    <ChartContainer config={config} className={`aspect-auto w-full h-full`}>
-      <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+    <ChartContainer
+      ref={chartRef}
+      config={config}
+      className={`aspect-auto w-full h-full`}
+    >
+      <LineChart
+        key={revealed ? "revealed" : "hidden"}
+        data={data}
+        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           type="number"
@@ -811,7 +869,7 @@ function EventsChartOverlay({
         />
         <Line
           yAxisId="kills"
-          isAnimationActive={false}
+          {...animationProps}
           type="stepAfter"
           dataKey="killsOverTime"
           stroke="var(--color-killsOverTime)"
@@ -821,7 +879,7 @@ function EventsChartOverlay({
         />
         <Line
           yAxisId="acc"
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="accOverTime"
           stroke="var(--color-accOverTime)"
@@ -831,7 +889,7 @@ function EventsChartOverlay({
         />
         <Line
           yAxisId="kills"
-          isAnimationActive={false}
+          {...animationProps}
           type="stepAfter"
           dataKey="cmpKillsOverTime"
           stroke="var(--color-cmpKillsOverTime)"
@@ -842,7 +900,7 @@ function EventsChartOverlay({
         />
         <Line
           yAxisId="acc"
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="cmpAccOverTime"
           stroke="var(--color-cmpAccOverTime)"
@@ -858,9 +916,18 @@ function EventsChartOverlay({
 
 function TTKChartOverlay({ data }: { data: Array<Record<string, unknown>> }) {
   const config = useChartConfig(ttkOverlayConfig);
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   return (
-    <ChartContainer config={config} className={`aspect-auto w-full h-full`}>
-      <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+    <ChartContainer
+      ref={chartRef}
+      config={config}
+      className={`aspect-auto w-full h-full`}
+    >
+      <LineChart
+        key={revealed ? "revealed" : "hidden"}
+        data={data}
+        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           type="number"
@@ -882,7 +949,7 @@ function TTKChartOverlay({ data }: { data: Array<Record<string, unknown>> }) {
           content={<ChartTooltipContent labelFormatter={formatTooltipTime} />}
         />
         <Line
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="realTTK"
           stroke="var(--color-realTTK)"
@@ -891,7 +958,7 @@ function TTKChartOverlay({ data }: { data: Array<Record<string, unknown>> }) {
           connectNulls
         />
         <Line
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="ma5"
           stroke="var(--color-ma5)"
@@ -900,7 +967,7 @@ function TTKChartOverlay({ data }: { data: Array<Record<string, unknown>> }) {
           connectNulls
         />
         <Line
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="cmpRealTTK"
           stroke="var(--color-cmpRealTTK)"
@@ -913,7 +980,7 @@ function TTKChartOverlay({ data }: { data: Array<Record<string, unknown>> }) {
           connectNulls
         />
         <Line
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="cmpMa5"
           stroke="var(--color-cmpMa5)"
@@ -936,9 +1003,17 @@ function ScatterPlotOverlay({
 }) {
   const config = useChartConfig(scatterOverlayConfig);
   const { t } = useI18n();
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   return (
-    <ChartContainer config={config} className={`aspect-auto w-full h-full`}>
-      <ScatterChart margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+    <ChartContainer
+      ref={chartRef}
+      config={config}
+      className={`aspect-auto w-full h-full`}
+    >
+      <ScatterChart
+        key={revealed ? "revealed" : "hidden"}
+        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+      >
         <CartesianGrid />
         <XAxis
           type="number"
@@ -983,14 +1058,14 @@ function ScatterPlotOverlay({
           data={primary}
           fill="var(--color-pinned)"
           r={CHART_STYLE.scatterPointRadius}
-          isAnimationActive={false}
+          {...animationProps}
         />
         <Scatter
           name="compare"
           data={compare}
           fill="var(--color-compare)"
           r={CHART_STYLE.scatterPointRadius}
-          isAnimationActive={false}
+          {...animationProps}
           opacity={0.7}
         />
       </ScatterChart>

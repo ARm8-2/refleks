@@ -1,8 +1,17 @@
 import { getRunTrace } from "@/shared/lib/api";
 import type { MousePoint } from "@/shared/types/ipc";
-import { useEffect, useState } from "react";
 import { decodeTrace } from "../lib/decodeTrace";
 import type { HistoryRun } from "../lib/historyModels";
+import { createRunResourceCache, useRunResource } from "./useRunResource";
+
+// Decoded traces are by far the largest per-run payload, so only the run being
+// inspected plus its comparison are kept resident.
+const traceCache = createRunResourceCache<MousePoint[]>(2);
+
+async function loadTrace(filePath: string): Promise<MousePoint[]> {
+  const encoded = await getRunTrace(filePath);
+  return encoded ? decodeTrace(encoded) : [];
+}
 
 /**
  * Lazily loads mouse trace data for a run from local storage.
@@ -10,42 +19,5 @@ import type { HistoryRun } from "../lib/historyModels";
  * bulk run history state.
  */
 export function useRunTrace(run: HistoryRun | null): MousePoint[] | null {
-  const [points, setPoints] = useState<MousePoint[] | null>(null);
-
-  useEffect(() => {
-    if (!run) {
-      setPoints(null);
-      return;
-    }
-
-    const filePath = run.item.filePath;
-    if (!filePath) {
-      setPoints(null);
-      return;
-    }
-
-    let cancelled = false;
-    setPoints(null);
-
-    getRunTrace(filePath)
-      .then((encoded) => {
-        if (cancelled) return;
-        if (!encoded) {
-          setPoints([]);
-          return;
-        }
-
-        const decoded = decodeTrace(encoded);
-        setPoints(decoded);
-      })
-      .catch(() => {
-        if (!cancelled) setPoints([]);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [run?.item.filePath]);
-
-  return points;
+  return useRunResource(run?.item.filePath, loadTrace, traceCache);
 }

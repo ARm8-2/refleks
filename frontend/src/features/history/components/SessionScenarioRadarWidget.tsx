@@ -5,7 +5,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/shared/components/ui/chart";
-import { useStore } from "@/shared/hooks";
+import { useChartAnimation, useStore } from "@/shared/hooks";
 import {
   CHART_SERIES_COLORS,
   CHART_STYLE,
@@ -155,6 +155,7 @@ function SessionScenarioRadarChart({
         ? "64%"
         : "72%";
   const { t } = useI18n();
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   const config: ChartConfig = {
     runs: {
       label: t(scenarioUsageConfig.runs.labelKey),
@@ -163,8 +164,13 @@ function SessionScenarioRadarChart({
   };
 
   return (
-    <ChartContainer config={config} className="aspect-auto h-full w-full">
+    <ChartContainer
+      ref={chartRef}
+      config={config}
+      className="aspect-auto h-full w-full"
+    >
       <RadarChart
+        key={revealed ? "revealed" : "hidden"}
         data={points}
         cx="50%"
         cy="52%"
@@ -207,7 +213,7 @@ function SessionScenarioRadarChart({
           }
         />
         <Radar
-          isAnimationActive={false}
+          {...animationProps}
           dataKey="runs"
           stroke="var(--color-runs)"
           fill="var(--color-runs)"
