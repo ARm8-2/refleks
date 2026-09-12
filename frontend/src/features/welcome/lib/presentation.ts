@@ -28,7 +28,7 @@ function buildPresentation(
     content: resolveWelcomeContent(currentVersion, previousVersion),
     currentVersion,
     showMouseTraceChoice: isFirstLaunch,
-    showScreenCaptureChoice: true, // show on first launch AND version upgrades
+    showScreenCaptureChoice: isFirstLaunch,
     showAnonymousChoice: isFirstLaunch,
     initialAnonymousEnabled: settings.anonymousEnabled === true,
     initialMouseTrackingEnabled: settings.mouseTrackingEnabled === true,
