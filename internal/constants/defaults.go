@@ -8,6 +8,7 @@ const (
 	DefaultTheme              = "dark"
 	DefaultFont               = "montserrat"
 	DefaultScale              = "100"
+	DefaultLanguage           = "en"
 	DefaultMouseBufferMinutes = 5
 	DefaultRecentRunsDays     = 180
 	DefaultRecentRunsMinCount = 2500
@@ -46,7 +47,11 @@ const (
 	ScreenCaptureSegmentSeconds = 5
 	// ScreenCaptureReplayTailSeconds preserves the final visual feedback after
 	// a scenario reports its end without affecting the stored run statistics.
-	ScreenCaptureReplayTailSeconds    = 2
+	ScreenCaptureReplayTailSeconds = 2
+	// ScreenCaptureSegmentRetention is the rolling media buffer depth. It must
+	// comfortably exceed ScreenCaptureTrimMaxWaitSeconds plus the delay before a
+	// finished run's stats file is ingested, otherwise a run can age out of the
+	// buffer before its trim starts and its replay is lost.
 	ScreenCaptureSegmentRetention     = 5 * 60 // seconds; segments older than this are pruned
 	ScreenCaptureTrimPollInterval     = 1      // seconds between readiness checks while waiting on a segment to close
 	ScreenCaptureTrimMaxWaitSeconds   = 45     // give up waiting on a run's segment after this long
@@ -110,6 +115,14 @@ const (
 	YawDegPerCountSiege = 0.018 / math.Pi
 )
 
+// ValidThemes lists the themes accepted from the frontend, kept in sync with
+// frontend/src/shared/lib/theme.ts (THEMES).
+var ValidThemes = []string{"dark", "light", "custom"}
+
 // ValidScales lists the UI scale percentages accepted from the frontend,
 // kept in sync with frontend/src/shared/lib/theme.ts (SCALES).
 var ValidScales = []string{"60", "75", "90", "100", "110", "125", "150"}
+
+// ValidLanguages lists the UI languages accepted from the frontend, kept in
+// sync with frontend/src/shared/lib/i18n (LOCALES).
+var ValidLanguages = []string{"en", "nl", "es", "zh-CN", "ja", "ru"}

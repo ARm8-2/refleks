@@ -2,6 +2,7 @@ export const STORAGE_KEYS = {
   theme: "refleks.theme",
   font: "refleks.font",
   scale: "refleks.scale",
+  language: "refleks.language",
   sidebarOpen: "refleks.sidebar.open",
   navLastPath: "refleks.nav.lastPath",
 

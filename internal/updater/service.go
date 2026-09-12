@@ -2,8 +2,10 @@ package updater
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"refleks/internal/constants"
 	"refleks/internal/models"
 )
 
@@ -26,7 +28,7 @@ func (s *Service) CheckForUpdates(ctx context.Context) (models.UpdateInfo, error
 	defer cancel()
 	latest, notes, err := u.Latest(cctx)
 	if err != nil {
-		return models.UpdateInfo{CurrentVersion: s.current}, err
+		return models.UpdateInfo{CurrentVersion: s.current}, constants.WrapCoded(constants.UpdateCheckFailed, err)
 	}
 	has := CompareSemver(s.current, latest) < 0
 	info := models.UpdateInfo{
@@ -50,13 +52,25 @@ func (s *Service) DownloadAndInstallUpdate(ctx context.Context, version string) 
 	if version == "" {
 		latest, _, err := u.Latest(ctx)
 		if err != nil {
-			return err
+			return constants.WrapCoded(constants.UpdateDownloadFailed, err)
 		}
 		version = latest
 	}
 	path, err := u.Download(ctx, version)
 	if err != nil {
-		return err
+		return wrapUpdateError(err)
 	}
-	return u.LaunchInstaller(ctx, path)
+	if err := u.LaunchInstaller(ctx, path); err != nil {
+		return wrapUpdateError(err)
+	}
+	return nil
+}
+
+// wrapUpdateError attaches a message code, keeping the unsupported-OS case
+// distinguishable from generic download/launch failures.
+func wrapUpdateError(err error) error {
+	if errors.Is(err, ErrUnsupportedOS) {
+		return constants.WrapCoded(constants.UpdateUnsupportedOS, err)
+	}
+	return constants.WrapCoded(constants.UpdateDownloadFailed, err)
 }

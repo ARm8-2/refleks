@@ -1,4 +1,5 @@
 import { Widget, WidgetEmpty } from "@/shared/components";
+import { useI18n } from "@/shared/lib";
 import { Activity, Crosshair } from "lucide-react";
 import type { RecentSessionSnapshot } from "../../hooks/useRecentSessionSnapshot";
 import { formatScore, TrendIndicator } from "./shared";
@@ -8,8 +9,9 @@ export function LastRunWidget({
 }: {
   snapshot: RecentSessionSnapshot;
 }) {
+  const { t } = useI18n();
   if (!snapshot.currentSession)
-    return <WidgetEmpty icon={Activity} label="Last Run" />;
+    return <WidgetEmpty icon={Activity} label={t("overview.lastRun.title")} />;
 
   const {
     lastRunScore,
@@ -22,12 +24,12 @@ export function LastRunWidget({
 
   if (lastRunScore === null && lastRunAccuracy === null) {
     return (
-      <Widget icon={Activity} title="Last Run">
+      <Widget icon={Activity} title={t("overview.lastRun.title")}>
         <p className="text-lg font-semibold text-surface-muted-foreground">
           --
         </p>
         <p className="mt-0.5 text-xs text-surface-muted-foreground">
-          No score data
+          {t("overview.lastRun.noScoreData")}
         </p>
       </Widget>
     );
@@ -36,7 +38,7 @@ export function LastRunWidget({
   return (
     <Widget
       icon={Activity}
-      title="Last Run"
+      title={t("overview.lastRun.title")}
       headerAction={
         lastRunScenario ? (
           <span
@@ -70,12 +72,12 @@ export function LastRunWidget({
       <div className="mt-0.5 flex items-center gap-2 text-xs text-surface-muted-foreground">
         <span>
           {lastRunScoreTrend !== null
-            ? "Trend: last 40% vs first 60%"
-            : "Score & accuracy"}
+            ? t("overview.lastRun.trendLabel")
+            : t("overview.lastRun.scoreAccuracy")}
         </span>
         {recentScores.length > 0 && (
           <span className="ml-auto tabular-nums">
-            {recentScores.length} {recentScores.length === 1 ? "run" : "runs"}
+            {t("overview.lastRun.runs", { count: recentScores.length })}
           </span>
         )}
       </div>

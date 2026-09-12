@@ -1,6 +1,6 @@
 import { STORAGE_KEYS } from "./storageKeys";
 
-export const THEMES = ["dark", "darker", "light"] as const;
+export const THEMES = ["dark", "light", "custom"] as const;
 export type Theme = (typeof THEMES)[number];
 
 export const FONTS = [
@@ -39,14 +39,18 @@ const SCALE_STORAGE_KEY = STORAGE_KEYS.scale;
 
 const THEME_CLASSES: Record<Theme, string | null> = {
   dark: "dark",
-  darker: "darker",
   light: null,
+  // "custom" is not a CSS scope: it layers a user stylesheet on top of the
+  // active base theme, so it never changes the class on <html>.
+  custom: null,
 };
 
-export const THEME_SELECTORS: Record<Theme, string> = {
+// Chart color scopes. "custom" is excluded on purpose: charts read their
+// colors from CSS variables, so the custom stylesheet's overrides flow
+// through automatically while the underlying base theme class stays active.
+export const THEME_SELECTORS: Record<Exclude<Theme, "custom">, string> = {
   light: "",
   dark: ".dark",
-  darker: ".darker",
 };
 
 export const DEFAULT_THEME: Theme = "dark";
@@ -85,16 +89,21 @@ export function getSavedTheme(): Theme {
 export function applyTheme(theme: Theme) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  const activeThemeClasses = Object.values(THEME_CLASSES).filter(
-    (v): v is string => !!v,
-  );
-  if (activeThemeClasses.length > 0) {
-    root.classList.remove(...activeThemeClasses);
-  }
 
-  const nextClass = THEME_CLASSES[theme];
-  if (nextClass) {
-    root.classList.add(nextClass);
+  // Switching to/from the custom theme must not touch the base theme class:
+  // the custom stylesheet layers over whatever base theme is active.
+  if (theme !== "custom") {
+    const activeThemeClasses = Object.values(THEME_CLASSES).filter(
+      (v): v is string => !!v,
+    );
+    if (activeThemeClasses.length > 0) {
+      root.classList.remove(...activeThemeClasses);
+    }
+
+    const nextClass = THEME_CLASSES[theme];
+    if (nextClass) {
+      root.classList.add(nextClass);
+    }
   }
 
   root.dataset.theme = theme;

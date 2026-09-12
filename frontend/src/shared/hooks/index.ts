@@ -1,5 +1,12 @@
+export { useAnimatedNumber } from "./useAnimatedNumber";
 export { useAppInitialization } from "./useAppInitialization";
 export { setAvailableUpdate, useAvailableUpdate } from "./useAvailableUpdate";
 export { BenchmarkProvider, useBenchmarks } from "./useBenchmarks";
+export { useChartAnimation } from "./useChartAnimation";
+export { useHorizontalDragScroll } from "./useHorizontalDragScroll";
+export { useInView } from "./useInView";
 export { usePersistedState } from "./usePersistedState";
+export { useReveal } from "./useReveal";
+export { useRetainedValue } from "./useRetainedValue";
+export { REVEAL_DELAY_MS } from "./timing";
 export { StoreProvider, useStore } from "./useStore";

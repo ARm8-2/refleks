@@ -1,15 +1,40 @@
 import { getScenarioName } from "@/features/benchmarks/lib/detailFormatting";
 import { buildStreakActivity } from "@/features/overview/lib/streakActivity";
 import { useStore } from "@/shared/hooks";
+import { getLocale, translate } from "@/shared/lib/i18n";
 import type { RunRecord, Session } from "@/shared/types";
 import { useMemo } from "react";
 
-const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
+let dateTimeFormatterLocale: string | null = null;
+let dateTimeFormatter: Intl.DateTimeFormat | null = null;
+function getDateTimeFormatter(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  if (!dateTimeFormatter || dateTimeFormatterLocale !== locale) {
+    dateTimeFormatterLocale = locale;
+    dateTimeFormatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+  return dateTimeFormatter;
+}
+
+let fullDateFormatterLocale: string | null = null;
+let fullDateFormatter: Intl.DateTimeFormat | null = null;
+function getFullDateFormatter(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  if (!fullDateFormatter || fullDateFormatterLocale !== locale) {
+    fullDateFormatterLocale = locale;
+    fullDateFormatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+  return fullDateFormatter;
+}
 
 export type SnapshotTone = "success" | "warning" | "neutral" | "muted";
 
@@ -79,6 +104,7 @@ type PerformanceRead = {
 export function useRecentSessionSnapshot(): RecentSessionSnapshot {
   const sessions = useStore((state) => state.sessions);
   const isInSession = useStore((state) => state.isInSession);
+  const locale = getLocale();
 
   return useMemo(() => {
     const currentSession = sessions[0] ?? null;
@@ -88,17 +114,17 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
         currentSession: null,
         isInSession,
         statusTone: "muted",
-        statusLabel: "No session",
+        statusLabel: translate("overview.status.noSession"),
         latestSessionLabel: "--",
         sessionLengthLabel: "--",
-        sessionLengthDetail: "No session loaded",
+        sessionLengthDetail: translate("overview.status.noSessionLoaded"),
         activePlaytimeLabel: "--",
-        activePlaytimeDetail: "No run duration data",
+        activePlaytimeDetail: translate("overview.status.noRunDuration"),
         streakLabel: "--",
-        streakDetail: "No recent activity",
+        streakDetail: translate("overview.status.noRecentActivity"),
         topStreak: 0,
         performanceValue: "--",
-        performanceDetail: "Need more history",
+        performanceDetail: translate("overview.status.needMoreHistory"),
         currentRuns: 0,
         suggestedRuns: 8,
         warmupRuns: 2,
@@ -141,24 +167,34 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
       latestSessionLabel: formatTimestamp(lastPlayedAt),
       sessionLengthLabel: formatDuration(sessionLengthMs),
       sessionLengthDetail: isInSession
-        ? "Elapsed so far"
-        : "Latest session window",
+        ? translate("overview.status.elapsedSoFar")
+        : translate("overview.status.latestSessionWindow"),
       activePlaytimeLabel: formatDuration(activePlaytimeMs),
       activePlaytimeDetail:
         focusRatio > 0
-          ? `${Math.round(focusRatio * 100)}% active`
-          : "No run duration data",
-      streakLabel: `${streakActivity.currentStreak} ${pluralize("day", streakActivity.currentStreak)}`,
+          ? translate("overview.status.activePct", {
+              count: Math.round(focusRatio * 100),
+            })
+          : translate("overview.status.noRunDuration"),
+      streakLabel: translate("overview.streakPlaytime.days", {
+        count: streakActivity.currentStreak,
+      }),
       streakDetail:
         streakActivity.currentStreak > 0
-          ? `${formatDuration(streakActivity.todayPlaytimeMs)} today`
+          ? translate("overview.status.todayPlaytime", {
+              count: formatDuration(streakActivity.todayPlaytimeMs),
+            })
           : streakActivity.lastActiveDayTs !== null
-            ? `Last active ${formatRelativeDay(streakActivity.lastActiveDayTs)}`
-            : "No recent activity",
+            ? translate("overview.status.lastActive", {
+                day: formatRelativeDay(streakActivity.lastActiveDayTs),
+              })
+            : translate("overview.status.noRecentActivity"),
       topStreak: streakActivity.topStreak,
       performanceValue: performance.value,
       performanceDetail:
-        performance.tone === "muted" ? "Need more history" : performance.label,
+        performance.tone === "muted"
+          ? translate("overview.status.needMoreHistory")
+          : performance.label,
       currentRuns,
       suggestedRuns: recommendation.suggestedRuns,
       warmupRuns: recommendation.warmupRuns,
@@ -177,7 +213,8 @@ export function useRecentSessionSnapshot(): RecentSessionSnapshot {
       recentScoresPb: recentScoresData.pb,
       recentScoresSessionStartIndex: recentScoresData.sessionStartIndex,
     };
-  }, [isInSession, sessions]);
+    // Labels and date formats follow the active locale.
+  }, [isInSession, sessions, locale]);
 }
 
 function computeLastRunStats(session: Session) {
@@ -363,7 +400,10 @@ function readPerformance(
       tone: toneFromDelta(delta),
       label: labelFromHistoryDelta(delta),
       value: formatSignedPercent(delta),
-      detail: `${labelFromHistoryDelta(delta)} across ${comparableDeltas.length} comparable ${pluralize("run", comparableDeltas.length)}`,
+      detail: translate("overview.status.comparableRuns", {
+        label: labelFromHistoryDelta(delta),
+        count: comparableDeltas.length,
+      }),
     };
   }
 
@@ -373,15 +413,17 @@ function readPerformance(
       tone: toneFromDelta(repeatDelta),
       label: labelFromRepeatDelta(repeatDelta),
       value: formatSignedPercent(repeatDelta),
-      detail: `${labelFromRepeatDelta(repeatDelta)} based on repeated scenarios in this session`,
+      detail: translate("overview.status.repeatedScenarios", {
+        label: labelFromRepeatDelta(repeatDelta),
+      }),
     };
   }
 
   return {
     tone: "muted",
-    label: "Building signal",
+    label: translate("overview.status.buildingSignal"),
     value: "--",
-    detail: "Need older comparison runs or repeated scenarios",
+    detail: translate("overview.status.needOlderRuns"),
   };
 }
 
@@ -706,8 +748,8 @@ function readRunDurationMs(item: RunRecord): number {
 }
 
 function formatTimestamp(timestamp: number): string {
-  if (timestamp <= 0) return "Unknown time";
-  return dateTimeFormatter.format(new Date(timestamp));
+  if (timestamp <= 0) return translate("overview.status.unknownTime");
+  return getDateTimeFormatter().format(new Date(timestamp));
 }
 
 function formatDuration(ms: number): string {
@@ -738,15 +780,15 @@ function toneFromDelta(delta: number): SnapshotTone {
 }
 
 function labelFromHistoryDelta(delta: number): string {
-  if (delta >= 0.06) return "Above usual";
-  if (delta <= -0.06) return "Below usual";
-  return "On pace";
+  if (delta >= 0.06) return translate("overview.status.aboveUsual");
+  if (delta <= -0.06) return translate("overview.status.belowUsual");
+  return translate("overview.status.onPace");
 }
 
 function labelFromRepeatDelta(delta: number): string {
-  if (delta >= 0.04) return "Warming up";
-  if (delta <= -0.04) return "Cooling off";
-  return "Steady";
+  if (delta >= 0.04) return translate("overview.status.warmingUp");
+  if (delta <= -0.04) return translate("overview.status.coolingOff");
+  return translate("overview.status.steady");
 }
 
 function average(values: number[]): number {
@@ -771,10 +813,6 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function pluralize(word: string, count: number): string {
-  return count === 1 ? word : `${word}s`;
-}
-
 function formatRelativeDay(timestamp: number): string {
   const target = new Date(timestamp);
   target.setHours(0, 0, 0, 0);
@@ -785,12 +823,10 @@ function formatRelativeDay(timestamp: number): string {
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
-  if (target.getTime() === today.getTime()) return "today";
-  if (target.getTime() === yesterday.getTime()) return "yesterday";
+  if (target.getTime() === today.getTime())
+    return translate("overview.status.today");
+  if (target.getTime() === yesterday.getTime())
+    return translate("overview.status.yesterday");
 
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(target);
+  return getFullDateFormatter().format(target);
 }

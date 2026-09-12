@@ -1,9 +1,24 @@
+import { translate, type MessageKey } from "@/shared/lib/i18n";
 import type {
   MousePoint,
   RunPerformanceHeader,
   RunStatsEvent,
   RunStatsSummary,
 } from "@/shared/types/ipc";
+
+const SEVERITY_LABEL_KEYS: Record<
+  Exclude<SeverityGrade, "none">,
+  MessageKey
+> = {
+  slight: "history.trace.severitySlight",
+  moderate: "history.trace.severityModerate",
+  severe: "history.trace.severitySevere",
+};
+
+const ISSUE_LABEL_KEYS: Record<"overshoot" | "undershoot", MessageKey> = {
+  overshoot: "history.trace.overshoot",
+  undershoot: "history.trace.undershoot",
+};
 
 /*
  * The trace is an event-driven stream of accumulated raw mouse input. It is not
@@ -869,18 +884,32 @@ export function computeSuggestedSens(
     primaryIssue === "overshoot"
       ? overshootMagnitude / Math.max(1, overshootScore)
       : undershootMagnitude / Math.max(1, undershootScore);
-  const issueLabel = primaryIssue === "overshoot" ? "overshoot" : "undershoot";
+  // The reason string is assembled at call time (this function only runs from
+  // render/effect paths), so translate() reads the active locale correctly.
   const clickNote =
     movingClicks / known.length > 0.35
-      ? " Click timing also appears to contribute."
+      ? translate("history.trace.sensClickNote")
       : "";
+  const reason = translate("history.trace.sensReason", {
+    severity: translate(SEVERITY_LABEL_KEYS[severity]),
+    issue: translate(ISSUE_LABEL_KEYS[primaryIssue]),
+    pct: Math.round(issueFraction * 100),
+    clickNote,
+    sens: recommended.toFixed(2),
+    pctChange: Math.abs(Math.round(changePct)),
+    direction: translate(
+      primaryIssue === "overshoot"
+        ? "history.trace.sensLowerCm360"
+        : "history.trace.sensHigherCm360",
+    ),
+  });
 
   return {
     current,
     recommended,
     changePct,
     direction,
-    reason: `${severity[0].toUpperCase() + severity.slice(1)} ${issueLabel} pattern in ${Math.round(issueFraction * 100)}% of reliable kills.${clickNote} Train temporarily at ${recommended.toFixed(2)} cm/360 (${Math.abs(Math.round(changePct))}% ${primaryIssue === "overshoot" ? "lower cm/360 / higher sensitivity" : "higher cm/360 / lower sensitivity"}). This is intentionally exaggerated to force adaptation to the diagnosed error; use it for a short block, then return to your normal sens and reassess.`,
+    reason,
     primaryIssue,
     avgMagnitudePixels: avgMagnitude,
     severity,

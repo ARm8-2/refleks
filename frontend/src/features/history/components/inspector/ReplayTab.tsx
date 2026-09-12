@@ -7,6 +7,9 @@ import {
   getRunReplay,
   getRunReplayInfo,
   getRunReplayStatus,
+  translate,
+  translateMessage,
+  useI18n,
 } from "@/shared/lib";
 import { cn } from "@/shared/lib/utils";
 import type { ReplayFileInfo, ReplayStatus } from "@/shared/types/ipc";
@@ -55,7 +58,7 @@ const REPLAY_SELECT_DEBOUNCE_MS = 200;
 
 const fallbackReplayStatus = (): ReplayStatus => ({
   state: "processing",
-  message: "Waiting for replay status…",
+  message: translate("history.replay.waitingStatus"),
 });
 
 async function lookupReplay(filePath: string): Promise<{
@@ -84,7 +87,7 @@ async function lookupReplay(filePath: string): Promise<{
     if (path === null) {
       status = {
         state: "processing",
-        message: "Replay was published and is becoming available…",
+        message: translate("history.replay.becomingAvailable"),
       };
     }
   }
@@ -93,6 +96,7 @@ async function lookupReplay(filePath: string): Promise<{
 }
 
 export function ReplayTab({ primaryRun, compareRun }: Props) {
+  const { t } = useI18n();
   const [primaryReplay, setPrimaryReplay] = useState<ReplaySource | null>(null);
   const [compareReplay, setCompareReplay] = useState<ReplaySource | null>(null);
   const [primaryStatus, setPrimaryStatus] = useState<ReplayStatus | null>(null);
@@ -127,7 +131,7 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
               path: primaryPath,
               status: {
                 state: "ready",
-                message: "Replay is ready.",
+                message: translate("history.replay.ready"),
               } satisfies ReplayStatus,
             })
           : lookupReplay(primaryRun.item.filePath),
@@ -211,7 +215,7 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
             }
             waiting={primaryWaiting}
             status={primaryStatus}
-            label="Primary"
+            label={t("history.inspector.primary")}
             onDeleted={() => setPrimaryReplay(null)}
           />
           <ReplaySlot
@@ -223,7 +227,7 @@ export function ReplayTab({ primaryRun, compareRun }: Props) {
             }
             waiting={compareWaiting}
             status={compareStatus}
-            label="Compare"
+            label={t("history.inspector.compare")}
             onDeleted={() => setCompareReplay(null)}
           />
         </div>
@@ -263,6 +267,7 @@ function ReplaySlot({
 }) {
   const [fullscreen, setFullscreen] = useState(false);
   const [fullscreenTime, setFullscreenTime] = useState(0);
+  const { t } = useI18n();
 
   useEffect(() => {
     setFullscreen(false);
@@ -275,7 +280,11 @@ function ReplaySlot({
         <Modal
           isOpen
           onClose={() => setFullscreen(false)}
-          title={label ? `Replay – ${label}` : "Replay"}
+          title={
+            label
+              ? t("history.replay.modalTitle", { label })
+              : t("history.replay.title")
+          }
           className="flex flex-col overflow-hidden"
         >
           <div className="min-h-0 flex-1">
@@ -316,8 +325,10 @@ function ReplaySlot({
     >
       <p className="text-sm text-surface-muted-foreground" aria-live="polite">
         {waiting
-          ? status?.message || "Waiting for replay to finish processing…"
-          : status?.message || "No replay is available for this run."}
+          ? translateMessage(status?.message) ||
+            t("history.replay.waitingForFinish")
+          : translateMessage(status?.message) ||
+            t("history.replay.noReplayAvailable")}
       </p>
     </div>
   );
@@ -375,6 +386,7 @@ function VideoPlayer({
   onExpand?: (time: number) => void;
   fitAvailable?: boolean;
 }) {
+  const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -538,9 +550,7 @@ function VideoPlayer({
         video.playbackRate = speed;
         video.load();
       }
-      setDeleteError(
-        "Could not delete this replay. Close other apps using it and try again.",
-      );
+      setDeleteError(t("history.replay.deleteFailed"));
     } finally {
       setDeleting(false);
     }
@@ -565,7 +575,9 @@ function VideoPlayer({
       const savedTo = await exportRunReplay(filePath);
       // An empty result means the user cancelled the save dialog.
       if (savedTo) {
-        setExportFeedback({ text: `Saved to ${savedTo}` });
+        setExportFeedback({
+          text: t("history.replay.savedTo", { path: savedTo }),
+        });
         exportTimerRef.current = setTimeout(() => {
           setExportFeedback(null);
           exportTimerRef.current = null;
@@ -575,8 +587,10 @@ function VideoPlayer({
       setExportFeedback({
         text:
           err instanceof Error
-            ? `Export failed: ${err.message}`
-            : "Export failed.",
+            ? t("history.replay.exportFailedMessage", {
+                message: translateMessage(err),
+              })
+            : t("history.replay.exportFailed"),
         error: true,
       });
     } finally {
@@ -669,9 +683,7 @@ function VideoPlayer({
               seekingRef.current = false;
               pendingSeekRef.current = null;
               setPlaying(false);
-              setPlaybackError(
-                "This replay could not be played. It may be incomplete or use an unsupported codec.",
-              );
+              setPlaybackError(t("history.replay.playbackError"));
             }}
             onPlay={() => setPlaying(true)}
             onPause={() => setPlaying(false)}
@@ -689,7 +701,7 @@ function VideoPlayer({
             min={0}
             max={Number.isFinite(duration) && duration > 0 ? duration : 1}
             step={0.1}
-            aria-label="Playback position"
+            aria-label={t("history.replay.playbackPosition")}
             onValueChange={([v]) => {
               // Keep dragging purely UI-local. Seeking on every pointer move
               // makes Chromium repeatedly fetch and decode GOPs, which can
@@ -714,7 +726,7 @@ function VideoPlayer({
           <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
             <ControlBtn
               icon={<SkipBack className="h-3.5 w-3.5" />}
-              title="Back 5s"
+              title={t("history.replay.back5s")}
               onClick={() => seek(-5)}
             />
             <ControlBtn
@@ -725,13 +737,15 @@ function VideoPlayer({
                   <Play className="h-3.5 w-3.5" />
                 )
               }
-              title={playing ? "Pause" : "Play"}
+              title={
+                playing ? t("history.replay.pause") : t("history.replay.play")
+              }
               onClick={togglePlay}
               active={playing}
             />
             <ControlBtn
               icon={<SkipForward className="h-3.5 w-3.5" />}
-              title="Forward 5s"
+              title={t("history.replay.forward5s")}
               onClick={() => seek(5)}
             />
           </div>
@@ -739,14 +753,14 @@ function VideoPlayer({
           {/* Speed */}
           <div className="flex items-center gap-1.5 rounded-xl bg-surface-subtle p-1 pl-2.5">
             <span className="text-[0.6875rem] font-medium text-surface-muted-foreground">
-              Speed
+              {t("history.replay.speed")}
             </span>
             <Slider
               value={[speed]}
               min={SPEED_MIN}
               max={SPEED_MAX}
               step={0.1}
-              aria-label="Playback speed"
+              aria-label={t("history.replay.playbackSpeed")}
               onValueChange={([v]) => setSpeed(v)}
               className="w-20"
             />
@@ -755,7 +769,7 @@ function VideoPlayer({
             </span>
             <ControlBtn
               icon={<RotateCcw className="h-3 w-3" />}
-              title="Reset speed to 1×"
+              title={t("history.replay.resetSpeed")}
               onClick={() => setSpeed(SPEED_DEFAULT)}
               disabled={isDefaultSpeed}
             />
@@ -770,29 +784,48 @@ function VideoPlayer({
             >
               <InfoTooltip
                 side="left"
-                ariaLabel="Replay information"
+                ariaLabel={t("history.replay.infoAriaLabel")}
                 iconClassName="h-7 w-7"
               >
                 {info ? (
                   <div className="max-w-xs space-y-1 text-[0.6875rem]">
                     <p className="font-medium text-popover-foreground">
-                      Replay Info
+                      {t("history.replay.info")}
                     </p>
                     <div className="space-y-0.5 text-popover-foreground/70">
                       <p>
-                        Resolution: {info.width}×{info.height}
+                        {t("history.replay.resolution", {
+                          width: info.width,
+                          height: info.height,
+                        })}
                       </p>
-                      <p>Frame rate: {Math.round(info.fps)} fps</p>
-                      <p>Codec: {info.codec || "unknown"}</p>
-                      <p>Duration: {fmtTime(info.durationSeconds)}</p>
-                      <p>File size: {fmtBytes(info.sizeBytes)}</p>
+                      <p>
+                        {t("history.replay.frameRate", {
+                          fps: Math.round(info.fps),
+                        })}
+                      </p>
+                      <p>
+                        {t("history.replay.codec", {
+                          codec: info.codec || t("common.unknown"),
+                        })}
+                      </p>
+                      <p>
+                        {t("history.replay.duration", {
+                          time: fmtTime(info.durationSeconds),
+                        })}
+                      </p>
+                      <p>
+                        {t("history.replay.fileSize", {
+                          size: fmtBytes(info.sizeBytes),
+                        })}
+                      </p>
                     </div>
                   </div>
                 ) : (
                   <p className="text-[0.6875rem] text-popover-foreground/70">
                     {infoUnavailable
-                      ? "Replay info unavailable"
-                      : "Loading replay info…"}
+                      ? t("history.replay.infoUnavailable")
+                      : t("history.replay.loadingInfo")}
                   </p>
                 )}
               </InfoTooltip>
@@ -800,19 +833,19 @@ function VideoPlayer({
             {onExpand && (
               <ControlBtn
                 icon={<Maximize2 className="h-3.5 w-3.5" />}
-                title="Open replay fullscreen"
+                title={t("history.replay.openFullscreen")}
                 onClick={() => onExpand(currentTime)}
               />
             )}
             <ControlBtn
               icon={<Download className="h-3.5 w-3.5" />}
-              title="Export replay"
+              title={t("history.replay.export")}
               onClick={handleExport}
               disabled={exporting}
             />
             <ControlBtn
               icon={<Trash2 className="h-3.5 w-3.5" />}
-              title="Delete replay"
+              title={t("history.replay.delete")}
               onClick={() => setConfirmOpen(true)}
             />
           </div>
@@ -835,14 +868,13 @@ function VideoPlayer({
       <Modal
         isOpen={confirmOpen}
         onClose={closeDeleteModal}
-        title="Delete Replay"
+        title={t("history.replay.deleteTitle")}
         width="23.75rem"
         height="auto"
       >
         <div className="flex flex-col gap-4 p-4">
           <p className="text-sm text-surface-muted-foreground">
-            This will permanently delete the screen recording for this run. This
-            can't be undone.
+            {t("history.replay.deleteDescription")}
           </p>
           {deleteError && (
             <p className="text-sm text-destructive">{deleteError}</p>
@@ -853,14 +885,16 @@ function VideoPlayer({
               onClick={closeDeleteModal}
               disabled={deleting}
             >
-              Cancel
+              {t("common.actions.cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={handleDelete}
               disabled={deleting}
             >
-              {deleting ? "Deleting…" : "Delete"}
+              {deleting
+                ? t("common.actions.deleting")
+                : t("common.actions.delete")}
             </Button>
           </div>
         </div>

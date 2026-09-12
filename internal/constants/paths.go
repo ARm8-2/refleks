@@ -26,6 +26,8 @@ const (
 	DefaultWindowsSteamInstallDir = `C:\\Program Files (x86)\\Steam`
 
 	// Environment variable names
+	// If set, this overrides the default Steam install directory (useful in dev containers)
+	EnvSteamInstallDirVar = "REFLEKS_STEAM_INSTALL_DIR"
 	// If set, this overrides SteamID detection from loginusers.vdf
 	EnvSteamIDVar = "REFLEKS_STEAM_ID"
 	// If set, this overrides PersonaName detection from loginusers.vdf
@@ -45,4 +47,7 @@ const (
 	BenchmarksDataCacheFileName    = "benchmarks.json"
 	BenchmarkProgressCacheFileName = "benchmark_progress.json"
 	SettingsFileName               = "settings.json"
+
+	// User-editable custom theme stylesheet in the config directory.
+	CustomThemeFileName = "custom.css"
 )

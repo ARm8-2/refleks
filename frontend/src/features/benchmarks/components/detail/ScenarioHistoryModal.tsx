@@ -10,7 +10,10 @@ import {
   CHART_STYLE,
   buildThresholdAnchoredScoreDomain,
   getLastScenarioScores,
+  translateMessage,
 } from "@/shared/lib";
+import { getLocale, useI18n } from "@/shared/lib/i18n";
+import { useChartAnimation } from "@/shared/hooks";
 import type { KovaaksLastScore, RankDef } from "@/shared/types";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -43,9 +46,21 @@ type RankBand = {
   color: string;
 };
 
-const chartConfig: ChartConfig = {
-  score: { label: "Score", color: CHART_SERIES_COLORS.scoreHistory },
-};
+let dateFormatterLocale: string | null = null;
+let dateFormatter: Intl.DateTimeFormat | null = null;
+function getDateFormatter(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  if (!dateFormatter || dateFormatterLocale !== locale) {
+    dateFormatterLocale = locale;
+    dateFormatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+  return dateFormatter;
+}
 
 export function ScenarioHistoryModal({
   isOpen,
@@ -54,6 +69,7 @@ export function ScenarioHistoryModal({
   thresholds,
   rankDefs,
 }: Props) {
+  const { t, locale } = useI18n();
   const [scores, setScores] = useState<KovaaksLastScore[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,21 +77,35 @@ export function ScenarioHistoryModal({
   useEffect(() => {
     if (!isOpen || !scenarioName) return;
 
+    let cancelled = false;
     setLoading(true);
     setError(null);
     setScores([]);
 
     getLastScenarioScores(scenarioName)
-      .then((result) => setScores(result))
-      .catch((fetchError) => {
-        setError(
-          fetchError instanceof Error ? fetchError.message : String(fetchError),
-        );
+      .then((result) => {
+        if (!cancelled) setScores(result);
       })
-      .finally(() => setLoading(false));
+      .catch((fetchError) => {
+        if (!cancelled) setError(translateMessage(fetchError));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [isOpen, scenarioName]);
 
   const sorted = useMemo(() => [...scores].reverse(), [scores]);
+
+  const chartConfig: ChartConfig = {
+    score: {
+      label: t("benchmarks.scenarioHistory.score"),
+      color: CHART_SERIES_COLORS.scoreHistory,
+    },
+  };
 
   const trendData = useMemo<TrendPoint[]>(() => {
     return sorted.map((entry, index) => {
@@ -83,8 +113,8 @@ export function ScenarioHistoryModal({
       const date = rawDate ? new Date(rawDate) : null;
       const dateLabel =
         date && !Number.isNaN(date.getTime())
-          ? date.toLocaleString()
-          : rawDate || "Unknown";
+          ? getDateFormatter().format(date)
+          : rawDate || t("common.unknown");
 
       return {
         run: index + 1,
@@ -92,7 +122,8 @@ export function ScenarioHistoryModal({
         dateLabel,
       };
     });
-  }, [sorted]);
+    // `t` is referentially stable — the locale drives recomputation.
+  }, [sorted, locale]);
 
   const numericScores = useMemo(
     () =>
@@ -115,10 +146,15 @@ export function ScenarioHistoryModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Scenario History · ${scenarioName}`}
+      title={t("benchmarks.scenarioHistory.title", { scenario: scenarioName })}
+      className="grid-rows-[auto_minmax(0,1fr)]"
     >
-      <div className="space-y-3 px-4 pb-4">
-        {loading && <Loading />}
+      <div className="flex min-h-0 flex-1 flex-col space-y-3 px-4 pb-4">
+        {loading && (
+          <div className="flex min-h-0 flex-1 items-center justify-center">
+            <Loading />
+          </div>
+        )}
 
         {!loading && error && (
           <div className="rounded-xl border border-destructive-border bg-destructive-soft p-4 text-sm text-destructive">
@@ -128,71 +164,99 @@ export function ScenarioHistoryModal({
 
         {!loading && !error && trendData.length === 0 && (
           <div className="rounded-xl border border-border bg-surface p-4 text-sm text-surface-muted-foreground">
-            No scores found.
+            {t("benchmarks.scenarioHistory.noScores")}
           </div>
         )}
 
         {!loading && !error && trendData.length > 0 && (
-          <>
-            <ChartContainer
-              config={chartConfig}
-              className="aspect-auto h-full w-full"
-            >
-              <LineChart
-                data={trendData}
-                margin={{ top: 2, right: 6, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis dataKey="run" hide />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={6}
-                  width={46}
-                  domain={scoreDomain}
-                  tickFormatter={(value) => formatNumber(value, 0)}
-                />
-
-                {rankBands.map((band, index) => (
-                  <ReferenceArea
-                    key={`rank-band-${index}`}
-                    y1={band.y1}
-                    y2={band.y2}
-                    fill={band.color}
-                    fillOpacity={0.16}
-                    strokeOpacity={0}
-                    ifOverflow="extendDomain"
-                  />
-                ))}
-
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      labelFormatter={(_, payload) =>
-                        payload?.[0]?.payload?.dateLabel ?? null
-                      }
-                    />
-                  }
-                />
-                <Line
-                  isAnimationActive={false}
-                  type="monotone"
-                  dataKey="score"
-                  stroke="var(--color-score)"
-                  strokeWidth={CHART_STYLE.linePrimaryWidth}
-                  dot={{
-                    r: CHART_STYLE.pointRadius,
-                    fill: "var(--color-score)",
-                    strokeWidth: 0,
-                  }}
-                  activeDot={{ r: CHART_STYLE.activePointRadius }}
-                />
-              </LineChart>
-            </ChartContainer>
-          </>
+          <ScenarioHistoryChart
+            trendData={trendData}
+            scoreDomain={scoreDomain}
+            rankBands={rankBands}
+            chartConfig={chartConfig}
+          />
         )}
       </div>
     </Modal>
+  );
+}
+
+/**
+ * The chart owns its animation hooks so they mount together with the dialog
+ * content. Radix unmounts the dialog on close, but a hook held by the
+ * always-mounted modal would stay revealed and skip the entrance animation on
+ * every reopen after the first.
+ */
+function ScenarioHistoryChart({
+  trendData,
+  scoreDomain,
+  rankBands,
+  chartConfig,
+}: {
+  trendData: TrendPoint[];
+  scoreDomain: [number, number];
+  rankBands: RankBand[];
+  chartConfig: ChartConfig;
+}) {
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
+  return (
+    <ChartContainer
+      ref={chartRef}
+      config={chartConfig}
+      className="min-h-0 flex-1 aspect-auto w-full"
+    >
+      <LineChart
+        key={revealed ? "revealed" : "hidden"}
+        data={trendData}
+        margin={{ top: 2, right: 6, left: 0, bottom: 0 }}
+      >
+        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+        <XAxis dataKey="run" hide />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          tickMargin={6}
+          width={46}
+          domain={scoreDomain}
+          tickFormatter={(value) => formatNumber(value, 0)}
+        />
+
+        {rankBands.map((band, index) => (
+          <ReferenceArea
+            key={`rank-band-${index}`}
+            y1={band.y1}
+            y2={band.y2}
+            fill={band.color}
+            fillOpacity={0.16}
+            strokeOpacity={0}
+            ifOverflow="extendDomain"
+          />
+        ))}
+
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              labelFormatter={(_, payload) =>
+                payload?.[0]?.payload?.dateLabel ?? null
+              }
+            />
+          }
+        />
+        <Line
+          {...animationProps}
+          type="monotone"
+          dataKey="score"
+          stroke="var(--color-score)"
+          strokeWidth={CHART_STYLE.linePrimaryWidth}
+          dot={{
+            r: CHART_STYLE.pointRadius,
+            fill: "var(--color-score)",
+            strokeWidth: 0,
+          }}
+          activeDot={{ r: CHART_STYLE.activePointRadius }}
+        />
+      </LineChart>
+    </ChartContainer>
   );
 }
 

@@ -10,12 +10,17 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/shared/components/ui/chart";
-import { usePersistedState } from "@/shared/hooks";
+import {
+  useAnimatedNumber,
+  useChartAnimation,
+  usePersistedState,
+} from "@/shared/hooks";
 import {
   CHART_SERIES_COLORS,
   CHART_STYLE,
   primeHistoryRunSelection,
   STORAGE_KEYS,
+  useI18n,
 } from "@/shared/lib";
 import { useId, useMemo, type ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
@@ -33,10 +38,6 @@ import { buildScoreDomain, formatScoreCompact } from "./shared";
 const RECENT_SCORE_RUN_COUNT_OPTIONS = [10, 20, 50] as const;
 const REFERENCE_LABEL_OVERLAP_RATIO = 0.08;
 
-const recentScoresConfig: ChartConfig = {
-  score: { label: "Score", color: CHART_SERIES_COLORS.scoreHistory },
-};
-
 type RecentScorePoint = {
   index: number;
   score: number;
@@ -53,12 +54,51 @@ function currentSessionStartRatio(points: RecentScorePoint[]): number | null {
   return firstCurrentIndex / (points.length - 1);
 }
 
+/**
+ * Mounts the reveal hooks together with the widget's modal content.
+ *
+ * `Widget` renders the modal through Radix, which unmounts its content when
+ * closed. Holding these hooks in `RecentScoresWidget` instead would leave them
+ * revealed while the modal is shut, so the chart would skip its entrance
+ * animation on every reopen after the first.
+ */
+function ChartReveal({
+  children,
+}: {
+  children: (state: {
+    revealed: boolean;
+    reveal: number;
+    chartRef: (element: HTMLDivElement | null) => void;
+  }) => ReactElement;
+}): ReactElement {
+  const chart = useChartAnimation();
+  const reveal = useAnimatedNumber(1, {
+    active: chart.revealed,
+    delayMs: 0,
+    durationMs: 700,
+    initial: 0,
+  });
+  return children({ revealed: chart.revealed, reveal, chartRef: chart.ref });
+}
+
 export function RecentScoresWidget({
   snapshot,
 }: {
   snapshot: RecentSessionSnapshot;
 }) {
   const navigate = useNavigate();
+  const { t, locale } = useI18n();
+  const compactChart = useChartAnimation();
+  // The session-split gradient and per-point dot colors are worked out from
+  // the plotted values, so this chart is animated by sweeping the values
+  // themselves from the domain floor rather than relying on Recharts' built-in
+  // line animation (which does not play well with the custom dots/gradient).
+  const compactReveal = useAnimatedNumber(1, {
+    active: compactChart.revealed,
+    delayMs: 0,
+    durationMs: 700,
+    initial: 0,
+  });
   const gradientBaseId = useId().replace(/:/g, "");
   const {
     currentSession,
@@ -85,6 +125,17 @@ export function RecentScoresWidget({
   )
     ? runCount
     : 10;
+
+  const recentScoresConfig = useMemo<ChartConfig>(
+    () => ({
+      score: {
+        label: t("overview.recentScores.score"),
+        color: CHART_SERIES_COLORS.scoreHistory,
+      },
+    }),
+    // `t` is referentially stable — the locale drives recomputation.
+    [locale],
+  );
 
   const compactData = useMemo(
     () =>
@@ -140,6 +191,14 @@ export function RecentScoresWidget({
     [compactData, referenceScores],
   );
 
+  const compactDisplay = useMemo(() => {
+    const base = compactScoreDomain[0];
+    return compactData.map((point) => ({
+      ...point,
+      score: base + (point.score - base) * compactReveal,
+    }));
+  }, [compactData, compactScoreDomain, compactReveal]);
+
   const expandedScoreDomain = useMemo(
     () =>
       buildScoreDomain(
@@ -163,37 +222,42 @@ export function RecentScoresWidget({
 
   if (!currentSession || recentScores.length === 0) {
     return (
-      <Widget title="Recent Scores">
+      <Widget title={t("overview.recentScores.title")}>
         <div className="flex h-full items-center justify-center rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
-          Play a scenario to see recent scores here.
+          {t("overview.recentScores.empty")}
         </div>
       </Widget>
     );
   }
 
-  const renderScoreDot = (props: {
-    cx?: number;
-    cy?: number;
-    payload?: { fill?: string; inCurrentSession?: boolean };
-  }): ReactElement => {
-    const hasPosition =
-      typeof props.cx === "number" && typeof props.cy === "number";
-    const fill =
-      props.payload?.fill ??
-      (props.payload?.inCurrentSession
-        ? CHART_SERIES_COLORS.scoreCurrent
-        : "var(--color-score)");
+  // Dots fade in with the value sweep so they do not sit at the domain floor
+  // while the line is still rising.
+  const renderScoreDot =
+    (opacity: number) =>
+    (props: {
+      cx?: number;
+      cy?: number;
+      payload?: { fill?: string; inCurrentSession?: boolean };
+    }): ReactElement => {
+      const hasPosition =
+        typeof props.cx === "number" && typeof props.cy === "number";
+      const fill =
+        props.payload?.fill ??
+        (props.payload?.inCurrentSession
+          ? CHART_SERIES_COLORS.scoreCurrent
+          : "var(--color-score)");
 
-    return (
-      <circle
-        cx={hasPosition ? props.cx : 0}
-        cy={hasPosition ? props.cy : 0}
-        r={hasPosition ? CHART_STYLE.pointRadius : 0}
-        fill={fill}
-        strokeWidth={0}
-      />
-    );
-  };
+      return (
+        <circle
+          cx={hasPosition ? props.cx : 0}
+          cy={hasPosition ? props.cy : 0}
+          r={hasPosition ? CHART_STYLE.pointRadius : 0}
+          fill={fill}
+          strokeWidth={0}
+          opacity={opacity}
+        />
+      );
+    };
 
   const renderActiveScoreDot = (props: {
     cx?: number;
@@ -288,11 +352,13 @@ export function RecentScoresWidget({
     const compactGradientId = `recent-scores-compact-${gradientBaseId}`;
     return (
       <ChartContainer
+        ref={compactChart.ref}
         config={recentScoresConfig}
         className="aspect-auto w-full h-full min-h-[8.75rem]"
       >
         <LineChart
-          data={compactData}
+          key={compactChart.revealed ? "revealed" : "hidden"}
+          data={compactDisplay}
           margin={{ top: 6, right: 6, left: 0, bottom: 0 }}
           onClick={(state) => handlePointClick(state, compactData)}
           style={{ cursor: "pointer" }}
@@ -313,11 +379,12 @@ export function RecentScoresWidget({
           {renderReferenceLines()}
           <Line
             isAnimationActive={false}
+            hide={!compactChart.revealed}
             type="monotone"
             dataKey="score"
             stroke={`url(#${compactGradientId})`}
             strokeWidth={CHART_STYLE.linePrimaryWidth}
-            dot={renderScoreDot}
+            dot={renderScoreDot(compactReveal)}
             activeDot={renderActiveScoreDot}
           />
         </LineChart>
@@ -325,8 +392,21 @@ export function RecentScoresWidget({
     );
   }
 
-  function renderExpandedChart() {
+  function renderExpandedChart({
+    revealed,
+    reveal,
+    chartRef,
+  }: {
+    revealed: boolean;
+    reveal: number;
+    chartRef: (element: HTMLDivElement | null) => void;
+  }) {
     const expandedGradientId = `recent-scores-expanded-${gradientBaseId}`;
+    const domainBase = expandedScoreDomain[0];
+    const expandedDisplay = expandedData.map((point) => ({
+      ...point,
+      score: domainBase + (point.score - domainBase) * reveal,
+    }));
     const sessionBestScore = recentScoresSessionBest ?? 0;
     const personalBestScore = recentScoresPb ?? 0;
     const domainSpan = Math.max(
@@ -359,7 +439,9 @@ export function RecentScoresWidget({
           fontSize="0.6875rem"
           fontWeight={500}
         >
-          {`Session Best: ${formatScoreCompact(sessionBestScore)}`}
+          {t("overview.recentScores.sessionBestLine", {
+            score: formatScoreCompact(sessionBestScore),
+          })}
         </text>
       );
     };
@@ -380,18 +462,22 @@ export function RecentScoresWidget({
           fontSize="0.6875rem"
           fontWeight={500}
         >
-          {`Personal Best: ${formatScoreCompact(personalBestScore)}`}
+          {t("overview.recentScores.personalBestLine", {
+            score: formatScoreCompact(personalBestScore),
+          })}
         </text>
       );
     };
 
     return (
       <ChartContainer
+        ref={chartRef}
         config={recentScoresConfig}
         className="aspect-auto w-full h-full"
       >
         <LineChart
-          data={expandedData}
+          key={revealed ? "revealed" : "hidden"}
+          data={expandedDisplay}
           margin={{ top: 12, right: 12, left: 6, bottom: 0 }}
           onClick={(state) => handlePointClick(state, expandedData)}
           style={{ cursor: "pointer" }}
@@ -430,11 +516,12 @@ export function RecentScoresWidget({
           )}
           <Line
             isAnimationActive={false}
+            hide={!revealed}
             type="monotone"
             dataKey="score"
             stroke={`url(#${expandedGradientId})`}
             strokeWidth={CHART_STYLE.linePrimaryWidth}
-            dot={renderScoreDot}
+            dot={renderScoreDot(reveal)}
             activeDot={renderActiveScoreDot}
           />
         </LineChart>
@@ -448,7 +535,7 @@ export function RecentScoresWidget({
         value={effectiveRunCount}
         options={RECENT_SCORE_RUN_COUNT_OPTIONS.map((n) => ({
           value: n,
-          label: `Last ${n}`,
+          label: t("overview.recentScores.last", { count: n }),
         }))}
         onValueChange={setRunCount}
         size="sm"
@@ -458,10 +545,10 @@ export function RecentScoresWidget({
           active={showSessionBest}
           onClick={() => setShowSessionBest((v) => !v)}
         >
-          Session Best
+          {t("overview.recentScores.sessionBest")}
         </TogglePill>
         <TogglePill active={showPb} onClick={() => setShowPb((v) => !v)}>
-          Personal Best
+          {t("overview.recentScores.personalBest")}
         </TogglePill>
       </TogglePillGroup>
     </div>
@@ -469,10 +556,16 @@ export function RecentScoresWidget({
 
   return (
     <Widget
-      title="Recent Scores"
-      modalTitle={recentScoresScenario || "Recent Scores"}
+      title={t("overview.recentScores.title")}
+      modalTitle={recentScoresScenario || t("overview.recentScores.title")}
       modalControls={modalControls}
-      modalContent={renderExpandedChart()}
+      modalContent={
+        <ChartReveal>
+          {({ revealed, reveal, chartRef }) =>
+            renderExpandedChart({ revealed, reveal, chartRef })
+          }
+        </ChartReveal>
+      }
       contentClassName="flex flex-col h-full"
     >
       {renderCompactChart()}

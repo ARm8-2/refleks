@@ -1,4 +1,5 @@
 import { Button } from "@/shared/components";
+import { useI18n } from "@/shared/lib";
 import type { StatKey } from "@/shared/types";
 import { ArrowRightLeft, PinOff } from "lucide-react";
 import {
@@ -76,6 +77,7 @@ export function StatsTab({
   onClearPrimaryRun: () => void;
   onClearComparison: () => void;
 }) {
+  const { t } = useI18n();
   if (compareRun) {
     return (
       <CompareStatsView
@@ -93,7 +95,7 @@ export function StatsTab({
     return (
       <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
         <p className="text-sm text-surface-muted-foreground">
-          No stats available for this run.
+          {t("history.stats.noStats")}
         </p>
       </div>
     );
@@ -112,10 +114,16 @@ export function StatsTab({
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <HeroStat label="Score" value={formatScore(primaryRun.score)} />
-        <HeroStat label="Accuracy" value={formatPercent(primaryRun.accuracy)} />
         <HeroStat
-          label="Duration"
+          label={t("history.stats.score")}
+          value={formatScore(primaryRun.score)}
+        />
+        <HeroStat
+          label={t("history.stats.accuracy")}
+          value={formatPercent(primaryRun.accuracy)}
+        />
+        <HeroStat
+          label={t("history.stats.duration")}
           value={formatDurationLabel(primaryRun.durationMs)}
         />
       </div>
@@ -151,6 +159,7 @@ function CompareStatsView({
   onClearPrimaryRun: () => void;
   onClearComparison: () => void;
 }) {
+  const { t } = useI18n();
   const primaryCats = getCategorizedStats(primaryRun);
   const compareCats = getCategorizedStats(compareRun);
 
@@ -175,7 +184,9 @@ function CompareStatsView({
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex items-start justify-between gap-2 rounded-xl bg-surface-subtle px-3 py-2.5">
           <div className="min-w-0">
-            <div className="text-xs text-surface-muted-foreground">Pinned</div>
+            <div className="text-xs text-surface-muted-foreground">
+              {t("history.inspector.pinned")}
+            </div>
             <div className="mt-0.5 font-medium text-foreground truncate">
               {primaryRun.scenarioName}
             </div>
@@ -194,7 +205,9 @@ function CompareStatsView({
         </div>
         <div className="flex items-start justify-between gap-2 rounded-xl bg-surface-subtle px-3 py-2.5">
           <div className="min-w-0">
-            <div className="text-xs text-surface-muted-foreground">Compare</div>
+            <div className="text-xs text-surface-muted-foreground">
+              {t("history.inspector.compare")}
+            </div>
             <div className="mt-0.5 font-medium text-foreground truncate">
               {compareRun.scenarioName}
             </div>
@@ -220,14 +233,14 @@ function CompareStatsView({
         return (
           <div className="grid grid-cols-3 gap-3">
             <CompareMetric
-              label="Score"
+              label={t("history.stats.score")}
               a={formatScore(primaryRun.score)}
               b={formatScore(compareRun.score)}
               delta={computeDelta(primaryRun.score, compareRun.score)}
               lowerIsBetter={false}
             />
             <CompareMetric
-              label="Accuracy"
+              label={t("history.stats.accuracy")}
               a={formatPercent(primaryRun.accuracy)}
               b={formatPercent(compareRun.accuracy)}
               delta={computeDelta(
@@ -237,7 +250,7 @@ function CompareStatsView({
               lowerIsBetter={false}
             />
             <CompareMetric
-              label="Avg TTK"
+              label={t("history.stats.avgTtk")}
               a={readFormattedStat(primaryRun, "avgTtk")}
               b={readFormattedStat(compareRun, "avgTtk")}
               delta={

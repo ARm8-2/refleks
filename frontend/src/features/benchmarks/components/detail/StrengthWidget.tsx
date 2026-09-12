@@ -6,8 +6,14 @@ import {
   SelectValue,
   Widget,
 } from "@/shared/components";
-import { usePersistedState } from "@/shared/hooks";
-import { STORAGE_KEYS } from "@/shared/lib";
+import {
+  useAnimatedNumber,
+  useInView,
+  usePersistedState,
+  useReveal,
+  REVEAL_DELAY_MS,
+} from "@/shared/hooks";
+import { STORAGE_KEYS, useI18n } from "@/shared/lib";
 import type { BenchmarkProgress } from "@/shared/types";
 import { useMemo } from "react";
 import {
@@ -32,7 +38,90 @@ type StrengthLevel = "category" | "subcategory" | "scenario";
 
 const CARD_BACKGROUND = "var(--surface)";
 
+function StrengthBarRow({
+  row,
+  expanded,
+  revealed,
+}: {
+  row: StrengthRow;
+  expanded: boolean;
+  revealed: boolean;
+}) {
+  const { t } = useI18n();
+  // The bar and its percentage label share one animated value so they stay in
+  // sync as the value counts up.
+  const animated = useAnimatedNumber(row.percent, {
+    active: revealed,
+    delayMs: 0,
+    durationMs: 800,
+    initial: 0,
+  });
+  const shown = Math.round(animated);
+
+  return (
+    <div className="rounded-xl bg-surface-subtle p-3">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <div
+          className={`font-medium text-foreground truncate ${expanded ? "text-sm" : ""}`}
+        >
+          {row.label}
+        </div>
+        <div className="text-xs text-surface-muted-foreground">
+          {row.rankName} · {t("benchmarks.strength.avg")}{" "}
+          {formatNumber(row.avgScore, 1)}
+        </div>
+      </div>
+
+      <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-surface-muted">
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${animated}%`,
+            backgroundColor: row.color,
+          }}
+        />
+      </div>
+
+      <div className="mt-1 text-xs text-surface-muted-foreground">{shown}%</div>
+    </div>
+  );
+}
+
+// Bars only animate once their list has been on screen for a moment; offscreen
+// rows stay at zero so scrolling through a long table cannot trigger a burst.
+function StrengthBarList({
+  rows,
+  expanded,
+}: {
+  rows: StrengthRow[];
+  expanded: boolean;
+}) {
+  const { ref, inView } = useInView<HTMLDivElement>();
+  const revealed = useReveal(inView, REVEAL_DELAY_MS);
+
+  return (
+    <div
+      ref={ref}
+      className={
+        expanded
+          ? "space-y-3 overflow-auto pr-1"
+          : "space-y-2.5 max-h-[20rem] overflow-auto pr-1"
+      }
+    >
+      {rows.map((row) => (
+        <StrengthBarRow
+          key={row.label}
+          row={row}
+          expanded={expanded}
+          revealed={revealed}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function StrengthWidget({ progress }: Props) {
+  const { t, locale } = useI18n();
   const [level, setLevel] = usePersistedState<StrengthLevel>(
     STORAGE_KEYS.benchmarksDetailStrengthLevel,
     "category",
@@ -46,9 +135,15 @@ export function StrengthWidget({ progress }: Props) {
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="category">Category</SelectItem>
-        <SelectItem value="subcategory">Subcategory</SelectItem>
-        <SelectItem value="scenario">Scenario</SelectItem>
+        <SelectItem value="category">
+          {t("benchmarks.strength.scopeCategory")}
+        </SelectItem>
+        <SelectItem value="subcategory">
+          {t("benchmarks.strength.scopeSubcategory")}
+        </SelectItem>
+        <SelectItem value="scenario">
+          {t("benchmarks.strength.scopeScenario")}
+        </SelectItem>
       </SelectContent>
     </Select>
   );
@@ -66,7 +161,13 @@ export function StrengthWidget({ progress }: Props) {
       }>,
     ): StrengthRow => {
       if (!scenarios.length) {
-        return { label, percent: 0, avgScore: 0, color, rankName: "Unranked" };
+        return {
+          label,
+          percent: 0,
+          avgScore: 0,
+          color,
+          rankName: t("benchmarks.strength.unranked"),
+        };
       }
 
       const values = scenarios.map((scenario) =>
@@ -104,7 +205,8 @@ export function StrengthWidget({ progress }: Props) {
           CARD_BACKGROUND,
           0.94,
         ),
-        rankName: rankDefs[rankIndex]?.name || "Unranked",
+        rankName:
+          rankDefs[rankIndex]?.name || t("benchmarks.strength.unranked"),
       };
     };
 
@@ -148,67 +250,35 @@ export function StrengthWidget({ progress }: Props) {
     return data.sort(
       (a, b) => b.percent - a.percent || a.label.localeCompare(b.label),
     );
-  }, [progress, level]);
+  }, [progress, level, locale]);
 
   const levelLabel =
     level === "category"
-      ? "Category"
+      ? t("benchmarks.strength.scopeCategory")
       : level === "subcategory"
-        ? "Subcategory"
-        : "Scenario";
+        ? t("benchmarks.strength.scopeSubcategory")
+        : t("benchmarks.strength.scopeScenario");
 
   const renderBody = (expanded: boolean) => {
     if (rows.length === 0) {
       return (
         <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">
-          No data.
+          {t("benchmarks.strength.noData")}
         </div>
       );
     }
 
-    return (
-      <div
-        className={
-          expanded
-            ? "space-y-3 overflow-auto pr-1"
-            : "space-y-2.5 max-h-[20rem] overflow-auto pr-1"
-        }
-      >
-        {rows.map((row) => (
-          <div key={row.label} className="rounded-xl bg-surface-subtle p-3">
-            <div className="flex items-center justify-between gap-3 text-sm">
-              <div
-                className={`font-medium text-foreground truncate ${expanded ? "text-sm" : ""}`}
-              >
-                {row.label}
-              </div>
-              <div className="text-xs text-surface-muted-foreground">
-                {row.rankName} · Avg {formatNumber(row.avgScore, 1)}
-              </div>
-            </div>
-
-            <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-surface-muted">
-              <div
-                className="h-full rounded-full"
-                style={{ width: `${row.percent}%`, backgroundColor: row.color }}
-              />
-            </div>
-
-            <div className="mt-1 text-xs text-surface-muted-foreground">
-              {row.percent}%
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+    return <StrengthBarList rows={rows} expanded={expanded} />;
   };
 
   return (
     <Widget
-      title="Strength Breakdown"
-      description={`${levelLabel}-level progress toward max rank.`}
+      title={t("benchmarks.strength.title")}
+      description={t("benchmarks.strength.description", {
+        level: levelLabel,
+      })}
       headerAction={levelControls}
-      modalTitle="Strength Breakdown"
+      modalTitle={t("benchmarks.strength.title")}
       modalControls={levelControls}
       modalContent={renderBody(true)}
       modalWidth="56.25rem"

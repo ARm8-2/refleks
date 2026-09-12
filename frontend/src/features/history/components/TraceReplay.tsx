@@ -1,7 +1,7 @@
 import { Modal, TogglePill } from "@/shared/components";
 import { Slider } from "@/shared/components/ui/slider";
 import { usePersistedState } from "@/shared/hooks";
-import { cn, STORAGE_KEYS } from "@/shared/lib";
+import { cn, STORAGE_KEYS, useI18n, type MessageKey } from "@/shared/lib";
 import type { MousePoint } from "@/shared/types/ipc";
 import {
   CircleDot,
@@ -99,6 +99,12 @@ const SPEED_DEFAULT = 1;
 // Slightly shorter than 16:9 to keep the trace viewer compact.
 const TRACE_ASPECT_RATIO = 1.85;
 
+const CLICK_MODE_LABEL_KEYS: Record<ClickMode, MessageKey> = {
+  none: "history.traceViewer.clickOff",
+  down: "history.traceViewer.clickDown",
+  all: "history.traceViewer.clickAll",
+};
+
 export function TraceReplay({
   points,
   resolution,
@@ -112,6 +118,7 @@ export function TraceReplay({
   onReset,
   onHighlightChange,
 }: TraceReplayProps) {
+  const { t } = useI18n();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTraceSet, setModalTraceSet] = useState<
     "primary" | "compare" | "both"
@@ -596,7 +603,7 @@ export function TraceReplay({
         <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
           <ControlBtn
             icon={<SkipBack className="h-3.5 w-3.5" />}
-            title="Back 5s"
+            title={t("history.traceViewer.back5s")}
             onClick={() => actions.nudge(-5000)}
           />
           <ControlBtn
@@ -607,18 +614,22 @@ export function TraceReplay({
                 <Play className="h-3.5 w-3.5" />
               )
             }
-            title={isPlaying ? "Pause" : "Play"}
+            title={
+              isPlaying
+                ? t("history.traceViewer.pause")
+                : t("history.traceViewer.play")
+            }
             onClick={actions.toggle}
             active={isPlaying}
           />
           <ControlBtn
             icon={<SkipForward className="h-3.5 w-3.5" />}
-            title="Forward 5s"
+            title={t("history.traceViewer.forward5s")}
             onClick={() => actions.nudge(5000)}
           />
           <ControlBtn
             icon={<RotateCcw className="h-3.5 w-3.5" />}
-            title="Reset"
+            title={t("history.traceViewer.reset")}
             onClick={() => {
               actions.reset();
               onReset?.();
@@ -629,7 +640,7 @@ export function TraceReplay({
         {/* Speed slider */}
         <div className="flex items-center gap-1.5 rounded-xl bg-surface-subtle p-1 pl-2.5">
           <span className="text-[0.6875rem] font-medium text-surface-muted-foreground">
-            Speed
+            {t("history.traceViewer.speed")}
           </span>
           <Slider
             value={[speed]}
@@ -644,7 +655,7 @@ export function TraceReplay({
           </span>
           <ControlBtn
             icon={<RotateCcw className="h-3 w-3" />}
-            title="Reset speed to 1×"
+            title={t("history.traceViewer.resetSpeed")}
             onClick={() => setSpeed(SPEED_DEFAULT)}
             disabled={isDefaultSpeed}
           />
@@ -654,27 +665,40 @@ export function TraceReplay({
         <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
           <OptionToggle
             icon={<LineSquiggle className="h-3.5 w-3.5" />}
-            label={trailMode === "all" ? "All" : "2s"}
-            title={`Trail: ${trailMode === "all" ? "Full path" : "Last 2 seconds"}`}
+            label={
+              trailMode === "all"
+                ? t("history.traceViewer.trailAll")
+                : t("history.traceViewer.trailLast2")
+            }
+            title={t("history.traceViewer.trailTitle", {
+              value:
+                trailMode === "all"
+                  ? t("history.traceViewer.trailFullPath")
+                  : t("history.traceViewer.trailLast2Seconds"),
+            })}
             onClick={() => setTrailMode((m) => (m === "all" ? "last2" : "all"))}
           />
           <OptionToggle
             icon={<Eye className="h-3.5 w-3.5" />}
-            label={autoFollow ? "Follow" : "Static"}
-            title={autoFollow ? "Following cursor" : "Static view"}
+            label={
+              autoFollow
+                ? t("history.traceViewer.follow")
+                : t("history.traceViewer.static")
+            }
+            title={
+              autoFollow
+                ? t("history.traceViewer.followingCursor")
+                : t("history.traceViewer.staticView")
+            }
             active={autoFollow}
             onClick={() => setAutoFollow((f) => !f)}
           />
           <OptionToggle
             icon={<MousePointerClick className="h-3.5 w-3.5" />}
-            label={
-              clickMode === "none"
-                ? "Off"
-                : clickMode === "down"
-                  ? "Down"
-                  : "All"
-            }
-            title={`Click markers: ${clickMode}`}
+            label={t(CLICK_MODE_LABEL_KEYS[clickMode])}
+            title={t("history.traceViewer.clickMarkers", {
+              mode: t(CLICK_MODE_LABEL_KEYS[clickMode]),
+            })}
             onClick={() =>
               setClickMode((m) =>
                 m === "down" ? "all" : m === "all" ? "none" : "down",
@@ -684,11 +708,11 @@ export function TraceReplay({
           {hasTargetInference && (
             <OptionToggle
               icon={<CircleDot className="h-3.5 w-3.5" />}
-              label={showTargetInference ? "Target" : "Target"}
+              label={t("history.traceViewer.target")}
               title={
                 showTargetInference
-                  ? "Hide target inference"
-                  : "Show target inference"
+                  ? t("history.traceViewer.hideTargetInference")
+                  : t("history.traceViewer.showTargetInference")
               }
               active={showTargetInference}
               onClick={() => setShowTargetInference((v) => !v)}
@@ -701,11 +725,15 @@ export function TraceReplay({
           <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
             <OptionToggle
               icon={<Link className="h-3.5 w-3.5" />}
-              label={syncByTime ? "Time" : "Ratio"}
+              label={
+                syncByTime
+                  ? t("history.traceViewer.syncTime")
+                  : t("history.traceViewer.syncRatio")
+              }
               title={
                 syncByTime
-                  ? "Synced by elapsed time"
-                  : "Synced by progress percentage"
+                  ? t("history.traceViewer.syncedByTime")
+                  : t("history.traceViewer.syncedByProgress")
               }
               active={syncByTime}
               onClick={() => setSyncByTime((v) => !v)}
@@ -724,7 +752,7 @@ export function TraceReplay({
       <button
         type="button"
         onClick={() => openModal(traceSet)}
-        title="Expand"
+        title={t("history.traceViewer.expand")}
         className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-lg bg-surface/80 text-surface-muted-foreground backdrop-blur transition-colors hover:bg-surface hover:text-foreground"
       >
         <Maximize2 className="h-3.5 w-3.5" />
@@ -740,7 +768,7 @@ export function TraceReplay({
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <div className="text-[0.6875rem] font-medium text-surface-muted-foreground">
-                Pinned
+                {t("history.inspector.pinned")}
               </div>
               <div
                 ref={wrapRef}
@@ -756,7 +784,7 @@ export function TraceReplay({
             </div>
             <div className="flex flex-col gap-1">
               <div className="text-[0.6875rem] font-medium text-surface-muted-foreground">
-                Compare
+                {t("history.inspector.compare")}
               </div>
               <div
                 ref={splitWrapRef}
@@ -794,10 +822,10 @@ export function TraceReplay({
         onClose={() => setModalOpen(false)}
         title={
           modalTraceSet === "primary"
-            ? "Mouse Trace \u2013 Pinned"
+            ? t("history.traceViewer.modalTitlePinned")
             : modalTraceSet === "compare"
-              ? "Mouse Trace \u2013 Compare"
-              : "Mouse Trace"
+              ? t("history.traceViewer.modalTitleCompare")
+              : t("history.traceViewer.modalTitle")
         }
         className="flex flex-col overflow-hidden"
       >
@@ -953,18 +981,23 @@ function OptionToggle({
 }
 
 function TraceLegend() {
+  const { t } = useI18n();
   return (
     <div className="absolute left-2 top-2 flex flex-col gap-0.5">
       <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[0.625rem] font-medium backdrop-blur">
         <span className="inline-block h-2 w-2 rounded-full bg-primary" />
-        <span className="text-surface-muted-foreground">Pinned</span>
+        <span className="text-surface-muted-foreground">
+          {t("history.inspector.pinned")}
+        </span>
       </div>
       <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[0.625rem] font-medium backdrop-blur">
         <span
           className="inline-block h-2 w-2 rounded-full"
           style={{ background: "var(--trace-compare)" }}
         />
-        <span className="text-surface-muted-foreground">Compare</span>
+        <span className="text-surface-muted-foreground">
+          {t("history.inspector.compare")}
+        </span>
       </div>
     </div>
   );

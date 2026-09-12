@@ -5,8 +5,15 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/shared/components/ui/chart";
-import { CHART_SERIES_COLORS, CHART_STYLE, chartDot } from "@/shared/lib";
+import {
+  CHART_SERIES_COLORS,
+  CHART_STYLE,
+  chartDot,
+  useI18n,
+  type MessageKey,
+} from "@/shared/lib";
 import { useMemo } from "react";
+import { useChartAnimation, useRetainedValue } from "@/shared/hooks";
 import {
   CartesianGrid,
   Line,
@@ -43,44 +50,103 @@ function formatTooltipTime(
   return fmtTimeTick(Number(payload?.[0]?.payload?.timeSec ?? 0));
 }
 
-const eventsConfig: ChartConfig = {
-  killsOverTime: { label: "Kills", color: CHART_SERIES_COLORS.scoreHistory },
-  accOverTime: { label: "Accuracy", color: CHART_SERIES_COLORS.accuracy },
-};
+// Chart series labels are catalog keys resolved at render time so they follow
+// the active locale; dataKeys (the outer map keys) never translate.
+type KeyedChartConfig = Record<
+  string,
+  { labelKey?: MessageKey; color: string }
+>;
 
-const ttkConfig: ChartConfig = {
-  realTTK: { label: "TTK (s)", color: CHART_SERIES_COLORS.ttk },
-  ma5: { label: "MA(5)", color: CHART_SERIES_COLORS.scoreHistory },
-};
-
-const scatterConfig: ChartConfig = {
-  scatter: { label: "Kill", color: CHART_SERIES_COLORS.scoreHistory },
-};
-
-const eventsOverlayConfig: ChartConfig = {
+const eventsConfig: KeyedChartConfig = {
   killsOverTime: {
-    label: "Pinned Kills",
+    labelKey: "history.analysis.chart.kills",
     color: CHART_SERIES_COLORS.scoreHistory,
   },
-  accOverTime: { label: "Pinned Acc", color: CHART_SERIES_COLORS.accuracy },
+  accOverTime: {
+    labelKey: "history.analysis.chart.accuracy",
+    color: CHART_SERIES_COLORS.accuracy,
+  },
+};
+
+const ttkConfig: KeyedChartConfig = {
+  realTTK: {
+    labelKey: "history.analysis.chart.ttk",
+    color: CHART_SERIES_COLORS.ttk,
+  },
+  ma5: {
+    labelKey: "history.analysis.chart.ma5",
+    color: CHART_SERIES_COLORS.scoreHistory,
+  },
+};
+
+const scatterConfig: KeyedChartConfig = {
+  scatter: {
+    labelKey: "history.analysis.chart.kill",
+    color: CHART_SERIES_COLORS.scoreHistory,
+  },
+};
+
+const eventsOverlayConfig: KeyedChartConfig = {
+  killsOverTime: {
+    labelKey: "history.analysis.chart.pinnedKills",
+    color: CHART_SERIES_COLORS.scoreHistory,
+  },
+  accOverTime: {
+    labelKey: "history.analysis.chart.pinnedAcc",
+    color: CHART_SERIES_COLORS.accuracy,
+  },
   cmpKillsOverTime: {
-    label: "Compare Kills",
+    labelKey: "history.analysis.chart.compareKills",
     color: CHART_SERIES_COLORS.compare,
   },
-  cmpAccOverTime: { label: "Compare Acc", color: CHART_SERIES_COLORS.compare },
+  cmpAccOverTime: {
+    labelKey: "history.analysis.chart.compareAcc",
+    color: CHART_SERIES_COLORS.compare,
+  },
 };
 
-const ttkOverlayConfig: ChartConfig = {
-  realTTK: { label: "Pinned TTK", color: CHART_SERIES_COLORS.ttk },
-  ma5: { label: "Pinned MA(5)", color: CHART_SERIES_COLORS.scoreHistory },
-  cmpRealTTK: { label: "Compare TTK", color: CHART_SERIES_COLORS.compare },
-  cmpMa5: { label: "Compare MA(5)", color: CHART_SERIES_COLORS.compare },
+const ttkOverlayConfig: KeyedChartConfig = {
+  realTTK: {
+    labelKey: "history.analysis.chart.pinnedTtk",
+    color: CHART_SERIES_COLORS.ttk,
+  },
+  ma5: {
+    labelKey: "history.analysis.chart.pinnedMa5",
+    color: CHART_SERIES_COLORS.scoreHistory,
+  },
+  cmpRealTTK: {
+    labelKey: "history.analysis.chart.compareTtk",
+    color: CHART_SERIES_COLORS.compare,
+  },
+  cmpMa5: {
+    labelKey: "history.analysis.chart.compareMa5",
+    color: CHART_SERIES_COLORS.compare,
+  },
 };
 
-const scatterOverlayConfig: ChartConfig = {
-  pinned: { label: "Pinned", color: CHART_SERIES_COLORS.scoreHistory },
-  compare: { label: "Compare", color: CHART_SERIES_COLORS.compare },
+const scatterOverlayConfig: KeyedChartConfig = {
+  pinned: {
+    labelKey: "history.inspector.pinned",
+    color: CHART_SERIES_COLORS.scoreHistory,
+  },
+  compare: {
+    labelKey: "history.inspector.compare",
+    color: CHART_SERIES_COLORS.compare,
+  },
 };
+
+function useChartConfig(base: KeyedChartConfig): ChartConfig {
+  const { t, locale } = useI18n();
+  return useMemo<ChartConfig>(() => {
+    const out: ChartConfig = {};
+    for (const [key, entry] of Object.entries(base)) {
+      const { labelKey, color } = entry;
+      out[key] = { color, label: labelKey ? t(labelKey) : undefined };
+    }
+    return out;
+    // `t` is referentially stable — the locale drives recomputation.
+  }, [base, locale]);
+}
 
 export function AnalysisTab({
   primaryRun,
@@ -91,6 +157,7 @@ export function AnalysisTab({
   compareRun: HistoryRun | null;
   overlay: boolean;
 }) {
+  const { t } = useI18n();
   const primaryEvents = useRunStatsEvents(primaryRun);
   const compareEvents = useRunStatsEvents(compareRun);
   const primaryPerformanceEvents = useRunPerformanceEvents(primaryRun);
@@ -146,78 +213,100 @@ export function AnalysisTab({
     [compareAnalysis, compareEvents, comparePerformanceEvents, compareRun],
   );
 
-  if (
-    primaryEvents === null ||
-    primaryPerformanceEvents === null ||
-    (compareRun &&
-      (compareEvents === null || comparePerformanceEvents === null))
-  ) {
+  // Keep the last fully-computed run on screen while the next one loads. The
+  // charts and their summary are retained together so a load never pairs one
+  // run's events with another run's stats. Without this the panel collapses to
+  // the loading placeholder and back, which reads as a blink.
+  const retainedPrimary = useRetainedValue(
+    useMemo(
+      () => (primary ? { chart: primary, analysis: primaryAnalysis } : null),
+      [primary, primaryAnalysis],
+    ),
+  );
+  const retainedCompare = useRetainedValue(
+    useMemo(
+      () => (compare ? { chart: compare, analysis: compareAnalysis } : null),
+      [compare, compareAnalysis],
+    ),
+  );
+
+  const activeCompare = compareRun ? retainedCompare : null;
+
+  if (!retainedPrimary) {
     return (
       <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
         <p className="text-sm text-surface-muted-foreground">
-          Loading event data...
+          {t("history.analysis.loadingEventData")}
         </p>
       </div>
     );
   }
 
-  if (!primary || primary.events.length === 0) {
+  const primaryChart = retainedPrimary.chart;
+  const primaryAnalysisShown = retainedPrimary.analysis;
+
+  if (primaryChart.events.length === 0) {
     return (
       <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
         <p className="text-sm text-surface-muted-foreground">
-          No event data available for this run. Ensure Kovaak's is saving event
-          details in the stats CSV.
+          {t("history.analysis.noEventData")}
         </p>
       </div>
     );
   }
 
-  if (!compareAnalysis || !compare) {
+  if (!activeCompare) {
     return (
       <div className="space-y-3">
-        {primaryAnalysis && <SummaryMetrics analysis={primaryAnalysis} />}
+        {primaryAnalysisShown && (
+          <SummaryMetrics analysis={primaryAnalysisShown} />
+        )}
         <Widget
-          title="Accuracy over time"
+          title={t("history.analysis.accuracyOverTime")}
           className="bg-surface-subtle h-[22.5rem]"
-          modalTitle="Accuracy over time"
+          modalTitle={t("history.analysis.accuracyOverTime")}
           modalContent={
             <EventsChart
-              data={primary.events}
-              domainMax={primary.eventsDomainMax}
+              data={primaryChart.events}
+              domainMax={primaryChart.eventsDomainMax}
             />
           }
         >
           <EventsChart
-            data={primary.events}
-            domainMax={primary.eventsDomainMax}
+            data={primaryChart.events}
+            domainMax={primaryChart.eventsDomainMax}
           />
         </Widget>
-        {primaryAnalysis ? (
+        {primaryAnalysisShown ? (
           <div className="grid gap-3 lg:grid-cols-2">
             <Widget
-              title="TTK trend"
-              description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill · R² ${primaryAnalysis.movingAvg.r2.toFixed(3)}`}
+              title={t("history.analysis.ttkTrend")}
+              description={t("history.analysis.slopeLineWithR2", {
+                slope: `${primaryAnalysisShown.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysisShown.movingAvg.slope.toFixed(4)}`,
+                r2: primaryAnalysisShown.movingAvg.r2.toFixed(3),
+              })}
               className="bg-surface-subtle h-[22.5rem]"
-              modalTitle="TTK moving average"
-              modalContent={<TTKChart data={primary.ttk} />}
+              modalTitle={t("history.analysis.ttkMovingAverage")}
+              modalContent={<TTKChart data={primaryChart.ttk} />}
             >
-              <TTKChart data={primary.ttk} />
+              <TTKChart data={primaryChart.ttk} />
             </Widget>
             <Widget
-              title="Accuracy vs speed"
-              description={`Pearson r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
+              title={t("history.analysis.accuracyVsSpeed")}
+              description={t("history.analysis.pearsonR", {
+                r: primaryAnalysisShown.scatter.corrKpmAcc.toFixed(3),
+              })}
               className="bg-surface-subtle h-[22.5rem]"
-              modalTitle="Accuracy vs speed"
-              modalContent={<ScatterPlot data={primary.scatter} />}
+              modalTitle={t("history.analysis.accuracyVsSpeed")}
+              modalContent={<ScatterPlot data={primaryChart.scatter} />}
             >
-              <ScatterPlot data={primary.scatter} />
+              <ScatterPlot data={primaryChart.scatter} />
             </Widget>
           </div>
         ) : (
           <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
             <p className="text-sm text-surface-muted-foreground">
-              Waiting for the first kill to compute TTK trend, accuracy vs
-              speed, and summary stats.
+              {t("history.analysis.waitingForFirstKill")}
             </p>
           </div>
         )}
@@ -225,28 +314,37 @@ export function AnalysisTab({
     );
   }
 
+  const compareChart = activeCompare.chart;
+  const compareAnalysisShown = activeCompare.analysis;
+
   return (
     <div className="space-y-3">
-      {primaryAnalysis && compareAnalysis && (
+      {primaryAnalysisShown && compareAnalysisShown && (
         <div className="grid gap-3 md:grid-cols-2">
-          <SummaryMetrics analysis={primaryAnalysis} label="Pinned" />
-          <SummaryMetrics analysis={compareAnalysis} label="Compare" />
+          <SummaryMetrics
+            analysis={primaryAnalysisShown}
+            label={t("history.inspector.pinned")}
+          />
+          <SummaryMetrics
+            analysis={compareAnalysisShown}
+            label={t("history.inspector.compare")}
+          />
         </div>
       )}
 
       {overlay ? (
         <OverlayCharts
-          primary={primary}
-          compare={compare}
-          primaryAnalysis={primaryAnalysis}
-          compareAnalysis={compareAnalysis}
+          primary={primaryChart}
+          compare={compareChart}
+          primaryAnalysis={primaryAnalysisShown}
+          compareAnalysis={compareAnalysisShown}
         />
       ) : (
         <SplitCharts
-          primary={primary}
-          compare={compare}
-          primaryAnalysis={primaryAnalysis}
-          compareAnalysis={compareAnalysis}
+          primary={primaryChart}
+          compare={compareChart}
+          primaryAnalysis={primaryAnalysisShown}
+          compareAnalysis={compareAnalysisShown}
         />
       )}
     </div>
@@ -264,13 +362,14 @@ function SplitCharts({
   primaryAnalysis: ScenarioAnalysis | null;
   compareAnalysis: ScenarioAnalysis | null;
 }) {
+  const { t } = useI18n();
   return (
     <div className="space-y-3">
       <div className="grid gap-3 md:grid-cols-2">
         <Widget
-          title="Accuracy over time — Pinned"
+          title={t("history.analysis.accuracyOverTimePinned")}
           className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
-          modalTitle="Accuracy over time — Pinned"
+          modalTitle={t("history.analysis.accuracyOverTimePinned")}
           modalContent={
             <EventsChart
               data={primary.events}
@@ -284,9 +383,9 @@ function SplitCharts({
           />
         </Widget>
         <Widget
-          title="Accuracy over time — Compare"
+          title={t("history.analysis.accuracyOverTimeCompare")}
           className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
-          modalTitle="Accuracy over time — Compare"
+          modalTitle={t("history.analysis.accuracyOverTimeCompare")}
           modalContent={
             <EventsChart
               data={compare.events}
@@ -304,19 +403,23 @@ function SplitCharts({
       {primaryAnalysis && compareAnalysis && (
         <div className="grid gap-3 md:grid-cols-2">
           <Widget
-            title="TTK trend — Pinned"
-            description={`Slope: ${primaryAnalysis.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysis.movingAvg.slope.toFixed(4)}s/kill`}
+            title={t("history.analysis.ttkTrendPinned")}
+            description={t("history.analysis.slopeLine", {
+              slope: `${primaryAnalysis.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysis.movingAvg.slope.toFixed(4)}`,
+            })}
             className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
-            modalTitle="TTK trend — Pinned"
+            modalTitle={t("history.analysis.ttkTrendPinned")}
             modalContent={<TTKChart data={primary.ttk} />}
           >
             <TTKChart data={primary.ttk} />
           </Widget>
           <Widget
-            title="TTK trend — Compare"
-            description={`Slope: ${compareAnalysis.movingAvg.slope >= 0 ? "+" : ""}${compareAnalysis.movingAvg.slope.toFixed(4)}s/kill`}
+            title={t("history.analysis.ttkTrendCompare")}
+            description={t("history.analysis.slopeLine", {
+              slope: `${compareAnalysis.movingAvg.slope >= 0 ? "+" : ""}${compareAnalysis.movingAvg.slope.toFixed(4)}`,
+            })}
             className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
-            modalTitle="TTK trend — Compare"
+            modalTitle={t("history.analysis.ttkTrendCompare")}
             modalContent={<TTKChart data={compare.ttk} />}
           >
             <TTKChart data={compare.ttk} />
@@ -327,19 +430,23 @@ function SplitCharts({
       {primaryAnalysis && compareAnalysis && (
         <div className="grid gap-3 md:grid-cols-2">
           <Widget
-            title="Acc vs speed — Pinned"
-            description={`r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
+            title={t("history.analysis.accVsSpeedPinned")}
+            description={t("history.analysis.rLine", {
+              r: primaryAnalysis.scatter.corrKpmAcc.toFixed(3),
+            })}
             className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
-            modalTitle="Accuracy vs speed — Pinned"
+            modalTitle={t("history.analysis.accuracyVsSpeedPinned")}
             modalContent={<ScatterPlot data={primary.scatter} />}
           >
             <ScatterPlot data={primary.scatter} />
           </Widget>
           <Widget
-            title="Acc vs speed — Compare"
-            description={`r: ${compareAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
+            title={t("history.analysis.accVsSpeedCompare")}
+            description={t("history.analysis.rLine", {
+              r: compareAnalysis.scatter.corrKpmAcc.toFixed(3),
+            })}
             className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
-            modalTitle="Accuracy vs speed — Compare"
+            modalTitle={t("history.analysis.accuracyVsSpeedCompare")}
             modalContent={<ScatterPlot data={compare.scatter} />}
           >
             <ScatterPlot data={compare.scatter} />
@@ -404,13 +511,14 @@ function OverlayCharts({
     primary.eventsDomainMax,
     compare.eventsDomainMax,
   );
+  const { t } = useI18n();
 
   return (
     <div className="space-y-3">
       <Widget
-        title="Accuracy over time"
+        title={t("history.analysis.accuracyOverTime")}
         className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
-        modalTitle="Accuracy over time — Overlay"
+        modalTitle={t("history.analysis.accuracyOverTimeOverlay")}
         modalContent={
           <EventsChartOverlay
             data={eventsOverlay}
@@ -423,19 +531,25 @@ function OverlayCharts({
       {primaryAnalysis && compareAnalysis && (
         <div className="grid gap-3 lg:grid-cols-2">
           <Widget
-            title="TTK trend"
-            description={`Pinned slope: ${primaryAnalysis.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysis.movingAvg.slope.toFixed(4)} · Compare: ${compareAnalysis.movingAvg.slope >= 0 ? "+" : ""}${compareAnalysis.movingAvg.slope.toFixed(4)}`}
+            title={t("history.analysis.ttkTrend")}
+            description={t("history.analysis.pinnedSlopeLine", {
+              slope: `${primaryAnalysis.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysis.movingAvg.slope.toFixed(4)}`,
+              compare: `${compareAnalysis.movingAvg.slope >= 0 ? "+" : ""}${compareAnalysis.movingAvg.slope.toFixed(4)}`,
+            })}
             className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
-            modalTitle="TTK trend — Overlay"
+            modalTitle={t("history.analysis.ttkTrendOverlay")}
             modalContent={<TTKChartOverlay data={ttkOverlay} />}
           >
             <TTKChartOverlay data={ttkOverlay} />
           </Widget>
           <Widget
-            title="Accuracy vs speed"
-            description={`Pinned r: ${primaryAnalysis.scatter.corrKpmAcc.toFixed(3)} · Compare: ${compareAnalysis.scatter.corrKpmAcc.toFixed(3)}`}
+            title={t("history.analysis.accuracyVsSpeed")}
+            description={t("history.analysis.pinnedRLine", {
+              primary: primaryAnalysis.scatter.corrKpmAcc.toFixed(3),
+              compare: compareAnalysis.scatter.corrKpmAcc.toFixed(3),
+            })}
             className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
-            modalTitle="Accuracy vs speed — Overlay"
+            modalTitle={t("history.analysis.accuracyVsSpeedOverlay")}
             modalContent={
               <ScatterPlotOverlay
                 primary={primary.scatter}
@@ -462,6 +576,7 @@ function SummaryMetrics({
   label?: string;
 }) {
   const { summary } = analysis;
+  const { t } = useI18n();
   const fmtS = (value: number) => `${value.toFixed(2)}s`;
   const fmtPct = (value: number) => `${(value * 100).toFixed(1)}%`;
 
@@ -473,12 +588,30 @@ function SummaryMetrics({
         </div>
       )}
       <div className="grid grid-cols-3 gap-2">
-        <MiniStat label="Kills" value={String(summary.kills)} />
-        <MiniStat label="Accuracy" value={fmtPct(summary.finalAcc)} />
-        <MiniStat label="Avg TTK" value={fmtS(summary.avgTTK)} />
-        <MiniStat label="Median TTK" value={fmtS(summary.medianTTK)} />
-        <MiniStat label="Avg KPM" value={summary.meanKPM.toFixed(1)} />
-        <MiniStat label="TTK σ" value={fmtS(summary.stdTTK)} />
+        <MiniStat
+          label={t("history.analysis.summary.kills")}
+          value={String(summary.kills)}
+        />
+        <MiniStat
+          label={t("history.analysis.summary.accuracy")}
+          value={fmtPct(summary.finalAcc)}
+        />
+        <MiniStat
+          label={t("history.analysis.summary.avgTtk")}
+          value={fmtS(summary.avgTTK)}
+        />
+        <MiniStat
+          label={t("history.analysis.summary.medianTtk")}
+          value={fmtS(summary.medianTTK)}
+        />
+        <MiniStat
+          label={t("history.analysis.summary.avgKpm")}
+          value={summary.meanKPM.toFixed(1)}
+        />
+        <MiniStat
+          label={t("history.analysis.summary.ttkSigma")}
+          value={fmtS(summary.stdTTK)}
+        />
       </div>
     </div>
   );
@@ -491,12 +624,19 @@ function EventsChart({
   data: EventsChartPoint[];
   domainMax: number;
 }) {
+  const config = useChartConfig(eventsConfig);
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   return (
     <ChartContainer
-      config={eventsConfig}
+      ref={chartRef}
+      config={config}
       className={`aspect-auto w-full h-full`}
     >
-      <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+      <LineChart
+        key={revealed ? "revealed" : "hidden"}
+        data={data}
+        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           type="number"
@@ -532,7 +672,7 @@ function EventsChart({
         />
         <Line
           yAxisId="kills"
-          isAnimationActive={false}
+          {...animationProps}
           type="stepAfter"
           dataKey="killsOverTime"
           stroke="var(--color-killsOverTime)"
@@ -542,7 +682,7 @@ function EventsChart({
         />
         <Line
           yAxisId="acc"
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="accOverTime"
           stroke="var(--color-accOverTime)"
@@ -556,9 +696,19 @@ function EventsChart({
 }
 
 function TTKChart({ data }: { data: Array<Record<string, unknown>> }) {
+  const config = useChartConfig(ttkConfig);
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   return (
-    <ChartContainer config={ttkConfig} className={`aspect-auto w-full h-full`}>
-      <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+    <ChartContainer
+      ref={chartRef}
+      config={config}
+      className={`aspect-auto w-full h-full`}
+    >
+      <LineChart
+        key={revealed ? "revealed" : "hidden"}
+        data={data}
+        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           type="number"
@@ -580,7 +730,7 @@ function TTKChart({ data }: { data: Array<Record<string, unknown>> }) {
           content={<ChartTooltipContent labelFormatter={formatTooltipTime} />}
         />
         <Line
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="realTTK"
           stroke="var(--color-realTTK)"
@@ -588,7 +738,7 @@ function TTKChart({ data }: { data: Array<Record<string, unknown>> }) {
           dot={chartDot("var(--color-realTTK)", CHART_STYLE.pointRadiusSmall)}
         />
         <Line
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="ma5"
           stroke="var(--color-ma5)"
@@ -601,17 +751,24 @@ function TTKChart({ data }: { data: Array<Record<string, unknown>> }) {
 }
 
 function ScatterPlot({ data }: { data: Array<{ x: number; y: number }> }) {
+  const config = useChartConfig(scatterConfig);
+  const { t } = useI18n();
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   return (
     <ChartContainer
-      config={scatterConfig}
+      ref={chartRef}
+      config={config}
       className={`aspect-auto w-full h-full`}
     >
-      <ScatterChart margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+      <ScatterChart
+        key={revealed ? "revealed" : "hidden"}
+        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+      >
         <CartesianGrid />
         <XAxis
           type="number"
           dataKey="x"
-          name="KPM"
+          name={t("history.analysis.chart.kpm")}
           tickLine={false}
           axisLine={false}
           tickMargin={8}
@@ -619,7 +776,7 @@ function ScatterPlot({ data }: { data: Array<{ x: number; y: number }> }) {
         <YAxis
           type="number"
           dataKey="y"
-          name="Accuracy %"
+          name={t("history.analysis.chart.accuracyPct")}
           tickLine={false}
           axisLine={false}
           tickMargin={8}
@@ -630,10 +787,17 @@ function ScatterPlot({ data }: { data: Array<{ x: number; y: number }> }) {
         <ChartTooltip
           content={
             <ChartTooltipContent
-              labelFormatter={() => "Kill"}
+              labelFormatter={() => t("history.analysis.chart.kill")}
               formatter={(value, name) => {
-                if (name === "x") return [`${value} KPM`, "Speed"];
-                if (name === "y") return [`${value}%`, "Accuracy"];
+                if (name === "x")
+                  return [
+                    t("history.analysis.chart.kpmValue", {
+                      value: String(value),
+                    }),
+                    t("history.analysis.chart.speed"),
+                  ];
+                if (name === "y")
+                  return [`${value}%`, t("history.analysis.chart.accuracy")];
                 return [String(value), String(name)];
               }}
             />
@@ -643,7 +807,7 @@ function ScatterPlot({ data }: { data: Array<{ x: number; y: number }> }) {
           data={data}
           fill="var(--color-scatter)"
           r={CHART_STYLE.scatterPointRadius}
-          isAnimationActive={false}
+          {...animationProps}
         />
       </ScatterChart>
     </ChartContainer>
@@ -657,12 +821,19 @@ function EventsChartOverlay({
   data: Array<Record<string, unknown>>;
   domainMax: number;
 }) {
+  const config = useChartConfig(eventsOverlayConfig);
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   return (
     <ChartContainer
-      config={eventsOverlayConfig}
+      ref={chartRef}
+      config={config}
       className={`aspect-auto w-full h-full`}
     >
-      <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+      <LineChart
+        key={revealed ? "revealed" : "hidden"}
+        data={data}
+        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           type="number"
@@ -698,7 +869,7 @@ function EventsChartOverlay({
         />
         <Line
           yAxisId="kills"
-          isAnimationActive={false}
+          {...animationProps}
           type="stepAfter"
           dataKey="killsOverTime"
           stroke="var(--color-killsOverTime)"
@@ -708,7 +879,7 @@ function EventsChartOverlay({
         />
         <Line
           yAxisId="acc"
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="accOverTime"
           stroke="var(--color-accOverTime)"
@@ -718,7 +889,7 @@ function EventsChartOverlay({
         />
         <Line
           yAxisId="kills"
-          isAnimationActive={false}
+          {...animationProps}
           type="stepAfter"
           dataKey="cmpKillsOverTime"
           stroke="var(--color-cmpKillsOverTime)"
@@ -729,7 +900,7 @@ function EventsChartOverlay({
         />
         <Line
           yAxisId="acc"
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="cmpAccOverTime"
           stroke="var(--color-cmpAccOverTime)"
@@ -744,12 +915,19 @@ function EventsChartOverlay({
 }
 
 function TTKChartOverlay({ data }: { data: Array<Record<string, unknown>> }) {
+  const config = useChartConfig(ttkOverlayConfig);
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   return (
     <ChartContainer
-      config={ttkOverlayConfig}
+      ref={chartRef}
+      config={config}
       className={`aspect-auto w-full h-full`}
     >
-      <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+      <LineChart
+        key={revealed ? "revealed" : "hidden"}
+        data={data}
+        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           type="number"
@@ -771,7 +949,7 @@ function TTKChartOverlay({ data }: { data: Array<Record<string, unknown>> }) {
           content={<ChartTooltipContent labelFormatter={formatTooltipTime} />}
         />
         <Line
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="realTTK"
           stroke="var(--color-realTTK)"
@@ -780,7 +958,7 @@ function TTKChartOverlay({ data }: { data: Array<Record<string, unknown>> }) {
           connectNulls
         />
         <Line
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="ma5"
           stroke="var(--color-ma5)"
@@ -789,7 +967,7 @@ function TTKChartOverlay({ data }: { data: Array<Record<string, unknown>> }) {
           connectNulls
         />
         <Line
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="cmpRealTTK"
           stroke="var(--color-cmpRealTTK)"
@@ -802,7 +980,7 @@ function TTKChartOverlay({ data }: { data: Array<Record<string, unknown>> }) {
           connectNulls
         />
         <Line
-          isAnimationActive={false}
+          {...animationProps}
           type="monotone"
           dataKey="cmpMa5"
           stroke="var(--color-cmpMa5)"
@@ -823,17 +1001,24 @@ function ScatterPlotOverlay({
   primary: Array<{ x: number; y: number }>;
   compare: Array<{ x: number; y: number }>;
 }) {
+  const config = useChartConfig(scatterOverlayConfig);
+  const { t } = useI18n();
+  const { ref: chartRef, animationProps, revealed } = useChartAnimation();
   return (
     <ChartContainer
-      config={scatterOverlayConfig}
+      ref={chartRef}
+      config={config}
       className={`aspect-auto w-full h-full`}
     >
-      <ScatterChart margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+      <ScatterChart
+        key={revealed ? "revealed" : "hidden"}
+        margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
+      >
         <CartesianGrid />
         <XAxis
           type="number"
           dataKey="x"
-          name="KPM"
+          name={t("history.analysis.chart.kpm")}
           tickLine={false}
           axisLine={false}
           tickMargin={8}
@@ -841,7 +1026,7 @@ function ScatterPlotOverlay({
         <YAxis
           type="number"
           dataKey="y"
-          name="Accuracy %"
+          name={t("history.analysis.chart.accuracyPct")}
           tickLine={false}
           axisLine={false}
           tickMargin={8}
@@ -852,10 +1037,17 @@ function ScatterPlotOverlay({
         <ChartTooltip
           content={
             <ChartTooltipContent
-              labelFormatter={() => "Kill"}
+              labelFormatter={() => t("history.analysis.chart.kill")}
               formatter={(value, name) => {
-                if (name === "x") return [`${value} KPM`, "Speed"];
-                if (name === "y") return [`${value}%`, "Accuracy"];
+                if (name === "x")
+                  return [
+                    t("history.analysis.chart.kpmValue", {
+                      value: String(value),
+                    }),
+                    t("history.analysis.chart.speed"),
+                  ];
+                if (name === "y")
+                  return [`${value}%`, t("history.analysis.chart.accuracy")];
                 return [String(value), String(name)];
               }}
             />
@@ -866,14 +1058,14 @@ function ScatterPlotOverlay({
           data={primary}
           fill="var(--color-pinned)"
           r={CHART_STYLE.scatterPointRadius}
-          isAnimationActive={false}
+          {...animationProps}
         />
         <Scatter
           name="compare"
           data={compare}
           fill="var(--color-compare)"
           r={CHART_STYLE.scatterPointRadius}
-          isAnimationActive={false}
+          {...animationProps}
           opacity={0.7}
         />
       </ScatterChart>

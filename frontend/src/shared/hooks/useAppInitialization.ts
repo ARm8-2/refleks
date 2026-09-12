@@ -1,5 +1,7 @@
 import { EventsOn } from "@wails/runtime";
 import { startTransition, useCallback, useEffect, useRef } from "react";
+import { getLocale, isLocale, useI18n, type Locale } from "../lib/i18n";
+import { STORAGE_KEYS } from "../lib/storageKeys";
 import { getRecentRuns, getSettings } from "../lib/api";
 import { useStore } from "./useStore";
 
@@ -8,11 +10,30 @@ const FETCH_ALL_LIMIT = 0;
 const PROGRESSIVE_BATCH_LIMITS = [8, 16, 32, 64, 128, 256, 512];
 const PROGRESSIVE_BATCH_DELAYS_MS = [50, 70, 100, 140, 200, 280, 360];
 
+/**
+ * Decide whether the persisted backend language should override the current
+ * UI locale. The backend wins whenever the user made an explicit choice
+ * (localStorage holds a value) or the backend was changed elsewhere; on a
+ * true first launch the backend still holds the default (`"en"`) so the
+ * system-language detection stands.
+ */
+function resolveBackendLanguage(
+  backend: string | undefined,
+  saved: string | null,
+  current: Locale,
+): Locale | null {
+  if (!backend || !isLocale(backend)) return null;
+  const untouchedDefault = saved === null && backend === "en";
+  if (untouchedDefault || backend === current) return null;
+  return backend;
+}
+
 export function useAppInitialization() {
   const setRuns = useStore((s) => s.setRuns);
   const setSessionGap = useStore((s) => s.setSessionGap);
   const setSessionNotes = useStore((s) => s.setSessionNotes);
   const updateRunHydration = useStore((s) => s.updateRunHydration);
+  const { setLocale } = useI18n();
 
   const refreshSeq = useRef(0);
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -158,6 +179,12 @@ export function useAppInitialization() {
           if (typeof s.sessionGapMinutes === "number")
             setSessionGap(s.sessionGapMinutes);
           if (s.sessionNotes) setSessionNotes(s.sessionNotes);
+          const backendLanguage = resolveBackendLanguage(
+            s.language,
+            localStorage.getItem(STORAGE_KEYS.language),
+            getLocale(),
+          );
+          if (backendLanguage) setLocale(backendLanguage);
         }
       })
       .catch(() => {});

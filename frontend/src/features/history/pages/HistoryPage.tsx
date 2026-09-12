@@ -1,5 +1,6 @@
 import { Loading } from "@/shared/components";
 import { useStore } from "@/shared/hooks";
+import { useI18n } from "@/shared/lib";
 import { HistoryRunDetailPane } from "../components/HistoryRunDetailPane";
 import { HistoryRunList } from "../components/HistoryRunList";
 import { HistorySessionList } from "../components/HistorySessionList";
@@ -7,6 +8,7 @@ import { HistorySessionOverview } from "../components/HistorySessionOverview";
 import { useHistoryPageState } from "../hooks/useHistoryPageState";
 
 export function HistoryPage() {
+  const { t } = useI18n();
   const allSessions = useStore((s) => s.sessions);
   const runHydration = useStore((s) => s.runHydration);
   const {
@@ -53,8 +55,11 @@ export function HistoryPage() {
   if (allSessions.length === 0 && runHydration.loading) {
     const label =
       runHydration.total > 0
-        ? `Loading run history ${Math.min(runHydration.loaded, runHydration.total)}/${runHydration.total}...`
-        : "Loading run history...";
+        ? t("history.page.loadingProgress", {
+            loaded: Math.min(runHydration.loaded, runHydration.total),
+            total: runHydration.total,
+          })
+        : t("history.page.loading");
 
     return <Loading label={label} />;
   }

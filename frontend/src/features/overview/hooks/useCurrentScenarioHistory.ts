@@ -1,19 +1,38 @@
 import { getScenarioName } from "@/features/benchmarks/lib/detailFormatting";
 import { useStore } from "@/shared/hooks";
+import { getLocale, translate } from "@/shared/lib/i18n";
 import type { RunRecord } from "@/shared/types";
 import { useMemo } from "react";
 
-const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-});
+let shortDateFormatterLocale: string | null = null;
+let shortDateFormatter: Intl.DateTimeFormat | null = null;
+function getShortDateFormatter(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  if (!shortDateFormatter || shortDateFormatterLocale !== locale) {
+    shortDateFormatterLocale = locale;
+    shortDateFormatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+    });
+  }
+  return shortDateFormatter;
+}
 
-const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
+let dateTimeFormatterLocale: string | null = null;
+let dateTimeFormatter: Intl.DateTimeFormat | null = null;
+function getDateTimeFormatter(): Intl.DateTimeFormat {
+  const locale = getLocale();
+  if (!dateTimeFormatter || dateTimeFormatterLocale !== locale) {
+    dateTimeFormatterLocale = locale;
+    dateTimeFormatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+  return dateTimeFormatter;
+}
 
 export type TrendPoint = {
   label: string;
@@ -29,6 +48,7 @@ type CurrentScenarioHistory = {
 
 export function useCurrentScenarioHistory(): CurrentScenarioHistory {
   const sessions = useStore((state) => state.sessions);
+  const locale = getLocale();
 
   return useMemo(() => {
     let currentScenarioName: string | null = null;
@@ -102,7 +122,7 @@ export function useCurrentScenarioHistory(): CurrentScenarioHistory {
       sessionAveragePoints,
       attemptPoints,
     };
-  }, [sessions]);
+  }, [sessions, locale]);
 }
 
 function readRunScore(item: Pick<RunRecord, "stats">): number {
@@ -120,12 +140,19 @@ function readRunTimestamp(item: Pick<RunRecord, "stats">): number {
 
 function formatShortDate(timestamp: number, fallbackIndex: number): string {
   if (timestamp <= 0) return `S${fallbackIndex}`;
-  return shortDateFormatter.format(new Date(timestamp));
+  return getShortDateFormatter().format(new Date(timestamp));
 }
 
 function formatAttemptLabel(timestamp: number, attemptIndex: number): string {
-  if (timestamp <= 0) return `Attempt ${attemptIndex}`;
-  return `Attempt ${attemptIndex} · ${dateTimeFormatter.format(new Date(timestamp))}`;
+  if (timestamp <= 0) {
+    return translate("overview.currentScenarioHistory.attempt", {
+      count: attemptIndex,
+    });
+  }
+  return translate("overview.currentScenarioHistory.attemptWithDate", {
+    count: attemptIndex,
+    date: getDateTimeFormatter().format(new Date(timestamp)),
+  });
 }
 
 function formatSessionLabel(
@@ -137,8 +164,17 @@ function formatSessionLabel(
   const endDate = new Date(end);
 
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
-    return `${attempts} ${attempts === 1 ? "run" : "runs"}`;
+    return translate("overview.currentScenarioHistory.runs", {
+      count: attempts,
+    });
   }
 
-  return `${dateTimeFormatter.format(startDate)} to ${dateTimeFormatter.format(endDate)} · ${attempts} ${attempts === 1 ? "run" : "runs"}`;
+  return translate("overview.currentScenarioHistory.sessionRange", {
+    start: getDateTimeFormatter().format(startDate),
+    end: getDateTimeFormatter().format(endDate),
+    count: attempts,
+    runs: translate("overview.currentScenarioHistory.runs", {
+      count: attempts,
+    }),
+  });
 }

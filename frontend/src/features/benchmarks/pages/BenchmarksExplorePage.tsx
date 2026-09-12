@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/shared/components";
 import { useBenchmarks, usePersistedState, useStore } from "@/shared/hooks";
-import { STORAGE_KEYS } from "@/shared/lib";
+import { STORAGE_KEYS, useI18n, type MessageKey } from "@/shared/lib";
 import type { Benchmark } from "@/shared/types";
 import { ChevronDown, Dice5, Search, Sparkles, Star } from "lucide-react";
 import { useEffect, useMemo } from "react";
@@ -17,11 +17,13 @@ import { BenchmarkCard } from "../components/BenchmarkCard";
 import { getRecommendedBenchmarks } from "../lib/recommendations";
 
 // ---------------------------------------------------------------------------
-// Category mapping — maps benchmark abbreviations to high-level categories
+// Category mapping — maps benchmark abbreviations to high-level categories.
+// Map keys are internal codes; display names come from the catalog at render
+// time via CATEGORY_LABEL_KEYS. Benchmark abbreviations are data and stay as-is.
 // ---------------------------------------------------------------------------
 
 const BENCHMARK_CATEGORIES: Record<string, string[]> = {
-  "Aim Groups": [
+  aim: [
     "VT",
     "rA",
     "xyz",
@@ -38,7 +40,7 @@ const BENCHMARK_CATEGORIES: Record<string, string[]> = {
     "ZERO",
     "RVG",
   ],
-  "Community Benchmarks": [
+  community: [
     "AQ!",
     "AOI",
     "e",
@@ -91,21 +93,17 @@ const BENCHMARK_CATEGORIES: Record<string, string[]> = {
     "773TS",
     "350",
   ],
-  "Notable Creator Benchmarks": [
-    "A",
-    "w",
-    "TPT",
-    "m",
-    "M",
-    "WH",
-    "V",
-    "D&R",
-    "MH",
-    "LEM",
-    "LEI",
-  ],
+  notable: ["A", "w", "TPT", "m", "M", "WH", "V", "D&R", "MH", "LEM", "LEI"],
 };
-const DEFAULT_CATEGORY = "Other";
+const DEFAULT_CATEGORY = "other";
+
+/** Internal category code -> catalog key for the group header label. */
+const CATEGORY_LABEL_KEYS: Record<string, MessageKey> = {
+  aim: "benchmarks.explore.categories.aim",
+  community: "benchmarks.explore.categories.community",
+  notable: "benchmarks.explore.categories.notable",
+  other: "benchmarks.explore.categories.other",
+};
 
 function getBenchmarkCategory(abbreviation: string): string {
   const abbr = (abbreviation ?? "").trim();
@@ -123,16 +121,22 @@ function getBenchmarkCategory(abbreviation: string): string {
 type SortBy = "name" | "abbreviation" | "date";
 type GroupBy = "none" | "abbreviation" | "category";
 
-const sortOptions = [
-  { label: "Name", value: "name" },
-  { label: "Abbreviation", value: "abbreviation" },
-  { label: "Date Added", value: "date" },
+const sortOptions: { value: SortBy; labelKey: MessageKey }[] = [
+  { value: "name", labelKey: "benchmarks.explore.sortOptions.name" },
+  {
+    value: "abbreviation",
+    labelKey: "benchmarks.explore.sortOptions.abbreviation",
+  },
+  { value: "date", labelKey: "benchmarks.explore.sortOptions.dateAdded" },
 ];
 
-const groupOptions = [
-  { label: "None", value: "none" },
-  { label: "Abbreviation", value: "abbreviation" },
-  { label: "Category", value: "category" },
+const groupOptions: { value: GroupBy; labelKey: MessageKey }[] = [
+  { value: "none", labelKey: "common.actions.none" },
+  {
+    value: "abbreviation",
+    labelKey: "benchmarks.explore.groupOptions.abbreviation",
+  },
+  { value: "category", labelKey: "benchmarks.explore.groupOptions.category" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -141,6 +145,7 @@ const groupOptions = [
 
 export function BenchmarksExplorePage() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const {
     benchmarks,
     loading,
@@ -255,6 +260,12 @@ export function BenchmarksExplorePage() {
     navigate(`/benchmarks/${encodeURIComponent(name)}`);
   };
 
+  /** Group header label: catalog for known categories, raw key otherwise (abbreviations are data). */
+  const groupLabel = (group: string) => {
+    const labelKey = CATEGORY_LABEL_KEYS[group];
+    return labelKey ? t(labelKey) : group;
+  };
+
   const showInitialSkeleton = loading && benchmarks.length === 0;
   const showRecommendationWarmup =
     showRecs && Object.keys(progressMap).length === 0;
@@ -264,7 +275,9 @@ export function BenchmarksExplorePage() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-canvas px-6 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold text-foreground">Benchmarks</h1>
+          <h1 className="text-lg font-semibold text-foreground">
+            {t("benchmarks.explore.title")}
+          </h1>
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Search */}
@@ -274,7 +287,7 @@ export function BenchmarksExplorePage() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search..."
+                placeholder={t("common.search")}
                 className="h-9 pl-8 w-32 sm:w-48 focus:w-64 transition-all"
               />
             </div>
@@ -285,12 +298,15 @@ export function BenchmarksExplorePage() {
               onValueChange={(v) => setSortBy(v as SortBy)}
             >
               <SelectTrigger className="h-9 w-auto min-w-[8rem] text-sm">
-                <SelectValue>{`Sort: ${sortOptions.find((o) => o.value === sortBy)?.label}`}</SelectValue>
+                <SelectValue>{`${t("benchmarks.explore.sort")}: ${t(
+                  sortOptions.find((o) => o.value === sortBy)?.labelKey ??
+                    sortOptions[0].labelKey,
+                )}`}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {sortOptions.map((o) => (
                   <SelectItem key={o.value} value={o.value}>
-                    {o.label}
+                    {t(o.labelKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -302,12 +318,15 @@ export function BenchmarksExplorePage() {
               onValueChange={(v) => setGroupBy(v as GroupBy)}
             >
               <SelectTrigger className="h-9 w-auto min-w-[8rem] text-sm">
-                <SelectValue>{`Group: ${groupOptions.find((o) => o.value === groupBy)?.label}`}</SelectValue>
+                <SelectValue>{`${t("benchmarks.explore.group")}: ${t(
+                  groupOptions.find((o) => o.value === groupBy)?.labelKey ??
+                    groupOptions[0].labelKey,
+                )}`}</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {groupOptions.map((o) => (
                   <SelectItem key={o.value} value={o.value}>
-                    {o.label}
+                    {t(o.labelKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -319,10 +338,10 @@ export function BenchmarksExplorePage() {
               size="default"
               className="px-3"
               onClick={handleRandom}
-              title="Open a random benchmark"
+              title={t("benchmarks.explore.randomTitle")}
             >
               <Dice5 className="w-4 h-4" />
-              Random
+              {t("benchmarks.explore.random")}
             </Button>
 
             <Button
@@ -331,14 +350,18 @@ export function BenchmarksExplorePage() {
               className="px-3"
               onClick={() => setShowFavOnly((v) => !v)}
               title={
-                showFavOnly ? "Show all benchmarks" : "Show favorites only"
+                showFavOnly
+                  ? t("benchmarks.explore.showAll")
+                  : t("benchmarks.explore.showFavoritesOnly")
               }
             >
               <Star
                 className="h-4 w-4"
                 fill={showFavOnly ? "currentColor" : "none"}
               />
-              {showFavOnly ? "Favorites" : "All"}
+              {showFavOnly
+                ? t("benchmarks.explore.favorites")
+                : t("common.actions.all")}
             </Button>
 
             <Button
@@ -348,12 +371,12 @@ export function BenchmarksExplorePage() {
               onClick={() => setShowRecs((v) => !v)}
               title={
                 showRecs
-                  ? "Hide recommendations"
-                  : "Show recommended benchmarks"
+                  ? t("benchmarks.explore.hideRecommendations")
+                  : t("benchmarks.explore.showRecommended")
               }
             >
               <Sparkles className="h-4 w-4" />
-              Recommended
+              {t("benchmarks.explore.recommended")}
             </Button>
           </div>
         </div>
@@ -378,7 +401,7 @@ export function BenchmarksExplorePage() {
             {/* Recommended benchmarks section */}
             {showRecs && showRecommendationWarmup && (
               <div className="rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-surface-muted-foreground">
-                Loading benchmark progress for recommendations...
+                {t("benchmarks.explore.loadingRecommendations")}
               </div>
             )}
 
@@ -387,7 +410,7 @@ export function BenchmarksExplorePage() {
                 <div className="flex items-center gap-2 text-sm font-medium text-primary mt-1 mb-2 select-none">
                   <Sparkles className="h-4 w-4" />
                   <span className="whitespace-nowrap">
-                    Recommended{" "}
+                    {t("benchmarks.explore.recommended")}{" "}
                     <span className="text-xs opacity-50">
                       ({recommendedBenchmarks.length})
                     </span>
@@ -411,12 +434,12 @@ export function BenchmarksExplorePage() {
             {filtered.length === 0 ? (
               <div className="text-sm text-surface-muted-foreground py-8 text-center">
                 {benchmarks.length === 0
-                  ? "Waiting for the benchmark catalog to finish syncing..."
+                  ? t("benchmarks.explore.emptySyncing")
                   : showFavOnly
-                    ? "No favorite benchmarks yet. Star a benchmark to add it here."
+                    ? t("benchmarks.explore.emptyFavorites")
                     : query
-                      ? "No benchmarks match your search."
-                      : "No benchmarks found."}
+                      ? t("benchmarks.explore.emptySearch")
+                      : t("benchmarks.explore.emptyAll")}
               </div>
             ) : (
               groupKeys.map((group) => {
@@ -435,7 +458,7 @@ export function BenchmarksExplorePage() {
                           className={`h-4 w-4 transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}
                         />
                         <span className="whitespace-nowrap">
-                          {group}{" "}
+                          {groupLabel(group)}{" "}
                           <span className="text-xs opacity-50">
                             ({items.length})
                           </span>

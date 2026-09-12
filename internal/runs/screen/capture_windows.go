@@ -25,10 +25,17 @@ import (
 
 // Windows DXGI Desktop Duplication screen capture.
 //
-// Frames are captured on a dedicated goroutine at the configured rate and
-// handed off to a separate writer goroutine via a bounded channel. A small
-// pre-allocated frame pool eliminates heap allocations; overload drops frames
-// rather than retaining more raw desktop images in memory.
+// Frames are captured on a dedicated goroutine and handed off to a separate
+// writer goroutine via a bounded channel. A small pre-allocated frame pool
+// eliminates heap allocations; under overload a frame is dropped rather than
+// retaining more raw desktop images in memory.
+//
+// A frameClock keeps the encoded media timeline locked to wall time: the
+// capture loop emits exactly as many frames as the configured rate requires,
+// repeating the latest frame when desktop duplication has nothing new and
+// padding any deficit left by a dropped frame. Without it, a static desktop or
+// a slow encoder would let media time fall behind wall time, and every
+// wall-clock replay window would drift later while keeping its length.
 //
 // D3D device resources are never freed while the capture goroutine is still
 // active; a shutdown handshake (doneCh → writerDone) ensures pipeWriter
@@ -168,14 +175,12 @@ func (c *captureWin) Status() ProviderStatus {
 	if c.running {
 		if c.ffmpegAlive && !c.lastFrameAt.IsZero() && time.Since(c.lastFrameAt) < 5*time.Second {
 			state = CaptureStateCapturing
-			message = "Capturing and receiving frames."
+			message = constants.ScreenCaptureActive
 			healthy = true
 		} else if state != CaptureStateError {
 			state = CaptureStateStarting
-			message = "Capture has not produced a frame yet."
+			message = constants.ScreenCaptureStarting
 		}
-	} else if state == "" {
-		state = CaptureStateIdle
 	}
 	lastFrameUnixMilli := int64(0)
 	if !c.lastFrameAt.IsZero() {
@@ -318,7 +323,7 @@ func (c *captureWin) Start() error {
 	// file even though older segments have already been pruned.
 	segmentListSize := constants.ScreenCaptureSegmentRetention/segSeconds + 2
 	segPattern := filepath.Join(segDir, "seg-%06d"+ext)
-	segList := filepath.Join(segDir, "segments.csv")
+	segList := filepath.Join(segDir, segmentIndexName)
 
 	args := []string{
 		"-loglevel", "warning",
@@ -422,7 +427,10 @@ func (c *captureWin) Start() error {
 	c.cmd = cmd
 	c.rawStdin = rawStdin
 	c.segDir = segDir
-	c.started = time.Now()
+	// started is anchored by captureLoop when the first frame reaches the
+	// encoder, which is media t=0. Any earlier anchor would offset every replay
+	// window by the capture startup delay.
+	c.started = time.Time{}
 	doneCh := make(chan struct{})
 	captureDoneCh := make(chan struct{})
 	writerDoneCh := make(chan struct{})
@@ -618,42 +626,23 @@ func (c *captureWin) Segments(dir string, sessionStart, start, end time.Time) ([
 		return nil, 0, false
 	}
 
-	startRel := start.Sub(sessionStart).Seconds()
-	if startRel < 0 {
-		startRel = 0
+	windowStart := start.Sub(sessionStart).Seconds()
+	if windowStart < 0 {
+		windowStart = 0
 	}
-	endRel := end.Sub(sessionStart).Seconds()
-	const epsilon = 0.05
+	windowEnd := end.Sub(sessionStart).Seconds()
 
-	var paths []string
-	var firstStart, previousEnd float64
-	for _, e := range entries {
-		if e.endSec <= startRel {
-			continue
-		}
-		if e.startSec >= endRel {
-			break
-		}
-		if len(paths) == 0 {
-			// Do not silently clamp a run whose beginning has already fallen out
-			// of the rolling buffer; that produces a plausible but wrong replay.
-			if e.startSec > startRel+epsilon {
-				return nil, 0, false
-			}
-			firstStart = e.startSec
-		} else if e.startSec > previousEnd+epsilon {
-			// CSV entries must cover one continuous media timeline. A gap means
-			// the retention window or a failed segment has made this replay unsafe.
-			return nil, 0, false
-		}
+	selected, firstStart, ok := selectSegmentRange(entries, windowStart, windowEnd)
+	if !ok {
+		return nil, 0, false
+	}
+
+	paths := make([]string, 0, len(selected))
+	for _, e := range selected {
 		if _, err := os.Stat(e.path); err != nil {
 			return nil, 0, false
 		}
 		paths = append(paths, e.path)
-		previousEnd = e.endSec
-	}
-	if len(paths) == 0 || previousEnd < endRel-epsilon {
-		return nil, 0, false
 	}
 	for _, path := range paths {
 		c.segmentLeases[path]++
@@ -695,17 +684,12 @@ func (c *captureWin) ReleaseSession(dir string) {
 
 // --- segment index (segments.csv) ---
 
-type segmentEntry struct {
-	path             string
-	startSec, endSec float64
-}
-
 // readSegmentIndex parses the segment_list CSV ffmpeg maintains alongside a
 // capture session's segment files. Rows are appended by ffmpeg only once a
 // segment is fully closed, so this file also doubles as the "is this segment
 // safe to read" signal.
 func readSegmentIndex(dir string) ([]segmentEntry, error) {
-	f, err := os.Open(filepath.Join(dir, "segments.csv"))
+	f, err := os.Open(filepath.Join(dir, segmentIndexName))
 	if err != nil {
 		return nil, err
 	}
@@ -760,33 +744,35 @@ func (c *captureWin) pruneLoop(dir string, done <-chan struct{}) {
 	}
 }
 
-// pruneOldSegments deletes closed segment files older than the retention
-// window. The most-recently-modified file is never deleted, even if it is
-// older than the retention window, as a safety margin against deleting the
-// segment ffmpeg currently has open.
+// pruneOldSegments deletes closed segment files outside the retention window.
+// Retention is measured against the index's media timestamps rather than file
+// mtimes, because mtime and media time diverge whenever the producer and
+// encoder fall out of step, and deleting a segment the index still references
+// makes that window untrimmable. The newest file is always kept as a safety
+// margin against deleting the segment ffmpeg currently has open.
 func (c *captureWin) pruneOldSegments(dir string) {
 	c.segmentsMu.Lock()
 	defer c.segmentsMu.Unlock()
 
-	entries, err := os.ReadDir(dir)
+	dirEntries, err := os.ReadDir(dir)
 	if err != nil {
 		return
 	}
 
-	type fileInfo struct {
+	type mediaFile struct {
 		path    string
 		modTime time.Time
 	}
-	var files []fileInfo
-	for _, e := range entries {
-		if e.IsDir() || e.Name() == "segments.csv" {
+	var files []mediaFile
+	for _, e := range dirEntries {
+		if e.IsDir() || e.Name() == segmentIndexName {
 			continue
 		}
 		info, err := e.Info()
 		if err != nil {
 			continue
 		}
-		files = append(files, fileInfo{path: filepath.Join(dir, e.Name()), modTime: info.ModTime()})
+		files = append(files, mediaFile{path: filepath.Join(dir, e.Name()), modTime: info.ModTime()})
 	}
 	if len(files) <= 1 {
 		return
@@ -795,9 +781,36 @@ func (c *captureWin) pruneOldSegments(dir string) {
 	sort.Slice(files, func(i, j int) bool { return files[i].modTime.Before(files[j].modTime) })
 	files = files[:len(files)-1] // never delete the most recent (possibly still-open) segment
 
-	cutoff := time.Now().Add(-time.Duration(constants.ScreenCaptureSegmentRetention) * time.Second)
+	// The index records the media-time range of every segment ffmpeg has fully
+	// closed. Prune against those timestamps so a listed segment is never
+	// removed while it is still inside the retention window.
+	entries, _ := readSegmentIndex(dir)
+	listedEnd := make(map[string]float64, len(entries))
+	latestEnd := 0.0
+	for _, e := range entries {
+		listedEnd[filepath.Base(e.path)] = e.endSec
+		if e.endSec > latestEnd {
+			latestEnd = e.endSec
+		}
+	}
+
+	mediaCutoff := latestEnd - float64(constants.ScreenCaptureSegmentRetention)
+	mtimeCutoff := time.Now().Add(-time.Duration(constants.ScreenCaptureSegmentRetention) * time.Second)
 	for _, f := range files {
-		if f.modTime.Before(cutoff) && c.segmentLeases[f.path] == 0 {
+		if c.segmentLeases[f.path] != 0 {
+			continue
+		}
+		if endSec, ok := listedEnd[filepath.Base(f.path)]; ok {
+			if endSec < mediaCutoff {
+				_ = os.Remove(f.path)
+			}
+			continue
+		}
+		// Not in the index: either the segment ffmpeg currently has open or one
+		// already dropped from the bounded live list. Only a file older than the
+		// retention window is safe to remove; an open segment keeps a recent
+		// mtime.
+		if f.modTime.Before(mtimeCutoff) {
 			_ = os.Remove(f.path)
 		}
 	}
@@ -823,52 +836,203 @@ func (c *captureWin) captureLoop() {
 	interval := time.Second / time.Duration(fps)
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
+	var clock *frameClock
+	lastPacingLog := time.Now()
 	for {
 		select {
 		case <-c.doneCh:
 			return
-		case <-ticker.C:
-			c.captureFrame()
+		case now := <-ticker.C:
+			// Emit nothing while ahead of wall time so the frame count cannot
+			// outrun the media timeline.
+			if clock != nil && clock.due(now) == 0 {
+				continue
+			}
+			frame := c.nextFrame()
+			if frame == nil {
+				// No frame could be produced this tick (no free buffer, no frame
+				// yet, or a transient capture error). The deficit is retried on a
+				// later tick rather than permanently lost.
+				continue
+			}
+			emittedAt := time.Now()
+			if c.sendFrame(frame) {
+				if clock == nil {
+					// Anchor the media timeline and the capture session to the
+					// first frame handed to the encoder. Replay windows are
+					// measured from this instant, so it must be media t=0 rather
+					// than the earlier process start.
+					clock = newFrameClock(fps, emittedAt)
+					c.setSessionStart(emittedAt)
+				}
+				clock.frameEmitted()
+			}
+			if clock == nil {
+				continue
+			}
+			c.padToClock(clock, emittedAt)
+
+			stats := clock.stats(emittedAt)
+			if stats.Skew > pacingMaxSkew {
+				// A stall this large (system sleep, a wedged encoder) cannot be
+				// padded away without shifting every later replay. Restart the
+				// session so the timeline is re-anchored instead of exporting
+				// plausible-but-wrong clips for the rest of the session.
+				c.reportFailure(fmt.Errorf("capture media timeline fell %s behind wall time", stats.Skew.Round(time.Second)))
+				return
+			}
+			if emittedAt.Sub(lastPacingLog) >= pacingLogInterval {
+				lastPacingLog = emittedAt
+				runtime.LogDebugf(c.ctx,
+					"screen/pacing: emitted=%d media=%s wall=%s skew=%s",
+					stats.Emitted,
+					stats.Media.Round(time.Millisecond),
+					stats.Wall.Round(time.Millisecond),
+					stats.Skew.Round(time.Millisecond),
+				)
+			}
 		}
 	}
 }
 
-func (c *captureWin) repeatLatestFrame() {
-	c.mu.Lock()
-	freeFrames := c.freeFrames
-	pipeCh := c.pipeChan
-	done := c.doneCh
-	running := c.running
-	c.mu.Unlock()
-	if !running || freeFrames == nil || pipeCh == nil {
-		return
-	}
+// pacingLogInterval bounds how often media/wall pacing diagnostics are logged.
+const pacingLogInterval = 30 * time.Second
 
-	c.latestMu.RLock()
-	if !c.latestReady || len(c.latestFrame) == 0 {
-		c.latestMu.RUnlock()
-		return
-	}
-	var frame []byte
-	select {
-	case frame = <-freeFrames:
-	default:
-		c.latestMu.RUnlock()
-		return
-	}
-	copy(frame, c.latestFrame)
-	c.latestMu.RUnlock()
+// pacingMaxSkew is the largest media/wall divergence that padding attempts to
+// absorb. Beyond it the session is restarted so the timeline is re-anchored.
+const pacingMaxSkew = 10 * time.Second
 
-	select {
-	case <-done:
-		freeFrames <- frame
-	case pipeCh <- frame:
-	default:
-		freeFrames <- frame
+// errNoNewFrame reports that desktop duplication has no pending change, so the
+// capture loop repeats the latest frame instead of blocking on the desktop.
+var errNoNewFrame = fmt.Errorf("no new desktop frame")
+
+// padToClock emits duplicate frames until the media timeline catches up with
+// wall time. A dropped frame leaves a deficit instead of permanently
+// shortening the timeline; the loop stops as soon as the encoder cannot accept
+// another frame and resumes on a later tick.
+func (c *captureWin) padToClock(clock *frameClock, now time.Time) {
+	for clock.due(now) > 0 {
+		frame := c.nextDuplicate()
+		if frame == nil {
+			return
+		}
+		if !c.sendFrame(frame) {
+			return
+		}
+		clock.frameEmitted()
 	}
 }
 
-func (c *captureWin) captureFrame() {
+// setSessionStart anchors the session clock to media t=0, the moment the first
+// frame reaches the encoder.
+func (c *captureWin) setSessionStart(t time.Time) {
+	c.mu.Lock()
+	if c.running && c.started.IsZero() {
+		c.started = t
+	}
+	c.mu.Unlock()
+}
+
+// nextFrame returns a buffer holding the newest desktop frame, falling back to
+// a copy of the most recent frame when the desktop has not changed. It returns
+// nil when a frame cannot be produced without blocking the capture loop.
+func (c *captureWin) nextFrame() []byte {
+	buf := c.acquireBuffer()
+	if buf == nil {
+		return nil
+	}
+	if err := c.captureInto(buf); err != nil {
+		if err == errNoNewFrame {
+			if c.duplicateLatest(buf) {
+				return buf
+			}
+		} else {
+			c.warnCapturef("screen: capture frame: %v", err)
+			c.reportFailure(err)
+		}
+		c.releaseBuffer(buf)
+		return nil
+	}
+	return buf
+}
+
+// nextDuplicate returns a buffer holding a copy of the most recent frame, or
+// nil when none is available.
+func (c *captureWin) nextDuplicate() []byte {
+	buf := c.acquireBuffer()
+	if buf == nil {
+		return nil
+	}
+	if !c.duplicateLatest(buf) {
+		c.releaseBuffer(buf)
+		return nil
+	}
+	return buf
+}
+
+// acquireBuffer takes a frame buffer from the pool without blocking. Returning
+// nil drops this attempt instead of stalling the capture loop, which would
+// reintroduce media/wall drift.
+func (c *captureWin) acquireBuffer() []byte {
+	c.mu.Lock()
+	freeFrames := c.freeFrames
+	c.mu.Unlock()
+	if freeFrames == nil {
+		return nil
+	}
+	select {
+	case buf := <-freeFrames:
+		return buf
+	default:
+		return nil
+	}
+}
+
+func (c *captureWin) releaseBuffer(buf []byte) {
+	c.mu.Lock()
+	freeFrames := c.freeFrames
+	c.mu.Unlock()
+	if freeFrames == nil {
+		return
+	}
+	select {
+	case freeFrames <- buf:
+	default:
+	}
+}
+
+// sendFrame hands a filled buffer to the writer. Ownership transfers to the
+// writer on success; on failure the buffer is returned to the pool.
+func (c *captureWin) sendFrame(frame []byte) bool {
+	c.mu.Lock()
+	running := c.running
+	pipeCh := c.pipeChan
+	done := c.doneCh
+	freeFrames := c.freeFrames
+	c.mu.Unlock()
+
+	if !running || pipeCh == nil || freeFrames == nil {
+		if freeFrames != nil {
+			freeFrames <- frame
+		}
+		return false
+	}
+	select {
+	case <-done:
+		freeFrames <- frame
+		return false
+	case pipeCh <- frame:
+		return true
+	default:
+		freeFrames <- frame
+		return false
+	}
+}
+
+// captureInto copies the newest desktop frame into dst. It returns
+// errNoNewFrame when desktop duplication has no pending change so the caller
+// can repeat the latest frame rather than block.
+func (c *captureWin) captureInto(dst []byte) error {
 	c.mu.Lock()
 	dup := c.dup
 	d3dCtx := c.d3dCtx
@@ -876,105 +1040,79 @@ func (c *captureWin) captureFrame() {
 	stride := c.stride
 	width := c.width
 	height := c.height
-	freeFrames := c.freeFrames
-	pipeCh := c.pipeChan
-	done := c.doneCh
+	running := c.running
 	c.mu.Unlock()
-
-	if dup == 0 || freeFrames == nil || pipeCh == nil {
-		return
+	if !running || dup == 0 || d3dCtx == 0 || staging == 0 {
+		return errNoNewFrame
 	}
 
-	// GPU work — fast, must not block on the mutex.
-	dxgiResource, err := dxgiAcquireNextFrame(dup, 50)
+	// A zero timeout is deliberate. Blocking here (previously 50ms) caps the
+	// capture rate on a static desktop and lets media time fall behind wall
+	// time; the capture loop pads the gap with a repeated frame instead.
+	resource, err := dxgiAcquireNextFrame(dup, 0)
 	if err != nil {
 		if err == errDxgiWaitTimeout {
-			c.repeatLatestFrame()
-			return
+			return errNoNewFrame
 		}
-		c.warnCapturef("screen: AcquireNextFrame: %v", err)
-		c.reportFailure(err)
-		return
+		return err
 	}
-
-	// QueryInterface for ID3D11Texture2D — the resource from
-	// AcquireNextFrame is an IDXGIResource, not usable directly with D3D11.
-	iidTex2D := guidFromString("6f15aaf2-d208-4e89-9ab4-489535d34f9c")
-	var d3dTex uintptr
-	_ = comQueryInterface(dxgiResource, &iidTex2D, &d3dTex)
-	iUnknownRelease(dxgiResource)
-	if d3dTex == 0 {
-		_ = dxgiReleaseFrame(dup)
-		c.reportFailure(fmt.Errorf("QueryInterface(ID3D11Texture2D) returned null"))
-		return
-	}
-	defer iUnknownRelease(d3dTex)
 	defer dxgiReleaseFrame(dup)
 
-	// Never write into a buffer until the writer has explicitly returned it.
-	// The old ring index could wrap to a frame still being written to ffmpeg,
-	// yielding intermittent corrupt video under backpressure.
-	var currentBuf []byte
-	select {
-	case currentBuf = <-freeFrames:
-	default:
-		return
+	// QueryInterface for ID3D11Texture2D — the resource from AcquireNextFrame
+	// is an IDXGIResource, not usable directly with D3D11.
+	var d3dTex uintptr
+	_ = comQueryInterface(resource, &id3d11Texture2D, &d3dTex)
+	iUnknownRelease(resource)
+	if d3dTex == 0 {
+		return fmt.Errorf("QueryInterface(ID3D11Texture2D) returned null")
 	}
-	returned := false
-	defer func() {
-		if !returned {
-			freeFrames <- currentBuf
-		}
-	}()
+	defer iUnknownRelease(d3dTex)
 
 	d3d11CopyResource(d3dCtx, staging, d3dTex)
 
-	// Lock before touching mapped surfaces; Stop() may have been called.
-	c.mu.Lock()
-	if !c.running || c.dup == 0 {
-		c.mu.Unlock()
-		return
-	}
-
+	// Map/copy/unmap run without c.mu. Stop() releases the D3D resources only
+	// after captureLoop has exited (it waits on captureDone), so staging stays
+	// valid here; holding c.mu across a full-frame copy would instead stall the
+	// writer and status polling for the duration of every frame.
 	mapped, err := d3d11Map(d3dCtx, staging, 0, 1)
 	if err != nil {
-		c.warnCapturef("screen: %v", err)
-		c.mu.Unlock()
-		c.reportFailure(err)
-		return
+		return err
 	}
 
 	// Memory copy — zero allocations.
 	pixelSize := int(width) * int(height) * 4
 	rowPitch := mapped.RowPitch
 	if rowPitch == stride {
-		copy(currentBuf, bytesFromPtr(mapped.pData, pixelSize))
+		copy(dst, bytesFromPtr(mapped.pData, pixelSize))
 	} else {
 		srcBytes := bytesFromPtr(mapped.pData, int(height)*int(rowPitch))
 		for y := uint32(0); y < height; y++ {
 			srcOff := int(y * rowPitch)
 			dstOff := int(y * stride)
-			sLen := int(stride)
-			copy(currentBuf[dstOff:dstOff+sLen], srcBytes[srcOff:srcOff+sLen])
+			copy(dst[dstOff:dstOff+int(stride)], srcBytes[srcOff:srcOff+int(stride)])
 		}
 	}
 
 	d3d11Unmap(d3dCtx, staging, 0)
-	c.mu.Unlock()
 
+	// Publish as the newest frame so a static desktop can repeat it.
 	c.latestMu.Lock()
-	copy(c.latestFrame, currentBuf)
+	copy(c.latestFrame, dst)
 	c.latestReady = true
 	c.latestMu.Unlock()
+	return nil
+}
 
-	select {
-	case <-done:
-		return
-	case pipeCh <- currentBuf:
-		returned = true
-	default:
-		return
+// duplicateLatest copies the most recent frame into dst. It returns false when
+// no frame has been captured yet or the buffer sizes do not match.
+func (c *captureWin) duplicateLatest(dst []byte) bool {
+	c.latestMu.RLock()
+	defer c.latestMu.RUnlock()
+	if !c.latestReady || len(c.latestFrame) == 0 || len(c.latestFrame) != len(dst) {
+		return false
 	}
+	copy(dst, c.latestFrame)
+	return true
 }
 
 // --- dedicated writer goroutine ---
@@ -1050,6 +1188,11 @@ var (
 	errDxgiWaitTimeout = fmt.Errorf("DXGI_ERROR_WAIT_TIMEOUT")
 	errDxgiAccessLost  = fmt.Errorf("DXGI_ERROR_ACCESS_LOST")
 )
+
+// id3d11Texture2D is the IID queried for every copied desktop frame. It is
+// parsed once at package init: guidFromString uses reflection-based formatting,
+// which is far too expensive to run on the capture hot path.
+var id3d11Texture2D = guidFromString("6f15aaf2-d208-4e89-9ab4-489535d34f9c")
 
 type mappedSubresource struct {
 	pData      uintptr

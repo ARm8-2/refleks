@@ -7,8 +7,14 @@ import {
   PopoverTrigger,
   Widget,
 } from "@/shared/components";
-import { usePersistedState } from "@/shared/hooks";
-import { CHART_SERIES_COLORS, STORAGE_KEYS } from "@/shared/lib";
+import {
+  useAnimatedNumber,
+  useInView,
+  usePersistedState,
+  useReveal,
+  REVEAL_DELAY_MS,
+} from "@/shared/hooks";
+import { CHART_SERIES_COLORS, STORAGE_KEYS, useI18n } from "@/shared/lib";
 import { Pencil, Plus, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { RecentSessionSnapshot } from "../../hooks/useRecentSessionSnapshot";
@@ -22,6 +28,11 @@ const PHASE_SWATCH = {
   diminishingFill: "var(--phase-diminishing-soft)",
 } as const;
 
+function clamp01(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(1, value));
+}
+
 type SessionProgressTargetEditorProps = {
   targetRuns: number;
   isCustom: boolean;
@@ -33,6 +44,7 @@ function SessionProgressTargetEditor({
   isCustom,
   onChange,
 }: SessionProgressTargetEditorProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [draftTarget, setDraftTarget] = useState(targetRuns);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -99,11 +111,13 @@ function SessionProgressTargetEditor({
           variant={isCustom ? "secondary" : "ghost"}
           size="sm"
           className="h-7 gap-1.5 px-2 text-xs"
-          title="Edit session target"
+          title={t("overview.sessionProgress.editTarget")}
         >
           <span className="tabular-nums">{targetRuns}</span>
           <span className="text-surface-muted-foreground">
-            target{isCustom ? "" : " auto"}
+            {isCustom
+              ? t("overview.sessionProgress.target")
+              : t("overview.sessionProgress.targetAuto")}
           </span>
           <Pencil className="h-3 w-3" />
         </Button>
@@ -112,7 +126,7 @@ function SessionProgressTargetEditor({
       <PopoverContent align="end" className="w-56 p-2">
         <div className="space-y-2">
           <div className="px-1 text-[0.625rem] font-medium uppercase tracking-wide text-surface-muted-foreground">
-            Session target runs
+            {t("overview.sessionProgress.targetRuns")}
           </div>
 
           <div className="flex items-center gap-1">
@@ -158,7 +172,9 @@ function SessionProgressTargetEditor({
 
           <div className="flex items-center justify-between gap-2 px-1 pt-1">
             <span className="text-xs text-surface-muted-foreground">
-              {isCustom ? "Custom target" : "Automatic target"}
+              {isCustom
+                ? t("overview.sessionProgress.customTarget")
+                : t("overview.sessionProgress.automaticTarget")}
             </span>
             <div className="flex items-center gap-1">
               {isCustom && (
@@ -174,7 +190,7 @@ function SessionProgressTargetEditor({
                   }}
                 >
                   <RotateCcw className="h-3 w-3" />
-                  Reset
+                  {t("common.actions.reset")}
                 </Button>
               )}
             </div>
@@ -190,6 +206,7 @@ export function SessionProgressWidget({
 }: {
   snapshot: RecentSessionSnapshot;
 }) {
+  const { t } = useI18n();
   const {
     currentSession,
     currentRuns,
@@ -207,33 +224,79 @@ export function SessionProgressWidget({
   const targetRuns = customTarget ?? suggestedRuns;
   const isCustom = customTarget !== null;
 
+  // Gauge geometry is expressed as a fraction of the full circle. The scale
+  // (maxRun) includes the live run count and the target/suggested values change
+  // as history streams in, so animating fractions lets every load update ease
+  // into place instead of snapping the arc back.
+  const maxRun = Math.max(targetRuns, diminishingReturnsAt, currentRuns, 12);
+
+  const { ref: gaugeRef, inView } = useInView<HTMLDivElement>();
+  const revealed = useReveal(inView, REVEAL_DELAY_MS);
+  const animation = {
+    active: revealed,
+    // The reveal delay above already gates the first tween; later data updates
+    // (the target and run count stream in) animate immediately.
+    delayMs: 0,
+    durationMs: 900,
+  };
+  const runFrac = useAnimatedNumber(clamp01(currentRuns / maxRun), {
+    ...animation,
+    initial: 0,
+  });
+  const pctFrac = useAnimatedNumber(
+    targetRuns > 0 ? clamp01(currentRuns / targetRuns) : 0,
+    { ...animation, initial: 0 },
+  );
+  const runCount = useAnimatedNumber(currentRuns, {
+    ...animation,
+    initial: 0,
+  });
+  // Phase bands and the target marker animate the same way, so when the
+  // recommendation changes mid-load the whole gauge resettles smoothly instead
+  // of redrawing the bands in one jump.
+  const warmupFrac = useAnimatedNumber(clamp01(warmupRuns / maxRun), {
+    ...animation,
+    initial: 0,
+  });
+  const peakStartFrac = useAnimatedNumber(clamp01((peakStart - 1) / maxRun), {
+    ...animation,
+    initial: 0,
+  });
+  const peakEndFrac = useAnimatedNumber(clamp01(peakEnd / maxRun), {
+    ...animation,
+    initial: 0,
+  });
+  const dimFrac = useAnimatedNumber(clamp01(diminishingReturnsAt / maxRun), {
+    ...animation,
+    initial: 1,
+  });
+  const targetFrac = useAnimatedNumber(clamp01(targetRuns / maxRun), {
+    ...animation,
+    initial: 0,
+  });
+
   if (!currentSession) {
     return (
-      <Widget title="Session Progress">
+      <Widget title={t("overview.sessionProgress.title")}>
         <div className="flex h-full items-center justify-center rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
-          Play or import a few runs to see session progress.
+          {t("overview.sessionProgress.empty")}
         </div>
       </Widget>
     );
   }
 
-  const pct =
-    targetRuns > 0
-      ? Math.min(Math.round((currentRuns / targetRuns) * 100), 100)
-      : 0;
+  const pct = Math.round(pctFrac * 100);
+  const shownRuns = Math.round(runCount);
 
-  const maxRun = Math.max(targetRuns, diminishingReturnsAt, currentRuns, 12);
-  const toAngle = (run: number) => 90 - (Math.min(run, maxRun) / maxRun) * 360;
   const showCustomTargetMarker = isCustom && targetRuns < suggestedRuns;
-  const targetAngle = (toAngle(targetRuns) * Math.PI) / 180;
-  const warmupEnd = Math.min(warmupRuns, maxRun);
-  const peakEndClamped = Math.min(peakEnd, maxRun);
-  const dimEnd = Math.min(diminishingReturnsAt, maxRun);
 
   const outerR = 86;
   const innerR = 64;
   const cx = 100;
   const cy = 100;
+  const toAngle = (frac: number) =>
+    ((90 - clamp01(frac) * 360) * Math.PI) / 180;
+  const targetAngle = toAngle(targetFrac);
   const targetMarkerRadius = (outerR + innerR) / 2;
   const targetMarkerInnerRadius = targetMarkerRadius - 4;
   const targetMarkerOuterRadius = targetMarkerRadius + 4;
@@ -242,9 +305,9 @@ export function SessionProgressWidget({
   const targetMarkerX2 = cx + targetMarkerOuterRadius * Math.cos(targetAngle);
   const targetMarkerY2 = cy - targetMarkerOuterRadius * Math.sin(targetAngle);
 
-  function arcPath(startRun: number, endRun: number): string {
-    const a1 = (toAngle(startRun) * Math.PI) / 180;
-    const a2 = (toAngle(endRun) * Math.PI) / 180;
+  function arcPath(startFrac: number, endFrac: number): string {
+    const a1 = toAngle(startFrac);
+    const a2 = toAngle(endFrac);
     const x1 = cx + outerR * Math.cos(a1);
     const y1 = cy - outerR * Math.sin(a1);
     const x2 = cx + outerR * Math.cos(a2);
@@ -259,7 +322,7 @@ export function SessionProgressWidget({
 
   return (
     <Widget
-      title="Session Progress"
+      title={t("overview.sessionProgress.title")}
       headerAction={
         <SessionProgressTargetEditor
           targetRuns={targetRuns}
@@ -268,7 +331,10 @@ export function SessionProgressWidget({
         />
       }
     >
-      <div className="relative mx-auto flex flex-1 items-center justify-center">
+      <div
+        ref={gaugeRef}
+        className="relative mx-auto flex flex-1 items-center justify-center"
+      >
         <div className="relative aspect-square w-full max-w-[10rem] shrink-0">
           <svg viewBox="0 0 200 200" className="h-full w-full">
             <circle
@@ -280,21 +346,21 @@ export function SessionProgressWidget({
               strokeWidth={outerR - innerR}
             />
 
-            <path d={arcPath(0, warmupEnd)} fill={PHASE_SWATCH.warmupFill} />
+            <path d={arcPath(0, warmupFrac)} fill={PHASE_SWATCH.warmupFill} />
             <path
-              d={arcPath(peakStart - 1, peakEndClamped)}
+              d={arcPath(peakStartFrac, peakEndFrac)}
               fill={PHASE_SWATCH.peakFill}
             />
-            {dimEnd < maxRun && (
+            {dimFrac < 1 && (
               <path
-                d={arcPath(dimEnd, maxRun)}
+                d={arcPath(dimFrac, 1)}
                 fill={PHASE_SWATCH.diminishingFill}
               />
             )}
 
-            {currentRuns > 0 && (
+            {runFrac > 0 && (
               <path
-                d={arcPath(0, currentRuns)}
+                d={arcPath(0, runFrac)}
                 fill={CHART_SERIES_COLORS.scoreHistory}
                 opacity={0.55}
               />
@@ -319,7 +385,7 @@ export function SessionProgressWidget({
               dominantBaseline="middle"
               className="fill-foreground text-2xl font-bold"
             >
-              {currentRuns}
+              {shownRuns}
             </text>
             <text
               x={cx}
@@ -328,7 +394,9 @@ export function SessionProgressWidget({
               dominantBaseline="middle"
               className="fill-surface-muted-foreground text-[0.6875rem]"
             >
-              / {targetRuns} target
+              {t("overview.sessionProgress.targetSuffix", {
+                count: targetRuns,
+              })}
             </text>
             <text
               x={cx}
@@ -350,7 +418,9 @@ export function SessionProgressWidget({
                   className="inline-block h-2 w-2 rounded-full"
                   style={{ background: PHASE_SWATCH.warmup }}
                 />
-                <span className="text-popover-foreground/70">Warm-up</span>
+                <span className="text-popover-foreground/70">
+                  {t("overview.sessionProgress.warmup")}
+                </span>
                 <span className="ml-auto font-medium text-popover-foreground">
                   1–{warmupRuns}
                 </span>
@@ -360,7 +430,9 @@ export function SessionProgressWidget({
                   className="inline-block h-2 w-2 rounded-full"
                   style={{ background: PHASE_SWATCH.peak }}
                 />
-                <span className="text-popover-foreground/70">Peak</span>
+                <span className="text-popover-foreground/70">
+                  {t("overview.sessionProgress.peak")}
+                </span>
                 <span className="ml-auto font-medium text-popover-foreground">
                   {peakStart}–{peakEnd}
                 </span>
@@ -370,7 +442,9 @@ export function SessionProgressWidget({
                   className="inline-block h-2 w-2 rounded-full"
                   style={{ background: PHASE_SWATCH.diminishing }}
                 />
-                <span className="text-popover-foreground/70">Diminishing</span>
+                <span className="text-popover-foreground/70">
+                  {t("overview.sessionProgress.diminishing")}
+                </span>
                 <span className="ml-auto font-medium text-popover-foreground">
                   {diminishingReturnsAt}+
                 </span>

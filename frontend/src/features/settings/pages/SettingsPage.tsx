@@ -26,23 +26,33 @@ import {
   DEFAULT_SCALE,
   EXTERNAL_LINKS,
   FONTS,
-  MISSING_VALUE,
   SCALES,
   STORAGE_KEYS,
   THEMES,
+  buildCustomThemeTemplate,
   checkForUpdates,
   downloadAndInstallUpdate,
+  ensureCustomThemeFile,
+  getCustomThemeCSS,
   getScreenCaptureInfo,
   getSettings,
   getVersion,
+  injectCustomTheme,
+  openCustomThemeCSS,
   openURL,
   quitApp,
+  removeCustomTheme,
   setAutostart,
   setFont,
   setScale,
   setTheme,
+  translateMessage,
   updateSettings,
+  useI18n,
+  writeCustomThemeCSS,
   type Font,
+  type Locale,
+  type MessageKey,
   type Scale,
   type Theme,
 } from "@/shared/lib";
@@ -59,43 +69,65 @@ import { ResetSettingsModal } from "../components/ResetSettingsModal";
 import { SettingsField } from "../components/SettingsField";
 import { SettingsSection } from "../components/SettingsSection";
 
-const themeOptions = THEMES.map((t) => ({
-  label: t
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" "),
-  value: t,
-}));
+const THEME_LABEL_KEYS: Record<Theme, MessageKey> = {
+  dark: "settings.appearance.themeDark",
+  light: "settings.appearance.themeLight",
+  custom: "settings.appearance.themeCustom",
+};
+
 const fontOptions = FONTS.map((f) => ({ label: f.label, value: f.id }));
 const scaleOptions = SCALES.map((s) => ({ label: s.label, value: s.id }));
-const sessionGapOptions = [5, 10, 15, 20, 30, 45, 60, 90, 120].map((m) => ({
-  label: `${m} minutes`,
-  value: String(m),
-}));
-
-const replayRetentionOptions = [
-  { label: "Unlimited", value: "0" },
-  { label: "1 day", value: "1" },
-  { label: "2 days", value: "2" },
-  { label: "4 days", value: "4" },
-  { label: "1 week", value: "7" },
-  { label: "2 weeks", value: "14" },
-  { label: "1 month", value: "30" },
+const sessionGapMinutes = [5, 10, 15, 20, 30, 45, 60, 90, 120];
+// Language names are shown in their own language by convention.
+const languageOptions = [
+  { label: "English", value: "en" },
+  { label: "Nederlands", value: "nl" },
+  { label: "Español", value: "es" },
+  { label: "简体中文", value: "zh-CN" },
+  { label: "日本語", value: "ja" },
+  { label: "Русский", value: "ru" },
+];
+const replayRetentionOptionValues: { value: string; key: MessageKey }[] = [
+  { value: "0", key: "common.actions.unlimited" },
+  { value: "1", key: "settings.general.replayAge1d" },
+  { value: "2", key: "settings.general.replayAge2d" },
+  { value: "4", key: "settings.general.replayAge4d" },
+  { value: "7", key: "settings.general.replayAge1w" },
+  { value: "14", key: "settings.general.replayAge2w" },
+  { value: "30", key: "settings.general.replayAge1m" },
 ];
 
-const replayStorageOptions = [
-  { label: "Unlimited", value: "0" },
-  { label: "1 GB", value: "1" },
-  { label: "2 GB", value: "2" },
-  { label: "5 GB", value: "5" },
-  { label: "10 GB", value: "10" },
-  { label: "25 GB", value: "25" },
+const replayStorageOptionValues: { value: string; key: MessageKey }[] = [
+  { value: "0", key: "common.actions.unlimited" },
+  { value: "1", key: "settings.general.storage1gb" },
+  { value: "2", key: "settings.general.storage2gb" },
+  { value: "5", key: "settings.general.storage5gb" },
+  { value: "10", key: "settings.general.storage10gb" },
+  { value: "25", key: "settings.general.storage25gb" },
 ];
 
 export function SettingsPage() {
   const setSessionGap = useStore((s) => s.setSessionGap);
   const setSessionNotes = useStore((s) => s.setSessionNotes);
   const availableUpdate = useAvailableUpdate();
+  const { locale, setLocale, t } = useI18n();
+
+  const themeOptions = THEMES.map((theme) => ({
+    label: t(THEME_LABEL_KEYS[theme]),
+    value: theme,
+  }));
+  const sessionGapOptions = sessionGapMinutes.map((m) => ({
+    label: t("settings.general.sessionGapMinutes", { count: m }),
+    value: String(m),
+  }));
+  const replayRetentionOptions = replayRetentionOptionValues.map((option) => ({
+    label: t(option.key),
+    value: option.value,
+  }));
+  const replayStorageOptions = replayStorageOptionValues.map((option) => ({
+    label: t(option.key),
+    value: option.value,
+  }));
 
   const [settings, setSettings] = useState<Settings | null>(null);
   const [showAdvanced, setShowAdvanced] = usePersistedState(
@@ -167,7 +199,7 @@ export function SettingsPage() {
       })
       .catch((error: unknown) => {
         console.error("Save error:", error);
-        alert("Failed to save settings");
+        alert(t("settings.errors.failedToSaveSettings"));
         throw error;
       })
       .finally(() => {
@@ -201,14 +233,57 @@ export function SettingsPage() {
       updateField("autostartEnabled", enabled);
     } catch (e) {
       console.error("setAutostart error:", e);
-      alert("Failed to update autostart: " + (e as Error)?.message);
+      alert(
+        translateMessage(e) || t("settings.errors.failedToUpdateAutostart"),
+      );
     }
   };
 
-  const handleThemeChange = (value: string) => {
+  const handleThemeChange = async (value: string) => {
     const theme = value as Theme;
+    try {
+      if (theme === "custom") {
+        // Generate the stylesheet on first use, then apply it on top of the
+        // active base theme (the class on <html> stays untouched).
+        await ensureCustomThemeFile();
+      } else {
+        removeCustomTheme();
+      }
+    } catch (e) {
+      console.error("Custom theme apply error:", e);
+      alert(t("settings.appearance.themeFileWriteFailed"));
+      return;
+    }
     setTheme(theme);
     updateField("theme", theme, true);
+  };
+
+  const handleOpenThemeFile = async () => {
+    try {
+      // Recreate the file if it was deleted manually, then open it with the
+      // system's default handler (e.g. a text editor).
+      if (!(await getCustomThemeCSS())) {
+        await writeCustomThemeCSS(buildCustomThemeTemplate());
+      }
+      await openCustomThemeCSS();
+    } catch (e) {
+      console.error("Open custom theme file error:", e);
+      alert(t("settings.appearance.themeFileOpenFailed"));
+    }
+  };
+
+  const handleRegenerateThemeFile = async () => {
+    if (!window.confirm(t("settings.appearance.themeFileRegenerateConfirm"))) {
+      return;
+    }
+    try {
+      const template = buildCustomThemeTemplate();
+      await writeCustomThemeCSS(template);
+      injectCustomTheme(template);
+    } catch (e) {
+      console.error("Regenerate custom theme error:", e);
+      alert(t("settings.appearance.themeFileWriteFailed"));
+    }
   };
 
   const handleFontChange = (value: string) => {
@@ -223,6 +298,12 @@ export function SettingsPage() {
     updateField("scale", scale, true);
   };
 
+  const handleLanguageChange = (value: string) => {
+    const language = value as Locale;
+    setLocale(language);
+    updateField("language", language, true);
+  };
+
   const handleCheckUpdate = async () => {
     setChecking(true);
     setCheckError("");
@@ -231,7 +312,7 @@ export function SettingsPage() {
       setUpdate(info);
       setAvailableUpdate(info);
     } catch (e) {
-      setCheckError((e as Error)?.message || "Failed to check for updates");
+      setCheckError(translateMessage(e) || t("settings.updates.failedToCheck"));
     } finally {
       setChecking(false);
     }
@@ -243,7 +324,9 @@ export function SettingsPage() {
     try {
       await downloadAndInstallUpdate(update?.latestVersion ?? "");
     } catch (e) {
-      setDownloadError((e as Error)?.message || "Failed to download update");
+      setDownloadError(
+        translateMessage(e) || t("settings.updates.failedToDownload"),
+      );
       setDownloading(false);
     }
     // On success the app quits — no need to reset state
@@ -319,8 +402,13 @@ export function SettingsPage() {
       setSettings(current);
       setHasUnsavedChanges(false);
       setTheme(current.theme);
+      // A reset restores a built-in theme; drop any injected custom styles.
+      if (current.theme !== "custom") {
+        removeCustomTheme();
+      }
       if (current.font) setFont(current.font);
       if (current.scale) setScale(current.scale);
+      setLocale(current.language);
       setSessionGap(current.sessionGapMinutes);
       setSessionNotes(current.sessionNotes ?? {});
     } catch (e) {
@@ -332,7 +420,7 @@ export function SettingsPage() {
     return (
       <div className="flex h-full flex-col overflow-hidden text-sm">
         <div className="p-5 text-surface-muted-foreground">
-          Loading settings...
+          {t("settings.page.loading")}
         </div>
       </div>
     );
@@ -342,10 +430,11 @@ export function SettingsPage() {
     <div className="flex flex-1 flex-col overflow-hidden text-sm">
       <div className="sticky top-0 z-10 bg-canvas/95 px-5 py-4 backdrop-blur">
         <div className="space-y-0.5">
-          <h1 className="text-lg font-semibold text-foreground">Settings</h1>
+          <h1 className="text-lg font-semibold text-foreground">
+            {t("settings.page.title")}
+          </h1>
           <p className="text-xs text-surface-muted-foreground">
-            General behavior, privacy, appearance, and advanced integration
-            options.
+            {t("settings.page.description")}
           </p>
         </div>
       </div>
@@ -353,14 +442,14 @@ export function SettingsPage() {
       <div className="min-h-0 flex-1 overflow-y-auto p-5">
         <div className="space-y-4">
           <SettingsSection
-            title="Updates"
-            description="Check for the latest version, reopen the welcome screen, and review the current release."
+            title={t("settings.updates.title")}
+            description={t("settings.updates.description")}
           >
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm text-surface-muted-foreground">
-                Current version:{" "}
+                {t("settings.updates.currentVersion")}{" "}
                 <span className="font-mono text-foreground">
-                  {currentVersion || MISSING_VALUE}
+                  {currentVersion || t("common.missingValue")}
                 </span>
               </span>
               <Button
@@ -372,7 +461,7 @@ export function SettingsPage() {
                 {checking ? (
                   <RefreshCw className="h-4 w-4 animate-spin" />
                 ) : (
-                  "Check for Updates"
+                  t("settings.updates.checkForUpdates")
                 )}
               </Button>
               <Button
@@ -381,14 +470,14 @@ export function SettingsPage() {
                 variant="outline"
                 size="sm"
               >
-                Read Welcome Again
+                {t("settings.updates.readWelcomeAgain")}
               </Button>
               {checkError && (
                 <span className="text-sm text-destructive">{checkError}</span>
               )}
               {update && !update.hasUpdate && (
                 <span className="text-sm text-surface-muted-foreground">
-                  You're on the latest version!
+                  {t("settings.updates.upToDate")}
                 </span>
               )}
             </div>
@@ -396,15 +485,20 @@ export function SettingsPage() {
               <div className="space-y-3 rounded-xl bg-surface p-4 shadow-sm">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-foreground">
-                    Version {update.latestVersion} available
+                    {t("settings.updates.versionAvailable", {
+                      version: update.latestVersion,
+                    })}
                   </span>
                 </div>
                 <p className="text-xs text-surface-muted-foreground">
-                  You&apos;re on{" "}
-                  {update.currentVersion || currentVersion || MISSING_VALUE}.
-                  Click <strong>Install Update</strong> to download in the
-                  background — the app will close and the installer will launch
-                  automatically.
+                  {t("settings.updates.installBannerPrefix", {
+                    version:
+                      update.currentVersion ||
+                      currentVersion ||
+                      t("common.missingValue"),
+                  })}{" "}
+                  <strong>{t("settings.updates.installUpdate")}</strong>{" "}
+                  {t("settings.updates.installBannerSuffix")}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
@@ -416,12 +510,12 @@ export function SettingsPage() {
                     {downloading ? (
                       <>
                         <RefreshCw className="mr-1.5 h-4 w-4 animate-spin" />
-                        Downloading...
+                        {t("settings.updates.downloading")}
                       </>
                     ) : (
                       <>
                         <Download className="mr-1.5 h-4 w-4" />
-                        Install Update
+                        {t("settings.updates.installUpdate")}
                       </>
                     )}
                   </Button>
@@ -430,7 +524,7 @@ export function SettingsPage() {
                     variant="outline"
                     size="sm"
                   >
-                    View Changelog
+                    {t("settings.updates.viewChangelog")}
                   </Button>
                   {downloadError && (
                     <span className="text-sm text-destructive">
@@ -445,12 +539,14 @@ export function SettingsPage() {
           <div className="grid gap-4 xl:grid-cols-2">
             <div className="space-y-4">
               <SettingsSection
-                title="General"
-                description="Core folders and session behavior."
+                title={t("settings.general.title")}
+                description={t("settings.general.description")}
               >
                 <SettingsField
-                  label="KovaaK's Install Folder"
-                  description="Path to the KovaaK's install folder used to locate FPSAimTrainer/stats and FPSAimTrainer/performances"
+                  label={t("settings.general.kovaaksInstallFolder")}
+                  description={t(
+                    "settings.general.kovaaksInstallFolderDescription",
+                  )}
                 >
                   <Input
                     type="text"
@@ -464,8 +560,10 @@ export function SettingsPage() {
                 </SettingsField>
 
                 <SettingsField
-                  label="Start with KovaaK's"
-                  description="Automatically launch RefleK's when you start KovaaK's, RefleK's will also start with Windows"
+                  label={t("settings.general.startWithKovaaks")}
+                  description={t(
+                    "settings.general.startWithKovaaksDescription",
+                  )}
                   checkbox
                 >
                   <Checkbox
@@ -475,8 +573,8 @@ export function SettingsPage() {
                 </SettingsField>
 
                 <SettingsField
-                  label="Mouse Tracking"
-                  description="Record mouse movement during scenarios (Windows only)"
+                  label={t("settings.general.mouseTracking")}
+                  description={t("settings.general.mouseTrackingDescription")}
                   checkbox
                 >
                   <Checkbox
@@ -490,8 +588,10 @@ export function SettingsPage() {
                 {settings.mouseTrackingEnabled && (
                   <div className="space-y-3 pl-6">
                     <SettingsField
-                      label="Buffer Duration"
-                      description="Minutes of mouse data to keep in memory"
+                      label={t("settings.general.bufferDuration")}
+                      description={t(
+                        "settings.general.bufferDurationDescription",
+                      )}
                     >
                       <Input
                         type="number"
@@ -514,7 +614,7 @@ export function SettingsPage() {
                 <SettingsField
                   label={
                     <span className="inline-flex items-center gap-1.5">
-                      Screen Capture
+                      {t("settings.general.screenCapture")}
                       {screenCaptureLoading ? null : (
                         <InfoTooltip
                           side="bottom"
@@ -536,36 +636,50 @@ export function SettingsPage() {
                             <div className="max-w-xs space-y-1 text-[0.6875rem]">
                               <p className="font-medium text-popover-foreground">
                                 {screenCaptureInfo.healthy
-                                  ? "Screen capture active"
+                                  ? t(
+                                      "settings.general.screenCaptureStatusActive",
+                                    )
                                   : screenCaptureInfo.state === "error"
-                                    ? "Screen capture error"
+                                    ? t(
+                                        "settings.general.screenCaptureStatusError",
+                                      )
                                     : screenCaptureInfo.state === "unavailable"
-                                      ? "Screen capture unavailable"
-                                      : "Screen capture ready"}
+                                      ? t(
+                                          "settings.general.screenCaptureStatusUnavailable",
+                                        )
+                                      : t(
+                                          "settings.general.screenCaptureStatusReady",
+                                        )}
                               </p>
                               <p className="text-popover-foreground/70">
-                                {screenCaptureInfo.message}
+                                {translateMessage(screenCaptureInfo.message)}
                               </p>
                               {screenCaptureInfo.encoderName && (
                                 <p className="text-popover-foreground/70">
-                                  Using {screenCaptureInfo.encoderName}
+                                  {t("settings.general.screenCaptureEncoder", {
+                                    encoder: screenCaptureInfo.encoderName,
+                                  })}
                                   {screenCaptureInfo.isHardware
-                                    ? " (hardware accelerated)"
-                                    : " (software)"}
+                                    ? t(
+                                        "settings.general.screenCaptureHardware",
+                                      )
+                                    : t(
+                                        "settings.general.screenCaptureSoftware",
+                                      )}
                                 </p>
                               )}
                             </div>
                           ) : (
                             <div className="max-w-xs space-y-1 text-[0.6875rem]">
                               <p className="font-medium text-popover-foreground">
-                                FFmpeg not detected
+                                {t("settings.general.ffmpegMissingTitle")}
                               </p>
                               <p className="text-popover-foreground/70">
-                                Place{" "}
+                                {t("settings.general.ffmpegMissingPrefix")}{" "}
                                 <code className="rounded bg-surface-muted px-1 py-0.5 font-mono">
                                   ffmpeg.exe
                                 </code>{" "}
-                                alongside{" "}
+                                {t("settings.general.ffmpegMissingSuffix")}{" "}
                                 <code className="rounded bg-surface-muted px-1 py-0.5 font-mono">
                                   refleks.exe
                                 </code>
@@ -577,7 +691,7 @@ export function SettingsPage() {
                       )}
                     </span>
                   }
-                  description="Record screen during scenarios for video replays (Windows only, requires FFmpeg)"
+                  description={t("settings.general.screenCaptureDescription")}
                   checkbox
                 >
                   <Checkbox
@@ -591,8 +705,8 @@ export function SettingsPage() {
                 {settings.screenCaptureEnabled && (
                   <div className="space-y-3 pl-6">
                     <SettingsField
-                      label="Resolution"
-                      description="Resolution used for new capture sessions; changing it while the game is running rotates the capture session immediately"
+                      label={t("settings.general.resolution")}
+                      description={t("settings.general.resolutionDescription")}
                     >
                       <Select
                         value={settings.screenCaptureResolution || "720"}
@@ -605,20 +719,24 @@ export function SettingsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="native">
-                            Native (monitor res)
+                            {t("settings.general.resolutionNative")}
                           </SelectItem>
                           <SelectItem value="1080">
-                            1080p (1920×1080)
+                            {t("settings.general.resolution1080")}
                           </SelectItem>
-                          <SelectItem value="900">900p (1600×900)</SelectItem>
-                          <SelectItem value="720">720p (1280×720)</SelectItem>
+                          <SelectItem value="900">
+                            {t("settings.general.resolution900")}
+                          </SelectItem>
+                          <SelectItem value="720">
+                            {t("settings.general.resolution720")}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </SettingsField>
 
                     <SettingsField
-                      label="Capture FPS"
-                      description="Frames per second for new capture sessions; changing it while the game is running rotates the capture session immediately"
+                      label={t("settings.general.captureFps")}
+                      description={t("settings.general.captureFpsDescription")}
                     >
                       <Input
                         type="number"
@@ -640,8 +758,8 @@ export function SettingsPage() {
                 )}
 
                 <SettingsField
-                  label="Replay Cleanup"
-                  description="Automatically remove old replays and limit replay storage; runs at startup and after new replays are created"
+                  label={t("settings.general.replayCleanup")}
+                  description={t("settings.general.replayCleanupDescription")}
                   checkbox
                 >
                   <Checkbox
@@ -655,8 +773,10 @@ export function SettingsPage() {
                 {settings.replayCleanupEnabled !== false && (
                   <div className="space-y-3 pl-6">
                     <SettingsField
-                      label="Replay age limit"
-                      description="Delete replays older than this; Unlimited disables the age limit"
+                      label={t("settings.general.replayAgeLimit")}
+                      description={t(
+                        "settings.general.replayAgeLimitDescription",
+                      )}
                     >
                       <Select
                         value={String(settings.replayRetentionDays ?? 0)}
@@ -682,8 +802,10 @@ export function SettingsPage() {
                     </SettingsField>
 
                     <SettingsField
-                      label="Storage limit"
-                      description="Delete the oldest replays when the replay folder exceeds this size; Unlimited disables the storage limit"
+                      label={t("settings.general.storageLimit")}
+                      description={t(
+                        "settings.general.storageLimitDescription",
+                      )}
                     >
                       <Select
                         value={String(settings.replayStorageLimitGb ?? 5)}
@@ -711,8 +833,8 @@ export function SettingsPage() {
                 )}
 
                 <SettingsField
-                  label="Session Gap"
-                  description="Minutes of inactivity before starting a new session"
+                  label={t("settings.general.sessionGap")}
+                  description={t("settings.general.sessionGapDescription")}
                 >
                   <Select
                     value={String(settings.sessionGapMinutes)}
@@ -735,12 +857,12 @@ export function SettingsPage() {
               </SettingsSection>
 
               <SettingsSection
-                title="Privacy"
-                description="Control whether runs are uploaded and whether identifying environment data is scrubbed before sync."
+                title={t("settings.privacy.title")}
+                description={t("settings.privacy.description")}
               >
                 <SettingsField
-                  label="Run Sync"
-                  description="Upload completed runs to the RefleK's Index."
+                  label={t("settings.privacy.runSync")}
+                  description={t("settings.privacy.runSyncDescription")}
                   checkbox
                 >
                   <Checkbox
@@ -752,8 +874,8 @@ export function SettingsPage() {
                 </SettingsField>
 
                 <SettingsField
-                  label="Anonymous Mode"
-                  description="Remove Steam ID and Steam persona name from run environment data before sync uploads."
+                  label={t("settings.privacy.anonymousMode")}
+                  description={t("settings.privacy.anonymousModeDescription")}
                   checkbox
                 >
                   <Checkbox
@@ -766,12 +888,12 @@ export function SettingsPage() {
 
             <div className="space-y-4">
               <SettingsSection
-                title="Appearance"
-                description="Visual preferences for the interface."
+                title={t("settings.appearance.title")}
+                description={t("settings.appearance.description")}
               >
                 <SettingsField
-                  label="Theme"
-                  description="Color theme for the application"
+                  label={t("settings.appearance.theme")}
+                  description={t("settings.appearance.themeDescription")}
                 >
                   <Select
                     value={settings.theme}
@@ -788,11 +910,34 @@ export function SettingsPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {settings.theme === "custom" && (
+                    <div className="mt-2 space-y-2 rounded-xl bg-surface-subtle p-3">
+                      <p className="text-xs leading-5 text-surface-muted-foreground">
+                        {t("settings.appearance.themeCustomDescription")}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void handleOpenThemeFile()}
+                        >
+                          {t("settings.appearance.openThemeFile")}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void handleRegenerateThemeFile()}
+                        >
+                          {t("settings.appearance.regenerateThemeFile")}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </SettingsField>
 
                 <SettingsField
-                  label="Font"
-                  description="Font family for the interface"
+                  label={t("settings.appearance.font")}
+                  description={t("settings.appearance.fontDescription")}
                 >
                   <Select
                     value={settings.font || FONTS[0].id}
@@ -812,8 +957,8 @@ export function SettingsPage() {
                 </SettingsField>
 
                 <SettingsField
-                  label="Scale"
-                  description="Interface size; smaller values fit more content on large screens"
+                  label={t("settings.appearance.scale")}
+                  description={t("settings.appearance.scaleDescription")}
                 >
                   <Select
                     value={settings.scale || DEFAULT_SCALE}
@@ -831,11 +976,29 @@ export function SettingsPage() {
                     </SelectContent>
                   </Select>
                 </SettingsField>
+
+                <SettingsField
+                  label={t("settings.appearance.language")}
+                  description={t("settings.appearance.languageDescription")}
+                >
+                  <Select value={locale} onValueChange={handleLanguageChange}>
+                    <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {languageOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </SettingsField>
               </SettingsSection>
 
               <SettingsSection
-                title="Advanced"
-                description="Integration and data retention options."
+                title={t("settings.advanced.title")}
+                description={t("settings.advanced.description")}
               >
                 <button
                   onClick={() => setShowAdvanced(!showAdvanced)}
@@ -847,18 +1010,20 @@ export function SettingsPage() {
                     <ChevronDown className="h-4 w-4" />
                   )}
                   {showAdvanced
-                    ? "Hide advanced settings"
-                    : "Show advanced settings"}
+                    ? t("settings.advanced.hide")
+                    : t("settings.advanced.show")}
                 </button>
 
                 {showAdvanced && (
                   <div className="space-y-4 pt-2">
                     <div className="space-y-3">
                       <div className="text-xs font-medium uppercase tracking-wide text-surface-muted-foreground">
-                        Steam
+                        {t("settings.advanced.steam")}
                       </div>
                       <div className="space-y-4">
-                        <SettingsField label="Steam Install Directory">
+                        <SettingsField
+                          label={t("settings.advanced.steamInstallDirectory")}
+                        >
                           <Input
                             type="text"
                             value={settings.steamInstallDir}
@@ -871,8 +1036,10 @@ export function SettingsPage() {
                         </SettingsField>
 
                         <SettingsField
-                          label="Steam ID Override"
-                          description="Leave empty to auto-detect"
+                          label={t("settings.advanced.steamId")}
+                          description={t(
+                            "settings.advanced.steamIdDescription",
+                          )}
                         >
                           <Input
                             type="text"
@@ -890,8 +1057,10 @@ export function SettingsPage() {
                         </SettingsField>
 
                         <SettingsField
-                          label="Persona Name Override"
-                          description="Leave empty to auto-detect"
+                          label={t("settings.advanced.personaName")}
+                          description={t(
+                            "settings.advanced.personaNameDescription",
+                          )}
                         >
                           <Input
                             type="text"
@@ -903,7 +1072,9 @@ export function SettingsPage() {
                               )
                             }
                             onKeyDown={handleInputKeyDown}
-                            placeholder="Display name"
+                            placeholder={t(
+                              "settings.advanced.displayNamePlaceholder",
+                            )}
                             className="w-full max-w-xs"
                           />
                         </SettingsField>
@@ -912,12 +1083,14 @@ export function SettingsPage() {
 
                     <div className="space-y-3 pt-4">
                       <div className="text-xs font-medium uppercase tracking-wide text-surface-muted-foreground">
-                        Data Retention
+                        {t("settings.advanced.dataRetention")}
                       </div>
                       <div className="space-y-4">
                         <SettingsField
-                          label="Recent Runs Window (Days)"
-                          description="Only runs from the last N days are loaded and shown"
+                          label={t("settings.advanced.recentRunsWindow")}
+                          description={t(
+                            "settings.advanced.recentRunsWindowDescription",
+                          )}
                         >
                           <Input
                             type="number"
@@ -939,8 +1112,10 @@ export function SettingsPage() {
                         </SettingsField>
 
                         <SettingsField
-                          label="Recent Runs Minimum Count"
-                          description="If the day window has too few runs, include older runs until this minimum is reached"
+                          label={t("settings.advanced.recentRunsMinCount")}
+                          description={t(
+                            "settings.advanced.recentRunsMinCountDescription",
+                          )}
                         >
                           <Input
                             type="number"
@@ -974,21 +1149,21 @@ export function SettingsPage() {
               size="sm"
               onClick={() => setIsResetOpen(true)}
             >
-              Reset
+              {t("common.actions.reset")}
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsClearCacheOpen(true)}
             >
-              Clear Cache
+              {t("settings.footer.clearCache")}
             </Button>
             <span className="text-xs text-surface-muted-foreground">
               {isSaving
-                ? "Saving settings..."
+                ? t("settings.footer.saving")
                 : hasUnsavedChanges
-                  ? "Unsaved changes"
-                  : "All changes saved"}
+                  ? t("settings.footer.unsavedChanges")
+                  : t("settings.footer.allSaved")}
             </span>
             <div className="flex-1" />
             <Button
@@ -997,10 +1172,10 @@ export function SettingsPage() {
               onClick={() => handleEnterCommit()}
               disabled={isSaving || !settings}
             >
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving ? t("common.actions.saving") : t("common.actions.save")}
             </Button>
             <Button variant="destructive" size="sm" onClick={() => quitApp()}>
-              Quit App
+              {t("settings.footer.quitApp")}
             </Button>
           </div>
         </div>

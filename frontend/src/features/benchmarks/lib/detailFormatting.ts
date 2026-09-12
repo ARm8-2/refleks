@@ -1,5 +1,5 @@
 export { getScenarioName } from "@/shared/lib";
-import { MISSING_STR } from "./detailConstants";
+import { getLocale, translate } from "@/shared/lib/i18n";
 
 type RGB = { r: number; g: number; b: number };
 
@@ -152,20 +152,43 @@ export function adjustColorForTheme(
   return rgbToCss(hslToRgb({ ...sourceHsl, l: adjustedLightness }));
 }
 
+// Locale-aware number formatting. This is a hot path (called per table cell),
+// so formatters are cached and only rebuilt when the locale changes. Each
+// (decimals, trim) option pair gets its own formatter per locale.
+let formatterLocale: string | null = null;
+const formatterCache = new Map<string, Intl.NumberFormat>();
+function getFormatter(
+  decimals: number,
+  trimTrailingZeros: boolean,
+): Intl.NumberFormat {
+  const locale = getLocale();
+  if (formatterLocale !== locale) {
+    formatterLocale = locale;
+    formatterCache.clear();
+  }
+  const key = `${decimals}:${trimTrailingZeros ? "trim" : "fixed"}`;
+  let formatter = formatterCache.get(key);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: trimTrailingZeros ? 0 : decimals,
+      maximumFractionDigits: decimals,
+      useGrouping: true,
+    });
+    formatterCache.set(key, formatter);
+  }
+  return formatter;
+}
+
 export function formatNumber(
   value: unknown,
   decimals = 2,
   trimTrailingZeros = true,
 ): string {
-  if (value == null || value === "") return MISSING_STR;
+  if (value == null || value === "") return translate("common.missingValue");
   const number = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(number)) return MISSING_STR;
+  if (!Number.isFinite(number)) return translate("common.missingValue");
 
-  return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: trimTrailingZeros ? 0 : decimals,
-    maximumFractionDigits: decimals,
-    useGrouping: true,
-  }).format(number);
+  return getFormatter(decimals, trimTrailingZeros).format(number);
 }
 
 export function computeFillColor(

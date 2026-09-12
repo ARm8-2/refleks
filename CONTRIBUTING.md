@@ -1,4 +1,4 @@
-# Contributing to RefleK's
+# Contributing to RefleK's Desktop
 
 Thank you for your interest in contributing! We welcome bug reports, feature requests, and code contributions.
 

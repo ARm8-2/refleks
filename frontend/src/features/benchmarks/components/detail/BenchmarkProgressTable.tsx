@@ -10,17 +10,22 @@ import {
   SelectValue,
   TogglePill,
 } from "@/shared/components";
-import { usePersistedState, useStore } from "@/shared/hooks";
+import {
+  useHorizontalDragScroll,
+  usePersistedState,
+  useStore,
+} from "@/shared/hooks";
 import {
   benchmarkDetailProgressStorageBase,
   benchmarkDetailProgressStorageKey,
   getSettings,
   launchScenario,
   saveScenarioNote,
+  useI18n,
 } from "@/shared/lib";
 import type { Benchmark, BenchmarkProgress, Settings } from "@/shared/types";
 import { Settings2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useBenchmarkVisibility } from "../../hooks/useBenchmarkVisibility";
 import {
   adjustColorForTheme,
@@ -72,7 +77,9 @@ export function BenchmarkProgressTable({
   progress,
   shareMode = false,
 }: Props) {
+  const { t } = useI18n();
   const sessions = useStore((state) => state.sessions);
+  const { isDragging, dragScrollProps } = useHorizontalDragScroll();
 
   const storageBase = benchmarkDetailProgressStorageBase(
     benchmark.benchmarkName,
@@ -304,7 +311,6 @@ export function BenchmarkProgressTable({
     rankDefs[(progress.overallRank ?? 0) - 1]?.color ?? null;
   const cls = getRowClasses(compactMode);
   const categoryPaddingClass = compactMode ? "py-3" : "py-4";
-  const categorySpacingClass = compactMode ? "space-y-1.5" : "space-y-2";
   const rowSpacingClass = compactMode ? "space-y-0.5" : "space-y-1";
   const labelTextClass = compactMode ? "text-[0.625rem]" : "text-[0.6875rem]";
   const rankVisibilityOptions = Array.from(
@@ -325,7 +331,7 @@ export function BenchmarkProgressTable({
           <div>
             <p className="text-lg font-semibold text-foreground">RefleK's</p>
             <p className="text-sm text-surface-muted-foreground">
-              Benchmark Progress Snapshot
+              {t("benchmarks.progressTable.snapshot")}
             </p>
           </div>
         </div>
@@ -334,7 +340,7 @@ export function BenchmarkProgressTable({
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <div>
           <h3 className="text-sm font-semibold text-foreground">
-            Progress Tracker
+            {t("benchmarks.progressTable.title")}
           </h3>
           <p className="text-xs text-surface-muted-foreground">
             {benchmark.benchmarkName} · {difficultyName} ·{" "}
@@ -355,10 +361,12 @@ export function BenchmarkProgressTable({
               onClick={() => setCompactMode((value) => !value)}
               aria-pressed={compactMode}
               title={
-                compactMode ? "Disable compact mode" : "Enable compact mode"
+                compactMode
+                  ? t("benchmarks.progressTable.disableCompact")
+                  : t("benchmarks.progressTable.enableCompact")
               }
             >
-              Compact
+              {t("benchmarks.progressTable.compact")}
             </Button>
             <Button
               variant={showLastPlayedHighlight ? "secondary" : "ghost"}
@@ -368,17 +376,17 @@ export function BenchmarkProgressTable({
               aria-pressed={showLastPlayedHighlight}
               title={
                 showLastPlayedHighlight
-                  ? "Hide last played highlight"
-                  : "Show last played highlight"
+                  ? t("benchmarks.progressTable.hideLastPlayed")
+                  : t("benchmarks.progressTable.showLastPlayed")
               }
             >
-              Last Played
+              {t("benchmarks.progressTable.lastPlayed")}
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowSettings(true)}
-              title="View tracker settings"
+              title={t("benchmarks.progressTable.viewSettings")}
             >
               <Settings2 className="h-4 w-4" />
             </Button>
@@ -398,13 +406,13 @@ export function BenchmarkProgressTable({
                   style={{ gridTemplateColumns: infoGridTemplate }}
                 >
                   <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
-                    Scenario
+                    {t("benchmarks.progressTable.columnScenario")}
                   </div>
                   <div />
                   {effectiveShowNotesCol && <div />}
                   {effectiveShowRecCol && (
-                    <div className="flex items-center gap-1 pl-2 text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
-                      Rec
+                    <div className="relative flex w-max min-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap pl-2 text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
+                      {t("benchmarks.progressTable.columnRec")}
                       {!shareMode && <RecommendationInfo />}
                     </div>
                   )}
@@ -412,7 +420,7 @@ export function BenchmarkProgressTable({
                   {effectiveShowHistoryCol && <div />}
                   <div />
                   <div className="text-right text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
-                    Score
+                    {t("benchmarks.progressTable.columnScore")}
                   </div>
                 </div>
               </div>
@@ -442,97 +450,101 @@ export function BenchmarkProgressTable({
                   </span>
                 </div>
 
-                <div className={`flex-1 ${categorySpacingClass}`}>
+                <div className="flex-1">
                   {category.groups.map((group, groupIndex) => (
-                    <div
-                      key={`${category.name}-${groupIndex}`}
-                      className="relative flex"
-                    >
-                      <div className="flex w-6 shrink-0 items-center justify-center bg-transparent pr-2">
-                        {group.name ? (
-                          <span
-                            className={`font-semibold tracking-wide text-foreground ${labelTextClass}`}
-                            style={{
-                              color: adjustColorForTheme(
-                                group.color || category.color,
-                                labelBackgroundColor,
-                                0.96,
-                              ),
-                              writingMode: "vertical-rl",
-                              transform: "rotate(180deg)",
-                            }}
-                          >
-                            {group.name}
-                          </span>
-                        ) : (
-                          <span
-                            className="text-[0.625rem] text-surface-muted-foreground"
-                            style={{
-                              writingMode: "vertical-rl",
-                              transform: "rotate(180deg)",
-                            }}
-                          >
-                            -
-                          </span>
-                        )}
-                      </div>
+                    <Fragment key={`${category.name}-${groupIndex}`}>
+                      <div className="relative flex">
+                        <div className="flex w-6 shrink-0 items-center justify-center bg-transparent pr-2">
+                          {group.name ? (
+                            <span
+                              className={`font-semibold tracking-wide text-foreground ${labelTextClass}`}
+                              style={{
+                                color: adjustColorForTheme(
+                                  group.color || category.color,
+                                  labelBackgroundColor,
+                                  0.96,
+                                ),
+                                writingMode: "vertical-rl",
+                                transform: "rotate(180deg)",
+                              }}
+                            >
+                              {group.name}
+                            </span>
+                          ) : (
+                            <span
+                              className="text-[0.625rem] text-surface-muted-foreground"
+                              style={{
+                                writingMode: "vertical-rl",
+                                transform: "rotate(180deg)",
+                              }}
+                            >
+                              -
+                            </span>
+                          )}
+                        </div>
 
-                      <div className="shrink-0 bg-transparent">
-                        <div className={rowSpacingClass}>
-                          {group.scenarios.map((scenario) => {
-                            const recommendation = getRecommendation(
-                              scenario.name,
-                            );
-                            const completedThreshold = Math.max(
-                              1,
-                              (scenario.thresholds?.length ?? 0) - 1,
-                            );
-                            const completed =
-                              scenario.scenarioRank >= completedThreshold;
-                            const hasSavedNote = Boolean(
-                              settings?.scenarioNotes?.[scenario.name]?.notes,
-                            );
-                            const isCurrentScenarioRow =
-                              currentScenarioName === scenario.name;
+                        <div className="shrink-0 bg-transparent">
+                          <div className={rowSpacingClass}>
+                            {group.scenarios.map((scenario) => {
+                              const recommendation = getRecommendation(
+                                scenario.name,
+                              );
+                              const completedThreshold = Math.max(
+                                1,
+                                (scenario.thresholds?.length ?? 0) - 1,
+                              );
+                              const completed =
+                                scenario.scenarioRank >= completedThreshold;
+                              const hasSavedNote = Boolean(
+                                settings?.scenarioNotes?.[scenario.name]?.notes,
+                              );
+                              const isCurrentScenarioRow =
+                                currentScenarioName === scenario.name;
 
-                            return (
-                              <div
-                                key={scenario.name}
-                                className={`rounded-l-md pl-2 pr-2 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? "bg-surface-subtle-hover" : ""}`}
-                              >
-                                <ScenarioInfoRow
-                                  scenarioName={scenario.name}
-                                  score={scenario.score || 0}
-                                  gridTemplate={infoGridTemplate}
-                                  cls={cls}
-                                  showNotesCol={effectiveShowNotesCol}
-                                  showRecCol={effectiveShowRecCol}
-                                  showPlayCol={effectiveShowPlayCol}
-                                  showHistoryCol={effectiveShowHistoryCol}
-                                  hasSavedNote={hasSavedNote}
-                                  recommendation={recommendation}
-                                  isTopPick={isTopPick(scenario.name)}
-                                  completed={completed}
-                                  onNotes={() => openNotes(scenario.name)}
-                                  onHistory={() =>
-                                    openHistory(
-                                      scenario.name,
-                                      scenario.thresholds || [],
-                                    )
-                                  }
-                                  onPlay={() =>
-                                    launchScenario(
-                                      scenario.name,
-                                      "challenge",
-                                    ).catch(() => {})
-                                  }
-                                />
-                              </div>
-                            );
-                          })}
+                              return (
+                                <div
+                                  key={scenario.name}
+                                  className={`rounded-l-md pl-2 pr-2 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? "bg-surface-subtle-hover" : ""}`}
+                                >
+                                  <ScenarioInfoRow
+                                    scenarioName={scenario.name}
+                                    score={scenario.score || 0}
+                                    gridTemplate={infoGridTemplate}
+                                    cls={cls}
+                                    showNotesCol={effectiveShowNotesCol}
+                                    showRecCol={effectiveShowRecCol}
+                                    showPlayCol={effectiveShowPlayCol}
+                                    showHistoryCol={effectiveShowHistoryCol}
+                                    hasSavedNote={hasSavedNote}
+                                    recommendation={recommendation}
+                                    isTopPick={isTopPick(scenario.name)}
+                                    completed={completed}
+                                    onNotes={() => openNotes(scenario.name)}
+                                    onHistory={() =>
+                                      openHistory(
+                                        scenario.name,
+                                        scenario.thresholds || [],
+                                      )
+                                    }
+                                    onPlay={() =>
+                                      launchScenario(
+                                        scenario.name,
+                                        "challenge",
+                                      ).catch(() => {})
+                                    }
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                      {groupIndex < category.groups.length - 1 && (
+                        <div className="h-[1.0625rem] flex items-center pl-6 pr-4">
+                          <div className="h-px w-full bg-border" />
+                        </div>
+                      )}
+                    </Fragment>
                   ))}
                 </div>
               </div>
@@ -541,8 +553,9 @@ export function BenchmarkProgressTable({
         </div>
 
         <div
-          className="pointer-events-auto absolute bottom-0 right-0 top-0 z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-          style={{ left: `${rightPanelOffset}rem` }}
+          {...dragScrollProps}
+          className={`pointer-events-auto absolute bottom-0 right-0 top-0 z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
+          style={{ left: `${rightPanelOffset}rem`, touchAction: "pan-y" }}
         >
           <div className="min-h-full min-w-full w-max space-y-3 pb-4 pr-2">
             <div className="relative mb-3 min-w-full py-2 pr-1">
@@ -568,7 +581,7 @@ export function BenchmarkProgressTable({
                       ))
                     ) : (
                       <div className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
-                        Details
+                        {t("benchmarks.progressTable.details")}
                       </div>
                     )}
                   </div>
@@ -582,40 +595,42 @@ export function BenchmarkProgressTable({
                 className={`min-w-full ${categoryPaddingClass}`}
               >
                 <div className="flex">
-                  <div className={`w-full flex-1 ${categorySpacingClass}`}>
+                  <div className="w-full flex-1">
                     {category.groups.map((group, groupIndex) => (
-                      <div
-                        key={`${category.name}-${groupIndex}-right`}
-                        className="relative flex"
-                      >
-                        <div className="flex-1">
-                          <div className={rowSpacingClass}>
-                            {group.scenarios.map((scenario) => {
-                              const isCurrentScenarioRow =
-                                currentScenarioName === scenario.name;
-                              return (
-                                <div
-                                  key={`${scenario.name}-ranks`}
-                                  className={`rounded-r-md pr-1 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? "bg-surface-subtle-hover" : ""}`}
-                                >
-                                  <ScenarioRankCells
-                                    scenarioName={scenario.name}
-                                    score={scenario.score || 0}
-                                    scenarioRank={scenario.scenarioRank}
-                                    thresholds={scenario.thresholds || []}
-                                    rankDefs={rankDefs}
-                                    visibleRankIndices={visibleRankIndices}
-                                    hasVisibleRanks={hasVisibleRanks}
-                                    rightGridTemplate={rightGridTemplate}
-                                    rightGridMinWidth={rightGridMinWidth}
-                                    cls={cls}
-                                  />
-                                </div>
-                              );
-                            })}
+                      <Fragment key={`${category.name}-${groupIndex}-right`}>
+                        <div className="relative flex">
+                          <div className="flex-1">
+                            <div className={rowSpacingClass}>
+                              {group.scenarios.map((scenario) => {
+                                const isCurrentScenarioRow =
+                                  currentScenarioName === scenario.name;
+                                return (
+                                  <div
+                                    key={`${scenario.name}-ranks`}
+                                    className={`rounded-r-md pr-1 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? "bg-surface-subtle-hover" : ""}`}
+                                  >
+                                    <ScenarioRankCells
+                                      scenarioName={scenario.name}
+                                      score={scenario.score || 0}
+                                      scenarioRank={scenario.scenarioRank}
+                                      thresholds={scenario.thresholds || []}
+                                      rankDefs={rankDefs}
+                                      visibleRankIndices={visibleRankIndices}
+                                      hasVisibleRanks={hasVisibleRanks}
+                                      rightGridTemplate={rightGridTemplate}
+                                      rightGridMinWidth={rightGridMinWidth}
+                                      cls={cls}
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                        {groupIndex < category.groups.length - 1 && (
+                          <div className="h-[1.0625rem]" />
+                        )}
+                      </Fragment>
                     ))}
                   </div>
                 </div>
@@ -636,14 +651,14 @@ export function BenchmarkProgressTable({
           <Modal
             isOpen={showSettings}
             onClose={() => setShowSettings(false)}
-            title="Tracker Settings"
+            title={t("benchmarks.progressTable.settingsTitle")}
             width="43.75rem"
             height="auto"
           >
             <div className="space-y-6 px-6 pb-6">
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-foreground">
-                  Feature Columns
+                  {t("benchmarks.progressTable.featureColumns")}
                 </h4>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="inline-flex items-center gap-2 text-sm text-foreground">
@@ -653,14 +668,14 @@ export function BenchmarkProgressTable({
                         setShowNotesCol(Boolean(value))
                       }
                     />
-                    Notes
+                    {t("benchmarks.progressTable.columnLabelNotes")}
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm text-foreground">
                     <Checkbox
                       checked={showRecCol}
                       onCheckedChange={(value) => setShowRecCol(Boolean(value))}
                     />
-                    Recommendations
+                    {t("benchmarks.progressTable.columnLabelRecommendations")}
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm text-foreground">
                     <Checkbox
@@ -669,7 +684,7 @@ export function BenchmarkProgressTable({
                         setShowPlayCol(Boolean(value))
                       }
                     />
-                    Play
+                    {t("benchmarks.progressTable.columnLabelPlay")}
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm text-foreground">
                     <Checkbox
@@ -678,14 +693,14 @@ export function BenchmarkProgressTable({
                         setShowHistoryCol(Boolean(value))
                       }
                     />
-                    History
+                    {t("benchmarks.progressTable.columnLabelHistory")}
                   </label>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-foreground">
-                  Rank Visibility
+                  {t("benchmarks.progressTable.rankVisibility")}
                 </h4>
                 <div className="flex flex-wrap items-center gap-4">
                   <label className="inline-flex items-center gap-2 text-sm text-foreground">
@@ -695,12 +710,12 @@ export function BenchmarkProgressTable({
                         setAutoHideCleared(Boolean(value))
                       }
                     />
-                    Auto-hide earlier cleared ranks
+                    {t("benchmarks.progressTable.autoHideCleared")}
                   </label>
 
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-surface-muted-foreground">
-                      Keep visible:
+                      {t("benchmarks.progressTable.keepVisible")}
                     </span>
                     <Select
                       value={String(visibleRankCount)}
@@ -722,7 +737,7 @@ export function BenchmarkProgressTable({
                   </div>
 
                   <Button variant="outline" size="sm" onClick={resetManual}>
-                    Reset Manual
+                    {t("benchmarks.progressTable.resetManual")}
                   </Button>
                 </div>
 
@@ -746,7 +761,7 @@ export function BenchmarkProgressTable({
                         }
                         title={
                           hiddenAutomatically
-                            ? "Hidden automatically because every scenario is already past this rank"
+                            ? t("benchmarks.progressTable.hiddenAutoTitle")
                             : undefined
                         }
                       >

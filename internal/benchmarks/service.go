@@ -2,6 +2,7 @@ package benchmarks
 
 import (
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -11,11 +12,24 @@ import (
 	"refleks/internal/settings"
 )
 
+const defaultProgressRequestDelay = 2 * time.Second
+
+// progressRequest deduplicates both queued and active refreshes for one
+// benchmark difficulty. The first caller executes the request; concurrent
+// callers wait for the same result.
+type progressRequest struct {
+	once     sync.Once
+	done     chan struct{}
+	progress models.BenchmarkProgress
+	err      error
+}
+
 // Service manages benchmark data and progress tracking.
 type Service struct {
 	mu                  sync.Mutex
 	progressCache       map[int]models.BenchmarkProgress
-	progressRefreshes   map[int]struct{}
+	progressCacheLoaded bool
+	progressRequests    map[int]*progressRequest
 	scenarioIndex       map[string][]int
 	benchmarksList      []models.Benchmark
 	loadErr             error
@@ -25,27 +39,33 @@ type Service struct {
 	onBenchmarksUpdated func([]models.Benchmark)
 	settingsSvc         *settings.Service
 	cacheSvc            *cache.Service
+
+	progressRequestMu    sync.Mutex
+	lastProgressRequest  time.Time
+	progressRequestDelay time.Duration
 }
 
 // NewService creates a new benchmark service.
 func NewService(settingsSvc *settings.Service, cacheSvc *cache.Service) *Service {
 	s := &Service{
-		progressCache:     make(map[int]models.BenchmarkProgress),
-		progressRefreshes: make(map[int]struct{}),
-		scenarioIndex:     make(map[string][]int),
-		benchmarksURL:     resolveBenchmarksEndpoint(),
+		progressCache:    make(map[int]models.BenchmarkProgress),
+		progressRequests: make(map[int]*progressRequest),
+		scenarioIndex:    make(map[string][]int),
+		benchmarksURL:    resolveBenchmarksEndpoint(),
 		httpClient: &http.Client{
 			Timeout: 15 * time.Second,
 		},
-		settingsSvc: settingsSvc,
-		cacheSvc:    cacheSvc,
+		settingsSvc:          settingsSvc,
+		cacheSvc:             cacheSvc,
+		progressRequestDelay: defaultProgressRequestDelay,
 	}
 	// Register cache clear callback
 	cacheSvc.RegisterOnClear(func() {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 		s.progressCache = make(map[int]models.BenchmarkProgress)
-		s.progressRefreshes = make(map[int]struct{})
+		s.progressCacheLoaded = false
+		s.progressRequests = make(map[int]*progressRequest)
 		s.scenarioIndex = make(map[string][]int)
 		s.benchmarksList = nil
 		s.loadErr = nil
@@ -74,37 +94,63 @@ func (s *Service) GetBenchmarkProgress(benchmarkId int, useCache bool) (models.B
 		}
 	}
 
-	raw, err := s.GetPlayerProgressRaw(benchmarkId)
-	if err != nil {
-		return models.BenchmarkProgress{}, false, err
-	}
-	prog, err := s.buildStructuredProgress(raw, benchmarkId)
-	if err != nil {
-		return models.BenchmarkProgress{}, false, err
+	request := s.getOrCreateProgressRequest(benchmarkId)
+	progress, err := s.executeProgressRequest(benchmarkId, request)
+	return progress, false, err
+}
+
+func (s *Service) getOrCreateProgressRequest(benchmarkID int) *progressRequest {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.ensureProgressCacheLoadedLocked()
+	if request, ok := s.progressRequests[benchmarkID]; ok {
+		return request
 	}
 
-	// Update cache asynchronously
-	go func(bid int, p models.BenchmarkProgress) {
+	request := &progressRequest{done: make(chan struct{})}
+	s.progressRequests[benchmarkID] = request
+	return request
+}
+
+func (s *Service) executeProgressRequest(benchmarkID int, request *progressRequest) (models.BenchmarkProgress, error) {
+	request.once.Do(func() {
+		raw, err := s.GetPlayerProgressRaw(benchmarkID)
+		if err == nil {
+			request.progress, err = s.buildStructuredProgress(raw, benchmarkID)
+		}
+		if err == nil {
+			err = s.storeProgress(benchmarkID, request.progress)
+		}
+		request.err = err
+
+		close(request.done)
 		s.mu.Lock()
-		defer s.mu.Unlock()
-
-		// Ensure cache is loaded
-		if len(s.progressCache) == 0 {
-			// Try to load, if fails, make new map
-			if _, err := s.loadCacheLocked(); err != nil {
-				// ignore error, start fresh
-			}
+		if current, ok := s.progressRequests[benchmarkID]; ok && current == request {
+			delete(s.progressRequests, benchmarkID)
 		}
+		s.mu.Unlock()
+	})
 
-		s.progressCache[bid] = p
-		_ = s.saveCacheLocked()
+	<-request.done
+	return request.progress, request.err
+}
 
-		if s.onProgressUpdated != nil {
-			s.onProgressUpdated(bid, p)
-		}
-	}(benchmarkId, prog)
+func (s *Service) storeProgress(benchmarkID int, progress models.BenchmarkProgress) error {
+	s.mu.Lock()
+	s.ensureProgressCacheLoadedLocked()
+	s.progressCache[benchmarkID] = progress
+	err := s.saveCacheLocked()
+	callback := s.onProgressUpdated
+	s.mu.Unlock()
 
-	return prog, false, nil
+	if err != nil {
+		return err
+	}
+	if callback != nil {
+		callback(benchmarkID, progress)
+	}
+	return nil
 }
 
 // GetAllBenchmarkProgresses returns progress for all benchmarks.
@@ -115,10 +161,7 @@ func (s *Service) GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress,
 	}
 
 	s.mu.Lock()
-	// Ensure cache is loaded
-	if len(s.progressCache) == 0 {
-		_, _ = s.loadCacheLocked()
-	}
+	s.ensureProgressCacheLoadedLocked()
 
 	// Build set of valid IDs
 	validIDs := make(map[int]struct{})
@@ -153,6 +196,7 @@ func (s *Service) GetAllBenchmarkProgresses() (map[int]models.BenchmarkProgress,
 	}
 	s.mu.Unlock()
 
+	sort.Ints(missingIDs)
 	if len(missingIDs) > 0 {
 		s.enqueueBenchmarkProgressRefreshes(missingIDs)
 	}
@@ -174,27 +218,19 @@ func (s *Service) RefreshAllBenchmarkProgresses() (map[int]models.BenchmarkProgr
 		}
 	}
 
-	results := make(map[int]models.BenchmarkProgress)
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	sem := make(chan struct{}, 3)
-
+	results := make(map[int]models.BenchmarkProgress, len(uniqueIDs))
+	ids := make([]int, 0, len(uniqueIDs))
 	for id := range uniqueIDs {
-		wg.Add(1)
-		go func(bid int) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-
-			prog, _, err := s.GetBenchmarkProgress(bid, false)
-			if err == nil {
-				mu.Lock()
-				results[bid] = prog
-				mu.Unlock()
-			}
-		}(id)
+		ids = append(ids, id)
 	}
-	wg.Wait()
+	sort.Ints(ids)
+
+	for _, id := range ids {
+		prog, _, err := s.GetBenchmarkProgress(id, false)
+		if err == nil {
+			results[id] = prog
+		}
+	}
 
 	return results, nil
 }
@@ -208,9 +244,7 @@ func (s *Service) CheckAndRefreshIfNeeded(rec models.RunRecord) {
 	score := rec.Stats.Summary.Score
 
 	s.mu.Lock()
-	if len(s.progressCache) == 0 {
-		_, _ = s.loadCacheLocked()
-	}
+	s.ensureProgressCacheLoadedLocked()
 
 	nameLower := strings.ToLower(scenarioName)
 	bids := s.scenarioIndex[nameLower]
@@ -253,6 +287,7 @@ func (s *Service) CheckAndRefreshIfNeeded(rec models.RunRecord) {
 		for bid := range benchmarksToRefresh {
 			ids = append(ids, bid)
 		}
+		sort.Ints(ids)
 		s.enqueueBenchmarkProgressRefreshes(ids)
 	}
 }
@@ -262,11 +297,15 @@ func (s *Service) GetCachedBenchmarkProgress(benchmarkId int) (models.BenchmarkP
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if len(s.progressCache) == 0 {
-		_, _ = s.loadCacheLocked()
-	}
+	s.ensureProgressCacheLoadedLocked()
 	p, ok := s.progressCache[benchmarkId]
 	return p, ok
+}
+
+// QueueBenchmarkProgressRefresh schedules a deduplicated background refresh
+// for one benchmark difficulty.
+func (s *Service) QueueBenchmarkProgressRefresh(benchmarkID int) {
+	s.enqueueBenchmarkProgressRefreshes([]int{benchmarkID})
 }
 
 func (s *Service) enqueueBenchmarkProgressRefreshes(ids []int) {
@@ -274,10 +313,10 @@ func (s *Service) enqueueBenchmarkProgressRefreshes(ids []int) {
 
 	s.mu.Lock()
 	for _, id := range ids {
-		if _, ok := s.progressRefreshes[id]; ok {
+		if _, ok := s.progressRequests[id]; ok {
 			continue
 		}
-		s.progressRefreshes[id] = struct{}{}
+		s.progressRequests[id] = &progressRequest{done: make(chan struct{})}
 		queued = append(queued, id)
 	}
 	s.mu.Unlock()
@@ -287,25 +326,14 @@ func (s *Service) enqueueBenchmarkProgressRefreshes(ids []int) {
 	}
 
 	go func() {
-		sem := make(chan struct{}, 3)
-		var wg sync.WaitGroup
-
 		for _, id := range queued {
-			wg.Add(1)
-			go func(bid int) {
-				defer wg.Done()
-				sem <- struct{}{}
-				defer func() { <-sem }()
-				defer func() {
-					s.mu.Lock()
-					delete(s.progressRefreshes, bid)
-					s.mu.Unlock()
-				}()
-
-				_, _, _ = s.GetBenchmarkProgress(bid, false)
-			}(id)
+			s.mu.Lock()
+			request := s.progressRequests[id]
+			s.mu.Unlock()
+			if request == nil {
+				continue
+			}
+			s.executeProgressRequest(id, request)
 		}
-
-		wg.Wait()
 	}()
 }

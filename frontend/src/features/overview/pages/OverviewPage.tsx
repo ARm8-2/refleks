@@ -1,6 +1,7 @@
 import { PerformanceVsSensWidget } from "@/features/history/components/PerformanceVsSensWidget";
 import { SessionScenarioRadarWidget } from "@/features/history/components/SessionScenarioRadarWidget";
 import { Loading } from "@/shared/components";
+import { useI18n } from "@/shared/lib";
 import { useStore } from "@/shared/hooks";
 import { BenchmarkOverviewWidget } from "../components/BenchmarkOverviewWidget";
 import {
@@ -14,6 +15,7 @@ import {
 import { useRecentSessionSnapshot } from "../hooks/useRecentSessionSnapshot";
 
 export function OverviewPage() {
+  const { t } = useI18n();
   const snapshot = useRecentSessionSnapshot();
   const sessions = useStore((s) => s.sessions);
   const runHydration = useStore((s) => s.runHydration);
@@ -21,8 +23,11 @@ export function OverviewPage() {
   if (sessions.length === 0 && runHydration.loading) {
     const label =
       runHydration.total > 0
-        ? `Loading run history ${Math.min(runHydration.loaded, runHydration.total)}/${runHydration.total}...`
-        : "Loading run history...";
+        ? t("overview.page.loadingHistoryProgress", {
+            loaded: Math.min(runHydration.loaded, runHydration.total),
+            total: runHydration.total,
+          })
+        : t("overview.page.loadingHistory");
 
     return <Loading label={label} />;
   }
@@ -48,7 +53,10 @@ export function OverviewPage() {
         <BenchmarkOverviewWidget />
 
         <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
-          <PerformanceVsSensWidget allowScopeSelection className="h-[21.25rem]" />
+          <PerformanceVsSensWidget
+            allowScopeSelection
+            className="h-[21.25rem]"
+          />
           <SessionScenarioRadarWidget className="h-[21.25rem]" />
         </div>
       </div>

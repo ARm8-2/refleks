@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 import type { ReactNode } from "react";
+import { useI18n } from "@/shared/lib/i18n";
 import { cn } from "../lib/utils";
 import {
   Tooltip,
@@ -23,15 +24,17 @@ export function InfoTooltip({
   className,
   iconClassName,
   icon,
-  ariaLabel = "More information",
+  ariaLabel,
 }: InfoTooltipProps) {
+  const { t } = useI18n();
+  const resolvedAriaLabel = ariaLabel ?? t("common.infoTooltip.ariaLabel");
   return (
     <TooltipProvider delayDuration={150}>
       <Tooltip>
         <TooltipTrigger asChild>
           <button
             type="button"
-            aria-label={ariaLabel}
+            aria-label={resolvedAriaLabel}
             className={cn(
               "inline-flex h-5 w-5 items-center justify-center rounded-md text-surface-muted-foreground transition-colors hover:text-foreground",
               iconClassName,

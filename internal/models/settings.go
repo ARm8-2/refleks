@@ -13,6 +13,7 @@ type Settings struct {
 	Theme                   string                  `json:"theme"`
 	Font                    string                  `json:"font,omitempty"`
 	Scale                   string                  `json:"scale,omitempty"`
+	Language                string                  `json:"language"`
 	FavoriteBenchmarks      []string                `json:"favoriteBenchmarks,omitempty"`
 	MouseTrackingEnabled    bool                    `json:"mouseTrackingEnabled"`
 	MouseBufferMinutes      int                     `json:"mouseBufferMinutes"`
