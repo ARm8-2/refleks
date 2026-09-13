@@ -519,6 +519,7 @@ export function BenchmarkProgressTable({
                                     recommendation={recommendation}
                                     isTopPick={isTopPick(scenario.name)}
                                     completed={completed}
+                                    animate={!shareMode}
                                     onNotes={() => openNotes(scenario.name)}
                                     onHistory={() =>
                                       openHistory(
@@ -620,6 +621,7 @@ export function BenchmarkProgressTable({
                                       rightGridTemplate={rightGridTemplate}
                                       rightGridMinWidth={rightGridMinWidth}
                                       cls={cls}
+                                      animate={!shareMode}
                                     />
                                   </div>
                                 );

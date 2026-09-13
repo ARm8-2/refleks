@@ -166,6 +166,7 @@ type ScenarioInfoRowProps = {
   recommendation: number;
   isTopPick: boolean;
   completed: boolean;
+  animate?: boolean;
   onNotes: () => void;
   onHistory: () => void;
   onPlay: () => void;
@@ -184,6 +185,7 @@ export function ScenarioInfoRow({
   recommendation,
   isTopPick,
   completed,
+  animate = true,
   onNotes,
   onHistory,
   onPlay,
@@ -194,10 +196,10 @@ export function ScenarioInfoRow({
   // Count the scenario score up from zero on first reveal, in step with the
   // rank cells beside it.
   const animatedScore = useAnimatedNumber(score || 0, {
-    active: revealed,
+    active: animate && revealed,
     delayMs: 0,
     durationMs: 800,
-    initial: 0,
+    initial: animate ? 0 : score || 0,
   });
   return (
     <div
@@ -295,6 +297,7 @@ type ScenarioRankCellsProps = {
   rightGridTemplate: string;
   rightGridMinWidth: number;
   cls: RowClasses;
+  animate?: boolean;
 };
 
 // Fill bars animate with a transform instead of a width change so the browser
@@ -314,6 +317,7 @@ export function ScenarioRankCells({
   rightGridTemplate,
   rightGridMinWidth,
   cls,
+  animate = true,
 }: ScenarioRankCellsProps) {
   useI18n(); // subscribe so locale-formatted numbers refresh on language switch
   const { ref: rowRef, inView } = useInView<HTMLDivElement>();
@@ -328,10 +332,10 @@ export function ScenarioRankCells({
   );
   const totalFill = fills.reduce((sum, value) => sum + value, 0);
   const sweep = useAnimatedNumber(1, {
-    active: revealed,
+    active: animate && revealed,
     delayMs: 0,
     durationMs: 900,
-    initial: 0,
+    initial: animate ? 0 : 1,
   });
 
   let consumed = 0;
@@ -340,7 +344,7 @@ export function ScenarioRankCells({
     consumed += fill;
     return Math.max(0, Math.min(fill, sweep * totalFill - start));
   });
-  const sweeping = sweep < 1;
+  const sweeping = animate && sweep < 1;
 
   const fillColor = computeFillColor(scenarioRank, rankDefs);
   return (
