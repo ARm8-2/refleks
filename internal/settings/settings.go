@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"refleks/internal/constants"
-	"refleks/internal/detect"
 	"refleks/internal/models"
+	"refleks/internal/steam/detect"
 )
 
 // DefaultSteamInstallDir returns an OS-appropriate default Steam install

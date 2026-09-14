@@ -4,9 +4,9 @@ import (
 	"strings"
 
 	"refleks/internal/constants"
-	"refleks/internal/detect"
 	"refleks/internal/models"
 	"refleks/internal/settings"
+	"refleks/internal/steam/detect"
 )
 
 // GetSteamID returns the Steam ID RefleK's uses for KovaaK's API calls.
