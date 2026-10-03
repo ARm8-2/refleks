@@ -2,12 +2,15 @@ package runs
 
 import (
 	"bytes"
+	"encoding/binary"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
 
 	"refleks/internal/models"
+
+	"github.com/zeebo/xxh3"
 )
 
 func TestReadRecordFileRealRun(t *testing.T) {
@@ -144,6 +147,125 @@ func TestReadRecordFileRejectsCorrupt(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestReadRecordFileV1AndSkipSections(t *testing.T) {
+	path := writeV1RunFixture(t)
+	got, err := readRecordFile(path, readRecordOptions{})
+	if err != nil {
+		t.Fatalf("read legacy v1 record: %v", err)
+	}
+	if got.FileVersion != runVersionV1 || got.FileName != "legacy-run" || got.EpochMilli != 1700000000123 {
+		t.Fatalf("legacy record identity = version %d, name %q, epoch %d", got.FileVersion, got.FileName, got.EpochMilli)
+	}
+	if got.Stats.Summary.Score != 123.5 || got.Stats.Summary.Kills != 3 || got.Stats.Summary.Scenario != "legacy scenario" {
+		t.Fatalf("legacy summary = %+v", got.Stats.Summary)
+	}
+	if len(got.Stats.Events) != 1 || got.Stats.Events[0].Bot != "target" || got.Stats.Events[0].Shots != 2 {
+		t.Fatalf("legacy stats events = %+v", got.Stats.Events)
+	}
+	if got.Performances != nil {
+		t.Fatalf("legacy v1 record unexpectedly contains performances: %+v", got.Performances)
+	}
+	if !reflect.DeepEqual(got.MouseTrace, []models.MousePoint{{TS: 1700000000, X: -2, Y: 7, Buttons: 1}}) {
+		t.Fatalf("legacy mouse trace = %+v", got.MouseTrace)
+	}
+	if got.Env.AppVersion != "0.8.4" || got.Env.OS != "windows" || got.Env.MouseBackend != "rawinput" || got.Env.SampleRate != 125 {
+		t.Fatalf("legacy environment = %+v", got.Env)
+	}
+
+	skipped, err := readRecordFile(path, readRecordOptions{
+		skipStatsEvents: true, skipPerformanceEvents: true, skipMouseTrace: true,
+	})
+	if err != nil {
+		t.Fatalf("read legacy v1 record with skipped sections: %v", err)
+	}
+	if skipped.Stats.Summary != got.Stats.Summary || skipped.Stats.Events != nil || skipped.MouseTrace != nil || skipped.Env != got.Env {
+		t.Fatalf("selective legacy read = %+v", skipped)
+	}
+}
+
+func writeV1RunFixture(t *testing.T) string {
+	t.Helper()
+	var payload bytes.Buffer
+	mustWrite := func(value any) {
+		t.Helper()
+		if err := binary.Write(&payload, binary.LittleEndian, value); err != nil {
+			t.Fatal(err)
+		}
+	}
+	mustString := func(value string) {
+		t.Helper()
+		if err := writeString(&payload, value); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	mustString("legacy-run")
+	mustWrite(uint32(3))
+	mustString("Score")
+	mustWrite(uint8(statTypeFloat))
+	mustWrite(float64(123.5))
+	mustString("Kills")
+	mustWrite(uint8(statTypeInt))
+	mustWrite(int64(3))
+	mustString("Scenario")
+	mustWrite(uint8(statTypeString))
+	mustString("legacy scenario")
+
+	mustWrite(uint32(1))
+	row := []string{"1", "12:00:01.000", "target", "pistol", "0.5s", "2", "1", "0.5", "10", "20", "0.5", "false", "0"}
+	mustWrite(uint32(len(row)))
+	for _, value := range row {
+		mustString(value)
+	}
+
+	mustWrite(uint32(1))
+	mustWrite(int64(1700000000))
+	mustWrite(int32(-2))
+	mustWrite(int32(7))
+	mustWrite(int32(1))
+
+	for _, value := range []string{"0.8.4", "windows", "amd64", "Windows 11", "steam-id", "player", "cpu"} {
+		mustString(value)
+	}
+	mustWrite(int32(8))
+	mustString("gpu")
+	mustWrite(int32(16384))
+	mustWrite(float64(144))
+	mustWrite(int32(1920))
+	mustWrite(int32(1080))
+	mustWrite(uint8(1))
+	for _, value := range []string{"mouse", "046D", "C539", "01", "rawinput"} {
+		mustString(value)
+	}
+	mustWrite(int32(1))
+	mustWrite(float64(60))
+	mustWrite(int32(125))
+
+	var file bytes.Buffer
+	file.WriteString(runMagic)
+	for _, value := range []any{uint8(runVersionV1), uint8(runCompressionNone), int64(1700000000123)} {
+		if err := binary.Write(&file, binary.LittleEndian, value); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := file.Write(payload.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	hasher := xxh3.New()
+	if _, err := hasher.Write(payload.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	if err := binary.Write(&file, binary.LittleEndian, hasher.Sum64()); err != nil {
+		t.Fatal(err)
+	}
+
+	path := filepath.Join(t.TempDir(), "legacy.refleks")
+	if err := os.WriteFile(path, file.Bytes(), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return path
 }
 
 func sampleRecord() storedRunRecord {
