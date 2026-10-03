@@ -233,6 +233,117 @@ func TestDecodeStatsEventRows(t *testing.T) {
 	}
 }
 
+func TestStatsValueCoercions(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		value any
+		want  int32
+	}{
+		{"int", int(7), 7},
+		{"int8", int8(-8), -8},
+		{"int16", int16(16), 16},
+		{"int32", int32(32), 32},
+		{"int64", int64(64), 64},
+		{"uint", uint(9), 9},
+		{"uint8", uint8(8), 8},
+		{"uint16", uint16(16), 16},
+		{"uint32", uint32(32), 32},
+		{"uint64", uint64(64), 64},
+		{"float32 truncates", float32(3.9), 3},
+		{"float64 truncates", float64(-3.9), -3},
+		{"trimmed string", " 42 ", 42},
+		{"bad string", "4.2", 0},
+		{"unsupported type", true, 0},
+	} {
+		t.Run("int32/"+tt.name, func(t *testing.T) {
+			if got := int32FromAny(tt.value); got != tt.want {
+				t.Errorf("int32FromAny(%#v) = %d, want %d", tt.value, got, tt.want)
+			}
+		})
+	}
+
+	for _, tt := range []struct {
+		name  string
+		value any
+		want  float64
+	}{
+		{"int", int(7), 7},
+		{"int8", int8(-8), -8},
+		{"int16", int16(16), 16},
+		{"int32", int32(32), 32},
+		{"int64", int64(64), 64},
+		{"uint", uint(9), 9},
+		{"uint8", uint8(8), 8},
+		{"uint16", uint16(16), 16},
+		{"uint32", uint32(32), 32},
+		{"uint64", uint64(64), 64},
+		{"float32", float32(3.5), 3.5},
+		{"float64", float64(-3.5), -3.5},
+		{"trimmed string", " 4.25 ", 4.25},
+		{"bad string", "not a number", 0},
+		{"unsupported type", true, 0},
+	} {
+		t.Run("float64/"+tt.name, func(t *testing.T) {
+			if got := float64FromAny(tt.value); got != tt.want {
+				t.Errorf("float64FromAny(%#v) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+
+	for _, tt := range []struct {
+		name  string
+		value any
+		want  string
+	}{
+		{"trimmed string", "  text  ", "text"},
+		{"non-string", 1, ""},
+	} {
+		t.Run("string/"+tt.name, func(t *testing.T) {
+			if got := stringFromAny(tt.value); got != tt.want {
+				t.Errorf("stringFromAny(%#v) = %q, want %q", tt.value, got, tt.want)
+			}
+		})
+	}
+
+	for _, tt := range []struct {
+		name  string
+		value any
+		want  bool
+	}{
+		{"bool true", true, true},
+		{"bool false", false, false},
+		{"string true", " TRUE ", true},
+		{"string false", " False ", false},
+		{"invalid string", "yes", false},
+		{"non-string", 1, false},
+	} {
+		t.Run("bool/"+tt.name, func(t *testing.T) {
+			if got := boolFromAny(tt.value); got != tt.want {
+				t.Errorf("boolFromAny(%#v) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestParseStatsEventRowValidationAndWhitespace(t *testing.T) {
+	if _, ok := parseStatsEventRow([]string{"1", "12:00:00"}); ok {
+		t.Fatal("short event row should be rejected")
+	}
+	invalid := []string{"not an index", "12:00:00", "bot", "gun", "1s", "1", "1", "1", "1", "1", "1", "false", "0"}
+	if _, ok := parseStatsEventRow(invalid); ok {
+		t.Fatal("non-numeric kill index should be rejected")
+	}
+	valid := []string{" 2 ", " 12:00:01.000 ", " target ", " pistol ", "0.5s", "2", "1", "0.5", "10", "20", "0.5", "true", "1"}
+	got, ok := parseStatsEventRow(valid)
+	if !ok {
+		t.Fatal("valid event row was rejected")
+	}
+	if got.KillIndex != 2 || got.Timestamp != "12:00:01.000" || got.Bot != "target" || got.Weapon != "pistol" ||
+		got.TTKSeconds != 0.5 || got.Shots != 2 || got.Hits != 1 || got.Accuracy != 0.5 || !got.Cheated || got.OverShots != 1 {
+		t.Fatalf("parsed event = %+v", got)
+	}
+}
+
 func TestWrapReaderWithUTF8(t *testing.T) {
 	const want = "Score:,88\n"
 
