@@ -16,11 +16,15 @@ import (
 // Service manages scenario data fetching.
 type Service struct {
 	settingsSvc *settings.Service
+	httpClient  *http.Client
 }
 
 // NewService creates a new scenario service.
 func NewService(settingsSvc *settings.Service) *Service {
-	return &Service{settingsSvc: settingsSvc}
+	return &Service{
+		settingsSvc: settingsSvc,
+		httpClient:  &http.Client{Timeout: 10 * time.Second},
+	}
 }
 
 // GetLastScores fetches the last 10 scores for a given scenario from KovaaK's API.
@@ -32,8 +36,7 @@ func (s *Service) GetLastScores(scenarioName string) ([]models.KovaaksLastScore,
 
 	endpoint := fmt.Sprintf(constants.KovaaksLastScoresURL, url.QueryEscape(personaName), url.QueryEscape(scenarioName))
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(endpoint)
+	resp, err := s.httpClient.Get(endpoint)
 	if err != nil {
 		return nil, err
 	}
