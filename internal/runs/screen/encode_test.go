@@ -122,6 +122,30 @@ func TestTrimRecordingRejectsInvalidInputsBeforeRunningFFmpeg(t *testing.T) {
 	}
 }
 
+func TestTrimRecordingReturnsFFmpegExecutionError(t *testing.T) {
+	dir := t.TempDir()
+	segment := filepath.Join(dir, "segment.mp4")
+	if err := os.WriteFile(segment, []byte("fixture"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	e := &Encoder{
+		ffmpegPath:  filepath.Join(dir, "missing-ffmpeg"),
+		encoderName: "libx264",
+		container:   ".mp4",
+	}
+	// A fake completed probe lets the trim reach process execution without FFmpeg.
+	e.probeOnce.Do(func() {})
+
+	out := filepath.Join(dir, "output.mp4")
+	err := e.TrimRecording([]string{segment}, out, 1000, 1000, 2000, 3000)
+	if err == nil || !strings.Contains(err.Error(), "ffmpeg trim:") {
+		t.Fatalf("TrimRecording error = %v, want FFmpeg execution error", err)
+	}
+	if _, err := os.Stat(out); !os.IsNotExist(err) {
+		t.Errorf("failed trim produced an output file: %v", err)
+	}
+}
+
 func TestEncoderArgsUseSharedCaptureAndProbeConfiguration(t *testing.T) {
 	common := []string{"-pix_fmt", "yuv420p", "-profile:v", "high"}
 	for _, tt := range []struct {
