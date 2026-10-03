@@ -1,8 +1,32 @@
 package screen
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
+
+func TestProbeReplayRejectsMissingFileAndUnreadableMetadata(t *testing.T) {
+	dir := t.TempDir()
+	e := &Encoder{ffmpegPath: filepath.Join(dir, "missing-ffmpeg")}
+	// Mark probing complete so this test covers replay probing, not encoder discovery.
+	e.probeOnce.Do(func() {})
+
+	missing := filepath.Join(dir, "missing.mp4")
+	if _, err := e.ProbeReplay(missing); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("ProbeReplay(missing file) error = %v, want os.ErrNotExist", err)
+	}
+
+	replay := filepath.Join(dir, "invalid.mp4")
+	if err := os.WriteFile(replay, []byte("not a replay"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := e.ProbeReplay(replay); err == nil || !strings.Contains(err.Error(), "could not read replay metadata") {
+		t.Fatalf("ProbeReplay(invalid file) error = %v, want metadata error", err)
+	}
+}
 
 func TestParseProbeOutputUsesVideoMetadata(t *testing.T) {
 	for _, tt := range []struct {
