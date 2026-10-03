@@ -87,6 +87,30 @@ func TestCleanupAbandonedDownloads(t *testing.T) {
 	}
 }
 
+func TestCleanupDownloadedInstallerOnlyRemovesUpdaterDirectory(t *testing.T) {
+	root := t.TempDir()
+	updaterDir := filepath.Join(root, constants.UpdaterTempDirPrefix+"download")
+	unrelatedDir := filepath.Join(root, "other-download")
+	for _, dir := range []string{updaterDir, unrelatedDir} {
+		if err := os.Mkdir(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "installer.exe"), []byte("installer"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	cleanupDownloadedInstaller(filepath.Join(updaterDir, "installer.exe"))
+	cleanupDownloadedInstaller(filepath.Join(unrelatedDir, "installer.exe"))
+
+	if _, err := os.Stat(updaterDir); !os.IsNotExist(err) {
+		t.Errorf("updater directory still present: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(unrelatedDir, "installer.exe")); err != nil {
+		t.Errorf("unrelated installer removed: %v", err)
+	}
+}
+
 func TestCleanupAbandonedDownloadsMissingRoot(t *testing.T) {
 	if err := cleanupAbandonedDownloads(filepath.Join(t.TempDir(), "missing")); err == nil {
 		t.Fatal("expected error for missing root")
