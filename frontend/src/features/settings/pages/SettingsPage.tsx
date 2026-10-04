@@ -1137,6 +1137,28 @@ export function SettingsPage() {
                         </SettingsField>
                       </div>
                     </div>
+
+                    <div className="space-y-3">
+                      <div className="text-xs font-medium uppercase tracking-wide text-surface-muted-foreground">
+                        {t("settings.advanced.rendering")}
+                      </div>
+                      <div className="space-y-4">
+                        <SettingsField
+                          label={t("settings.advanced.disableWebviewGpu")}
+                          description={t(
+                            "settings.advanced.disableWebviewGpuDescription",
+                          )}
+                          checkbox
+                        >
+                          <Checkbox
+                            checked={settings.disableWebviewGpu === true}
+                            onCheckedChange={(v) =>
+                              updateField("disableWebviewGpu", v === true, true)
+                            }
+                          />
+                        </SettingsField>
+                      </div>
+                    </div>
                   </div>
                 )}
               </SettingsSection>

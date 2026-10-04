@@ -38,6 +38,9 @@ const (
 	EnvRunsSyncURLVar = "REFLEKS_RUNS_SYNC_URL"
 	// If set, this overrides the default benchmarks API endpoint.
 	EnvBenchmarksURLVar = "REFLEKS_BENCHMARKS_URL"
+	// If set to a truthy value (1/true/yes/on), disables WebView2 GPU
+	// acceleration. Safe-mode escape hatch for GPUs that render a black window.
+	EnvDisableWebviewGPUVar = "REFLEKS_DISABLE_WEBVIEW_GPU"
 
 	// Conventional, explicit filename for release assets. Keep in sync with build/windows/installer/project.nsi
 	// Result example: "refleks-0.3.0-windows-amd64-installer.exe"

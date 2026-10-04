@@ -200,3 +200,34 @@ func TestSanitizePreservesValidValues(t *testing.T) {
 		t.Errorf("boolean settings changed: %+v", s)
 	}
 }
+
+func TestWebviewGPUDisabled(t *testing.T) {
+	tests := []struct {
+		name     string
+		cliFlag  bool
+		env      string
+		settings bool
+		want     bool
+	}{
+		{"all off", false, "", false, false},
+		{"cli flag", true, "", false, true},
+		{"persisted setting", false, "", true, true},
+		{"env 1", false, "1", false, true},
+		{"env true mixed case", false, " TRUE ", false, true},
+		{"env yes", false, "yes", false, true},
+		{"env on", false, "on", false, true},
+		{"env 0", false, "0", false, false},
+		{"env false", false, "false", false, false},
+		{"env garbage", false, "maybe", false, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv(constants.EnvDisableWebviewGPUVar, tt.env)
+			s := models.Settings{DisableWebviewGPU: tt.settings}
+			if got := WebviewGPUDisabled(tt.cliFlag, s); got != tt.want {
+				t.Errorf("WebviewGPUDisabled(%v, env=%q, setting=%v) = %v, want %v",
+					tt.cliFlag, tt.env, tt.settings, got, tt.want)
+			}
+		})
+	}
+}

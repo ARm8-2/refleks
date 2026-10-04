@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"refleks/internal/constants"
 	"refleks/internal/elevation"
+	appsettings "refleks/internal/settings"
 	"strings"
 
 	"github.com/wailsapp/wails/v2"
@@ -24,9 +25,8 @@ var assets embed.FS
 
 func main() {
 	monitor := flag.Bool("monitor", false, "Start in monitor mode (hidden)")
+	disableWebviewGPU := flag.Bool("disable-webview-gpu", false, "Disable WebView2 GPU acceleration (use if the window renders black)")
 	flag.Parse()
-
-	app := NewApp(*monitor)
 
 	// The app itself never needs elevation — the installer does. If an
 	// elevated instance was launched (e.g. by the installer's "Run RefleK's"
@@ -43,6 +43,12 @@ func main() {
 			return
 		}
 	}
+
+	// Settings are loaded before wails.Run because some of them configure the
+	// window itself. Load failures are reported once the runtime logger exists.
+	settingsSvc := appsettings.NewService()
+	settingsLoadErr := settingsSvc.Load()
+	app := NewApp(*monitor, settingsSvc, settingsLoadErr)
 
 	err := wails.Run(&options.App{
 		Title:  "RefleK's",
@@ -69,6 +75,7 @@ func main() {
 		},
 		Windows: &windows.Options{
 			WebviewIsTransparent: false,
+			WebviewGpuIsDisabled: appsettings.WebviewGPUDisabled(*disableWebviewGPU, settingsSvc.Get()),
 			WindowIsTranslucent:  false,
 			DisableWindowIcon:    false,
 		},

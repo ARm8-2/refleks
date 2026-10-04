@@ -146,6 +146,10 @@ export const settings = {
     recentRunsMinCount: "Recent Runs Minimum Count",
     recentRunsMinCountDescription:
       "If the day window has too few runs, include older runs until this minimum is reached",
+    rendering: "Rendering",
+    disableWebviewGpu: "Disable GPU Acceleration",
+    disableWebviewGpuDescription:
+      "Turn this on if the window stays black or flickers. Takes effect after restarting RefleK's. Can also be forced at launch with --disable-webview-gpu.",
   },
   footer: {
     clearCache: "Clear Cache",

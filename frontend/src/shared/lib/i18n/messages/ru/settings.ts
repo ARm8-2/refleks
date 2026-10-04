@@ -143,6 +143,10 @@ export const settings: SettingsMessages = {
     recentRunsMinCount: "Минимальное число последних забегов",
     recentRunsMinCountDescription:
       "Если за выбранный период слишком мало забегов, загружать более старые, пока не будет достигнут этот минимум",
+    rendering: "Отрисовка",
+    disableWebviewGpu: "Отключить аппаратное ускорение GPU",
+    disableWebviewGpuDescription:
+      "Включите, если окно остаётся чёрным или мерцает. Вступает в силу после перезапуска RefleK's. Также можно принудительно включить при запуске с помощью --disable-webview-gpu.",
   },
   footer: {
     clearCache: "Очистить кэш",

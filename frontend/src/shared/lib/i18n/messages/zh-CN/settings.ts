@@ -135,6 +135,10 @@ export const settings: SettingsMessages = {
     recentRunsMinCount: "最近训练最少数量",
     recentRunsMinCountDescription:
       "如果时间范围内的训练太少，则继续包含更早的训练，直到达到此最小数量",
+    rendering: "渲染",
+    disableWebviewGpu: "禁用 GPU 加速",
+    disableWebviewGpuDescription:
+      "如果窗口一直黑屏或闪烁，请开启此项。重启 RefleK's 后生效。也可以在启动时使用 --disable-webview-gpu 强制启用。",
   },
   footer: {
     clearCache: "清除缓存",

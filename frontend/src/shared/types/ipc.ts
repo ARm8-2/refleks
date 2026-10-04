@@ -232,6 +232,7 @@ export interface Settings {
   autostartEnabled?: boolean;
   anonymousEnabled?: boolean;
   runSyncEnabled?: boolean;
+  disableWebviewGpu?: boolean;
   scenarioNotes?: Record<string, ScenarioNote>;
   sessionNotes?: Record<string, SessionNote>;
 }

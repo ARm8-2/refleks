@@ -146,6 +146,10 @@ export const settings: SettingsMessages = {
     recentRunsMinCount: "Minimum aantal recente runs",
     recentRunsMinCountDescription:
       "Als het dagvenster te weinig runs bevat, neem oudere runs op tot dit minimum is bereikt",
+    rendering: "Weergave",
+    disableWebviewGpu: "GPU-versnelling uitschakelen",
+    disableWebviewGpuDescription:
+      "Schakel dit in als het venster zwart blijft of flikkert. Wordt actief na het herstarten van RefleK's. Kan ook bij het opstarten worden afgedwongen met --disable-webview-gpu.",
   },
   footer: {
     clearCache: "Cache wissen",

@@ -148,6 +148,10 @@ export const settings: SettingsMessages = {
     recentRunsMinCount: "Cantidad mínima de partidas recientes",
     recentRunsMinCountDescription:
       "Si el periodo de días contiene muy pocas partidas, incluye partidas anteriores hasta alcanzar este mínimo",
+    rendering: "Renderizado",
+    disableWebviewGpu: "Desactivar aceleración por GPU",
+    disableWebviewGpuDescription:
+      "Actívalo si la ventana se queda en negro o parpadea. Se aplica tras reiniciar RefleK's. También se puede forzar al iniciar con --disable-webview-gpu.",
   },
   footer: {
     clearCache: "Borrar caché",

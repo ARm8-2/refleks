@@ -830,6 +830,7 @@ export namespace models {
 	    autostartEnabled: boolean;
 	    anonymousEnabled: boolean;
 	    runSyncEnabled: boolean;
+	    disableWebviewGpu: boolean;
 	    scenarioNotes?: Record<string, ScenarioNote>;
 	    sessionNotes?: Record<string, SessionNote>;
 	
@@ -863,6 +864,7 @@ export namespace models {
 	        this.autostartEnabled = source["autostartEnabled"];
 	        this.anonymousEnabled = source["anonymousEnabled"];
 	        this.runSyncEnabled = source["runSyncEnabled"];
+	        this.disableWebviewGpu = source["disableWebviewGpu"];
 	        this.scenarioNotes = this.convertValues(source["scenarioNotes"], ScenarioNote, true);
 	        this.sessionNotes = this.convertValues(source["sessionNotes"], SessionNote, true);
 	    }

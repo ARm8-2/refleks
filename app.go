@@ -41,11 +41,22 @@ type App struct {
 	watcherCancel  context.CancelFunc
 	isQuitting     atomic.Bool
 	startedHidden  bool
+	// settingsLoadErr is the result of loading settings in main, reported in
+	// startup once the runtime logger is available.
+	settingsLoadErr error
 }
 
 // NewApp creates a new App application struct. startedHidden reports whether
 // the process was launched with --monitor (autostart/background mode).
-func NewApp(startedHidden bool) *App { return &App{startedHidden: startedHidden} }
+// settingsSvc has already been loaded by main, with settingsLoadErr holding
+// the outcome, because some settings are needed before the window exists.
+func NewApp(startedHidden bool, settingsSvc *appsettings.Service, settingsLoadErr error) *App {
+	return &App{
+		startedHidden:   startedHidden,
+		settingsSvc:     settingsSvc,
+		settingsLoadErr: settingsLoadErr,
+	}
+}
 
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
@@ -59,9 +70,8 @@ func (a *App) startup(ctx context.Context) {
 		runtime.LogWarningf(a.ctx, "updater: clean abandoned downloads: %v", err)
 	}
 
-	// Initialize Settings Service
-	a.settingsSvc = appsettings.NewService()
-	if err := a.settingsSvc.Load(); err != nil {
+	// Settings were loaded in main before the window was created.
+	if err := a.settingsLoadErr; err != nil {
 		runtime.LogWarning(a.ctx, "settings load failed, using defaults: "+err.Error())
 		// Load failed, but NewService already set defaults. Try to save them.
 		_ = a.settingsSvc.Update(a.settingsSvc.Get())

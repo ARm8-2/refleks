@@ -26,6 +26,7 @@ type Settings struct {
 	AutostartEnabled        bool                    `json:"autostartEnabled"`
 	AnonymousEnabled        bool                    `json:"anonymousEnabled"`
 	RunSyncEnabled          bool                    `json:"runSyncEnabled"`
+	DisableWebviewGPU       bool                    `json:"disableWebviewGpu"`
 	ScenarioNotes           map[string]ScenarioNote `json:"scenarioNotes,omitempty"`
 	SessionNotes            map[string]SessionNote  `json:"sessionNotes,omitempty"`
 }

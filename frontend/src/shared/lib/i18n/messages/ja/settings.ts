@@ -144,6 +144,10 @@ export const settings: SettingsMessages = {
     recentRunsMinCount: "最近のプレイの最小件数",
     recentRunsMinCountDescription:
       "期間内のプレイが少なすぎる場合、この最小件数に達するまで古いプレイを含めます",
+    rendering: "レンダリング",
+    disableWebviewGpu: "GPUアクセラレーションを無効化",
+    disableWebviewGpuDescription:
+      "ウィンドウが真っ黒のままになる、またはちらつく場合にオンにしてください。RefleK'sの再起動後に反映されます。起動時に --disable-webview-gpu を指定して強制することもできます。",
   },
   footer: {
     clearCache: "キャッシュをクリア",
