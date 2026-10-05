@@ -4,5 +4,6 @@ build/windows/installer/wails_tools.nsh
 
 node_modules
 dist
+/frontend/coverage/
 
 .env

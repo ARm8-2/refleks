@@ -1,6 +1,6 @@
 import react from "@vitejs/plugin-react";
 import path from "path";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -13,5 +13,11 @@ export default defineConfig({
   },
   build: {
     sourcemap: false,
+  },
+  test: {
+    coverage: {
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/**/*.d.ts"],
+    },
   },
 });
