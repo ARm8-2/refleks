@@ -20,13 +20,10 @@ export function decodeTrace(base64: string): MousePoint[] {
   const view = new DataView(bytes.buffer);
   const count = view.getUint32(0, true);
   const pointSize = 20;
-  const points: MousePoint[] = new Array(count);
+  const completePointCount = Math.min(count, Math.floor((len - 4) / pointSize));
+  const points: MousePoint[] = new Array(completePointCount);
 
-  for (
-    let i = 0, off = 4;
-    i < count && off + pointSize <= len;
-    i++, off += pointSize
-  ) {
+  for (let i = 0, off = 4; i < completePointCount; i++, off += pointSize) {
     points[i] = {
       ts: Number(view.getBigInt64(off, true) / BigInt(1_000_000)),
       x: view.getInt32(off + 8, true),
