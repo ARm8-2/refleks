@@ -20,27 +20,24 @@ function parseNumber(value: unknown): number | null {
 }
 
 function parseDurationMs(value: unknown): number {
+  if (typeof value === "string" && value.includes(":")) {
+    const parts = value
+      .trim()
+      .split(":")
+      .map((part) => Number.parseFloat(part));
+    if (parts.length < 2 || parts.some((part) => !Number.isFinite(part))) {
+      return 0;
+    }
+
+    let seconds = 0;
+    for (const part of parts) {
+      seconds = seconds * 60 + part;
+    }
+    return seconds > 0 ? seconds * 1000 : 0;
+  }
+
   const numeric = parseNumber(value);
-  if (numeric !== null && numeric > 0) {
-    return numeric * 1000;
-  }
-
-  if (typeof value !== "string") return 0;
-
-  const parts = value
-    .trim()
-    .split(":")
-    .map((part) => Number.parseFloat(part));
-  if (parts.length < 2 || parts.some((part) => !Number.isFinite(part))) {
-    return 0;
-  }
-
-  let seconds = 0;
-  for (const part of parts) {
-    seconds = seconds * 60 + part;
-  }
-
-  return seconds > 0 ? seconds * 1000 : 0;
+  return numeric !== null && numeric > 0 ? numeric * 1000 : 0;
 }
 
 export function getScenarioName(
