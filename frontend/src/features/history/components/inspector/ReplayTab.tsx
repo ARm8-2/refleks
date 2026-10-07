@@ -320,10 +320,10 @@ function ReplaySlot({
 
   return (
     <div
-      className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center"
+      className="flex min-h-40 items-center justify-center rounded-xl bg-secondary p-6 text-center"
       style={waiting ? { aspectRatio: DEFAULT_ASPECT } : undefined}
     >
-      <p className="text-sm text-surface-muted-foreground" aria-live="polite">
+      <p className="text-sm text-muted-foreground" aria-live="polite">
         {waiting
           ? translateMessage(status?.message) ||
             t("history.replay.waitingForFinish")
@@ -715,7 +715,7 @@ function VideoPlayer({
             }}
             className="min-w-0 flex-1 cursor-pointer"
           />
-          <span className="shrink-0 whitespace-nowrap font-mono text-[0.6875rem] text-surface-muted-foreground">
+          <span className="shrink-0 whitespace-nowrap font-mono text-[0.6875rem] text-muted-foreground">
             {fmtTime(currentTime)} / {fmtTime(duration)}
           </span>
         </div>
@@ -723,7 +723,7 @@ function VideoPlayer({
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-1.5">
           {/* Transport */}
-          <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
+          <div className="flex items-center gap-0.5 rounded-xl bg-secondary p-1">
             <ControlBtn
               icon={<SkipBack className="h-3.5 w-3.5" />}
               title={t("history.replay.back5s")}
@@ -751,8 +751,8 @@ function VideoPlayer({
           </div>
 
           {/* Speed */}
-          <div className="flex items-center gap-1.5 rounded-xl bg-surface-subtle p-1 pl-2.5">
-            <span className="text-[0.6875rem] font-medium text-surface-muted-foreground">
+          <div className="flex items-center gap-1.5 rounded-xl bg-secondary p-1 pl-2.5">
+            <span className="text-[0.6875rem] font-medium text-muted-foreground">
               {t("history.replay.speed")}
             </span>
             <Slider
@@ -764,7 +764,7 @@ function VideoPlayer({
               onValueChange={([v]) => setSpeed(v)}
               className="w-20"
             />
-            <span className="min-w-[2.5rem] text-center text-[0.6875rem] font-medium tabular-nums text-surface-muted-foreground">
+            <span className="min-w-[2.5rem] text-center text-[0.6875rem] font-medium tabular-nums text-muted-foreground">
               {speedLabel}
             </span>
             <ControlBtn
@@ -776,7 +776,7 @@ function VideoPlayer({
           </div>
 
           {/* Info + delete */}
-          <div className="ml-auto flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
+          <div className="ml-auto flex items-center gap-0.5 rounded-xl bg-secondary p-1">
             <div
               className="flex items-center"
               onMouseEnter={loadInfo}
@@ -857,7 +857,7 @@ function VideoPlayer({
               "text-[0.6875rem] leading-snug",
               exportFeedback.error
                 ? "text-destructive"
-                : "text-surface-muted-foreground",
+                : "text-muted-foreground",
             )}
           >
             {exportFeedback.text}
@@ -873,7 +873,7 @@ function VideoPlayer({
         height="auto"
       >
         <div className="flex flex-col gap-4 p-4">
-          <p className="text-sm text-surface-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {t("history.replay.deleteDescription")}
           </p>
           {deleteError && (
@@ -928,10 +928,10 @@ function ControlBtn({
       className={cn(
         "grid h-7 w-7 place-items-center rounded-lg transition-colors",
         disabled
-          ? "text-surface-muted-foreground/30 cursor-default"
+          ? "text-muted-foreground/30 cursor-default"
           : active
-            ? "bg-surface-muted text-foreground"
-            : "text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground",
+            ? "bg-muted text-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >
       {icon}

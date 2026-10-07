@@ -35,21 +35,21 @@ export class ErrorBoundary extends Component<
     if (this.state.error) {
       const { t } = this.context;
       return (
-        <div className="min-h-screen bg-canvas text-foreground flex items-center justify-center p-6">
-          <div className="max-w-xl w-full rounded-xl bg-surface p-4 space-y-3 shadow-md">
+        <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+          <div className="max-w-xl w-full rounded-xl bg-card p-4 space-y-3 shadow-md">
             <div className="text-lg font-semibold">
               {t("common.errorBoundary.title")}
             </div>
-            <div className="text-surface-muted-foreground text-sm break-words whitespace-pre-wrap">
+            <div className="text-muted-foreground text-sm break-words whitespace-pre-wrap">
               {this.state.error.message}
             </div>
             {this.state.error?.stack && (
-              <div className="text-[0.6875rem] text-surface-muted-foreground whitespace-pre-wrap bg-surface-muted border rounded p-2 overflow-auto max-h-48">
+              <div className="text-[0.6875rem] text-muted-foreground whitespace-pre-wrap bg-muted border rounded p-2 overflow-auto max-h-48">
                 {this.state.error.stack}
               </div>
             )}
             {this.state.stack && (
-              <div className="text-[0.6875rem] text-surface-muted-foreground whitespace-pre-wrap bg-surface-muted border rounded p-2 overflow-auto max-h-48">
+              <div className="text-[0.6875rem] text-muted-foreground whitespace-pre-wrap bg-muted border rounded p-2 overflow-auto max-h-48">
                 {this.state.stack}
               </div>
             )}
@@ -61,7 +61,7 @@ export class ErrorBoundary extends Component<
                 {t("common.errorBoundary.reload")}
               </button>
               <button
-                className="px-3 py-1.5 rounded-xl bg-surface text-surface-muted-foreground text-sm hover:bg-surface-muted hover:text-foreground"
+                className="px-3 py-1.5 rounded-xl bg-card text-muted-foreground text-sm hover:bg-muted hover:text-foreground"
                 onClick={() => this.setState({ error: null })}
               >
                 {t("common.errorBoundary.dismiss")}

@@ -10,8 +10,8 @@ export function StatsGroup({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-xl bg-surface-subtle p-3">
-      <div className="mb-2 text-xs font-medium text-surface-muted-foreground">
+    <div className="rounded-xl bg-secondary p-3">
+      <div className="mb-2 text-xs font-medium text-muted-foreground">
         {label}
       </div>
       <div className="space-y-1.5">{children}</div>
@@ -21,8 +21,8 @@ export function StatsGroup({
 
 export function HeroStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-surface-subtle px-3 py-2.5">
-      <div className="text-xs text-surface-muted-foreground">{label}</div>
+    <div className="rounded-xl bg-secondary px-3 py-2.5">
+      <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-1 text-xl font-semibold text-foreground">{value}</div>
     </div>
   );
@@ -31,7 +31,7 @@ export function HeroStat({ label, value }: { label: string; value: string }) {
 export function StatRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <span className="text-xs text-surface-muted-foreground">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
       <span className="text-sm font-medium text-foreground tabular-nums">
         {value}
       </span>
@@ -57,9 +57,9 @@ export function CompareMetric({
   const isImproved = showDelta && (lowerIsBetter ? delta < 0 : delta > 0);
 
   return (
-    <div className="rounded-xl bg-surface-subtle px-3 py-2.5">
+    <div className="rounded-xl bg-secondary px-3 py-2.5">
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-surface-muted-foreground">{label}</span>
+        <span className="text-xs text-muted-foreground">{label}</span>
         {showDelta && (
           <span
             className={cn(
@@ -74,11 +74,11 @@ export function CompareMetric({
       </div>
       <div className="mt-1 space-y-0.5 text-sm">
         <div className="flex justify-between gap-2">
-          <span className="text-surface-muted-foreground">A</span>
+          <span className="text-muted-foreground">A</span>
           <span className="font-medium text-foreground">{a}</span>
         </div>
         <div className="flex justify-between gap-2">
-          <span className="text-surface-muted-foreground">B</span>
+          <span className="text-muted-foreground">B</span>
           <span className="font-medium text-foreground">{b}</span>
         </div>
       </div>
@@ -97,7 +97,7 @@ export function CompareStatRow({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-2">
-      <span className="text-xs text-surface-muted-foreground flex-shrink-0">
+      <span className="text-xs text-muted-foreground shrink-0">
         {label}
       </span>
       <div className="flex items-baseline gap-4 text-sm tabular-nums">

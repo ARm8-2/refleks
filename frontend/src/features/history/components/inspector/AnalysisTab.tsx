@@ -234,8 +234,8 @@ export function AnalysisTab({
 
   if (!retainedPrimary) {
     return (
-      <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
-        <p className="text-sm text-surface-muted-foreground">
+      <div className="flex min-h-40 items-center justify-center rounded-xl bg-secondary p-6 text-center">
+        <p className="text-sm text-muted-foreground">
           {t("history.analysis.loadingEventData")}
         </p>
       </div>
@@ -247,8 +247,8 @@ export function AnalysisTab({
 
   if (primaryChart.events.length === 0) {
     return (
-      <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
-        <p className="text-sm text-surface-muted-foreground">
+      <div className="flex min-h-40 items-center justify-center rounded-xl bg-secondary p-6 text-center">
+        <p className="text-sm text-muted-foreground">
           {t("history.analysis.noEventData")}
         </p>
       </div>
@@ -263,7 +263,7 @@ export function AnalysisTab({
         )}
         <Widget
           title={t("history.analysis.accuracyOverTime")}
-          className="bg-surface-subtle h-[22.5rem]"
+          className="bg-secondary h-[22.5rem]"
           modalTitle={t("history.analysis.accuracyOverTime")}
           modalContent={
             <EventsChart
@@ -285,7 +285,7 @@ export function AnalysisTab({
                 slope: `${primaryAnalysisShown.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysisShown.movingAvg.slope.toFixed(4)}`,
                 r2: primaryAnalysisShown.movingAvg.r2.toFixed(3),
               })}
-              className="bg-surface-subtle h-[22.5rem]"
+              className="bg-secondary h-[22.5rem]"
               modalTitle={t("history.analysis.ttkMovingAverage")}
               modalContent={<TTKChart data={primaryChart.ttk} />}
             >
@@ -296,7 +296,7 @@ export function AnalysisTab({
               description={t("history.analysis.pearsonR", {
                 r: primaryAnalysisShown.scatter.corrKpmAcc.toFixed(3),
               })}
-              className="bg-surface-subtle h-[22.5rem]"
+              className="bg-secondary h-[22.5rem]"
               modalTitle={t("history.analysis.accuracyVsSpeed")}
               modalContent={<ScatterPlot data={primaryChart.scatter} />}
             >
@@ -304,8 +304,8 @@ export function AnalysisTab({
             </Widget>
           </div>
         ) : (
-          <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
-            <p className="text-sm text-surface-muted-foreground">
+          <div className="flex min-h-40 items-center justify-center rounded-xl bg-secondary p-6 text-center">
+            <p className="text-sm text-muted-foreground">
               {t("history.analysis.waitingForFirstKill")}
             </p>
           </div>
@@ -368,7 +368,7 @@ function SplitCharts({
       <div className="grid gap-3 md:grid-cols-2">
         <Widget
           title={t("history.analysis.accuracyOverTimePinned")}
-          className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
+          className="bg-secondary hover:bg-muted h-[22.5rem]"
           modalTitle={t("history.analysis.accuracyOverTimePinned")}
           modalContent={
             <EventsChart
@@ -384,7 +384,7 @@ function SplitCharts({
         </Widget>
         <Widget
           title={t("history.analysis.accuracyOverTimeCompare")}
-          className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
+          className="bg-secondary hover:bg-muted h-[22.5rem]"
           modalTitle={t("history.analysis.accuracyOverTimeCompare")}
           modalContent={
             <EventsChart
@@ -407,7 +407,7 @@ function SplitCharts({
             description={t("history.analysis.slopeLine", {
               slope: `${primaryAnalysis.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysis.movingAvg.slope.toFixed(4)}`,
             })}
-            className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
+            className="bg-secondary hover:bg-muted h-[22.5rem]"
             modalTitle={t("history.analysis.ttkTrendPinned")}
             modalContent={<TTKChart data={primary.ttk} />}
           >
@@ -418,7 +418,7 @@ function SplitCharts({
             description={t("history.analysis.slopeLine", {
               slope: `${compareAnalysis.movingAvg.slope >= 0 ? "+" : ""}${compareAnalysis.movingAvg.slope.toFixed(4)}`,
             })}
-            className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
+            className="bg-secondary hover:bg-muted h-[22.5rem]"
             modalTitle={t("history.analysis.ttkTrendCompare")}
             modalContent={<TTKChart data={compare.ttk} />}
           >
@@ -434,7 +434,7 @@ function SplitCharts({
             description={t("history.analysis.rLine", {
               r: primaryAnalysis.scatter.corrKpmAcc.toFixed(3),
             })}
-            className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
+            className="bg-secondary hover:bg-muted h-[22.5rem]"
             modalTitle={t("history.analysis.accuracyVsSpeedPinned")}
             modalContent={<ScatterPlot data={primary.scatter} />}
           >
@@ -445,7 +445,7 @@ function SplitCharts({
             description={t("history.analysis.rLine", {
               r: compareAnalysis.scatter.corrKpmAcc.toFixed(3),
             })}
-            className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
+            className="bg-secondary hover:bg-muted h-[22.5rem]"
             modalTitle={t("history.analysis.accuracyVsSpeedCompare")}
             modalContent={<ScatterPlot data={compare.scatter} />}
           >
@@ -517,7 +517,7 @@ function OverlayCharts({
     <div className="space-y-3">
       <Widget
         title={t("history.analysis.accuracyOverTime")}
-        className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
+        className="bg-secondary hover:bg-muted h-[22.5rem]"
         modalTitle={t("history.analysis.accuracyOverTimeOverlay")}
         modalContent={
           <EventsChartOverlay
@@ -536,7 +536,7 @@ function OverlayCharts({
               slope: `${primaryAnalysis.movingAvg.slope >= 0 ? "+" : ""}${primaryAnalysis.movingAvg.slope.toFixed(4)}`,
               compare: `${compareAnalysis.movingAvg.slope >= 0 ? "+" : ""}${compareAnalysis.movingAvg.slope.toFixed(4)}`,
             })}
-            className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
+            className="bg-secondary hover:bg-muted h-[22.5rem]"
             modalTitle={t("history.analysis.ttkTrendOverlay")}
             modalContent={<TTKChartOverlay data={ttkOverlay} />}
           >
@@ -548,7 +548,7 @@ function OverlayCharts({
               primary: primaryAnalysis.scatter.corrKpmAcc.toFixed(3),
               compare: compareAnalysis.scatter.corrKpmAcc.toFixed(3),
             })}
-            className="bg-surface-subtle hover:bg-surface-muted h-[22.5rem]"
+            className="bg-secondary hover:bg-muted h-[22.5rem]"
             modalTitle={t("history.analysis.accuracyVsSpeedOverlay")}
             modalContent={
               <ScatterPlotOverlay
@@ -583,7 +583,7 @@ function SummaryMetrics({
   return (
     <div className="space-y-1.5">
       {label && (
-        <div className="text-xs font-medium text-surface-muted-foreground">
+        <div className="text-xs font-medium text-muted-foreground">
           {label}
         </div>
       )}
@@ -1075,8 +1075,8 @@ function ScatterPlotOverlay({
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-surface px-2.5 py-2">
-      <div className="text-[0.625rem] text-surface-muted-foreground">
+    <div className="rounded-lg bg-card px-2.5 py-2">
+      <div className="text-[0.625rem] text-muted-foreground">
         {label}
       </div>
       <div className="mt-0.5 text-sm font-semibold text-foreground tabular-nums">

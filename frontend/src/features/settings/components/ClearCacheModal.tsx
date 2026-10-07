@@ -32,7 +32,7 @@ export function ClearCacheModal({ isOpen, onClose }: ClearCacheModalProps) {
       height="auto"
     >
       <div className="p-4 flex flex-col gap-4">
-        <p className="text-surface-muted-foreground text-sm">
+        <p className="text-muted-foreground text-sm">
           {t("settings.clearCache.description")}
         </p>
         <div className="flex justify-end gap-2">

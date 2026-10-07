@@ -118,14 +118,14 @@ export function SegmentedControl<T extends string | number>({
       <TabsList
         ref={containerRef}
         className={cn(
-          "relative inline-flex h-auto items-center rounded-xl bg-surface-subtle p-1",
+          "relative inline-flex h-auto items-center rounded-xl bg-secondary p-1",
           className,
         )}
       >
         <span
           aria-hidden
           className={cn(
-            "pointer-events-none absolute left-0 top-1 h-8 rounded-lg bg-surface shadow-sm transition-[transform,width,opacity] duration-250 ease-out",
+            "pointer-events-none absolute left-0 top-1 h-8 rounded-lg bg-card shadow-sm transition-[transform,width,opacity] duration-250 ease-out",
             size === "sm" && "h-7",
             !indicator.ready && "opacity-0",
             indicatorClassName,
@@ -152,7 +152,7 @@ export function SegmentedControl<T extends string | number>({
                 sizeClasses,
                 selected
                   ? "text-foreground"
-                  : "text-surface-muted-foreground hover:text-foreground",
+                  : "text-muted-foreground hover:text-foreground",
                 selected && activeItemClassName,
                 !selected && inactiveItemClassName,
                 itemClassName,

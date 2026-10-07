@@ -39,8 +39,8 @@ const CLASSIFICATION_STYLES = {
     highlight: "rgba(16,185,129,0.8)",
   },
   unknown: {
-    dot: "bg-surface-muted-foreground",
-    text: "text-surface-muted-foreground",
+    dot: "bg-muted-foreground",
+    text: "text-muted-foreground",
     highlight: "rgba(148,163,184,0.8)",
   },
 } as const;
@@ -254,8 +254,8 @@ export function TraceTab({
 
   if (!retainedPrimaryView) {
     return (
-      <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
-        <p className="text-sm text-surface-muted-foreground">
+      <div className="flex min-h-40 items-center justify-center rounded-xl bg-secondary p-6 text-center">
+        <p className="text-sm text-muted-foreground">
           {t("history.trace.loading")}
         </p>
       </div>
@@ -264,8 +264,8 @@ export function TraceTab({
 
   if (retainedPrimaryView.points.length === 0) {
     return (
-      <div className="flex min-h-40 items-center justify-center rounded-xl bg-surface-subtle p-6 text-center">
-        <p className="text-sm text-surface-muted-foreground">
+      <div className="flex min-h-40 items-center justify-center rounded-xl bg-secondary p-6 text-center">
+        <p className="text-sm text-muted-foreground">
           {t("history.trace.noMouseTrace")}
         </p>
       </div>
@@ -336,7 +336,7 @@ function AnalysisPanel({
     <div className="shrink-0 space-y-1.5">
       {/* Summary row */}
       <div className="flex flex-wrap items-center gap-2 pl-2 pr-3.5">
-        <div className="flex items-center gap-2 text-xs text-surface-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {counts.overshoot > 0 && (
             <span className="flex items-center gap-1">
               <span
@@ -459,7 +459,7 @@ function AnalysisPanel({
       {suggestion ? (
         <SensSuggestionCard suggestion={suggestion} />
       ) : (
-        <div className="rounded-xl bg-surface-subtle px-3 py-2 text-xs text-surface-muted-foreground">
+        <div className="rounded-xl bg-secondary px-3 py-2 text-xs text-muted-foreground">
           {t("history.trace.noSensSuggested")}
         </div>
       )}
@@ -517,8 +517,8 @@ function KillChip({
       className={cn(
         "flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.6875rem] tabular-nums transition-colors",
         selected
-          ? "bg-surface-muted text-foreground"
-          : "text-surface-muted-foreground hover:bg-surface-muted/50 hover:text-foreground",
+          ? "bg-muted text-foreground"
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
       )}
     >
       <span
@@ -545,16 +545,16 @@ function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
   };
 
   return (
-    <div className="rounded-xl bg-surface-subtle px-3 py-2">
+    <div className="rounded-xl bg-secondary px-3 py-2">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-xs text-surface-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {t("history.trace.suggestedTrainingSens")}
           </span>
           <span className="font-medium text-foreground">
             {fmtNum(suggestion.recommended, 2)} cm/360
           </span>
-          <span className="text-[0.6875rem] text-surface-muted-foreground">
+          <span className="text-[0.6875rem] text-muted-foreground">
             ({suggestion.changePct >= 0 ? "+" : ""}
             {fmtNum(suggestion.changePct)}%)
           </span>
@@ -564,7 +564,7 @@ function SensSuggestionCard({ suggestion }: { suggestion: SensSuggestion }) {
             title={t("history.trace.copySens", {
               value: suggestion.recommended.toFixed(2),
             })}
-            className="inline-flex h-5 w-5 items-center justify-center rounded text-surface-muted-foreground hover:text-foreground"
+            className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground"
           >
             <Copy className="h-3 w-3" />
           </button>

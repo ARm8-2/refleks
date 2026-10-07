@@ -163,7 +163,7 @@ export function ScenarioHistoryModal({
         )}
 
         {!loading && !error && trendData.length === 0 && (
-          <div className="rounded-xl border border-border bg-surface p-4 text-sm text-surface-muted-foreground">
+          <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
             {t("benchmarks.scenarioHistory.noScores")}
           </div>
         )}

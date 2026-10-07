@@ -19,7 +19,7 @@ export function RecommendationIndicator({
   const stackClass = compact ? "-space-y-1" : "-space-y-1.5";
 
   if (isCompleted)
-    return <Check className={`${sizeClass} text-surface-muted-foreground`} />;
+    return <Check className={`${sizeClass} text-muted-foreground`} />;
 
   const upColor = isTopPick ? "text-primary" : "text-success";
 
@@ -59,5 +59,5 @@ export function RecommendationIndicator({
     );
   }
 
-  return <Minus className={`${sizeClass} text-surface-muted-foreground`} />;
+  return <Minus className={`${sizeClass} text-muted-foreground`} />;
 }

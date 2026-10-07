@@ -339,7 +339,7 @@ export function BenchmarkOverviewWidget() {
           value={String(difficultyIndex)}
           onValueChange={(v) => setDifficultyIndex(Number(v) || 0)}
         >
-          <SelectTrigger className="h-7 w-auto min-w-0 max-w-[12.5rem] px-2 text-xs bg-surface-subtle">
+          <SelectTrigger className="h-7 w-auto min-w-0 max-w-[12.5rem] px-2 text-xs bg-secondary">
             <SelectValue
               placeholder={t("overview.benchmarkOverview.difficulty")}
             />
@@ -417,13 +417,13 @@ export function BenchmarkOverviewWidget() {
               className="grid h-[1.75rem] items-center mb-1.5"
               style={{ gridTemplateColumns: infoGridTemplate }}
             >
-              <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
+              <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[0.6875rem] uppercase tracking-wide text-muted-foreground">
                 {t("overview.benchmarkOverview.columns.scenario")}
               </div>
               <div />
               {showNotesCol && <div />}
               {showRecCol && (
-                <div className="relative flex w-max min-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap pl-2 text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
+                <div className="relative flex w-max min-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap pl-2 text-center text-[0.6875rem] uppercase tracking-wide text-muted-foreground">
                   {t("overview.benchmarkOverview.columns.rec")}
                   <RecommendationInfo />
                 </div>
@@ -431,7 +431,7 @@ export function BenchmarkOverviewWidget() {
               {showPlayCol && <div />}
               {showHistoryCol && <div />}
               <div />
-              <div className="text-right text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
+              <div className="text-right text-[0.6875rem] uppercase tracking-wide text-muted-foreground">
                 {t("overview.benchmarkOverview.columns.score")}
               </div>
             </div>
@@ -475,7 +475,7 @@ export function BenchmarkOverviewWidget() {
                   }
                 />
               ) : (
-                <div className="h-[2rem] flex items-center text-[0.75rem] text-surface-muted-foreground">
+                <div className="h-[2rem] flex items-center text-[0.75rem] text-muted-foreground">
                   {t("overview.benchmarkOverview.noRecentScenario")}
                 </div>
               )}
@@ -489,7 +489,7 @@ export function BenchmarkOverviewWidget() {
             {/* Recommended scenarios section */}
             <div className="space-y-0.5">
               {recommendedScenarios.length === 0 ? (
-                <div className="h-[2rem] flex items-center text-[0.75rem] text-surface-muted-foreground">
+                <div className="h-[2rem] flex items-center text-[0.75rem] text-muted-foreground">
                   {t("overview.benchmarkOverview.noRecommendations")}
                 </div>
               ) : (
@@ -553,7 +553,7 @@ export function BenchmarkOverviewWidget() {
                   return (
                     <div
                       key={`${rank.name}-${rankIndex}`}
-                      className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground"
+                      className="text-center text-[0.6875rem] uppercase tracking-wide text-muted-foreground"
                       style={rank.color ? { color: rank.color } : undefined}
                     >
                       {rank.name}
@@ -561,7 +561,7 @@ export function BenchmarkOverviewWidget() {
                   );
                 })
               ) : (
-                <div className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
+                <div className="text-center text-[0.6875rem] uppercase tracking-wide text-muted-foreground">
                   {t("overview.benchmarkOverview.columns.details")}
                 </div>
               )}
@@ -675,7 +675,7 @@ export function BenchmarkOverviewWidget() {
               </label>
 
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-surface-muted-foreground">
+                <span className="text-muted-foreground">
                   {t("overview.benchmarkOverview.settings.keepVisible")}
                 </span>
                 <Select

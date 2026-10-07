@@ -40,9 +40,9 @@ export function AppLayout() {
         />
       </div>
 
-      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-canvas shadow">
+      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-background shadow">
         {/* {showRunStatus && (
-          <div className="pointer-events-none absolute right-3 top-3 z-20 rounded-full border border-primary/15 bg-canvas/90 px-3 py-1 text-xs text-surface-muted-foreground shadow-sm backdrop-blur">
+          <div className="pointer-events-none absolute right-3 top-3 z-20 rounded-full border border-primary/15 bg-background/90 px-3 py-1 text-xs text-muted-foreground shadow-sm backdrop-blur">
             {runStatusLabel}
           </div>
         )} */}

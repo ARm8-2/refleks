@@ -49,7 +49,7 @@ describe("computeFillColor", () => {
   });
 
   it("uses the fallback for unranked values and missing rank colors", () => {
-    expect(computeFillColor(0, ranks)).toBe("var(--surface-muted-foreground)");
+    expect(computeFillColor(0, ranks)).toBe("var(--muted-foreground)");
     expect(computeFillColor(null, ranks, "gray")).toBe("gray");
     expect(computeFillColor(1, [{}], "gray")).toBe("gray");
   });

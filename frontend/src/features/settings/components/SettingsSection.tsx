@@ -15,12 +15,12 @@ export function SettingsSection({
 }: SettingsSectionProps) {
   return (
     <section
-      className={`rounded-xl bg-surface px-5 py-4 shadow-sm ${className}`}
+      className={`rounded-xl bg-card px-5 py-4 shadow-sm ${className}`}
     >
       <div className="flex flex-col gap-1.5">
         <h3 className="text-sm font-medium text-foreground">{title}</h3>
         {description && (
-          <p className="text-xs text-surface-muted-foreground">{description}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
         )}
       </div>
       <div className="mt-4 flex flex-col gap-4">{children}</div>

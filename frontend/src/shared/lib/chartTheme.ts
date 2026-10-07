@@ -4,7 +4,7 @@ export const CHART_SERIES_COLORS = {
   accuracy: "var(--chart-3)",
   ttk: "var(--chart-4)",
   compare: "var(--chart-5)",
-  neutral: "var(--surface-muted-foreground)",
+  neutral: "var(--muted-foreground)",
 } as const;
 
 export const CHART_STYLE = {

@@ -23,7 +23,7 @@ export function SettingsField({
         <div className="flex items-center gap-2">
           {children}
           {description && (
-            <span className="text-surface-muted-foreground text-xs">
+            <span className="text-muted-foreground text-xs">
               {description}
             </span>
           )}
@@ -36,7 +36,7 @@ export function SettingsField({
     <div className={`flex flex-col gap-1 ${className}`}>
       <span className="text-foreground text-sm">{label}</span>
       {description && (
-        <span className="text-surface-muted-foreground text-xs">
+        <span className="text-muted-foreground text-xs">
           {description}
         </span>
       )}

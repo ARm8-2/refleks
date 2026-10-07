@@ -62,7 +62,7 @@ export function ResetSettingsModal({
       height="auto"
     >
       <div className="flex flex-col gap-4">
-        <p className="text-surface-muted-foreground text-sm">
+        <p className="text-muted-foreground text-sm">
           {t("settings.resetSettings.description")}
         </p>
         <div className="flex flex-col gap-3">

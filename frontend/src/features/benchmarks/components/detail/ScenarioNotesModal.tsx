@@ -62,7 +62,7 @@ export function ScenarioNotesModal({
         <div className="space-y-2">
           <label
             htmlFor="scenario-sensitivity"
-            className="text-xs font-semibold text-surface-muted-foreground uppercase tracking-wide"
+            className="text-xs font-semibold text-muted-foreground uppercase tracking-wide"
           >
             {t("benchmarks.scenarioNotes.trainingSensitivity")}
           </label>
@@ -73,7 +73,7 @@ export function ScenarioNotesModal({
               value={sensitivity}
               onChange={(event) => setSensitivity(event.target.value)}
               placeholder={t("benchmarks.scenarioNotes.sensPlaceholder")}
-              className="flex-1 rounded-xl border border-input bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-surface-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="flex-1 rounded-xl border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
             <Button
               variant="outline"
@@ -90,7 +90,7 @@ export function ScenarioNotesModal({
         <div className="space-y-2">
           <label
             htmlFor="scenario-notes"
-            className="text-xs font-semibold text-surface-muted-foreground uppercase tracking-wide"
+            className="text-xs font-semibold text-muted-foreground uppercase tracking-wide"
           >
             {t("benchmarks.scenarioNotes.notesLabel")}
           </label>
@@ -99,7 +99,7 @@ export function ScenarioNotesModal({
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             placeholder={t("benchmarks.scenarioNotes.notesPlaceholder")}
-            className="min-h-[10.625rem] w-full resize-none rounded-xl border border-input bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-surface-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="min-h-[10.625rem] w-full resize-none rounded-xl border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
 

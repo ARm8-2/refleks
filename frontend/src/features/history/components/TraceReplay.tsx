@@ -600,7 +600,7 @@ export function TraceReplay({
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-1.5">
         {/* Transport */}
-        <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
+        <div className="flex items-center gap-0.5 rounded-xl bg-secondary p-1">
           <ControlBtn
             icon={<SkipBack className="h-3.5 w-3.5" />}
             title={t("history.traceViewer.back5s")}
@@ -638,8 +638,8 @@ export function TraceReplay({
         </div>
 
         {/* Speed slider */}
-        <div className="flex items-center gap-1.5 rounded-xl bg-surface-subtle p-1 pl-2.5">
-          <span className="text-[0.6875rem] font-medium text-surface-muted-foreground">
+        <div className="flex items-center gap-1.5 rounded-xl bg-secondary p-1 pl-2.5">
+          <span className="text-[0.6875rem] font-medium text-muted-foreground">
             {t("history.traceViewer.speed")}
           </span>
           <Slider
@@ -650,7 +650,7 @@ export function TraceReplay({
             onValueChange={([v]) => setSpeed(v)}
             className="w-24"
           />
-          <span className="min-w-[2.5rem] text-center text-[0.6875rem] font-medium tabular-nums text-surface-muted-foreground">
+          <span className="min-w-[2.5rem] text-center text-[0.6875rem] font-medium tabular-nums text-muted-foreground">
             {speedLabel}
           </span>
           <ControlBtn
@@ -662,7 +662,7 @@ export function TraceReplay({
         </div>
 
         {/* Toggles */}
-        <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
+        <div className="flex items-center gap-0.5 rounded-xl bg-secondary p-1">
           <OptionToggle
             icon={<LineSquiggle className="h-3.5 w-3.5" />}
             label={
@@ -722,7 +722,7 @@ export function TraceReplay({
 
         {/* Sync toggle (compare mode only) */}
         {hasCompare && (
-          <div className="flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1">
+          <div className="flex items-center gap-0.5 rounded-xl bg-secondary p-1">
             <OptionToggle
               icon={<Link className="h-3.5 w-3.5" />}
               label={
@@ -746,14 +746,14 @@ export function TraceReplay({
 
   const renderCanvasOverlay = (traceSet: "primary" | "compare" | "both") => (
     <>
-      <div className="absolute right-2 top-2 rounded-lg bg-surface/80 px-2 py-0.5 text-[0.625rem] font-medium text-surface-muted-foreground backdrop-blur">
+      <div className="absolute right-2 top-2 rounded-lg bg-card/80 px-2 py-0.5 text-[0.625rem] font-medium text-muted-foreground backdrop-blur">
         {Math.round(zoom * 100)}%
       </div>
       <button
         type="button"
         onClick={() => openModal(traceSet)}
         title={t("history.traceViewer.expand")}
-        className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-lg bg-surface/80 text-surface-muted-foreground backdrop-blur transition-colors hover:bg-surface hover:text-foreground"
+        className="absolute bottom-2 right-2 grid h-7 w-7 place-items-center rounded-lg bg-card/80 text-muted-foreground backdrop-blur transition-colors hover:bg-card hover:text-foreground"
       >
         <Maximize2 className="h-3.5 w-3.5" />
       </button>
@@ -767,12 +767,12 @@ export function TraceReplay({
         {isSplit ? (
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
-              <div className="text-[0.6875rem] font-medium text-surface-muted-foreground">
+              <div className="text-[0.6875rem] font-medium text-muted-foreground">
                 {t("history.inspector.pinned")}
               </div>
               <div
                 ref={wrapRef}
-                className="relative rounded-xl bg-surface-subtle"
+                className="relative rounded-xl bg-secondary"
                 style={{ aspectRatio: TRACE_ASPECT_RATIO }}
               >
                 <canvas
@@ -783,12 +783,12 @@ export function TraceReplay({
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <div className="text-[0.6875rem] font-medium text-surface-muted-foreground">
+              <div className="text-[0.6875rem] font-medium text-muted-foreground">
                 {t("history.inspector.compare")}
               </div>
               <div
                 ref={splitWrapRef}
-                className="relative rounded-xl bg-surface-subtle"
+                className="relative rounded-xl bg-secondary"
                 style={{ aspectRatio: TRACE_ASPECT_RATIO }}
               >
                 <canvas
@@ -802,7 +802,7 @@ export function TraceReplay({
         ) : (
           <div
             ref={wrapRef}
-            className="relative rounded-xl bg-surface-subtle"
+            className="relative rounded-xl bg-secondary"
             style={{ aspectRatio: TRACE_ASPECT_RATIO }}
           >
             <canvas
@@ -832,14 +832,14 @@ export function TraceReplay({
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <div
             ref={modalWrapRef}
-            className="relative min-h-0 flex-1 rounded-xl bg-surface-subtle"
+            className="relative min-h-0 flex-1 rounded-xl bg-secondary"
           >
             <canvas
               ref={modalCanvasCallbackRef}
               className="block h-full w-full cursor-grab rounded-xl active:cursor-grabbing"
             />
             {modalTraceSet === "both" && hasCompare && <TraceLegend />}
-            <div className="absolute right-2 top-2 rounded-lg bg-surface/80 px-2 py-0.5 text-[0.625rem] font-medium text-surface-muted-foreground backdrop-blur">
+            <div className="absolute right-2 top-2 rounded-lg bg-card/80 px-2 py-0.5 text-[0.625rem] font-medium text-muted-foreground backdrop-blur">
               {Math.round(zoom * 100)}%
             </div>
           </div>
@@ -912,7 +912,7 @@ function TimelineScrubber({
           onValueChange={handleValueChange}
         />
       </div>
-      <span className="min-w-[6.5rem] text-right font-mono text-[0.6875rem] text-surface-muted-foreground">
+      <span className="min-w-[6.5rem] text-right font-mono text-[0.6875rem] text-muted-foreground">
         {formatTraceTime(progressMs)} / {formatTraceTime(durationMs)}
       </span>
     </div>
@@ -943,10 +943,10 @@ function ControlBtn({
       className={cn(
         "grid h-7 w-7 place-items-center rounded-lg transition-colors",
         disabled
-          ? "text-surface-muted-foreground/30 cursor-default"
+          ? "text-muted-foreground/30 cursor-default"
           : active
-            ? "bg-surface-muted text-foreground"
-            : "text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground",
+            ? "bg-muted text-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >
       {icon}
@@ -984,18 +984,18 @@ function TraceLegend() {
   const { t } = useI18n();
   return (
     <div className="absolute left-2 top-2 flex flex-col gap-0.5">
-      <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[0.625rem] font-medium backdrop-blur">
+      <div className="flex items-center gap-1.5 rounded-md bg-card/80 px-2 py-0.5 text-[0.625rem] font-medium backdrop-blur">
         <span className="inline-block h-2 w-2 rounded-full bg-primary" />
-        <span className="text-surface-muted-foreground">
+        <span className="text-muted-foreground">
           {t("history.inspector.pinned")}
         </span>
       </div>
-      <div className="flex items-center gap-1.5 rounded-md bg-surface/80 px-2 py-0.5 text-[0.625rem] font-medium backdrop-blur">
+      <div className="flex items-center gap-1.5 rounded-md bg-card/80 px-2 py-0.5 text-[0.625rem] font-medium backdrop-blur">
         <span
           className="inline-block h-2 w-2 rounded-full"
           style={{ background: "var(--trace-compare)" }}
         />
-        <span className="text-surface-muted-foreground">
+        <span className="text-muted-foreground">
           {t("history.inspector.compare")}
         </span>
       </div>

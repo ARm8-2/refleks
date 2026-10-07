@@ -62,21 +62,6 @@ export function getFontStack(font: Font): string {
   return found?.stack || FONTS[0].stack;
 }
 
-function updateFontClasses(font: Font) {
-  if (typeof document === "undefined") return;
-  const root = document.documentElement;
-  const body = document.body;
-  // Remove any existing font-* class
-  FONTS.forEach((f) => {
-    const cls = `font-${f.id}`;
-    root.classList.remove(cls);
-    body?.classList.remove(cls);
-  });
-  const cls = `font-${font}`;
-  root.classList.add(cls);
-  body?.classList.add(cls);
-}
-
 export function getSavedTheme(): Theme {
   const v = (
     localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME
@@ -136,11 +121,7 @@ export function applyFont(font: Font) {
   const stack = getFontStack(font);
   const root = document.documentElement;
 
-  // Update CSS variable for components that use it
   root.style.setProperty("--font-body", stack);
-
-  // Update classes on html/body to force font change via CSS
-  updateFontClasses(font);
 
   try {
     window.dispatchEvent(

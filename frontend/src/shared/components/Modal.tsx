@@ -40,7 +40,7 @@ export function Modal({
     >
       <DialogContent
         className={cn(
-          "rounded-xl border-0 bg-surface p-5 shadow-2xl sm:rounded-xl",
+          "rounded-xl border-0 bg-card p-5 shadow-2xl sm:rounded-xl",
           className,
         )}
         showCloseButton={showCloseButton}

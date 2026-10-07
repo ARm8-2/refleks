@@ -36,7 +36,7 @@ export function InfoTooltip({
             type="button"
             aria-label={resolvedAriaLabel}
             className={cn(
-              "inline-flex h-5 w-5 items-center justify-center rounded-md text-surface-muted-foreground transition-colors hover:text-foreground",
+              "inline-flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground",
               iconClassName,
             )}
           >

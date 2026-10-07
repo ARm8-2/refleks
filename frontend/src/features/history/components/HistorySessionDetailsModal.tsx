@@ -65,7 +65,7 @@ export function HistorySessionDetailsModal({
       height="auto"
     >
       <div className="space-y-5 px-6 pb-6">
-        <div className="text-xs text-surface-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {sessionLabel}
         </div>
 
@@ -79,7 +79,7 @@ export function HistorySessionDetailsModal({
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             placeholder={t("history.sessionDetails.notesPlaceholder")}
-            className="min-h-[11.25rem] w-full resize-none rounded-xl border border-input bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-surface-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="min-h-[11.25rem] w-full resize-none rounded-xl border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
 

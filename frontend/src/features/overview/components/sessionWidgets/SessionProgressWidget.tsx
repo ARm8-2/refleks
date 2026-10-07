@@ -114,7 +114,7 @@ function SessionProgressTargetEditor({
           title={t("overview.sessionProgress.editTarget")}
         >
           <span className="tabular-nums">{targetRuns}</span>
-          <span className="text-surface-muted-foreground">
+          <span className="text-muted-foreground">
             {isCustom
               ? t("overview.sessionProgress.target")
               : t("overview.sessionProgress.targetAuto")}
@@ -125,7 +125,7 @@ function SessionProgressTargetEditor({
 
       <PopoverContent align="end" className="w-56 p-2">
         <div className="space-y-2">
-          <div className="px-1 text-[0.625rem] font-medium uppercase tracking-wide text-surface-muted-foreground">
+          <div className="px-1 text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground">
             {t("overview.sessionProgress.targetRuns")}
           </div>
 
@@ -134,7 +134,7 @@ function SessionProgressTargetEditor({
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8 shrink-0 text-surface-muted-foreground"
+              className="h-8 w-8 shrink-0 text-muted-foreground"
               onMouseDown={(event) => {
                 event.preventDefault();
                 adjustDraftTarget(-1);
@@ -160,7 +160,7 @@ function SessionProgressTargetEditor({
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8 shrink-0 text-surface-muted-foreground"
+              className="h-8 w-8 shrink-0 text-muted-foreground"
               onMouseDown={(event) => {
                 event.preventDefault();
                 adjustDraftTarget(1);
@@ -171,7 +171,7 @@ function SessionProgressTargetEditor({
           </div>
 
           <div className="flex items-center justify-between gap-2 px-1 pt-1">
-            <span className="text-xs text-surface-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {isCustom
                 ? t("overview.sessionProgress.customTarget")
                 : t("overview.sessionProgress.automaticTarget")}
@@ -278,7 +278,7 @@ export function SessionProgressWidget({
   if (!currentSession) {
     return (
       <Widget title={t("overview.sessionProgress.title")}>
-        <div className="flex h-full items-center justify-center rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
+        <div className="flex h-full items-center justify-center rounded-xl bg-muted-strong p-4 text-sm text-muted-foreground">
           {t("overview.sessionProgress.empty")}
         </div>
       </Widget>
@@ -342,7 +342,7 @@ export function SessionProgressWidget({
               cy={cy}
               r={(outerR + innerR) / 2}
               fill="none"
-              stroke="var(--surface-muted)"
+              stroke="var(--muted)"
               strokeWidth={outerR - innerR}
             />
 
@@ -392,7 +392,7 @@ export function SessionProgressWidget({
               y={cy + 8}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="fill-surface-muted-foreground text-[0.6875rem]"
+              className="fill-muted-foreground text-[0.6875rem]"
             >
               {t("overview.sessionProgress.targetSuffix", {
                 count: targetRuns,
@@ -403,7 +403,7 @@ export function SessionProgressWidget({
               y={cy + 22}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="fill-surface-muted-foreground text-[0.625rem]"
+              className="fill-muted-foreground text-[0.625rem]"
             >
               {pct}%
             </text>

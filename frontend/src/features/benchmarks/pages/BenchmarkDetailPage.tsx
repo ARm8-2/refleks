@@ -94,7 +94,7 @@ export function BenchmarkDetailPage() {
 
   return (
     <div className="flex-1 overflow-auto text-sm">
-      <div className="sticky top-0 z-20 bg-canvas px-6 py-4">
+      <div className="sticky top-0 z-20 bg-background px-6 py-4">
         <div className="flex flex-wrap items-center gap-2.5 min-w-0">
           <Button variant="ghost" size="sm" onClick={handleBack}>
             <ArrowLeft className="w-4 h-4 mr-1.5" />
@@ -185,14 +185,14 @@ export function BenchmarkDetailPage() {
 
       <div className="p-6 space-y-4">
         {showInitialSkeleton && (
-          <div className="space-y-3 rounded-xl bg-surface p-6 shadow-sm">
-            <div className="h-5 w-56 animate-pulse rounded-md bg-surface-subtle" />
-            <div className="h-[20rem] animate-pulse rounded-xl bg-surface-subtle" />
+          <div className="space-y-3 rounded-xl bg-card p-6 shadow-sm">
+            <div className="h-5 w-56 animate-pulse rounded-md bg-secondary" />
+            <div className="h-[20rem] animate-pulse rounded-xl bg-secondary" />
           </div>
         )}
 
         {!showInitialSkeleton && !benchmark && (
-          <div className="rounded-xl bg-surface p-6 text-sm text-surface-muted-foreground shadow-sm">
+          <div className="rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-sm">
             {t("benchmarks.detail.notFound")}
           </div>
         )}
@@ -221,7 +221,7 @@ export function BenchmarkDetailPage() {
               />
 
               <div className="pointer-events-none fixed -left-[10000px] top-0 z-[-1]">
-                <div ref={shareCaptureRef} className="w-[1500px] bg-canvas p-6">
+                <div ref={shareCaptureRef} className="w-[1500px] bg-background p-6">
                   <BenchmarkProgressTable
                     benchmark={benchmark}
                     difficultyName={
@@ -246,7 +246,7 @@ export function BenchmarkDetailPage() {
           !progressLoading &&
           !error &&
           !progress && (
-            <div className="route-content-enter rounded-xl bg-surface p-6 text-sm text-surface-muted-foreground shadow-sm">
+            <div className="route-content-enter rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-sm">
               {t("benchmarks.detail.noProgress")}
             </div>
           )}

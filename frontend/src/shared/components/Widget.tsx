@@ -62,7 +62,7 @@ export function Widget({
     <>
       <section
         className={cn(
-          "flex flex-col rounded-xl bg-surface px-4 py-3",
+          "flex flex-col rounded-xl bg-card px-4 py-3",
           canExpand && "cursor-pointer",
           className,
         )}
@@ -90,7 +90,7 @@ export function Widget({
               )}
             </div>
             {description && (
-              <p className="mt-0.5 text-xs text-surface-muted-foreground">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {description}
               </p>
             )}
@@ -110,7 +110,7 @@ export function Widget({
             {canExpand && (
               <button
                 type="button"
-                className="inline-flex h-6 w-6 items-center justify-center rounded-md text-surface-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+                className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 title={t("common.widget.expand")}
                 aria-label={t("common.widget.expand")}
                 onClick={handleExpandClick}
@@ -152,8 +152,8 @@ export function WidgetEmpty({
   const { t } = useI18n();
   return (
     <Widget icon={icon} title={label}>
-      <p className="text-lg font-semibold text-surface-muted-foreground">--</p>
-      <p className="mt-0.5 text-xs text-surface-muted-foreground">
+      <p className="text-lg font-semibold text-muted-foreground">--</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">
         {t("common.widget.noSessionLoaded")}
       </p>
     </Widget>

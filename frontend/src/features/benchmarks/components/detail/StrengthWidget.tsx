@@ -36,7 +36,7 @@ type StrengthRow = {
 
 type StrengthLevel = "category" | "subcategory" | "scenario";
 
-const CARD_BACKGROUND = "var(--surface)";
+const CARD_BACKGROUND = "var(--card)";
 
 function StrengthBarRow({
   row,
@@ -59,20 +59,20 @@ function StrengthBarRow({
   const shown = Math.round(animated);
 
   return (
-    <div className="rounded-xl bg-surface-subtle p-3">
+    <div className="rounded-xl bg-secondary p-3">
       <div className="flex items-center justify-between gap-3 text-sm">
         <div
           className={`font-medium text-foreground truncate ${expanded ? "text-sm" : ""}`}
         >
           {row.label}
         </div>
-        <div className="text-xs text-surface-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {row.rankName} · {t("benchmarks.strength.avg")}{" "}
           {formatNumber(row.avgScore, 1)}
         </div>
       </div>
 
-      <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-surface-muted">
+      <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-muted">
         <div
           className="h-full rounded-full"
           style={{
@@ -82,7 +82,7 @@ function StrengthBarRow({
         />
       </div>
 
-      <div className="mt-1 text-xs text-surface-muted-foreground">{shown}%</div>
+      <div className="mt-1 text-xs text-muted-foreground">{shown}%</div>
     </div>
   );
 }
@@ -131,7 +131,7 @@ export function StrengthWidget({ progress }: Props) {
       value={level}
       onValueChange={(value) => setLevel(value as StrengthLevel)}
     >
-      <SelectTrigger className="h-8 min-w-[8.125rem] w-auto px-2 text-xs bg-surface-subtle">
+      <SelectTrigger className="h-8 min-w-[8.125rem] w-auto px-2 text-xs bg-secondary">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -262,7 +262,7 @@ export function StrengthWidget({ progress }: Props) {
   const renderBody = (expanded: boolean) => {
     if (rows.length === 0) {
       return (
-        <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">
+        <div className="rounded-xl bg-secondary p-4 text-sm text-muted-foreground">
           {t("benchmarks.strength.noData")}
         </div>
       );

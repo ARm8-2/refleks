@@ -15,8 +15,8 @@ export function TrendIndicator({
 }) {
   if (!trend || trend === "flat") return null;
   if (trend === "up")
-    return <TrendingUp className="h-3.5 w-3.5 text-[color:var(--success)]" />;
-  return <TrendingDown className="h-3.5 w-3.5 text-[color:var(--warning)]" />;
+    return <TrendingUp className="h-3.5 w-3.5 text-success" />;
+  return <TrendingDown className="h-3.5 w-3.5 text-warning" />;
 }
 
 export function formatScore(score: number): string {
@@ -46,28 +46,28 @@ export function getStatusIcon(tone: SnapshotTone): LucideIcon {
 export function getToneBadgeClasses(tone: SnapshotTone): string {
   switch (tone) {
     case "success":
-      return "bg-[color:var(--success-soft)] text-[color:var(--success)]";
+      return "bg-success-soft text-success";
     case "warning":
-      return "bg-[color:var(--warning-soft)] text-[color:var(--warning-foreground)]";
+      return "bg-warning-soft text-warning-foreground";
     case "neutral":
       return "bg-primary-soft text-primary";
     case "muted":
     default:
-      return "bg-surface-muted-soft text-surface-muted-foreground";
+      return "bg-muted-soft text-muted-foreground";
   }
 }
 
 export function getPerformanceAccent(tone: SnapshotTone): string {
   switch (tone) {
     case "success":
-      return "text-[color:var(--success)]";
+      return "text-success";
     case "warning":
-      return "text-[color:var(--warning)]";
+      return "text-warning";
     case "neutral":
       return "text-primary";
     case "muted":
     default:
-      return "text-surface-muted-foreground";
+      return "text-muted-foreground";
   }
 }
 

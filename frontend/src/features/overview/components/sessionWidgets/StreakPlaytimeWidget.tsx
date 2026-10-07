@@ -461,12 +461,12 @@ export function StreakPlaytimeWidget({
         />
       </div>
 
-      <div className="rounded-xl bg-surface-subtle p-4">
+      <div className="rounded-xl bg-secondary p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-surface-muted-foreground">
+          <p className="text-sm font-semibold text-muted-foreground">
             {t("overview.streakPlaytime.activity")}
           </p>
-          <div className="flex items-center gap-1 text-[0.6875rem] text-surface-muted-foreground">
+          <div className="flex items-center gap-1 text-[0.6875rem] text-muted-foreground">
             <span>{t("overview.streakPlaytime.less")}</span>
             {[0, 1, 2, 3, 4].map((level) => (
               <span
@@ -482,7 +482,7 @@ export function StreakPlaytimeWidget({
         <div className="min-w-0 overflow-x-auto pb-1">
           <div className="min-w-max">
             {visibleMonthMarkers.length > 0 && (
-              <div className="mb-2 flex gap-2 text-[0.6875rem] font-medium text-surface-muted-foreground">
+              <div className="mb-2 flex gap-2 text-[0.6875rem] font-medium text-muted-foreground">
                 <div className="w-5" aria-hidden="true" />
                 <div
                   className="grid min-w-max"
@@ -505,7 +505,7 @@ export function StreakPlaytimeWidget({
             )}
 
             <div className="flex gap-2">
-              <div className="grid grid-rows-7 gap-1.5 pt-[0.125rem] text-[0.6875rem] text-surface-muted-foreground">
+              <div className="grid grid-rows-7 gap-1.5 pt-[0.125rem] text-[0.6875rem] text-muted-foreground">
                 {weekdayLabels.map((label, index) => (
                   <span key={`${label}-${index}`} className="h-4 leading-4">
                     {label}
@@ -543,7 +543,7 @@ export function StreakPlaytimeWidget({
                           <TooltipTrigger asChild>
                             <button
                               type="button"
-                              className={`relative h-4 w-4 rounded-[0.1875rem] border border-border-subtle transition-[transform,box-shadow,border-color,background-color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.96] hover:scale-110 hover:border-foreground/40 hover:shadow-sm focus-visible:scale-110 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${selected ? "scale-110 border-[color:var(--primary-border-strong)] ring-2 ring-[color:var(--primary-emphasis)] shadow-sm" : ""}`}
+                              className={`relative h-4 w-4 rounded-[0.1875rem] border border-border-subtle transition-[transform,box-shadow,border-color,background-color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.96] hover:scale-110 hover:border-foreground/40 hover:shadow-sm focus-visible:scale-110 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${selected ? "scale-110 border-primary-border-strong ring-2 ring-primary-emphasis shadow-sm" : ""}`}
                               style={
                                 selected
                                   ? selectedActivityCellStyle(cell.level)
@@ -570,7 +570,7 @@ export function StreakPlaytimeWidget({
                               {today && (
                                 <span
                                   aria-hidden="true"
-                                  className="pointer-events-none absolute right-[-1px] top-[-1px] h-1.5 w-1.5 rounded-full bg-[color:var(--primary)] shadow-sm ring-1 ring-[color:var(--surface)]"
+                                  className="pointer-events-none absolute right-[-1px] top-[-1px] h-1.5 w-1.5 rounded-full bg-primary shadow-sm ring-1 ring-card"
                                 />
                               )}
                             </button>
@@ -609,7 +609,7 @@ export function StreakPlaytimeWidget({
             className={`overflow-hidden transition-[max-height,opacity,transform] duration-220 ease-emphasized ${hasSelectedBreakdown ? "max-h-[22.5rem] translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-1 opacity-0"}`}
           >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-surface-muted-foreground">
+              <p className="text-sm font-semibold text-muted-foreground">
                 {selectedBreakdownLabel}
               </p>
               <SegmentedControl
@@ -690,7 +690,7 @@ export function StreakPlaytimeWidget({
               <p className="text-sm font-medium text-foreground">
                 {t("overview.streakPlaytime.clickDay")}
               </p>
-              <p className="mt-1 text-xs text-surface-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {t("overview.streakPlaytime.switchViews")}
               </p>
             </div>
@@ -703,17 +703,15 @@ export function StreakPlaytimeWidget({
   return (
     <Widget
       icon={Flame}
-      iconClassName="text-[color:var(--streak)]"
+      iconClassName="text-streak"
       title={t("overview.streakPlaytime.title")}
       modalTitle={t("overview.streakPlaytime.breakdownTitle")}
       modalControls={modalControls}
       modalContent={modalContent}
     >
       <div className="flex items-baseline gap-2">
-        <span className="text-lg font-semibold text-[color:var(--streak)]">
-          {streakLabel}
-        </span>
-        <span className="text-xs text-surface-muted-foreground">
+        <span className="text-lg font-semibold text-streak">{streakLabel}</span>
+        <span className="text-xs text-muted-foreground">
           {streakDetail}
         </span>
       </div>
@@ -839,7 +837,7 @@ function streakTickFormatter(date: Date): string {
 
 function activityCellStyle(level: 0 | 1 | 2 | 3 | 4) {
   if (level === 0) {
-    return { backgroundColor: "var(--surface-subtle)" };
+    return { backgroundColor: "var(--secondary)" };
   }
 
   return {
@@ -881,15 +879,15 @@ function MetricCard({
   onClick?: () => void;
   selected?: boolean;
 }) {
-  const className = `rounded-xl bg-surface-subtle px-3 py-2.5 text-left transition-[transform,color,opacity] duration-220 ease-emphasized will-change-transform ${onClick ? "active:scale-[0.985] hover:bg-surface-emphasis focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" : ""} ${selected ? "bg-surface-emphasis shadow-sm" : ""}`;
+  const className = `rounded-xl bg-secondary px-3 py-2.5 text-left transition-[transform,color,opacity] duration-220 ease-emphasized will-change-transform ${onClick ? "active:scale-[0.985] hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" : ""} ${selected ? "bg-accent shadow-sm" : ""}`;
 
   const labelNode = icon ? (
-    <div className="flex items-center gap-1 text-xs text-surface-muted-foreground">
+    <div className="flex items-center gap-1 text-xs text-muted-foreground">
       {icon}
       {label}
     </div>
   ) : (
-    <p className="text-xs text-surface-muted-foreground">{label}</p>
+    <p className="text-xs text-muted-foreground">{label}</p>
   );
 
   if (onClick) {

@@ -419,7 +419,7 @@ export function SettingsPage() {
   if (!settings) {
     return (
       <div className="flex h-full flex-col overflow-hidden text-sm">
-        <div className="p-5 text-surface-muted-foreground">
+        <div className="p-5 text-muted-foreground">
           {t("settings.page.loading")}
         </div>
       </div>
@@ -428,12 +428,12 @@ export function SettingsPage() {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden text-sm">
-      <div className="sticky top-0 z-10 bg-canvas/95 px-5 py-4 backdrop-blur">
+      <div className="sticky top-0 z-10 bg-background/95 px-5 py-4 backdrop-blur">
         <div className="space-y-0.5">
           <h1 className="text-lg font-semibold text-foreground">
             {t("settings.page.title")}
           </h1>
-          <p className="text-xs text-surface-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {t("settings.page.description")}
           </p>
         </div>
@@ -446,7 +446,7 @@ export function SettingsPage() {
             description={t("settings.updates.description")}
           >
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm text-surface-muted-foreground">
+              <span className="text-sm text-muted-foreground">
                 {t("settings.updates.currentVersion")}{" "}
                 <span className="font-mono text-foreground">
                   {currentVersion || t("common.missingValue")}
@@ -476,13 +476,13 @@ export function SettingsPage() {
                 <span className="text-sm text-destructive">{checkError}</span>
               )}
               {update && !update.hasUpdate && (
-                <span className="text-sm text-surface-muted-foreground">
+                <span className="text-sm text-muted-foreground">
                   {t("settings.updates.upToDate")}
                 </span>
               )}
             </div>
             {update?.hasUpdate && (
-              <div className="space-y-3 rounded-xl bg-surface p-4 shadow-sm">
+              <div className="space-y-3 rounded-xl bg-card p-4 shadow-sm">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-foreground">
                     {t("settings.updates.versionAvailable", {
@@ -490,7 +490,7 @@ export function SettingsPage() {
                     })}
                   </span>
                 </div>
-                <p className="text-xs text-surface-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {t("settings.updates.installBannerPrefix", {
                     version:
                       update.currentVersion ||
@@ -676,11 +676,11 @@ export function SettingsPage() {
                               </p>
                               <p className="text-popover-foreground/70">
                                 {t("settings.general.ffmpegMissingPrefix")}{" "}
-                                <code className="rounded bg-surface-muted px-1 py-0.5 font-mono">
+                                <code className="rounded bg-muted px-1 py-0.5 font-mono">
                                   ffmpeg.exe
                                 </code>{" "}
                                 {t("settings.general.ffmpegMissingSuffix")}{" "}
-                                <code className="rounded bg-surface-muted px-1 py-0.5 font-mono">
+                                <code className="rounded bg-muted px-1 py-0.5 font-mono">
                                   refleks.exe
                                 </code>
                                 .
@@ -911,8 +911,8 @@ export function SettingsPage() {
                     </SelectContent>
                   </Select>
                   {settings.theme === "custom" && (
-                    <div className="mt-2 space-y-2 rounded-xl bg-surface-subtle p-3">
-                      <p className="text-xs leading-5 text-surface-muted-foreground">
+                    <div className="mt-2 space-y-2 rounded-xl bg-secondary p-3">
+                      <p className="text-xs leading-5 text-muted-foreground">
                         {t("settings.appearance.themeCustomDescription")}
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -1002,7 +1002,7 @@ export function SettingsPage() {
               >
                 <button
                   onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="flex items-center gap-1.5 text-sm text-surface-muted-foreground transition-colors hover:text-foreground"
+                  className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {showAdvanced ? (
                     <ChevronUp className="h-4 w-4" />
@@ -1017,7 +1017,7 @@ export function SettingsPage() {
                 {showAdvanced && (
                   <div className="space-y-4 pt-2">
                     <div className="space-y-3">
-                      <div className="text-xs font-medium uppercase tracking-wide text-surface-muted-foreground">
+                      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         {t("settings.advanced.steam")}
                       </div>
                       <div className="space-y-4">
@@ -1082,7 +1082,7 @@ export function SettingsPage() {
                     </div>
 
                     <div className="space-y-3 pt-4">
-                      <div className="text-xs font-medium uppercase tracking-wide text-surface-muted-foreground">
+                      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         {t("settings.advanced.dataRetention")}
                       </div>
                       <div className="space-y-4">
@@ -1158,7 +1158,7 @@ export function SettingsPage() {
             >
               {t("settings.footer.clearCache")}
             </Button>
-            <span className="text-xs text-surface-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {isSaving
                 ? t("settings.footer.saving")
                 : hasUnsavedChanges

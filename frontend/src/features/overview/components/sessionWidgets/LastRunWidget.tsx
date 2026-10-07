@@ -25,10 +25,10 @@ export function LastRunWidget({
   if (lastRunScore === null && lastRunAccuracy === null) {
     return (
       <Widget icon={Activity} title={t("overview.lastRun.title")}>
-        <p className="text-lg font-semibold text-surface-muted-foreground">
+        <p className="text-lg font-semibold text-muted-foreground">
           --
         </p>
-        <p className="mt-0.5 text-xs text-surface-muted-foreground">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           {t("overview.lastRun.noScoreData")}
         </p>
       </Widget>
@@ -42,7 +42,7 @@ export function LastRunWidget({
       headerAction={
         lastRunScenario ? (
           <span
-            className="max-w-[7.5rem] truncate text-[0.6875rem] text-surface-muted-foreground"
+            className="max-w-[7.5rem] truncate text-[0.6875rem] text-muted-foreground"
             title={lastRunScenario}
           >
             {lastRunScenario}
@@ -61,7 +61,7 @@ export function LastRunWidget({
         )}
         {lastRunAccuracy !== null && (
           <div className="flex items-baseline gap-1.5">
-            <Crosshair className="h-3 w-3 text-surface-muted-foreground" />
+            <Crosshair className="h-3 w-3 text-muted-foreground" />
             <span className="text-sm font-medium text-foreground">
               {(lastRunAccuracy * 100).toFixed(1)}%
             </span>
@@ -69,7 +69,7 @@ export function LastRunWidget({
           </div>
         )}
       </div>
-      <div className="mt-0.5 flex items-center gap-2 text-xs text-surface-muted-foreground">
+      <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
         <span>
           {lastRunScoreTrend !== null
             ? t("overview.lastRun.trendLabel")

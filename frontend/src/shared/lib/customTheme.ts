@@ -14,6 +14,33 @@ import indexCss from "../../index.css?raw";
 
 const CUSTOM_THEME_STYLE_ID = "refleks-custom-theme";
 
+const LEGACY_THEME_VARIABLES: Record<string, string> = {
+  "--surface-subtle-foreground": "--secondary-foreground",
+  "--surface-subtle-hover": "--secondary-hover",
+  "--surface-muted-foreground": "--muted-foreground",
+  "--surface-emphasis-foreground": "--accent-foreground",
+  "--surface-muted-strong": "--muted-strong",
+  "--surface-muted-soft": "--muted-soft",
+  "--surface-foreground": "--card-foreground",
+  "--surface-subtle": "--secondary",
+  "--surface-emphasis": "--accent",
+  "--surface-panel": "--card-panel",
+  "--surface-hover": "--card-hover",
+  "--surface-muted": "--muted",
+  "--canvas-foreground": "--foreground",
+  "--sidebar-background": "--sidebar",
+  "--surface": "--card",
+  "--canvas": "--background",
+};
+
+function migrateLegacyThemeVariables(css: string): string {
+  return Object.entries(LEGACY_THEME_VARIABLES).reduce(
+    (migrated, [legacy, current]) =>
+      migrated.replace(new RegExp(`${legacy}(?![\\w-])`, "g"), current),
+    css,
+  );
+}
+
 const TEMPLATE_HEADER = `/* ============================================================
    RefleK's custom theme
    ============================================================
@@ -87,7 +114,7 @@ export function injectCustomTheme(css: string) {
     style.id = CUSTOM_THEME_STYLE_ID;
     document.head.appendChild(style);
   }
-  style.textContent = css;
+  style.textContent = migrateLegacyThemeVariables(css);
 }
 
 /** Remove the injected custom stylesheet, if any. */

@@ -72,7 +72,7 @@ export function HistoryRunList({
   return (
     <section
       className={cn(
-        "flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-surface shrink-0 transition-[width] duration-200 ease-out",
+        "flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-card shrink-0 transition-[width] duration-200 ease-out",
         collapsed ? "w-16" : "w-[17.5rem]",
       )}
     >
@@ -80,7 +80,7 @@ export function HistoryRunList({
       <div className="flex items-center gap-2 border-b border-border px-3 py-3">
         {!collapsed && (
           <div className="relative min-w-0 flex-1">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
@@ -140,7 +140,7 @@ export function HistoryRunList({
         estimateSize={collapsed ? 48 : 56}
         className="scrollbar-compact min-h-0 flex-1 overflow-y-auto p-2"
         emptyContent={
-          <p className="px-2 py-6 text-center text-sm text-surface-muted-foreground">
+          <p className="px-2 py-6 text-center text-sm text-muted-foreground">
             {collapsed
               ? "—"
               : !session
@@ -180,10 +180,10 @@ export function HistoryRunList({
                     className={cn(
                       "absolute inset-0 rounded-xl shadow-sm transition-[opacity,transform] duration-220 ease-emphasized",
                       isPrimary
-                        ? "scale-100 bg-surface-muted opacity-100 shadow-md"
+                        ? "scale-100 bg-muted opacity-100 shadow-md"
                         : isCompared
-                          ? "scale-100 bg-surface-muted/70 opacity-100 shadow-md"
-                          : "scale-[0.96] bg-surface-muted opacity-0 group-hover:scale-100 group-hover:opacity-100",
+                          ? "scale-100 bg-muted/70 opacity-100 shadow-md"
+                          : "scale-[0.96] bg-muted opacity-0 group-hover:scale-100 group-hover:opacity-100",
                     )}
                   />
                   <span className="relative z-10 text-xs font-semibold text-foreground">
@@ -191,7 +191,7 @@ export function HistoryRunList({
                   </span>
                   <span
                     className={cn(
-                      "relative z-10 mt-0.5 text-[0.625rem] leading-tight text-surface-muted-foreground transition-colors duration-200",
+                      "relative z-10 mt-0.5 text-[0.625rem] leading-tight text-muted-foreground transition-colors duration-200",
                       (isPrimary || isCompared) && "text-foreground/70",
                     )}
                   >
@@ -214,10 +214,10 @@ export function HistoryRunList({
                   className={cn(
                     "absolute inset-0 rounded-xl shadow-sm transition-[opacity,transform] duration-220 ease-emphasized",
                     isPrimary
-                      ? "scale-100 bg-surface-muted opacity-100 shadow-md"
+                      ? "scale-100 bg-muted opacity-100 shadow-md"
                       : isCompared
-                        ? "scale-100 bg-surface-muted/70 opacity-100 shadow-md"
-                        : "scale-[0.985] bg-surface-muted opacity-0 group-hover:scale-100 group-hover:opacity-100",
+                        ? "scale-100 bg-muted/70 opacity-100 shadow-md"
+                        : "scale-[0.985] bg-muted opacity-0 group-hover:scale-100 group-hover:opacity-100",
                   )}
                 />
                 <button
@@ -235,7 +235,7 @@ export function HistoryRunList({
                   </div>
                   <div
                     className={cn(
-                      "mt-1 flex items-center gap-2 text-xs text-surface-muted-foreground transition-colors duration-200",
+                      "mt-1 flex items-center gap-2 text-xs text-muted-foreground transition-colors duration-200",
                       (isPrimary || isCompared) && "text-foreground/70",
                     )}
                   >
@@ -334,7 +334,7 @@ function RunListSortFilter({
       </PopoverTrigger>
       <PopoverContent align="end" className="w-52">
         {/* Sort */}
-        <div className="px-2 py-1.5 text-[0.625rem] font-medium uppercase tracking-wider text-surface-muted-foreground">
+        <div className="px-2 py-1.5 text-[0.625rem] font-medium uppercase tracking-wider text-muted-foreground">
           <ArrowUpDown className="mr-1 inline h-3 w-3" />
           {t("history.runList.sort")}
         </div>
@@ -346,8 +346,8 @@ function RunListSortFilter({
             className={cn(
               "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-xs transition-colors",
               sort === opt.value
-                ? "bg-surface-muted text-foreground"
-                : "text-surface-muted-foreground hover:bg-surface-emphasis hover:text-foreground",
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
             <span className="min-w-0 flex-1 text-left">{t(opt.labelKey)}</span>
@@ -364,7 +364,7 @@ function RunListSortFilter({
         <div className="my-1 border-t border-border" />
 
         {/* Filters */}
-        <div className="px-2 py-1.5 text-[0.625rem] font-medium uppercase tracking-wider text-surface-muted-foreground">
+        <div className="px-2 py-1.5 text-[0.625rem] font-medium uppercase tracking-wider text-muted-foreground">
           <ListFilter className="mr-1 inline h-3 w-3" />
           {t("history.runList.filter")}
         </div>
@@ -374,8 +374,8 @@ function RunListSortFilter({
           className={cn(
             "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-xs transition-colors",
             filterPb
-              ? "bg-surface-muted text-foreground"
-              : "text-surface-muted-foreground hover:bg-surface-emphasis hover:text-foreground",
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
           <Trophy

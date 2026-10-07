@@ -71,7 +71,7 @@ export function HistoryRunDetailPane({
   }, []);
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-surface">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-card">
       <div className="flex items-center justify-between gap-2 px-4 py-3">
         <SegmentedControl
           value={activeTab}
@@ -143,7 +143,7 @@ export function HistoryRunDetailPane({
 
       {!primaryRun ? (
         <div className="flex flex-1 items-center justify-center p-6">
-          <p className="text-sm text-surface-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {t("history.inspector.selectRunToInspect")}
           </p>
         </div>

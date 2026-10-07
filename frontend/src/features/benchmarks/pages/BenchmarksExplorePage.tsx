@@ -273,7 +273,7 @@ export function BenchmarksExplorePage() {
   return (
     <div className="flex-1 overflow-auto text-sm">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-canvas px-6 py-4">
+      <div className="sticky top-0 z-10 bg-background px-6 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-lg font-semibold text-foreground">
             {t("benchmarks.explore.title")}
@@ -282,7 +282,7 @@ export function BenchmarksExplorePage() {
           <div className="flex flex-wrap items-center gap-2">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-muted-foreground" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type="text"
                 value={query}
@@ -386,12 +386,12 @@ export function BenchmarksExplorePage() {
       <div className="p-6 space-y-4">
         {showInitialSkeleton ? (
           <div className="space-y-3">
-            <div className="h-8 w-56 animate-pulse rounded-xl bg-surface-subtle" />
+            <div className="h-8 w-56 animate-pulse rounded-xl bg-secondary" />
             <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(20rem,1fr))]">
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-[4.25rem] animate-pulse rounded-xl bg-surface-subtle"
+                  className="h-[4.25rem] animate-pulse rounded-xl bg-secondary"
                 />
               ))}
             </div>
@@ -400,7 +400,7 @@ export function BenchmarksExplorePage() {
           <>
             {/* Recommended benchmarks section */}
             {showRecs && showRecommendationWarmup && (
-              <div className="rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-surface-muted-foreground">
+              <div className="rounded-xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
                 {t("benchmarks.explore.loadingRecommendations")}
               </div>
             )}
@@ -432,7 +432,7 @@ export function BenchmarksExplorePage() {
             )}
 
             {filtered.length === 0 ? (
-              <div className="text-sm text-surface-muted-foreground py-8 text-center">
+              <div className="text-sm text-muted-foreground py-8 text-center">
                 {benchmarks.length === 0
                   ? t("benchmarks.explore.emptySyncing")
                   : showFavOnly
@@ -452,7 +452,7 @@ export function BenchmarksExplorePage() {
                     {groupBy !== "none" && (
                       <button
                         onClick={() => toggleGroup(group)}
-                        className="flex items-center gap-2 text-sm font-medium text-surface-muted-foreground mt-2 mb-2 w-full hover:text-foreground transition-colors text-left group/hdr select-none"
+                        className="flex items-center gap-2 text-sm font-medium text-muted-foreground mt-2 mb-2 w-full hover:text-foreground transition-colors text-left group/hdr select-none"
                       >
                         <ChevronDown
                           className={`h-4 w-4 transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}

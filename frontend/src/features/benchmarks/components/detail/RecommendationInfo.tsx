@@ -25,7 +25,7 @@ export function RecommendationInfo() {
         </p>
         <div className="space-y-1">
           <div className="flex items-center gap-1.5">
-            <Check className="h-3.5 w-3.5 shrink-0 text-surface-muted-foreground" />
+            <Check className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span className="text-popover-foreground/70">
               {t("benchmarks.recommendationInfo.completed")}
             </span>
@@ -55,7 +55,7 @@ export function RecommendationInfo() {
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Minus className="h-3.5 w-3.5 shrink-0 text-surface-muted-foreground" />
+            <Minus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <span className="text-popover-foreground/70">
               {t("benchmarks.recommendationInfo.neutral")}
             </span>

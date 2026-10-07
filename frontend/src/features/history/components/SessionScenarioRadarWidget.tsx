@@ -188,7 +188,7 @@ function SessionScenarioRadarChart({
           tickLine={false}
           axisLine={false}
           tick={{
-            fill: "var(--surface-muted-foreground)",
+            fill: "var(--muted-foreground)",
             fontSize: angleTickSize,
           }}
         />
@@ -199,7 +199,7 @@ function SessionScenarioRadarChart({
           axisLine={false}
           tickLine={false}
           tick={{
-            fill: "var(--surface-muted-foreground)",
+            fill: "var(--muted-foreground)",
             fontSize: "0.6875rem",
           }}
         />
@@ -236,7 +236,7 @@ function truncateScenarioLabel(label: string): string {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
+    <div className="rounded-xl bg-muted-strong p-4 text-sm text-muted-foreground">
       {message}
     </div>
   );

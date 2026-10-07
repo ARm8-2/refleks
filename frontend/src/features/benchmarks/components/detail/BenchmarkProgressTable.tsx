@@ -317,7 +317,7 @@ export function BenchmarkProgressTable({
     { length: Math.max(1, rankDefs.length) },
     (_, index) => index + 1,
   );
-  const labelBackgroundColor = "var(--surface)";
+  const labelBackgroundColor = "var(--card)";
 
   const getRecommendation = (scenarioName: string) =>
     recommendationScore.get(scenarioName) ?? 0;
@@ -330,7 +330,7 @@ export function BenchmarkProgressTable({
           <img src={REFLEKS_SYMBOL} alt="RefleK's" className="h-12 w-12" />
           <div>
             <p className="text-lg font-semibold text-foreground">RefleK's</p>
-            <p className="text-sm text-surface-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {t("benchmarks.progressTable.snapshot")}
             </p>
           </div>
@@ -342,7 +342,7 @@ export function BenchmarkProgressTable({
           <h3 className="text-sm font-semibold text-foreground">
             {t("benchmarks.progressTable.title")}
           </h3>
-          <p className="text-xs text-surface-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {benchmark.benchmarkName} · {difficultyName} ·{" "}
             <span
               style={overallRankColor ? { color: overallRankColor } : undefined}
@@ -396,7 +396,7 @@ export function BenchmarkProgressTable({
 
       <div className="relative z-0">
         <div className="relative z-0 w-full space-y-3 pb-4">
-          <div className="relative mb-3 w-full rounded-xl bg-surface py-2 shadow-sm">
+          <div className="relative mb-3 w-full rounded-xl bg-card py-2 shadow-sm">
             <div className="flex items-center">
               <div className="flex h-[1.75rem] w-[3.25rem] shrink-0 bg-transparent pl-5" />
               <div className="flex h-[1.75rem] w-6 shrink-0 bg-transparent" />
@@ -405,13 +405,13 @@ export function BenchmarkProgressTable({
                   className="grid h-[1.75rem] items-center"
                   style={{ gridTemplateColumns: infoGridTemplate }}
                 >
-                  <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
+                  <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[0.6875rem] uppercase tracking-wide text-muted-foreground">
                     {t("benchmarks.progressTable.columnScenario")}
                   </div>
                   <div />
                   {effectiveShowNotesCol && <div />}
                   {effectiveShowRecCol && (
-                    <div className="relative flex w-max min-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap pl-2 text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
+                    <div className="relative flex w-max min-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap pl-2 text-center text-[0.6875rem] uppercase tracking-wide text-muted-foreground">
                       {t("benchmarks.progressTable.columnRec")}
                       {!shareMode && <RecommendationInfo />}
                     </div>
@@ -419,7 +419,7 @@ export function BenchmarkProgressTable({
                   {effectiveShowPlayCol && <div />}
                   {effectiveShowHistoryCol && <div />}
                   <div />
-                  <div className="text-right text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
+                  <div className="text-right text-[0.6875rem] uppercase tracking-wide text-muted-foreground">
                     {t("benchmarks.progressTable.columnScore")}
                   </div>
                 </div>
@@ -430,7 +430,7 @@ export function BenchmarkProgressTable({
           {categories.map((category) => (
             <div
               key={category.name}
-              className={`relative w-full overflow-hidden rounded-xl bg-surface shadow-sm ${categoryPaddingClass}`}
+              className={`relative w-full overflow-hidden rounded-xl bg-card shadow-sm ${categoryPaddingClass}`}
             >
               <div className="flex">
                 <div className="flex w-[3.25rem] shrink-0 items-center justify-center bg-transparent pl-5">
@@ -472,7 +472,7 @@ export function BenchmarkProgressTable({
                             </span>
                           ) : (
                             <span
-                              className="text-[0.625rem] text-surface-muted-foreground"
+                              className="text-[0.625rem] text-muted-foreground"
                               style={{
                                 writingMode: "vertical-rl",
                                 transform: "rotate(180deg)",
@@ -504,7 +504,7 @@ export function BenchmarkProgressTable({
                               return (
                                 <div
                                   key={scenario.name}
-                                  className={`rounded-l-md pl-2 pr-2 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? "bg-surface-subtle-hover" : ""}`}
+                                  className={`rounded-l-md pl-2 pr-2 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? "bg-secondary-hover" : ""}`}
                                 >
                                   <ScenarioInfoRow
                                     scenarioName={scenario.name}
@@ -574,14 +574,14 @@ export function BenchmarkProgressTable({
                       visibleRanks.map((rank, index) => (
                         <div
                           key={`${rank.name}-${visibleRankIndices[index]}`}
-                          className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground"
+                          className="text-center text-[0.6875rem] uppercase tracking-wide text-muted-foreground"
                           style={rank.color ? { color: rank.color } : undefined}
                         >
                           {rank.name}
                         </div>
                       ))
                     ) : (
-                      <div className="text-center text-[0.6875rem] uppercase tracking-wide text-surface-muted-foreground">
+                      <div className="text-center text-[0.6875rem] uppercase tracking-wide text-muted-foreground">
                         {t("benchmarks.progressTable.details")}
                       </div>
                     )}
@@ -608,7 +608,7 @@ export function BenchmarkProgressTable({
                                 return (
                                   <div
                                     key={`${scenario.name}-ranks`}
-                                    className={`rounded-r-md pr-1 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? "bg-surface-subtle-hover" : ""}`}
+                                    className={`rounded-r-md pr-1 ${isCurrentScenarioRow && showLastPlayedHighlight && !shareMode ? "bg-secondary-hover" : ""}`}
                                   >
                                     <ScenarioRankCells
                                       scenarioName={scenario.name}
@@ -643,7 +643,7 @@ export function BenchmarkProgressTable({
       </div>
 
       {shareMode && (
-        <div className="px-1 text-xs text-surface-muted-foreground">
+        <div className="px-1 text-xs text-muted-foreground">
           refleksapp.com
         </div>
       )}
@@ -716,7 +716,7 @@ export function BenchmarkProgressTable({
                   </label>
 
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-surface-muted-foreground">
+                    <span className="text-muted-foreground">
                       {t("benchmarks.progressTable.keepVisible")}
                     </span>
                     <Select

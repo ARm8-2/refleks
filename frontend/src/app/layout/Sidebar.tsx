@@ -139,7 +139,7 @@ function SidebarFavoriteItem({
   const collapsed = !open;
   const pill = (
     <span
-      className="w-[2.375rem] shrink-0 rounded py-0.5 text-center text-[0.625rem] font-semibold text-surface-muted-foreground"
+      className="w-[2.375rem] shrink-0 rounded py-0.5 text-center text-[0.625rem] font-semibold text-muted-foreground"
       style={color ? { color } : undefined}
     >
       {abbreviation}
@@ -228,7 +228,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
             open={open}
             trailing={
               version ? (
-                <span className="text-xs text-surface-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   v{version}
                 </span>
               ) : null

@@ -144,7 +144,7 @@ export function PerformanceVsSensWidget({
             setStoredScope(isDataScopeKey(value) ? value : DEFAULT_SCOPE)
           }
         >
-          <SelectTrigger className="h-7 w-auto min-w-0 max-w-[11.25rem] px-2 text-xs bg-surface-subtle">
+          <SelectTrigger className="h-7 w-auto min-w-0 max-w-[11.25rem] px-2 text-xs bg-secondary">
             <SelectValue
               placeholder={t("history.performanceVsSens.scopePlaceholder")}
             />
@@ -165,7 +165,7 @@ export function PerformanceVsSensWidget({
           setStoredMetric(isMetricKey(value) ? value : DEFAULT_METRIC)
         }
       >
-        <SelectTrigger className="h-7 w-auto min-w-0 max-w-[11.25rem] px-2 text-xs bg-surface-subtle">
+        <SelectTrigger className="h-7 w-auto min-w-0 max-w-[11.25rem] px-2 text-xs bg-secondary">
           <SelectValue
             placeholder={t("history.performanceVsSens.metricPlaceholder")}
           />
@@ -507,7 +507,7 @@ function formatMetricValue(value: number, metric: MetricKey): string {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
+    <div className="rounded-xl bg-muted-strong p-4 text-sm text-muted-foreground">
       {message}
     </div>
   );

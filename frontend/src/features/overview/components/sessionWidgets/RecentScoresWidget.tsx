@@ -223,7 +223,7 @@ export function RecentScoresWidget({
   if (!currentSession || recentScores.length === 0) {
     return (
       <Widget title={t("overview.recentScores.title")}>
-        <div className="flex h-full items-center justify-center rounded-xl bg-surface-muted-strong p-4 text-sm text-surface-muted-foreground">
+        <div className="flex h-full items-center justify-center rounded-xl bg-muted-strong p-4 text-sm text-muted-foreground">
           {t("overview.recentScores.empty")}
         </div>
       </Widget>

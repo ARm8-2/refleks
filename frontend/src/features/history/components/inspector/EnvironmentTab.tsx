@@ -184,7 +184,7 @@ function EnvironmentStatRow({
   return (
     <div className="flex items-baseline justify-between gap-3">
       <div className="flex min-w-0 items-center gap-1.5">
-        <span className="text-xs text-surface-muted-foreground">{label}</span>
+        <span className="text-xs text-muted-foreground">{label}</span>
         {showPrivacyHint && privacyNote && <PrivacyHint note={privacyNote} />}
       </div>
       <span className="text-sm font-medium text-foreground tabular-nums">
@@ -210,7 +210,7 @@ function EnvironmentCompareStatRow({
   return (
     <div className="flex items-baseline justify-between gap-2">
       <div className="flex min-w-0 items-center gap-1.5">
-        <span className="text-xs text-surface-muted-foreground flex-shrink-0">
+        <span className="text-xs text-muted-foreground shrink-0">
           {label}
         </span>
         {showPrivacyHint && privacyNote && <PrivacyHint note={privacyNote} />}
@@ -241,7 +241,7 @@ function SingleEnvironmentView({
         <div className="font-medium text-foreground">
           {primaryRun.scenarioName}
         </div>
-        <div className="mt-0.5 text-xs text-surface-muted-foreground">
+        <div className="mt-0.5 text-xs text-muted-foreground">
           {formatRunTimestamp(primaryRun.playedAt)} ·{" "}
           {formatSessionTitle(primaryRun.session)}
         </div>
@@ -297,15 +297,15 @@ function CompareEnvironmentView({
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="flex items-start justify-between gap-2 rounded-xl bg-surface-subtle px-3 py-2.5">
+        <div className="flex items-start justify-between gap-2 rounded-xl bg-secondary px-3 py-2.5">
           <div className="min-w-0">
-            <div className="text-xs text-surface-muted-foreground">
+            <div className="text-xs text-muted-foreground">
               {t("history.inspector.pinned")}
             </div>
             <div className="mt-0.5 font-medium text-foreground truncate">
               {primaryRun.scenarioName}
             </div>
-            <div className="text-[0.6875rem] text-surface-muted-foreground">
+            <div className="text-[0.6875rem] text-muted-foreground">
               {formatRunTimestamp(primaryRun.playedAt)}
             </div>
           </div>
@@ -318,15 +318,15 @@ function CompareEnvironmentView({
             <PinOff className="h-3.5 w-3.5" />
           </Button>
         </div>
-        <div className="flex items-start justify-between gap-2 rounded-xl bg-surface-subtle px-3 py-2.5">
+        <div className="flex items-start justify-between gap-2 rounded-xl bg-secondary px-3 py-2.5">
           <div className="min-w-0">
-            <div className="text-xs text-surface-muted-foreground">
+            <div className="text-xs text-muted-foreground">
               {t("history.inspector.compare")}
             </div>
             <div className="mt-0.5 font-medium text-foreground truncate">
               {compareRun.scenarioName}
             </div>
-            <div className="text-[0.6875rem] text-surface-muted-foreground">
+            <div className="text-[0.6875rem] text-muted-foreground">
               {formatRunTimestamp(compareRun.playedAt)}
             </div>
           </div>

@@ -46,7 +46,7 @@ export function SessionPerformanceWidget({
       >
         {performanceValue}
       </div>
-      <div className="mt-0.5 text-xs text-surface-muted-foreground">
+      <div className="mt-0.5 text-xs text-muted-foreground">
         {performanceDetail}
       </div>
     </Widget>

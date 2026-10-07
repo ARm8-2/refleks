@@ -132,7 +132,7 @@ function rgbToCss({ r, g, b }: RGB): string {
 
 export function adjustColorForTheme(
   color: string | undefined,
-  backgroundColor = "var(--surface)",
+  backgroundColor = "var(--card)",
   strength = 0.92,
 ): string {
   const sourceColor = resolveCssColor(color?.trim() || "var(--primary)");
@@ -194,7 +194,7 @@ export function formatNumber(
 export function computeFillColor(
   achievedRank: number | undefined | null,
   rankDefs: Array<{ color?: string }>,
-  fallback = "var(--surface-muted-foreground)",
+  fallback = "var(--muted-foreground)",
 ): string {
   const achieved = Number(achievedRank || 0);
   if (!achieved || achieved <= 0) return fallback;

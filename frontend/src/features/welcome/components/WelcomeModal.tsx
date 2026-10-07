@@ -63,12 +63,12 @@ function WelcomeSection({
 }: WelcomeSectionProps) {
   return (
     <section
-      className={cn("rounded-xl bg-surface px-5 py-4 shadow-sm", className)}
+      className={cn("rounded-xl bg-card px-5 py-4 shadow-sm", className)}
     >
       <div className="space-y-1">
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         {description && (
-          <p className="text-xs leading-5 text-surface-muted-foreground">
+          <p className="text-xs leading-5 text-muted-foreground">
             {description}
           </p>
         )}
@@ -94,9 +94,9 @@ function ChoiceCard({
       type="button"
       onClick={onSelect}
       className={cn(
-        "flex h-full flex-col rounded-xl bg-surface px-4 py-4 text-left shadow-sm transition-[transform,background-color,box-shadow,ring-color] duration-200 ease-emphasized will-change-transform hover:-translate-y-px hover:scale-[1.01] hover:bg-surface-hover hover:shadow-sm active:scale-[0.995]",
+        "flex h-full flex-col rounded-xl bg-card px-4 py-4 text-left shadow-sm transition-[transform,background-color,box-shadow,ring-color] duration-200 ease-emphasized will-change-transform hover:-translate-y-px hover:scale-[1.01] hover:bg-card-hover hover:shadow-sm active:scale-[0.995]",
         selected &&
-          "-translate-y-px scale-[1.005] bg-surface-hover ring-1 ring-primary/35 shadow-sm",
+          "-translate-y-px scale-[1.005] bg-card-hover ring-1 ring-primary/35 shadow-sm",
       )}
     >
       <div className="flex min-h-[1.75rem] items-center justify-between gap-3">
@@ -105,7 +105,7 @@ function ChoiceCard({
             "inline-flex rounded-full px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-wide",
             eyebrowTone === "primary"
               ? "bg-primary/10 text-primary"
-              : "bg-surface-muted text-surface-muted-foreground",
+              : "bg-muted text-muted-foreground",
           )}
         >
           {eyebrow}
@@ -125,12 +125,12 @@ function ChoiceCard({
         {label}
       </div>
       {subtitle && (
-        <div className="mt-1 text-xs text-surface-muted-foreground">
+        <div className="mt-1 text-xs text-muted-foreground">
           {subtitle}
         </div>
       )}
 
-      <p className="mt-3 text-sm leading-6 text-surface-muted-foreground">
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">
         {description}
       </p>
       <ul className="mt-4 space-y-2">
@@ -162,18 +162,18 @@ function ChoiceGroup({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-xl bg-surface-subtle p-4">
+    <div className="rounded-xl bg-secondary p-4">
       <div className="flex items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-primary">
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
           {icon}
         </span>
         <span className="leading-none">{label}</span>
       </div>
-      <p className="mt-1.5 text-sm leading-6 text-surface-muted-foreground">
+      <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
         {description}
       </p>
       {helper && (
-        <p className="mt-1 text-xs leading-5 text-surface-muted-foreground">
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
           {helper}
         </p>
       )}
@@ -199,13 +199,13 @@ function ResourceCard({
     <button
       type="button"
       onClick={() => openURL(url)}
-      className="w-full rounded-xl bg-surface-subtle p-4 text-left transition-[transform,background-color,box-shadow] duration-200 ease-emphasized will-change-transform hover:-translate-y-px hover:scale-[1.01] hover:bg-surface-hover hover:shadow-sm active:scale-[0.995]"
+      className="w-full rounded-xl bg-secondary p-4 text-left transition-[transform,background-color,box-shadow] duration-200 ease-emphasized will-change-transform hover:-translate-y-px hover:scale-[1.01] hover:bg-card-hover hover:shadow-sm active:scale-[0.995]"
     >
       <div className="text-sm font-medium text-foreground">{label}</div>
-      <p className="mt-1 text-xs leading-5 text-surface-muted-foreground">
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">
         {description}
       </p>
-      <div className="mt-2 font-mono text-[0.6875rem] text-surface-muted-foreground">
+      <div className="mt-2 font-mono text-[0.6875rem] text-muted-foreground">
         {urlLabel}
       </div>
     </button>
@@ -294,14 +294,14 @@ export function WelcomeModal({
       {/* -mr-6 cancels the modal's right padding so the scrollbar sits flush at the dialog edge */}
       <div className="-mr-6 max-h-[75vh] overflow-y-auto pr-6">
         <div className="space-y-3.5 pb-2.5">
-          <div className="rounded-xl bg-surface px-5 py-4 shadow-sm">
+          <div className="rounded-xl bg-card px-5 py-4 shadow-sm">
             <p className="text-sm leading-6 text-foreground">{content.intro}</p>
 
             <div className="mt-2.5 space-y-2.5">
               {content.details.map((detail) => (
                 <p
                   key={detail}
-                  className="text-sm leading-6 text-surface-muted-foreground"
+                  className="text-sm leading-6 text-muted-foreground"
                 >
                   {detail}
                 </p>
@@ -470,7 +470,7 @@ export function WelcomeModal({
               {content.highlights.map((item) => (
                 <div
                   key={item}
-                  className="rounded-xl bg-surface-subtle px-4 py-3 text-sm leading-6 text-foreground"
+                  className="rounded-xl bg-secondary px-4 py-3 text-sm leading-6 text-foreground"
                 >
                   {item}
                 </div>

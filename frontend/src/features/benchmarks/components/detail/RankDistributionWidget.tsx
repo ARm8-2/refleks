@@ -25,10 +25,10 @@ type Segment = {
 
 type ScopeLevel = "all" | "category" | "subcategory";
 
-const CARD_BACKGROUND = "var(--surface)";
+const CARD_BACKGROUND = "var(--card)";
 
 function buildConicGradient(segments: Segment[]): string {
-  if (!segments.length) return "var(--surface-muted)";
+  if (!segments.length) return "var(--muted)";
 
   let cursor = 0;
   const stops = segments
@@ -124,7 +124,7 @@ export function RankDistributionWidget({ progress }: Props) {
         label: t("benchmarks.rankDistribution.belowR1"),
         count: belowR1,
         color: adjustColorForTheme(
-          "var(--surface-muted-foreground)",
+          "var(--muted-foreground)",
           CARD_BACKGROUND,
           0.9,
         ),
@@ -182,7 +182,7 @@ export function RankDistributionWidget({ progress }: Props) {
         value={scopeLevel}
         onValueChange={(value) => setScopeLevel(value as ScopeLevel)}
       >
-        <SelectTrigger className="h-8 min-w-[7.5rem] w-auto px-2 text-xs bg-surface-subtle">
+        <SelectTrigger className="h-8 min-w-[7.5rem] w-auto px-2 text-xs bg-secondary">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -201,7 +201,7 @@ export function RankDistributionWidget({ progress }: Props) {
           value={String(safeCategoryIndex)}
           onValueChange={(value) => setCategoryIndex(Number(value) || 0)}
         >
-          <SelectTrigger className="h-8 min-w-[8.125rem] w-auto max-w-[11.25rem] px-2 text-xs bg-surface-subtle">
+          <SelectTrigger className="h-8 min-w-[8.125rem] w-auto max-w-[11.25rem] px-2 text-xs bg-secondary">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -222,7 +222,7 @@ export function RankDistributionWidget({ progress }: Props) {
           value={String(safeSubcategoryIndex)}
           onValueChange={(value) => setSubcategoryIndex(Number(value) || 0)}
         >
-          <SelectTrigger className="h-8 min-w-[8.125rem] w-auto max-w-[11.25rem] px-2 text-xs bg-surface-subtle">
+          <SelectTrigger className="h-8 min-w-[8.125rem] w-auto max-w-[11.25rem] px-2 text-xs bg-secondary">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -246,7 +246,7 @@ export function RankDistributionWidget({ progress }: Props) {
   const renderBody = (expanded: boolean) => {
     if (totalScenarios === 0) {
       return (
-        <div className="rounded-xl bg-surface-subtle p-4 text-sm text-surface-muted-foreground">
+        <div className="rounded-xl bg-secondary p-4 text-sm text-muted-foreground">
           {t("benchmarks.rankDistribution.noData")}
         </div>
       );
@@ -266,8 +266,8 @@ export function RankDistributionWidget({ progress }: Props) {
             style={{ background: donutBackground }}
             aria-label={t("benchmarks.rankDistribution.donutAriaLabel")}
           />
-          <div className="absolute inset-[22%] flex flex-col items-center justify-center rounded-full bg-surface">
-            <span className="text-[0.6875rem] text-surface-muted-foreground">
+          <div className="absolute inset-[22%] flex flex-col items-center justify-center rounded-full bg-card">
+            <span className="text-[0.6875rem] text-muted-foreground">
               {t("benchmarks.rankDistribution.scenarios")}
             </span>
             <span className="text-xl font-semibold text-foreground">
@@ -280,7 +280,7 @@ export function RankDistributionWidget({ progress }: Props) {
           {segments.map((segment) => (
             <div
               key={segment.label}
-              className="rounded-xl bg-surface-subtle px-3 py-2 text-sm"
+              className="rounded-xl bg-secondary px-3 py-2 text-sm"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
@@ -292,7 +292,7 @@ export function RankDistributionWidget({ progress }: Props) {
                     {segment.label}
                   </span>
                 </div>
-                <span className="text-xs text-surface-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {formatNumber(segment.count, 0)} ·{" "}
                   {formatNumber(segment.percent, 1, false)}%
                 </span>

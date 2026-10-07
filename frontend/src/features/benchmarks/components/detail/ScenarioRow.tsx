@@ -141,11 +141,11 @@ export function getRowClasses(compact: boolean): RowClasses {
     nameTextClass: compact ? "text-[0.75rem]" : "text-[0.8125rem]",
     scoreTextClass: compact ? "text-[0.6875rem]" : "text-[0.75rem]",
     iconButtonClass: compact
-      ? "rounded-lg border border-transparent p-1 text-surface-muted-foreground transition-colors hover:bg-surface-muted"
-      : "rounded-lg border border-transparent p-1.5 text-surface-muted-foreground transition-colors hover:bg-surface-muted",
+      ? "rounded-lg border border-transparent p-1 text-muted-foreground transition-colors hover:bg-muted"
+      : "rounded-lg border border-transparent p-1.5 text-muted-foreground transition-colors hover:bg-muted",
     actionButtonClass: compact
-      ? "rounded-lg border border-transparent p-1 text-foreground transition-colors hover:bg-surface-muted"
-      : "rounded-lg border border-transparent p-1.5 text-foreground transition-colors hover:bg-surface-muted",
+      ? "rounded-lg border border-transparent p-1 text-foreground transition-colors hover:bg-muted"
+      : "rounded-lg border border-transparent p-1.5 text-foreground transition-colors hover:bg-muted",
     iconClass: compact
       ? "h-[0.8125rem] w-[0.8125rem]"
       : "h-[0.875rem] w-[0.875rem]",
@@ -221,7 +221,7 @@ export function ScenarioInfoRow({
             className={
               hasSavedNote
                 ? cls.iconButtonClass.replace(
-                    "text-surface-muted-foreground",
+                    "text-muted-foreground",
                     "text-primary",
                   )
                 : cls.iconButtonClass
@@ -369,7 +369,7 @@ export function ScenarioRankCells({
           return (
             <div
               key={`${scenarioName}-${rank.name}-${rankIndex}`}
-              className={`relative flex items-center justify-center overflow-hidden rounded-md bg-surface-panel px-3 text-center text-[0.6875rem] ${cls.rankCellHeightClass}`}
+              className={`relative flex items-center justify-center overflow-hidden rounded-md bg-card-panel px-3 text-center text-[0.6875rem] ${cls.rankCellHeightClass}`}
             >
               <div
                 className="absolute inset-0 origin-left"
@@ -402,7 +402,7 @@ export function ScenarioRankCells({
         })
       ) : (
         <div
-          className={`flex items-center justify-center rounded-md bg-surface-panel px-3 text-center text-[0.6875rem] text-surface-muted-foreground ${cls.rankCellHeightClass}`}
+          className={`flex items-center justify-center rounded-md bg-card-panel px-3 text-center text-[0.6875rem] text-muted-foreground ${cls.rankCellHeightClass}`}
         >
           -
         </div>

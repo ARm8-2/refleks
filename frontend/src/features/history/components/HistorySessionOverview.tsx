@@ -150,8 +150,8 @@ export function HistorySessionOverview({
 
   if (!session) {
     return (
-      <section className="flex h-full min-h-0 items-center justify-center rounded-xl bg-surface p-5">
-        <p className="text-sm text-surface-muted-foreground">
+      <section className="flex h-full min-h-0 items-center justify-center rounded-xl bg-card p-5">
+        <p className="text-sm text-muted-foreground">
           {t("history.overview.selectSession")}
         </p>
       </section>
@@ -159,7 +159,7 @@ export function HistorySessionOverview({
   }
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-surface">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-card">
       <div className="px-5 pt-5 pb-1">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -185,7 +185,7 @@ export function HistorySessionOverview({
                     }
                   }}
                   placeholder={t("history.overview.sessionNamePlaceholder")}
-                  className="max-w-[21.25rem] bg-transparent px-3 font-medium shadow-none focus-visible:bg-surface-subtle focus-visible:ring-0"
+                  className="max-w-[21.25rem] bg-transparent px-3 font-medium shadow-none focus-visible:bg-secondary focus-visible:ring-0"
                   disabled={nameSaving}
                 />
               ) : (
@@ -198,14 +198,14 @@ export function HistorySessionOverview({
                   onClick={() => setNameEditing(true)}
                   variant="ghost"
                   size="icon"
-                  className="text-surface-muted-foreground"
+                  className="text-muted-foreground"
                   title={t("history.overview.renameSession")}
                 >
                   <SquarePen />
                 </Button>
               )}
             </div>
-            <div className="mt-0.5 text-xs text-surface-muted-foreground">
+            <div className="mt-0.5 text-xs text-muted-foreground">
               {formatSessionDateRange(session)}
             </div>
             {nameError && (
@@ -218,7 +218,7 @@ export function HistorySessionOverview({
             size="icon"
             className={cn(
               "shrink-0",
-              hasNotes ? "text-primary" : "text-surface-muted-foreground",
+              hasNotes ? "text-primary" : "text-muted-foreground",
             )}
             title={
               hasNotes
@@ -254,9 +254,9 @@ export function HistorySessionOverview({
         </div>
 
         {notes && (
-          <div className="mt-4 rounded-xl bg-surface-subtle px-3 py-2.5">
+          <div className="mt-4 rounded-xl bg-secondary px-3 py-2.5">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-surface-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {t("history.overview.notes")}
               </p>
               <Button
@@ -280,7 +280,7 @@ export function HistorySessionOverview({
             <button
               type="button"
               onClick={() => setScenarioGridExpanded((v) => !v)}
-              className="flex w-full items-center gap-1.5 text-xs font-medium text-surface-muted-foreground hover:text-foreground transition-colors"
+              className="flex w-full items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               {scenarioGridExpanded ? (
                 <ChevronUp className="h-3.5 w-3.5" />
@@ -294,7 +294,7 @@ export function HistorySessionOverview({
 
             {scenarioGridExpanded && scenarioSummaries.length > 3 && (
               <div className="relative mt-2 w-full max-w-sm">
-                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-muted-foreground" />
+                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={scenarioQuery}
                   onChange={(e) => setScenarioQuery(e.target.value)}
@@ -323,7 +323,7 @@ export function HistorySessionOverview({
               <button
                 type="button"
                 onClick={() => setScenarioGridExpanded(true)}
-                className="mt-2 text-xs text-surface-muted-foreground hover:text-foreground transition-colors"
+                className="mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 {t("history.overview.more", {
                   count: filteredSummaries.length - 3,
@@ -356,10 +356,10 @@ export function HistorySessionOverview({
                     <button
                       type="button"
                       onClick={() => onSelectRun(pb.id)}
-                      className="rounded-xl bg-surface-subtle px-3 py-2.5 text-left transition-[transform,color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.985] hover:bg-surface-emphasis"
+                      className="rounded-xl bg-secondary px-3 py-2.5 text-left transition-[transform,color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.985] hover:bg-accent"
                       title={t("history.overview.inspectPersonalBest")}
                     >
-                      <div className="flex items-center gap-1 text-xs text-surface-muted-foreground">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Trophy className="h-3 w-3 text-amber-500" />
                         {t("history.overview.allTimePb")}
                       </div>
@@ -379,7 +379,7 @@ export function HistorySessionOverview({
                   scenarioName={selectedScenario}
                   points={trendPoints}
                   onClickPoint={(runId) => onSelectRun(runId)}
-                  className="bg-surface-subtle h-[20rem]"
+                  className="bg-secondary h-[20rem]"
                 />
 
                 <div className="grid gap-3 lg:grid-cols-2">
@@ -393,11 +393,11 @@ export function HistorySessionOverview({
                           })
                         : undefined
                     }
-                    className="bg-surface-subtle h-[20rem]"
+                    className="bg-secondary h-[20rem]"
                   />
                   <SessionScenarioRadarWidget
                     session={session}
-                    className="bg-surface-subtle h-[20rem]"
+                    className="bg-secondary h-[20rem]"
                   />
                 </div>
               </div>
@@ -430,14 +430,14 @@ function MetricCell({
   sub?: string;
 }) {
   return (
-    <div className="rounded-xl bg-surface-subtle px-3 py-2.5">
-      <div className="flex items-center gap-1.5 text-xs text-surface-muted-foreground">
+    <div className="rounded-xl bg-secondary px-3 py-2.5">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         {icon}
         {label}
       </div>
       <div className="mt-1 text-lg font-semibold text-foreground">{value}</div>
       {sub && (
-        <div className="mt-0.5 text-xs text-surface-muted-foreground">
+        <div className="mt-0.5 text-xs text-muted-foreground">
           {sub}
         </div>
       )}
@@ -447,8 +447,8 @@ function MetricCell({
 
 function SmallMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-surface-subtle px-3 py-2.5">
-      <div className="text-xs text-surface-muted-foreground">{label}</div>
+    <div className="rounded-xl bg-secondary px-3 py-2.5">
+      <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-lg font-semibold text-foreground">{value}</div>
     </div>
   );
@@ -470,13 +470,13 @@ function ScenarioCard({
       onClick={onSelect}
       className={cn(
         "group relative flex items-center gap-2 overflow-hidden rounded-xl px-3 py-2.5 text-left transition-[transform,color,opacity] duration-220 ease-emphasized will-change-transform active:scale-[0.985]",
-        selected ? "shadow-sm" : "bg-surface-subtle",
+        selected ? "shadow-sm" : "bg-secondary",
       )}
     >
       <span
         aria-hidden
         className={cn(
-          "absolute inset-0 rounded-xl bg-surface-emphasis transition-[opacity,transform] duration-220 ease-emphasized",
+          "absolute inset-0 rounded-xl bg-accent transition-[opacity,transform] duration-220 ease-emphasized",
           selected
             ? "scale-100 opacity-100"
             : "scale-[0.985] opacity-0 group-hover:scale-100 group-hover:opacity-100",
@@ -486,7 +486,7 @@ function ScenarioCard({
         <div className="truncate text-sm font-medium text-foreground">
           {summary.name}
         </div>
-        <div className="text-xs text-surface-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {formatScore(summary.bestScore)} ·{" "}
           {t("history.overview.runs", { count: summary.count })}
         </div>
@@ -498,7 +498,7 @@ function ScenarioCard({
         <TrendingDown className="relative z-10 h-4 w-4 shrink-0 text-red-500" />
       )}
       {summary.trend === "same" && (
-        <Minus className="relative z-10 h-3.5 w-3.5 shrink-0 text-surface-muted-foreground" />
+        <Minus className="relative z-10 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       )}
     </button>
   );

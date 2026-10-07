@@ -27,10 +27,10 @@ export function TogglePill({
         "inline-flex items-center gap-1 rounded-lg font-medium transition-[transform,background-color,color,box-shadow] duration-200 ease-emphasized focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 enabled:active:scale-[0.98]",
         sizeClass,
         disabled
-          ? "text-surface-muted-foreground/40"
+          ? "text-muted-foreground/40"
           : active
-            ? "bg-surface-muted text-foreground"
-            : "text-surface-muted-foreground hover:bg-surface-muted hover:text-foreground",
+            ? "bg-muted text-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
         className,
       )}
       {...props}
@@ -44,7 +44,7 @@ export function TogglePillGroup({ className, ...props }: TogglePillGroupProps) {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-0.5 rounded-xl bg-surface-subtle p-1 shadow-inner shadow-black/5",
+        "inline-flex items-center gap-0.5 rounded-xl bg-secondary p-1 shadow-inner shadow-black/5",
         className,
       )}
       {...props}
