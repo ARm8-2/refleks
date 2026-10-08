@@ -52,6 +52,8 @@ export const benchmarks: BenchmarksMessages = {
   },
   progressTable: {
     title: "進捗トラッカー",
+    energy: "{energy} エネルギー",
+    completeRank: "{rank} コンプリート",
     snapshot: "ベンチマーク進捗スナップショット",
     compact: "コンパクト",
     enableCompact: "コンパクトモードを有効化",

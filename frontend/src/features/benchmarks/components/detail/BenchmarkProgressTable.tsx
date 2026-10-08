@@ -305,10 +305,15 @@ export function BenchmarkProgressTable({
     : `minmax(${RANK_MIN_COLUMN_WIDTH}rem, 1fr)`;
   const rightGridMinWidth =
     Math.max(1, visibleRankIndices.length) * RANK_MIN_COLUMN_WIDTH;
-  const overallRankName =
-    rankDefs[(progress.overallRank ?? 0) - 1]?.name || "-";
-  const overallRankColor =
-    rankDefs[(progress.overallRank ?? 0) - 1]?.color ?? null;
+  // Energy-based benchmarks (Voltaic) rank by overall energy; KovaaK's
+  // overallRank is then the "complete" rank (every scenario at that rank).
+  const hasEnergyRank = progress.overallEnergy != null;
+  const headlineRank = hasEnergyRank
+    ? (progress.energyRank ?? 0)
+    : (progress.overallRank ?? 0);
+  const overallRankName = rankDefs[headlineRank - 1]?.name || "-";
+  const overallRankColor = rankDefs[headlineRank - 1]?.color ?? null;
+  const completeRankName = rankDefs[(progress.overallRank ?? 0) - 1]?.name;
   const cls = getRowClasses(compactMode);
   const categoryPaddingClass = compactMode ? "py-3" : "py-4";
   const rowSpacingClass = compactMode ? "space-y-0.5" : "space-y-1";
@@ -349,6 +354,22 @@ export function BenchmarkProgressTable({
             >
               {overallRankName}
             </span>
+            {hasEnergyRank && (
+              <>
+                {" · "}
+                {t("benchmarks.progressTable.energy", {
+                  energy: Math.floor(progress.overallEnergy ?? 0),
+                })}
+                {completeRankName && (
+                  <>
+                    {" · "}
+                    {t("benchmarks.progressTable.completeRank", {
+                      rank: completeRankName,
+                    })}
+                  </>
+                )}
+              </>
+            )}
           </p>
         </div>
 

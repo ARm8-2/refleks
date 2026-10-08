@@ -243,6 +243,8 @@ export namespace models {
 	    benchmarkProgress: number;
 	    ranks: RankDef[];
 	    categories: ProgressCategory[];
+	    overallEnergy?: number;
+	    energyRank?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new BenchmarkProgress(source);
@@ -254,6 +256,8 @@ export namespace models {
 	        this.benchmarkProgress = source["benchmarkProgress"];
 	        this.ranks = this.convertValues(source["ranks"], RankDef);
 	        this.categories = this.convertValues(source["categories"], ProgressCategory);
+	        this.overallEnergy = source["overallEnergy"];
+	        this.energyRank = source["energyRank"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

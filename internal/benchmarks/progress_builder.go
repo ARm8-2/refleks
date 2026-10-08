@@ -27,7 +27,7 @@ func (s *Service) buildStructuredProgress(raw string, benchmarkID int) (models.B
 	out.Categories = groupScenariosByMeta(scenarios, difficulty)
 
 	if benchmark != nil {
-		rankcalc.UpdateEnergies(benchmark.RankCalculation, benchmark, difficulty, &out.Categories)
+		rankcalc.UpdateEnergies(benchmark.RankCalculation, benchmark, difficulty, &out)
 	}
 
 	return out, nil

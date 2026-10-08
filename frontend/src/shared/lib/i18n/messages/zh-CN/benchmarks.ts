@@ -52,6 +52,8 @@ export const benchmarks: BenchmarksMessages = {
   },
   progressTable: {
     title: "进度跟踪器",
+    energy: "{energy} 能量",
+    completeRank: "{rank} 全达成",
     snapshot: "基准训练进度快照",
     compact: "紧凑",
     enableCompact: "启用紧凑模式",

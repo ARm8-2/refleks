@@ -199,6 +199,10 @@ export interface ProgressCategory {
 
 export interface BenchmarkProgress {
   overallRank: number;
+  /** Energy-based benchmarks only (e.g. Voltaic): harmonic-mean energy. */
+  overallEnergy?: number;
+  /** Energy-based benchmarks only: 1-based rank reached with overallEnergy. */
+  energyRank?: number;
   benchmarkProgress: number;
   ranks: RankDef[];
   categories: ProgressCategory[];

@@ -57,6 +57,8 @@ export const benchmarks: BenchmarksMessages = {
   },
   progressTable: {
     title: "Seguimiento del progreso",
+    energy: "{energy} de energía",
+    completeRank: "{rank} completo",
     snapshot: "Resumen del progreso del benchmark",
     compact: "Compacto",
     enableCompact: "Activar el modo compacto",

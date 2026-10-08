@@ -60,6 +60,8 @@ export const benchmarks = {
   },
   progressTable: {
     title: "Progress Tracker",
+    energy: "{energy} energy",
+    completeRank: "{rank} complete",
     snapshot: "Benchmark Progress Snapshot",
     compact: "Compact",
     enableCompact: "Enable compact mode",

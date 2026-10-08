@@ -62,4 +62,11 @@ type BenchmarkProgress struct {
 	BenchmarkProgress float64            `json:"benchmarkProgress"`
 	Ranks             []RankDef          `json:"ranks"`
 	Categories        []ProgressCategory `json:"categories"`
+
+	// OverallEnergy and EnergyRank are set only for energy-based benchmarks
+	// (e.g. Voltaic), whose official rank comes from energy rather than from
+	// KovaaK's "every scenario at rank" OverallRank. EnergyRank is 1-based
+	// like OverallRank; 0 means no rank.
+	OverallEnergy *float64 `json:"overallEnergy,omitempty"`
+	EnergyRank    int      `json:"energyRank,omitempty"`
 }

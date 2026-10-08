@@ -6,13 +6,14 @@ import (
 )
 
 // UpdateEnergies calculates and assigns energy values to scenarios and/or groups
-// based on the benchmark's rank calculation logic.
-func UpdateEnergies(kind string, b *models.Benchmark, d *models.BenchmarkDifficulty, categories *[]models.ProgressCategory) {
+// (and, for energy-ranked benchmarks, the overall energy and rank) based on
+// the benchmark's rank calculation logic.
+func UpdateEnergies(kind string, b *models.Benchmark, d *models.BenchmarkDifficulty, progress *models.BenchmarkProgress) {
 	switch kind {
 	case "ra-s5":
-		raS5(categories, b, d)
+		raS5(&progress.Categories, b, d)
 	case "vt-energy":
-		vtEnergy(categories, b, d)
+		vtEnergy(progress, b, d)
 	}
 }
 
