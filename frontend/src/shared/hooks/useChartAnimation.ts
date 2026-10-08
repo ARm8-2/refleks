@@ -1,4 +1,4 @@
-import { prefersReducedMotion } from "./motion";
+import { usePrefersReducedMotion } from "./motion";
 import { REVEAL_DELAY_MS } from "./timing";
 import { useInView } from "./useInView";
 import { useReveal } from "./useReveal";
@@ -53,6 +53,7 @@ export function useChartAnimation(options?: {
     enabled = true,
   } = options ?? {};
   const { ref, inView } = useInView<HTMLDivElement>();
+  const reducedMotion = usePrefersReducedMotion();
   const revealed = useReveal(inView, delayMs);
 
   return {
@@ -60,7 +61,7 @@ export function useChartAnimation(options?: {
     inView,
     revealed,
     animationProps: {
-      isAnimationActive: enabled && revealed && !prefersReducedMotion(),
+      isAnimationActive: enabled && revealed && !reducedMotion,
       animationDuration: durationMs,
       animationBegin: 0,
       animationEasing: "ease-out",

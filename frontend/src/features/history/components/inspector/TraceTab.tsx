@@ -1,5 +1,5 @@
 import { InfoTooltip } from "@/shared/components";
-import { useRetainedValue } from "@/shared/hooks";
+import { usePrefersReducedMotion, useRetainedValue } from "@/shared/hooks";
 import { cn, useI18n, type MessageKey } from "@/shared/lib";
 
 import { Copy } from "lucide-react";
@@ -320,6 +320,7 @@ function AnalysisPanel({
   onKillClick: (kill: KillAnalysis) => void;
 }) {
   const { t } = useI18n();
+  const reducedMotion = usePrefersReducedMotion();
   const { counts, kills } = analysis;
   const killListRef = useRef<HTMLDivElement>(null);
 
@@ -329,8 +330,11 @@ function AnalysisPanel({
     const btn = killListRef.current.querySelector(
       `[data-kill="${selectedKillIdx}"]`,
     );
-    btn?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [selectedKillIdx]);
+    btn?.scrollIntoView({
+      block: "nearest",
+      behavior: reducedMotion ? "auto" : "smooth",
+    });
+  }, [reducedMotion, selectedKillIdx]);
 
   return (
     <div className="shrink-0 space-y-1.5">

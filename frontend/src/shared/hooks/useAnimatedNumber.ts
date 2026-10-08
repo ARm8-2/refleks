@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { prefersReducedMotion } from "./motion";
+import { usePrefersReducedMotion } from "./motion";
 
 type Tick = (now: number) => void;
 
@@ -55,9 +55,10 @@ export function useAnimatedNumber(
   options: UseAnimatedNumberOptions = {},
 ): number {
   const { active = true, delayMs = 0, durationMs = 700, initial } = options;
+  const reducedMotion = usePrefersReducedMotion();
 
   const [displayed, setDisplayed] = useState<number>(() =>
-    initial !== undefined ? initial : target,
+    reducedMotion ? target : (initial ?? target),
   );
   const displayedRef = useRef(displayed);
   const tickRef = useRef<Tick | null>(null);
@@ -82,7 +83,7 @@ export function useAnimatedNumber(
       const from = displayedRef.current;
       if (from === to) return;
 
-      if (durationMs <= 0 || prefersReducedMotion()) {
+      if (durationMs <= 0 || reducedMotion) {
         displayedRef.current = to;
         setDisplayed(to);
         return;
@@ -106,7 +107,7 @@ export function useAnimatedNumber(
       tickRef.current = tick;
       addTick(tick);
     },
-    [durationMs, stop],
+    [durationMs, reducedMotion, stop],
   );
 
   useEffect(() => {

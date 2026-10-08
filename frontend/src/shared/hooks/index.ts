@@ -6,6 +6,7 @@ export { useChartAnimation } from "./useChartAnimation";
 export { useHorizontalDragScroll } from "./useHorizontalDragScroll";
 export { useInView } from "./useInView";
 export { usePersistedState } from "./usePersistedState";
+export { usePrefersReducedMotion } from "./motion";
 export { useReveal } from "./useReveal";
 export { useRetainedValue } from "./useRetainedValue";
 export { REVEAL_DELAY_MS } from "./timing";

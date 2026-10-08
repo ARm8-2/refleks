@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { prefersReducedMotion } from "./motion";
+import { usePrefersReducedMotion } from "./motion";
 import { REVEAL_DELAY_MS } from "./timing";
 
 export type UseRevealOptions = {
@@ -20,11 +20,12 @@ export function useReveal(
   options: UseRevealOptions = {},
 ): boolean {
   const { reset = false } = options;
-  const [revealed, setRevealed] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
+  const [revealed, setRevealed] = useState(reducedMotion);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (prefersReducedMotion()) {
+    if (reducedMotion) {
       setRevealed(true);
       return;
     }
@@ -57,7 +58,7 @@ export function useReveal(
         timerRef.current = null;
       }
     };
-  }, [active, delayMs, reset, revealed]);
+  }, [active, delayMs, reducedMotion, reset, revealed]);
 
   return revealed;
 }
