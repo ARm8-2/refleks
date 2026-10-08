@@ -110,7 +110,7 @@ export function Widget({
             {canExpand && (
               <button
                 type="button"
-                className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
                 title={t("common.widget.expand")}
                 aria-label={t("common.widget.expand")}
                 onClick={handleExpandClick}

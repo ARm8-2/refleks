@@ -141,11 +141,11 @@ export function getRowClasses(compact: boolean): RowClasses {
     nameTextClass: compact ? "text-[0.75rem]" : "text-[0.8125rem]",
     scoreTextClass: compact ? "text-[0.6875rem]" : "text-[0.75rem]",
     iconButtonClass: compact
-      ? "rounded-lg border border-transparent p-1 text-muted-foreground transition-colors hover:bg-muted"
-      : "rounded-lg border border-transparent p-1.5 text-muted-foreground transition-colors hover:bg-muted",
+      ? "cursor-pointer rounded-lg border border-transparent p-1 text-muted-foreground transition-colors hover:bg-muted"
+      : "cursor-pointer rounded-lg border border-transparent p-1.5 text-muted-foreground transition-colors hover:bg-muted",
     actionButtonClass: compact
-      ? "rounded-lg border border-transparent p-1 text-foreground transition-colors hover:bg-muted"
-      : "rounded-lg border border-transparent p-1.5 text-foreground transition-colors hover:bg-muted",
+      ? "cursor-pointer rounded-lg border border-transparent p-1 text-foreground transition-colors hover:bg-muted"
+      : "cursor-pointer rounded-lg border border-transparent p-1.5 text-foreground transition-colors hover:bg-muted",
     iconClass: compact
       ? "h-[0.8125rem] w-[0.8125rem]"
       : "h-[0.875rem] w-[0.875rem]",
