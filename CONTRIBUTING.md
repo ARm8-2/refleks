@@ -31,6 +31,10 @@ We recommend using the VS Code Dev Container to get started quickly without inst
 - **Windows:** Run the "Wails: Build for Windows" task.
 - **Host:** Run `wails build`.
 
+### Reproducible builds
+
+The portable ZIP is built to be reproducible: `scripts/ensure_ffmpeg.sh` downloads a pinned FFmpeg build and verifies its SHA-256, and `scripts/build_portable_zip.sh` normalizes timestamps, permissions and file order. To reproduce a release checksum, build from the release tag with the same toolchain versions (Go, Wails CLI, Node.js/npm), since the compiled `refleks.exe` depends on them. Frontend dependencies are installed with `npm ci`, so they always match `frontend/package-lock.json`.
+
 ## Pull Requests
 
 - Please keep PRs focused and well-scoped.
