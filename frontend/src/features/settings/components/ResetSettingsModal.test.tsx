@@ -4,9 +4,9 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { resetSettings } from "@/shared/lib";
 import { I18nProvider } from "@/shared/lib/i18n";
 import { STORAGE_KEYS } from "@/shared/lib/storageKeys";
-import { resetSettings } from "@/shared/lib";
 import { ResetSettingsModal } from "./ResetSettingsModal";
 
 vi.mock("@/shared/lib", async (importOriginal) => {
@@ -55,5 +55,24 @@ describe("ResetSettingsModal", () => {
     expect(resetSettings).toHaveBeenCalledWith(true, true, false, true);
     expect(onReset).toHaveBeenCalledOnce();
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("disables reset when no options are selected", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <I18nProvider>
+        <ResetSettingsModal isOpen onClose={vi.fn()} />
+      </I18nProvider>,
+    );
+
+    await user.click(
+      screen.getByRole("checkbox", { name: "Settings & Configuration" }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Reset Selected" }),
+    ).toBeDisabled();
+    expect(resetSettings).not.toHaveBeenCalled();
   });
 });
