@@ -49,7 +49,7 @@ func loadDotEnv(path string) error {
 			continue
 		}
 		// allow export FOO=bar syntax
-		if after, ok :=strings.CutPrefix(line, "export "); ok  {
+		if after, ok := strings.CutPrefix(line, "export "); ok {
 			line = strings.TrimSpace(after)
 		}
 		eq := strings.IndexByte(line, '=')
