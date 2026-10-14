@@ -55,7 +55,7 @@ export function BenchmarkCard({
           }`}
         >
           <Star
-            className="h-[1.25rem] w-[1.25rem]"
+            className="h-5 w-5"
             strokeWidth={1.5}
             fill={isFavorite ? "currentColor" : "none"}
           />

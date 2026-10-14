@@ -354,7 +354,7 @@ export function RecentScoresWidget({
       <ChartContainer
         ref={compactChart.ref}
         config={recentScoresConfig}
-        className="aspect-auto w-full h-full min-h-[8.75rem]"
+        className="aspect-auto w-full h-full min-h-35"
       >
         <LineChart
           key={compactChart.revealed ? "revealed" : "hidden"}

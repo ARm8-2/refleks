@@ -79,7 +79,7 @@ export function HistorySessionDetailsModal({
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             placeholder={t("history.sessionDetails.notesPlaceholder")}
-            className="min-h-[11.25rem] w-full resize-none rounded-xl border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="min-h-45 w-full resize-none rounded-xl border border-input bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
 

@@ -99,7 +99,7 @@ function ChoiceCard({
           "-translate-y-px scale-[1.005] bg-card-hover ring-1 ring-primary/35 shadow-sm",
       )}
     >
-      <div className="flex min-h-[1.75rem] items-center justify-between gap-3">
+      <div className="flex min-h-7 items-center justify-between gap-3">
         <span
           className={cn(
             "inline-flex rounded-full px-2.5 py-1 text-[0.6875rem] font-semibold uppercase tracking-wide",

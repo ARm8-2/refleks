@@ -185,11 +185,11 @@ export function HistorySessionOverview({
                     }
                   }}
                   placeholder={t("history.overview.sessionNamePlaceholder")}
-                  className="max-w-[21.25rem] bg-transparent px-3 font-medium shadow-none focus-visible:bg-secondary focus-visible:ring-0"
+                  className="max-w-85 bg-transparent px-3 font-medium shadow-none focus-visible:bg-secondary focus-visible:ring-0"
                   disabled={nameSaving}
                 />
               ) : (
-                <div className="flex h-9 max-w-[21.25rem] items-center truncate font-medium text-foreground">
+                <div className="flex h-9 max-w-85 items-center truncate font-medium text-foreground">
                   {formatSessionTitle(session)}
                 </div>
               )}
@@ -379,7 +379,7 @@ export function HistorySessionOverview({
                   scenarioName={selectedScenario}
                   points={trendPoints}
                   onClickPoint={(runId) => onSelectRun(runId)}
-                  className="bg-secondary h-[20rem]"
+                  className="bg-secondary h-80"
                 />
 
                 <div className="grid gap-3 lg:grid-cols-2">
@@ -393,11 +393,11 @@ export function HistorySessionOverview({
                           })
                         : undefined
                     }
-                    className="bg-secondary h-[20rem]"
+                    className="bg-secondary h-80"
                   />
                   <SessionScenarioRadarWidget
                     session={session}
-                    className="bg-secondary h-[20rem]"
+                    className="bg-secondary h-80"
                   />
                 </div>
               </div>

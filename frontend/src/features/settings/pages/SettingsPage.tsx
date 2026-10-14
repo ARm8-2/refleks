@@ -714,7 +714,7 @@ export function SettingsPage() {
                           updateField("screenCaptureResolution", v, true)
                         }
                       >
-                        <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                        <SelectTrigger className="h-8 w-max min-w-32 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -788,7 +788,7 @@ export function SettingsPage() {
                           )
                         }
                       >
-                        <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                        <SelectTrigger className="h-8 w-max min-w-32 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -817,7 +817,7 @@ export function SettingsPage() {
                           )
                         }
                       >
-                        <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                        <SelectTrigger className="h-8 w-max min-w-32 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -842,7 +842,7 @@ export function SettingsPage() {
                       updateField("sessionGapMinutes", parseInt(v, 10), true)
                     }
                   >
-                    <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                    <SelectTrigger className="h-8 w-max min-w-32 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -899,7 +899,7 @@ export function SettingsPage() {
                     value={settings.theme}
                     onValueChange={handleThemeChange}
                   >
-                    <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                    <SelectTrigger className="h-8 w-max min-w-32 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -943,7 +943,7 @@ export function SettingsPage() {
                     value={settings.font || FONTS[0].id}
                     onValueChange={handleFontChange}
                   >
-                    <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                    <SelectTrigger className="h-8 w-max min-w-32 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -964,7 +964,7 @@ export function SettingsPage() {
                     value={settings.scale || DEFAULT_SCALE}
                     onValueChange={handleScaleChange}
                   >
-                    <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                    <SelectTrigger className="h-8 w-max min-w-32 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -982,7 +982,7 @@ export function SettingsPage() {
                   description={t("settings.appearance.languageDescription")}
                 >
                   <Select value={locale} onValueChange={handleLanguageChange}>
-                    <SelectTrigger className="h-8 w-max min-w-[8rem] text-xs">
+                    <SelectTrigger className="h-8 w-max min-w-32 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

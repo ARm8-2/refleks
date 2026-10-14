@@ -335,7 +335,7 @@ export function SessionProgressWidget({
         ref={gaugeRef}
         className="relative mx-auto flex flex-1 items-center justify-center"
       >
-        <div className="relative aspect-square w-full max-w-[10rem] shrink-0">
+        <div className="relative aspect-square w-full max-w-40 shrink-0">
           <svg viewBox="0 0 200 200" className="h-full w-full">
             <circle
               cx={cx}

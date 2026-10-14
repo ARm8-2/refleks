@@ -505,7 +505,7 @@ export function StreakPlaytimeWidget({
             )}
 
             <div className="flex gap-2">
-              <div className="grid grid-rows-7 gap-1.5 pt-[0.125rem] text-[0.6875rem] text-muted-foreground">
+              <div className="grid grid-rows-7 gap-1.5 pt-0.5 text-[0.6875rem] text-muted-foreground">
                 {weekdayLabels.map((label, index) => (
                   <span key={`${label}-${index}`} className="h-4 leading-4">
                     {label}
@@ -515,7 +515,7 @@ export function StreakPlaytimeWidget({
 
               <div className="p-1">
                 <TooltipProvider delayDuration={100}>
-                  <div className="grid grid-flow-col auto-cols-[0.875rem] grid-rows-7 gap-1.5">
+                  <div className="grid grid-flow-col auto-cols-3.5 grid-rows-7 gap-1.5">
                     {paddedHeatmapCells.map((cell, index) => {
                       if (!cell) {
                         return (
@@ -570,12 +570,12 @@ export function StreakPlaytimeWidget({
                               {today && (
                                 <span
                                   aria-hidden="true"
-                                  className="pointer-events-none absolute right-[-1px] top-[-1px] h-1.5 w-1.5 rounded-full bg-primary shadow-sm ring-1 ring-card"
+                                  className="pointer-events-none absolute -right-px -top-px h-1.5 w-1.5 rounded-full bg-primary shadow-sm ring-1 ring-card"
                                 />
                               )}
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-[14rem]">
+                          <TooltipContent side="top" className="max-w-56">
                             <div className="space-y-1">
                               <div className="font-medium text-popover-foreground">
                                 {getDayFormatter().format(new Date(cell.dayTs))}
@@ -606,7 +606,7 @@ export function StreakPlaytimeWidget({
 
         <div className="mt-4 border-t border-border-subtle pt-4">
           <div
-            className={`overflow-hidden transition-[max-height,opacity,transform] duration-220 ease-emphasized ${hasSelectedBreakdown ? "max-h-[22.5rem] translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-1 opacity-0"}`}
+            className={`overflow-hidden transition-[max-height,opacity,transform] duration-220 ease-emphasized ${hasSelectedBreakdown ? "max-h-90 translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-1 opacity-0"}`}
           >
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold text-muted-foreground">
@@ -631,7 +631,7 @@ export function StreakPlaytimeWidget({
             <ChartContainer
               ref={drilldownChart.ref}
               config={drilldownConfig}
-              className="aspect-auto h-[13.75rem] w-full"
+              className="aspect-auto h-55 w-full"
             >
               <BarChart
                 key={drilldownChart.revealed ? "revealed" : "hidden"}
@@ -684,7 +684,7 @@ export function StreakPlaytimeWidget({
           </div>
 
           <div
-            className={`overflow-hidden transition-[max-height,opacity,transform] duration-220 ease-emphasized ${hasSelectedBreakdown ? "pointer-events-none max-h-0 -translate-y-1 opacity-0" : "max-h-[7.5rem] translate-y-0 opacity-100"}`}
+            className={`overflow-hidden transition-[max-height,opacity,transform] duration-220 ease-emphasized ${hasSelectedBreakdown ? "pointer-events-none max-h-0 -translate-y-1 opacity-0" : "max-h-30 translate-y-0 opacity-100"}`}
           >
             <div className="px-4 py-5 text-center">
               <p className="text-sm font-medium text-foreground">
@@ -718,7 +718,7 @@ export function StreakPlaytimeWidget({
       <ChartContainer
         ref={playtimeChart.ref}
         config={playtimeConfig}
-        className="mt-1 aspect-auto h-[1.25rem] w-full"
+        className="mt-1 aspect-auto h-5 w-full"
       >
         <AreaChart
           key={playtimeChart.revealed ? "revealed" : "hidden"}

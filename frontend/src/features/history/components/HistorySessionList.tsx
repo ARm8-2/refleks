@@ -63,7 +63,7 @@ export function HistorySessionList({
     <aside
       className={cn(
         "flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-card shrink-0 transition-[width] duration-200 ease-out",
-        collapsed ? "w-16" : "w-[16.25rem]",
+        collapsed ? "w-16" : "w-65",
       )}
     >
       {/* Header */}

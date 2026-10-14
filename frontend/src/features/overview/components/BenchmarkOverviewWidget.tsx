@@ -339,7 +339,7 @@ export function BenchmarkOverviewWidget() {
           value={String(difficultyIndex)}
           onValueChange={(v) => setDifficultyIndex(Number(v) || 0)}
         >
-          <SelectTrigger className="h-7 w-auto min-w-0 max-w-[12.5rem] px-2 text-xs bg-secondary">
+          <SelectTrigger className="h-7 w-auto min-w-0 max-w-50 px-2 text-xs bg-secondary">
             <SelectValue
               placeholder={t("overview.benchmarkOverview.difficulty")}
             />
@@ -414,7 +414,7 @@ export function BenchmarkOverviewWidget() {
           <div className="pr-2">
             {/* Column headers */}
             <div
-              className="grid h-[1.75rem] items-center mb-1.5"
+              className="grid h-7 items-center mb-1.5"
               style={{ gridTemplateColumns: infoGridTemplate }}
             >
               <div className="select-none overflow-hidden text-ellipsis whitespace-nowrap text-[0.6875rem] uppercase tracking-wide text-muted-foreground">
@@ -475,21 +475,21 @@ export function BenchmarkOverviewWidget() {
                   }
                 />
               ) : (
-                <div className="h-[2rem] flex items-center text-[0.75rem] text-muted-foreground">
+                <div className="h-8 flex items-center text-[0.75rem] text-muted-foreground">
                   {t("overview.benchmarkOverview.noRecentScenario")}
                 </div>
               )}
             </div>
 
             {/* Divider — extends to widget edge minus matching right padding (pr-4 = pl-4 of outer container) */}
-            <div className="h-[1.0625rem] flex items-center pr-4">
+            <div className="h-4.25 flex items-center pr-4">
               <div className="h-px w-full bg-border" />
             </div>
 
             {/* Recommended scenarios section */}
             <div className="space-y-0.5">
               {recommendedScenarios.length === 0 ? (
-                <div className="h-[2rem] flex items-center text-[0.75rem] text-muted-foreground">
+                <div className="h-8 flex items-center text-[0.75rem] text-muted-foreground">
                   {t("overview.benchmarkOverview.noRecommendations")}
                 </div>
               ) : (
@@ -534,13 +534,13 @@ export function BenchmarkOverviewWidget() {
         {/* Right panel (scrollable rank cells, absolutely positioned) */}
         <div
           {...dragScrollProps}
-          className={`pointer-events-auto absolute bottom-0 right-0 top-0 z-10 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
+          className={`pointer-events-auto absolute bottom-0 right-0 top-0 z-10 overflow-x-auto scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
           style={{ left: `${rightPanelOffset}rem`, touchAction: "pan-y" }}
         >
           <div className="min-h-full min-w-full w-max pt-2 pb-3 pl-2 pr-2">
             {/* Rank column headers */}
             <div
-              className="grid h-[1.75rem] items-center gap-1 mb-1.5"
+              className="grid h-7 items-center gap-1 mb-1.5"
               style={{
                 gridTemplateColumns: rightGridTemplate,
                 minWidth: rightGridMinWidth,
@@ -584,17 +584,17 @@ export function BenchmarkOverviewWidget() {
                   cls={cls}
                 />
               ) : (
-                <div className="h-[2rem]" />
+                <div className="h-8" />
               )}
             </div>
 
             {/* Spacer to match left panel divider height — line is only in the left panel */}
-            <div className="h-[1.0625rem]" />
+            <div className="h-4.25" />
 
             {/* Recommended rank cells */}
             <div className="space-y-0.5">
               {recommendedScenarios.length === 0 ? (
-                <div className="h-[2rem]" />
+                <div className="h-8" />
               ) : (
                 recommendedScenarios.map((scenario) => (
                   <ScenarioRankCells
@@ -684,7 +684,7 @@ export function BenchmarkOverviewWidget() {
                     setVisibleRankCount(Math.max(1, Number(v) || 1))
                   }
                 >
-                  <SelectTrigger className="h-8 w-[5rem]">
+                  <SelectTrigger className="h-8 w-20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

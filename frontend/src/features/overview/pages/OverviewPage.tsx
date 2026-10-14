@@ -55,9 +55,9 @@ export function OverviewPage() {
         <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
           <PerformanceVsSensWidget
             allowScopeSelection
-            className="h-[21.25rem]"
+            className="h-85"
           />
-          <SessionScenarioRadarWidget className="h-[21.25rem]" />
+          <SessionScenarioRadarWidget className="h-85" />
         </div>
       </div>
     </div>
