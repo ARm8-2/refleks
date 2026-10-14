@@ -46,6 +46,14 @@ type replayLifecycleProvider struct {
 
 var _ screen.Provider = (*replayLifecycleProvider)(nil)
 
+func configureReplayLifecycleCapture(s *Store, provider screen.Provider, encoder *screen.Encoder) {
+	// These tests need capture dependencies but no Wails lifecycle context.
+	s.screenMu.Lock()
+	defer s.screenMu.Unlock()
+	s.screenProvider = provider
+	s.encoder = encoder
+}
+
 func (*replayLifecycleProvider) Configure(screen.CaptureConfig) {}
 func (*replayLifecycleProvider) SetFailureHandler(func(error))  {}
 func (*replayLifecycleProvider) Status() screen.ProviderStatus {
@@ -205,10 +213,10 @@ func TestReplayLifecycleFinalizeIgnoresUnavailableSession(t *testing.T) {
 			switch name {
 			case "active session":
 				p.enabled = true
-				s.SetScreenCapture(nil, p, nil)
+				configureReplayLifecycleCapture(s, p, nil)
 			case "empty stopped session":
 				p.dir = ""
-				s.SetScreenCapture(nil, p, nil)
+				configureReplayLifecycleCapture(s, p, nil)
 			}
 			s.FinalizeScreenCapture()
 			if len(s.screenFinalizing) != 0 || len(s.screenReleasePending) != 0 || len(s.screenSessions) != 0 || len(p.releasedSessions) != 0 {
@@ -222,7 +230,7 @@ func TestReplayLifecycleFinalizationBookkeeping(t *testing.T) {
 	s := newIsolatedStore(t)
 	trim := replayLifecycleTrim(t)
 	p := &replayLifecycleProvider{dir: trim.dir, started: trim.sessionStart}
-	s.SetScreenCapture(nil, p, nil)
+	configureReplayLifecycleCapture(s, p, nil)
 	s.screenTrimCounts[trim.dir] = 2
 
 	// Pending trims suppress the real 30-second grace goroutine entirely.
@@ -262,7 +270,7 @@ func TestReplayLifecycleGraceReleaseUsesCapturedDirectory(t *testing.T) {
 	trim := replayLifecycleTrim(t)
 	newStart := trim.sessionStart.Add(time.Hour)
 	p := &replayLifecycleProvider{dir: "new-session", started: newStart, enabled: true}
-	s.SetScreenCapture(nil, p, nil)
+	configureReplayLifecycleCapture(s, p, nil)
 	s.screenSessions[trim.dir], s.screenSessions[p.dir] = trim.sessionStart, newStart
 	s.screenFinalizing[trim.dir], s.screenReleasePending[trim.dir] = true, true
 
@@ -306,8 +314,7 @@ func TestReplayLifecyclePendingTrimBlocksReleaseAndShutdown(t *testing.T) {
 			}
 		},
 	}
-	// With no capture encoder, status updates remain testable without a Wails context.
-	s.SetScreenCapture(nil, p, nil)
+	configureReplayLifecycleCapture(s, p, nil)
 	s.screenTrimCounts[trim.dir] = 1
 	s.beginReplayTrim(trim.runPath)
 	go func() {
@@ -409,11 +416,11 @@ func TestReplayLifecycleRunScreenTrimTerminalPaths(t *testing.T) {
 				p.dir, p.started = "new-session", trim.sessionStart.Add(time.Hour)
 			}
 			if !tt.missing {
-				s.SetScreenCapture(nil, p, nil)
+				configureReplayLifecycleCapture(s, p, nil)
 			}
 			wantActive := 0
 			if tt.deleted {
-				s.SetScreenCapture(nil, p, &screen.Encoder{})
+				configureReplayLifecycleCapture(s, p, &screen.Encoder{})
 				s.beginReplayTrim(trim.runPath)
 				defer s.finishReplayTrim(trim.runPath)
 				wantActive = 1
@@ -466,7 +473,7 @@ func TestReplayLifecycleDeletionRejectsLateTrimPreflight(t *testing.T) {
 	trim := replayLifecycleTrim(t)
 	// This isolates deletion preflight with a zero-value encoder. Post-encode
 	// publication is covered in replay_publication_test.go.
-	s.SetScreenCapture(nil, nil, &screen.Encoder{})
+	configureReplayLifecycleCapture(s, nil, &screen.Encoder{})
 	for _, ext := range []string{".mp4", ".webm"} {
 		path, err := s.ReplayPath(trim.runPath, ext)
 		if err != nil {
