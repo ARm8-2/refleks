@@ -101,10 +101,13 @@ func (s *Store) IngestRun(fullPath string, mouse models.MouseTraceProvider) (mod
 	}
 
 	var trace []models.MousePoint
-	if mouse != nil && mouse.Enabled() {
-		if !start.IsZero() && !end.IsZero() && start.Before(end) {
-			trace = mouse.GetRange(start, end)
-		}
+	mouseTrackingActive := mouse != nil && mouse.Enabled()
+	validRunWindow := !start.IsZero() && !end.IsZero() && start.Before(end)
+	if mouseTrackingActive && validRunWindow {
+		trace = mouse.GetRange(start, end)
+	}
+	if s.ctx != nil {
+		runtime.LogDebugf(s.ctx, "mouse: trace selection for run=%q trackingActive=%v validWindow=%v points=%d", filepath.Base(fullPath), mouseTrackingActive, validRunWindow, len(trace))
 	}
 
 	runPath, err := s.Save(storedRunRecord{
