@@ -319,7 +319,16 @@ func (s *RuntimeService) reconfigureScreenCapture(settings models.Settings, rota
 	}
 
 	s.configureScreenCaptureLocked(settings)
-	if !settings.ScreenCaptureEnabled || !process.IsRunning(constants.KovaaksProcessName) || s.screen.Enabled() {
+	if !settings.ScreenCaptureEnabled || s.screen.Enabled() {
+		return
+	}
+	processRunning, err := process.IsRunning(constants.KovaaksProcessName)
+	if err != nil {
+		runtime.LogWarningf(s.ctx, "screen capture reconfigure: process check for %q failed: %v", constants.KovaaksProcessName, err)
+		return
+	}
+	runtime.LogDebugf(s.ctx, "screen capture reconfigure: process check for %q running=%v", constants.KovaaksProcessName, processRunning)
+	if !processRunning {
 		return
 	}
 	if err := s.screen.Start(); err != nil {
@@ -340,7 +349,21 @@ func (s *RuntimeService) startConfiguredScreenCapture(settings models.Settings) 
 	s.screenLifecycleMu.Lock()
 	defer s.screenLifecycleMu.Unlock()
 
-	if s.screen == nil || !settings.ScreenCaptureEnabled || !process.IsRunning(constants.KovaaksProcessName) {
+	if s.screen == nil {
+		runtime.LogWarning(s.ctx, "screen capture start skipped: provider is unavailable")
+		return
+	}
+	if !settings.ScreenCaptureEnabled {
+		runtime.LogDebug(s.ctx, "screen capture start skipped: disabled in settings")
+		return
+	}
+	processRunning, err := process.IsRunning(constants.KovaaksProcessName)
+	if err != nil {
+		runtime.LogWarningf(s.ctx, "screen capture start: process check for %q failed: %v", constants.KovaaksProcessName, err)
+		return
+	}
+	runtime.LogDebugf(s.ctx, "screen capture start: process check for %q running=%v", constants.KovaaksProcessName, processRunning)
+	if !processRunning {
 		return
 	}
 	if s.screen.Enabled() {
@@ -406,7 +429,16 @@ func (s *RuntimeService) ScreenCaptureStatus() screen.CaptureStatus {
 		status.Message = "Screen capture encountered an error."
 		return status
 	}
-	if !process.IsRunning(constants.KovaaksProcessName) {
+	processRunning, err := process.IsRunning(constants.KovaaksProcessName)
+	if err != nil {
+		runtime.LogWarningf(s.ctx, "screen capture status: process check for %q failed: %v", constants.KovaaksProcessName, err)
+		status.Active = false
+		status.Healthy = false
+		status.State = "error"
+		status.Message = "Unable to check whether KovaaK's is running."
+		return status
+	}
+	if !processRunning {
 		status.Active = false
 		status.Healthy = false
 		status.State = "ready"
@@ -460,7 +492,16 @@ func (s *RuntimeService) handleScreenCaptureFailure(err error) {
 		s.screenLifecycleMu.Lock()
 		defer s.screenLifecycleMu.Unlock()
 		settings := s.settingsSvc.Get()
-		if !settings.ScreenCaptureEnabled || !process.IsRunning(constants.KovaaksProcessName) {
+		if !settings.ScreenCaptureEnabled {
+			return
+		}
+		processRunning, err := process.IsRunning(constants.KovaaksProcessName)
+		if err != nil {
+			runtime.LogWarningf(s.ctx, "screen capture recovery: process check for %q failed: %v", constants.KovaaksProcessName, err)
+			return
+		}
+		runtime.LogDebugf(s.ctx, "screen capture recovery: process check for %q running=%v", constants.KovaaksProcessName, processRunning)
+		if !processRunning {
 			return
 		}
 		s.stopAndFinalizeScreenCaptureLocked()
@@ -556,9 +597,12 @@ func (s *RuntimeService) handleRunParsed(rec models.RunRecord) {
 
 func (s *RuntimeService) startProcessWatcher() {
 	if s.procWatcherStop != nil {
+		runtime.LogDebugf(s.ctx, "process watcher: already monitoring %q", constants.KovaaksProcessName)
 		return
 	}
 
+	settings := s.settingsSvc.Get()
+	runtime.LogDebugf(s.ctx, "process watcher: starting for %q (mouseTracking=%v screenCapture=%v)", constants.KovaaksProcessName, settings.MouseTrackingEnabled, settings.ScreenCaptureEnabled)
 	ctx, cancel := context.WithCancel(s.ctx)
 	s.procWatcherStop = cancel
 
@@ -625,6 +669,7 @@ func (s *RuntimeService) Shutdown() {
 
 func (s *RuntimeService) stopProcessWatcher() {
 	if s.procWatcherStop != nil {
+		runtime.LogDebugf(s.ctx, "process watcher: stopping monitor for %q", constants.KovaaksProcessName)
 		s.procWatcherStop()
 		s.procWatcherStop = nil
 	}
