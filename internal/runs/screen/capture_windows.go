@@ -56,15 +56,16 @@ type captureWin struct {
 	// goroutines refer to fields populated by Start, so allowing a new Start
 	// while Stop is still draining the old session could cross-close completion
 	// channels or release the wrong D3D resources.
-	lifecycleMu sync.Mutex
-	mu          sync.Mutex
-	logMu       sync.Mutex
-	segmentsMu  sync.Mutex // serializes selecting/leasing segments and retention pruning
-	running     bool
-	state       string
-	lastError   string
-	lastFrameAt time.Time
-	ffmpegAlive bool
+	lifecycleMu      sync.Mutex
+	mu               sync.Mutex
+	logMu            sync.Mutex
+	segmentsMu       sync.Mutex // serializes selecting/leasing segments and retention pruning
+	running          bool
+	state            string
+	lastError        string
+	lastFrameAt      time.Time
+	firstFrameLogged bool
+	ffmpegAlive      bool
 
 	failureHandler  func(error)
 	failureNotified bool
@@ -232,6 +233,7 @@ func (c *captureWin) Start() error {
 	c.state = CaptureStateStarting
 	c.lastError = ""
 	c.lastFrameAt = time.Time{}
+	c.firstFrameLogged = false
 	c.ffmpegAlive = false
 	c.failureNotified = false
 	procTimeBeginPeriod.Call(1)
@@ -1153,11 +1155,19 @@ func (c *captureWin) pipeWriter(pipeCh <-chan []byte, freeFrames chan<- []byte, 
 			buf = buf[n:]
 		}
 		c.mu.Lock()
+		firstFrame := c.running && !c.firstFrameLogged
 		if c.running {
 			c.lastFrameAt = time.Now()
 			c.state = CaptureStateCapturing
+			if firstFrame {
+				c.firstFrameLogged = true
+			}
 		}
+		width, height := c.width, c.height
 		c.mu.Unlock()
+		if firstFrame {
+			runtime.LogDebugf(c.ctx, "screen: first frame sent to ffmpeg (%dx%d)", width, height)
+		}
 		freeFrames <- frame
 	}
 }
