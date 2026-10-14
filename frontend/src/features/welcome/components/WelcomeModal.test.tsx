@@ -64,4 +64,32 @@ describe("WelcomeModal", () => {
       screenCaptureEnabled: true,
     });
   });
+
+  it("preserves hidden optional choices as null in the confirmation payload", async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <I18nProvider>
+        <WelcomeModal
+          isOpen
+          content={content}
+          initialAnonymousEnabled
+          initialMouseTrackingEnabled
+          initialScreenCaptureEnabled
+          runSyncEnabled={false}
+          onConfirm={onConfirm}
+          onClose={vi.fn()}
+        />
+      </I18nProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(onConfirm).toHaveBeenCalledWith({
+      anonymousEnabled: true,
+      mouseTrackingEnabled: null,
+      screenCaptureEnabled: null,
+    });
+  });
 });
