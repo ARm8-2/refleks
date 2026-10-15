@@ -366,13 +366,27 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  :root:not([data-motion-preference="full"]),
+  :root:not([data-motion-preference="full"])::before,
+  :root:not([data-motion-preference="full"])::after,
+  :root:not([data-motion-preference="full"]) *,
+  :root:not([data-motion-preference="full"]) *::before,
+  :root:not([data-motion-preference="full"]) *::after {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+:root[data-motion-preference="reduced"],
+:root[data-motion-preference="reduced"]::before,
+:root[data-motion-preference="reduced"]::after,
+:root[data-motion-preference="reduced"] *,
+:root[data-motion-preference="reduced"] *::before,
+:root[data-motion-preference="reduced"] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
 }
 
 @keyframes route-content-fade-in {

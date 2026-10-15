@@ -3,6 +3,7 @@ export * from "./chartTheme";
 export * from "./customTheme";
 export * from "./externalLinks";
 export * from "./i18n";
+export * from "./motion";
 export * from "./navigation";
 export * from "./scenarios";
 export * from "./scoreDomain";

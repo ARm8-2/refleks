@@ -65,7 +65,10 @@ afterAll(() => {
   }
 });
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  delete document.documentElement.dataset.motionPreference;
+});
 
 const settings: Settings = {
   kovaaksInstallDir: "C:/Games/Kovaaks",
@@ -76,6 +79,7 @@ const settings: Settings = {
   font: "montserrat",
   scale: "100",
   language: "en",
+  motionPreference: "system",
 };
 
 const captureInfo: ScreenCaptureInfo = {
@@ -125,6 +129,36 @@ describe("SettingsPage", () => {
 
     expect(updateSettings).toHaveBeenCalledWith(
       expect.objectContaining({ sessionGapMinutes: 20 }),
+    );
+  });
+
+  it("saves and applies a changed motion preference", async () => {
+    const user = userEvent.setup();
+    render(
+      <I18nProvider>
+        <StoreProvider>
+          <SettingsPage />
+        </StoreProvider>
+      </I18nProvider>,
+    );
+
+    const motionField = (await screen.findByText("Motion")).parentElement;
+    expect(motionField).not.toBeNull();
+    const motionSelect = within(motionField as HTMLElement).getByRole(
+      "combobox",
+    );
+    motionSelect.focus();
+    await user.keyboard("{Enter}{ArrowDown}{ArrowDown}{Enter}");
+
+    expect(updateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ motionPreference: "full" }),
+    );
+    expect(window.localStorage.getItem(STORAGE_KEYS.motionPreference)).toBe(
+      "full",
+    );
+    expect(document.documentElement).toHaveAttribute(
+      "data-motion-preference",
+      "full",
     );
   });
 });

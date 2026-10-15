@@ -9,6 +9,7 @@ const (
 	DefaultFont               = "montserrat"
 	DefaultScale              = "100"
 	DefaultLanguage           = "en"
+	DefaultMotionPreference   = "system"
 	DefaultMouseBufferMinutes = 5
 	DefaultRecentRunsDays     = 180
 	DefaultRecentRunsMinCount = 2500
@@ -126,3 +127,7 @@ var ValidScales = []string{"60", "75", "90", "100", "110", "125", "150"}
 // ValidLanguages lists the UI languages accepted from the frontend, kept in
 // sync with frontend/src/shared/lib/i18n (LOCALES).
 var ValidLanguages = []string{"en", "nl", "es", "zh-CN", "ja", "ru"}
+
+// ValidMotionPreferences lists animation policies accepted from the frontend,
+// kept in sync with frontend/src/shared/lib/motion.ts (MOTION_PREFERENCES).
+var ValidMotionPreferences = []string{"system", "reduced", "full"}

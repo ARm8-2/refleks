@@ -3,6 +3,10 @@ import { createRoot } from "react-dom/client";
 import { HashRouter } from "react-router-dom";
 import Root from "./Root";
 import { applySavedCustomTheme } from "./shared/lib/customTheme";
+import {
+  applyMotionPreference,
+  getSavedMotionPreference,
+} from "./shared/lib/motion";
 import { applyTheme, getSavedTheme } from "./shared/lib/theme";
 import "./index.css";
 
@@ -15,6 +19,7 @@ import "./index.css";
 async function bootstrap() {
   const theme = getSavedTheme();
   applyTheme(theme);
+  applyMotionPreference(getSavedMotionPreference());
   if (theme === "custom") {
     await applySavedCustomTheme();
   }

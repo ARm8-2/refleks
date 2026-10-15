@@ -117,6 +117,12 @@ export const settings: SettingsMessages = {
       "テーマファイルを再生成しますか？カスタマイズ内容はデフォルトに置き換えられます。",
     themeFileWriteFailed: "カスタムテーマファイルの書き込みに失敗しました。",
     themeFileOpenFailed: "カスタムテーマファイルを開けませんでした。",
+    motion: "アニメーション",
+    motionDescription:
+      "アニメーションをシステム設定に従わせるか、上書きするかを選択します。",
+    motionSystem: "システム設定に従う",
+    motionReduced: "アニメーションを減らす",
+    motionFull: "完全なアニメーション",
     font: "フォント",
     fontDescription: "インターフェースに使用するフォントファミリー",
     scale: "拡大率",

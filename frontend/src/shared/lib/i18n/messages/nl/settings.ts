@@ -117,6 +117,12 @@ export const settings: SettingsMessages = {
       "Themabestand opnieuw genereren? Je aanpassingen worden vervangen door de standaardwaarden.",
     themeFileWriteFailed: "Aangepaste themabestand schrijven mislukt.",
     themeFileOpenFailed: "Aangepaste themabestand openen mislukt.",
+    motion: "Beweging",
+    motionDescription:
+      "Kies of animaties de systeemvoorkeur volgen of deze overschrijven.",
+    motionSystem: "Systeem",
+    motionReduced: "Minder beweging",
+    motionFull: "Volledige beweging",
     font: "Lettertype",
     fontDescription: "Lettertypefamilie voor de interface",
     scale: "Schaal",

@@ -60,6 +60,7 @@ export const STORAGE_KEYS = {
   performanceVsSensScope: "refleks.widgets.performanceVsSens.scope",
 
   settingsShowAdvanced: "refleks.settings.showAdvanced",
+  motionPreference: "refleks.motionPreference",
 } as const;
 
 export type BenchmarkDetailProgressPreference =

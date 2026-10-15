@@ -18,6 +18,7 @@ function makeSettings(overrides: Partial<Settings> = {}): Settings {
     font: "default",
     scale: "default",
     language: "en",
+    motionPreference: "system",
     ...overrides,
   } as Settings;
 }
@@ -65,15 +66,11 @@ describe("buildVersionWelcomePresentation", () => {
       initialScreenCaptureEnabled: true,
       runSyncEnabled: false,
     });
-    expect(presentation?.content.title).toBe(
-      "Welcome back to RefleK's v1.2.3",
-    );
+    expect(presentation?.content.title).toBe("Welcome back to RefleK's v1.2.3");
   });
 
   it("does not show for a blank or already-seen version", () => {
-    expect(
-      buildVersionWelcomePresentation(makeSettings(), "   "),
-    ).toBeNull();
+    expect(buildVersionWelcomePresentation(makeSettings(), "   ")).toBeNull();
     expect(
       buildVersionWelcomePresentation(
         makeSettings({ lastSeenVersion: " 1.2.3 " }),

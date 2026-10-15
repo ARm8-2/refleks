@@ -119,6 +119,12 @@ export const settings: SettingsMessages = {
     themeFileWriteFailed:
       "No se pudo escribir el archivo de tema personalizado.",
     themeFileOpenFailed: "No se pudo abrir el archivo de tema personalizado.",
+    motion: "Movimiento",
+    motionDescription:
+      "Elige si las animaciones siguen o anulan la preferencia del sistema.",
+    motionSystem: "Sistema",
+    motionReduced: "Reducir movimiento",
+    motionFull: "Movimiento completo",
     font: "Fuente",
     fontDescription: "Familia tipográfica de la interfaz",
     scale: "Escala",

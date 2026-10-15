@@ -1,4 +1,11 @@
 import { useSyncExternalStore } from "react";
+import {
+  getSavedMotionPreference,
+  MOTION_PREFERENCE_CHANGED_EVENT,
+  refreshMotionPreferenceFromStorage,
+  shouldReduceMotion,
+} from "../lib/motion";
+import { STORAGE_KEYS } from "../lib/storageKeys";
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 let reducedMotionQuery: MediaQueryList | null = null;
@@ -14,20 +21,39 @@ function getReducedMotionQuery(): MediaQueryList | null {
   return reducedMotionQuery;
 }
 
-/** True when the operating system asks for reduced motion. */
+/** Resolves the app's motion setting against the current system preference. */
 export function prefersReducedMotion(): boolean {
-  return getReducedMotionQuery()?.matches ?? false;
+  return shouldReduceMotion(
+    getSavedMotionPreference(),
+    getReducedMotionQuery()?.matches ?? false,
+  );
 }
 
 function subscribeToReducedMotion(onChange: () => void): () => void {
   const query = getReducedMotionQuery();
-  if (!query) return () => {};
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEYS.motionPreference || event.key === null) {
+      refreshMotionPreferenceFromStorage();
+      onChange();
+    }
+  };
 
-  query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
+  query?.addEventListener("change", onChange);
+  if (typeof window !== "undefined") {
+    window.addEventListener(MOTION_PREFERENCE_CHANGED_EVENT, onChange);
+    window.addEventListener("storage", onStorage);
+  }
+
+  return () => {
+    query?.removeEventListener("change", onChange);
+    if (typeof window !== "undefined") {
+      window.removeEventListener(MOTION_PREFERENCE_CHANGED_EVENT, onChange);
+      window.removeEventListener("storage", onStorage);
+    }
+  };
 }
 
-/** Reactively tracks changes to the system reduced-motion preference. */
+/** Tracks the effective app/system motion preference reactively. */
 export function usePrefersReducedMotion(): boolean {
   return useSyncExternalStore(
     subscribeToReducedMotion,

@@ -51,6 +51,19 @@ func TestSanitizeEnums(t *testing.T) {
 		}
 	}
 
+	motionPreferenceTests := map[string]string{
+		"system":    "system",
+		" reduced ": "reduced",
+		"FULL":      "full",
+		"invalid":   "system",
+		"":          "system",
+	}
+	for in, want := range motionPreferenceTests {
+		if got := sanitizeMotionPreference(in); got != want {
+			t.Errorf("sanitizeMotionPreference(%q) = %q, want %q", in, got, want)
+		}
+	}
+
 	languageTests := map[string]string{"en": "en", "zh-CN": "zh-CN", " zz ": "en", "zz": "en", "": "en"}
 	for in, want := range languageTests {
 		if got := sanitizeLanguage(in); got != want {
@@ -131,6 +144,9 @@ func TestSanitizeFillsDefaultsAndClamps(t *testing.T) {
 	if s.Language != constants.DefaultLanguage {
 		t.Errorf("Language = %q", s.Language)
 	}
+	if s.MotionPreference != constants.DefaultMotionPreference {
+		t.Errorf("MotionPreference = %q", s.MotionPreference)
+	}
 	if s.MouseBufferMinutes != constants.DefaultMouseBufferMinutes {
 		t.Errorf("MouseBufferMinutes = %d", s.MouseBufferMinutes)
 	}
@@ -169,6 +185,7 @@ func TestSanitizePreservesValidValues(t *testing.T) {
 		Font:                    "inter",
 		Scale:                   "125",
 		Language:                "ja",
+		MotionPreference:        "full",
 		MouseTrackingEnabled:    false,
 		MouseBufferMinutes:      10,
 		ScreenCaptureEnabled:    true,
@@ -190,7 +207,8 @@ func TestSanitizePreservesValidValues(t *testing.T) {
 	if s.SessionGapMinutes != 45 || s.RecentRunsDays != 30 || s.RecentRunsMinCount != 10 {
 		t.Errorf("numeric settings changed: %+v", s)
 	}
-	if s.Theme != "light" || s.Font != "inter" || s.Scale != "125" || s.Language != "ja" {
+	if s.Theme != "light" || s.Font != "inter" || s.Scale != "125" ||
+		s.Language != "ja" || s.MotionPreference != "full" {
 		t.Errorf("appearance settings changed: %+v", s)
 	}
 	if s.ScreenCaptureFPS != 60 || s.ScreenCaptureResolution != "native" {

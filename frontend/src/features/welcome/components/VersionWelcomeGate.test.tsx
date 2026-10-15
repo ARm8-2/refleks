@@ -31,6 +31,7 @@ const settings: Settings = {
   font: "montserrat",
   scale: "100",
   language: "en",
+  motionPreference: "system",
 };
 
 beforeEach(() => {

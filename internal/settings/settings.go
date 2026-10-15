@@ -109,6 +109,7 @@ func Default() models.Settings {
 		Font:                    constants.DefaultFont,
 		Scale:                   constants.DefaultScale,
 		Language:                constants.DefaultLanguage,
+		MotionPreference:        constants.DefaultMotionPreference,
 		MouseTrackingEnabled:    true,
 		MouseBufferMinutes:      constants.DefaultMouseBufferMinutes,
 		ScreenCaptureEnabled:    false,
@@ -161,6 +162,7 @@ func Sanitize(s models.Settings) models.Settings {
 	}
 	s.Scale = sanitizeScale(s.Scale)
 	s.Language = sanitizeLanguage(s.Language)
+	s.MotionPreference = sanitizeMotionPreference(s.MotionPreference)
 	if s.MouseBufferMinutes <= 0 {
 		s.MouseBufferMinutes = constants.DefaultMouseBufferMinutes
 	}
@@ -210,6 +212,16 @@ func sanitizeLanguage(language string) string {
 		}
 	}
 	return constants.DefaultLanguage
+}
+
+func sanitizeMotionPreference(preference string) string {
+	preference = strings.ToLower(strings.TrimSpace(preference))
+	for _, valid := range constants.ValidMotionPreferences {
+		if preference == valid {
+			return preference
+		}
+	}
+	return constants.DefaultMotionPreference
 }
 
 func sanitizeScreenCaptureFPS(fps int) int {

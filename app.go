@@ -395,6 +395,7 @@ func (a *App) ResetSettings(resetConfig, resetFavorites, resetScenarioNotes, res
 		newSettings.Font = defaults.Font
 		newSettings.Scale = defaults.Scale
 		newSettings.Language = defaults.Language
+		newSettings.MotionPreference = defaults.MotionPreference
 		newSettings.MouseTrackingEnabled = defaults.MouseTrackingEnabled
 		newSettings.MouseBufferMinutes = defaults.MouseBufferMinutes
 		newSettings.ScreenCaptureEnabled = defaults.ScreenCaptureEnabled

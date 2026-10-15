@@ -118,6 +118,12 @@ export const settings = {
       "Regenerate the theme file? Your customizations will be replaced with the defaults.",
     themeFileWriteFailed: "Failed to write the custom theme file.",
     themeFileOpenFailed: "Failed to open the custom theme file.",
+    motion: "Motion",
+    motionDescription:
+      "Choose how app animations follow or override your system preference.",
+    motionSystem: "System",
+    motionReduced: "Reduce motion",
+    motionFull: "Full motion",
     font: "Font",
     fontDescription: "Font family for the interface",
     scale: "Scale",

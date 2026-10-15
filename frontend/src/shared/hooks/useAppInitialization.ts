@@ -2,6 +2,7 @@ import { EventsOn } from "@wails/runtime";
 import { startTransition, useCallback, useEffect, useRef } from "react";
 import { getLocale, isLocale, useI18n, type Locale } from "../lib/i18n";
 import { STORAGE_KEYS } from "../lib/storageKeys";
+import { setMotionPreference } from "../lib/motion";
 import { getRecentRuns, getSettings } from "../lib/api";
 import { useStore } from "./useStore";
 
@@ -176,6 +177,7 @@ export function useAppInitialization() {
     getSettings()
       .then((s) => {
         if (s) {
+          setMotionPreference(s.motionPreference);
           if (typeof s.sessionGapMinutes === "number")
             setSessionGap(s.sessionGapMinutes);
           if (s.sessionNotes) setSessionNotes(s.sessionNotes);

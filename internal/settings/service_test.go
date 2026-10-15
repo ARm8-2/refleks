@@ -60,6 +60,7 @@ func (env serviceTestEnvironment) defaults() models.Settings {
 		Font:                    constants.DefaultFont,
 		Scale:                   constants.DefaultScale,
 		Language:                constants.DefaultLanguage,
+		MotionPreference:        constants.DefaultMotionPreference,
 		MouseTrackingEnabled:    true,
 		MouseBufferMinutes:      constants.DefaultMouseBufferMinutes,
 		ScreenCaptureFPS:        constants.DefaultScreenCaptureFPS,
@@ -198,6 +199,7 @@ func TestServiceUpdateSanitizesAndReloads(t *testing.T) {
 					Font:                    " \t ",
 					Scale:                   "999",
 					Language:                "zz",
+					MotionPreference:        "invalid",
 					MouseBufferMinutes:      -1,
 					ScreenCaptureEnabled:    true,
 					ScreenCaptureFPS:        999,
@@ -235,6 +237,7 @@ func TestServiceUpdateSanitizesAndReloads(t *testing.T) {
 					Font:                    "inter",
 					Scale:                   "125",
 					Language:                "ja",
+					MotionPreference:        "full",
 					FavoriteBenchmarks:      []string{"second", "first"},
 					MouseTrackingEnabled:    true,
 					MouseBufferMinutes:      10,
@@ -260,6 +263,7 @@ func TestServiceUpdateSanitizesAndReloads(t *testing.T) {
 				input.SteamIDOverride = " " + want.SteamIDOverride + "\t"
 				input.PersonaNameOverride = "\t" + want.PersonaNameOverride + " "
 				input.Theme = " LIGHT "
+				input.MotionPreference = " FULL "
 				input.ScreenCaptureResolution = " NATIVE "
 				return input, want
 			},

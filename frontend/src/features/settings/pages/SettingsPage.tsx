@@ -43,6 +43,7 @@ import {
   quitApp,
   removeCustomTheme,
   setAutostart,
+  setMotionPreference,
   setFont,
   setScale,
   setTheme,
@@ -53,6 +54,7 @@ import {
   type Font,
   type Locale,
   type MessageKey,
+  type MotionPreference,
   type Scale,
   type Theme,
 } from "@/shared/lib";
@@ -75,6 +77,11 @@ const THEME_LABEL_KEYS: Record<Theme, MessageKey> = {
   custom: "settings.appearance.themeCustom",
 };
 
+const motionOptions: { value: MotionPreference; key: MessageKey }[] = [
+  { value: "system", key: "settings.appearance.motionSystem" },
+  { value: "reduced", key: "settings.appearance.motionReduced" },
+  { value: "full", key: "settings.appearance.motionFull" },
+];
 const fontOptions = FONTS.map((f) => ({ label: f.label, value: f.id }));
 const scaleOptions = SCALES.map((s) => ({ label: s.label, value: s.id }));
 const sessionGapMinutes = [5, 10, 15, 20, 30, 45, 60, 90, 120];
@@ -286,6 +293,12 @@ export function SettingsPage() {
     }
   };
 
+  const handleMotionPreferenceChange = (value: string) => {
+    const preference = value as MotionPreference;
+    setMotionPreference(preference);
+    updateField("motionPreference", preference, true);
+  };
+
   const handleFontChange = (value: string) => {
     const font = value as Font;
     setFont(font);
@@ -408,6 +421,7 @@ export function SettingsPage() {
       }
       if (current.font) setFont(current.font);
       if (current.scale) setScale(current.scale);
+      setMotionPreference(current.motionPreference);
       setLocale(current.language);
       setSessionGap(current.sessionGapMinutes);
       setSessionNotes(current.sessionNotes ?? {});
@@ -933,6 +947,27 @@ export function SettingsPage() {
                       </div>
                     </div>
                   )}
+                </SettingsField>
+
+                <SettingsField
+                  label={t("settings.appearance.motion")}
+                  description={t("settings.appearance.motionDescription")}
+                >
+                  <Select
+                    value={settings.motionPreference}
+                    onValueChange={handleMotionPreferenceChange}
+                  >
+                    <SelectTrigger className="h-8 w-max min-w-32 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {motionOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {t(option.key)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </SettingsField>
 
                 <SettingsField
