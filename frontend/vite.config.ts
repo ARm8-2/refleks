@@ -16,8 +16,6 @@ export default defineConfig({
     sourcemap: false,
   },
   test: {
-    isolate: false,
-    fsModuleCache: true,
     coverage: {
       include: ["src/**/*.{ts,tsx}"],
       exclude: ["src/**/*.test.{ts,tsx}", "src/**/*.d.ts"],
