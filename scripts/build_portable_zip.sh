@@ -54,17 +54,24 @@ Notes:
 License: see LICENSE in this archive.
 EOF
 
-# Normalize timestamps for reproducible builds
+# Normalize metadata for reproducible builds. Zip entries store DOS local
+# time and Unix permission bits, and zip adds files in directory-listing
+# order, so pin the timezone, permissions and file order explicitly.
+export TZ=UTC
 TIMESTAMP="202001010000"
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git log -1 --format=%H >/dev/null 2>&1; then
-    TIMESTAMP=$(git log -1 --format=%cd --date=format:%Y%m%d%H%M 2>/dev/null)
+    TIMESTAMP=$(git log -1 --format=%cd --date=format-local:%Y%m%d%H%M 2>/dev/null)
 fi
+find "${STAGE}" -type f -name '*.exe' -exec chmod 755 {} +
+find "${STAGE}" -type f ! -name '*.exe' -exec chmod 644 {} +
 find "${STAGE}" -exec touch -t "${TIMESTAMP}" {} + 2>/dev/null || true
 
-# Zip portable package (fast compression to avoid timeout on large ffmpeg binary)
+# Zip portable package (fast compression to avoid timeout on large ffmpeg binary).
+# Remove any previous archive first: zip would otherwise update it in place.
 ZIP="$(pwd)/${OUTDIR}/refleks-${V}-windows-amd64-portable.zip"
+rm -f "${ZIP}"
 (
-    cd "${STAGE}" && zip -1 -r -X "${ZIP}" . >/dev/null
+    cd "${STAGE}" && find . -type f | LC_ALL=C sort | zip -1 -X -D "${ZIP}" -@ >/dev/null
 )
 
 if [[ -f "${ZIP}" ]]; then
